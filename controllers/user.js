@@ -190,6 +190,11 @@ class User extends Controller {
 
       return this.setSuccessResponse(STATIC.SUCCESS.OK, { accessToken, user });
     });
+
+    list = (req, res) =>this.baseWrapper(req, res, async () => {
+      const { page, filter, order, orderType } = req.body;
+
+    });
 }
 
 module.exports = new User();
