@@ -14,11 +14,6 @@ const CLIENT_URL = process.env.CLIENT_URL;
 class Controller {
   __mailTransporter = null;
 
-  __actualResponseStatus = null;
-  __actualResponseIsError = false;
-  __actualResponseBody = null;
-  __actualResponseMessage = null;
-
   constructor() {
     this.userModel = new UserModel(db);
 
@@ -42,21 +37,22 @@ class Controller {
     );
   }
 
-  __setResponse(baseInfo, body, message, isError) {
-    this.__actualResponseBody = body;
-    this.__actualResponseStatus = baseInfo.STATUS;
-    this.__actualResponseMessage = message ?? baseInfo.DEFAULT_MESSAGE;
-    this.__actualResponseIsError = isError;
+  __sendResponse(response, baseInfo, body, message, isError) {
+    response.status(baseInfo.STATUS).json({
+      message: message ?? baseInfo.DEFAULT_MESSAGE,
+      body,
+      isError,
+    });
   }
 
-  setSuccessResponse(baseInfo = null, body = {}, message = null) {
+  sendSuccessResponse(response, baseInfo = null, body = {}, message = null) {
     if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
 
-    this.__setResponse(baseInfo, body, message, false);
+    this.__sendResponse(response, baseInfo, body, message, false);
   }
 
-  setErrorResponse(baseInfo, body = {}, message = null) {
-    this.__setResponse(baseInfo, body, message, true);
+  sendErrorResponse(response, baseInfo, body = {}, message = null) {
+    this.__sendResponse(response, baseInfo, body, message, true);
   }
 
   async baseWrapper(req, res, func) {
@@ -65,7 +61,8 @@ class Controller {
 
       if (!errors.isEmpty()) {
         const error = errors.array()[0].msg;
-        return this.setErrorResponse(
+        return this.sendErrorResponse(
+          res,
           { error },
           STATIC.ERRORS.BAD_REQUEST.STATUS
         );
@@ -73,22 +70,14 @@ class Controller {
 
       await func();
     } catch (e) {
-      console.log(e);
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey = Object.keys(STATIC.ERRORS).find(
         (error) => STATIC.ERRORS[error].KEY === errorType
       );
       const currentError = STATIC.ERRORS[currentErrorKey];
-      const error = e.message;
-      this.setErrorResponse(currentError, {
-        error,
-      });
-    } finally {
-      res.status(this.__actualResponseStatus).json({
-        message: this.__actualResponseMessage,
-        body: this.__actualResponseBody,
-        isError: this.__actualResponseIsError,
+      this.sendErrorResponse(res, currentError, {
+        error: e.message,
       });
     }
   }

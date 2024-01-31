@@ -7,15 +7,19 @@ function isAuth(request, response, next) {
   if (!authorization)
     return response
       .status(STATIC.ERRORS.UNAUTHORIZED.STATUS)
-      .json({ error: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE });
+      .json({
+        isError: true,
+        message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
+      });
 
   const token = authorization.split(" ")[1];
   const userId = validateToken(token);
 
   if (!userId)
-    return response
-      .status(STATIC.ERRORS.UNAUTHORIZED.STATUS)
-      .json({ error: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE });
+    return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
+      isError: true,
+      message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
+    });
 
   request.userData = {
     userId,

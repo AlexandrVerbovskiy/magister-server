@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const STATIC = require("../static");
 const Model = require("./model");
 const { generateRandomString } = require("../utils");
+const pgp = require("pg-promise")();
 
 class User extends Model {
   userByEmail = async (email) => {
@@ -131,7 +132,7 @@ class User extends Model {
       "INSERT INTO reset_password_tokens (user_id, token) VALUES (${id}, ${token})",
       { id, token }
     );
-    
+
     return token;
   };
 
@@ -159,6 +160,39 @@ class User extends Model {
     await this.db.none("DELETE FROM reset_password_tokens where user_id = $1", [
       userId,
     ]);
+  };
+
+  __userFilter =
+    "(email LIKE ${filter} OR name like ${filter} OR phone like ${filter})";
+
+  totalCount = async (filter) => {
+    filter = `%${filter}%`;
+    const query = `SELECT COUNT(*) as count FROM users WHERE ${this.__userFilter}`;
+    const res = await this.db.query(query, { filter });
+    return res[0]["count"];
+  };
+
+  list = async ({ filter, order, orderType, start, count }) => {
+    filter = `%${filter}%`;
+    const canBeOrderField = ["id", "email", "name", "phone"];
+    orderType = orderType.toLowerCase() == "desc" ? "desc" : "asc";
+
+    if (!canBeOrderField.includes(order.toLowerCase())) {
+      order = "id";
+    }
+
+    return await this.db.query(
+      `SELECT id, name, email, role, phone, active 
+      FROM users WHERE ${this.__userFilter}
+      ORDER BY ${order} ${orderType}
+      LIMIT \${count}
+      OFFSET \${start}`,
+      { filter, start, count }
+    );
+  };
+
+  delete = async (id) => {
+    await this.db.none("DELETE FROM users where id = $1", [id]);
   };
 }
 

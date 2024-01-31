@@ -12,7 +12,10 @@ function generateIsNotAuth(request, response, next) {
   if (userId)
     return response
       .status(STATIC.ERRORS.FORBIDDEN.STATUS)
-      .json({ error: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE });
+      .json({
+        isError: true,
+        message: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE,
+      });
 
   return next();
 }
