@@ -18,12 +18,12 @@ router.post(
   userController.login
 );
 
-router.post(
+/*router.post(
   "/register-admin",
   isNotAuth,
   registerValidation,
   userController.register
-);
+);*/
 
 router.post(
   "/reset-password",

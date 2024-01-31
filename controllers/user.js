@@ -11,7 +11,8 @@ class User extends Controller {
     const userByEmail = await this.userModel.userByEmail(email);
 
     if (userByEmail)
-      this.setErrorResponse(
+      this.sendErrorResponse(
+        res,
         STATIC.ERRORS.DATA_CONFLICT,
         {},
         "Email was registered earlier"
@@ -31,7 +32,9 @@ class User extends Controller {
       const token = await this.userModel.generateEmailVerifyToken(id);
 
       this.sendEmailVerificationMail(email, name, token);
-      return this.setSuccessResponse(
+
+      return this.sendSuccessResponse(
+        res,
         STATIC.SUCCESS.CREATED,
         {},
         "Account created successfully. An account confirmation letter has been sent to the email"
@@ -51,7 +54,8 @@ class User extends Controller {
 
       await this.userModel.create(userToSave);
 
-      return this.setSuccessResponse(
+      return this.sendSuccessResponse(
+        res,
         STATIC.SUCCESS.CREATED,
         {},
         "Account created successfully. Try to login on the site"
@@ -64,7 +68,8 @@ class User extends Controller {
       const user = await this.userModel.findByEmailAndPassword(email, password);
 
       if (!user) {
-        return this.setErrorResponse(
+        return this.sendErrorResponse(
+          res,
           STATIC.ERRORS.UNAUTHORIZED,
           {},
           "Incorrect email or password"
@@ -74,7 +79,10 @@ class User extends Controller {
       this.__filterUserFields(user);
       const accessToken = generateAccessToken(user.id);
 
-      return this.setSuccessResponse(STATIC.SUCCESS.OK, { accessToken, user });
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
+        accessToken,
+        user,
+      });
     });
 
   setRole = (req, res) =>
@@ -83,7 +91,8 @@ class User extends Controller {
 
       await this.userModel.setRole(id, role);
 
-      return this.setSuccessResponse(
+      return this.sendSuccessResponse(
+        res,
         STATIC.SUCCESS.OK,
         { id, role },
         "Role updated successfully"
@@ -99,7 +108,8 @@ class User extends Controller {
         ? "User activated successfully"
         : "User deactivated successfully";
 
-      return this.setSuccessResponse(
+      return this.sendSuccessResponse(
+        res,
         STATIC.SUCCESS.OK,
         { id, active },
         message
@@ -112,7 +122,8 @@ class User extends Controller {
       const userId = await this.userModel.getUserIdByEmailVerifiedToken(token);
 
       if (!userId) {
-        return this.setErrorResponse(
+        return this.sendErrorResponse(
+          res,
           STATIC.ERRORS.BAD_REQUEST,
           {},
           "No user found"
@@ -122,7 +133,8 @@ class User extends Controller {
       await this.userModel.setEmailVerified(userId);
       await this.userModel.removeEmailVerifiedToken(userId);
 
-      return this.setSuccessResponse(
+      return this.sendSuccessResponse(
+        res,
         STATIC.SUCCESS.OK,
         {},
         "Mail has been successfully verified. Try to log in"
@@ -135,7 +147,8 @@ class User extends Controller {
       const user = await this.userModel.userByEmail(email);
 
       if (!user) {
-        return this.setErrorResponse(
+        return this.sendErrorResponse(
+          res,
           STATIC.ERRORS.BAD_REQUEST,
           {},
           "No user found"
@@ -146,7 +159,8 @@ class User extends Controller {
 
       this.sendPasswordResetMail(email, user.name, token);
 
-      return this.setSuccessResponse(
+      return this.sendSuccessResponse(
+        res,
         STATIC.SUCCESS.OK,
         {},
         '"Password reset" email sent successfully'
@@ -159,7 +173,8 @@ class User extends Controller {
       const userId = await this.userModel.getUserIdByResetPasswordToken(token);
 
       if (!userId) {
-        return this.setErrorResponse(
+        return this.sendErrorResponse(
+          res,
           STATIC.ERRORS.BAD_REQUEST,
           {},
           "No user found"
@@ -169,7 +184,8 @@ class User extends Controller {
       await this.userModel.setNewPassword(userId, password);
       await this.userModel.removeResetPasswordToken(userId);
 
-      return this.setSuccessResponse(
+      return this.sendSuccessResponse(
+        res,
         STATIC.SUCCESS.OK,
         {},
         "Password updated successfully"
@@ -182,18 +198,58 @@ class User extends Controller {
       const user = await this.userModel.getById(userId);
 
       if (!user) {
-        return this.setErrorResponse(STATIC.ERRORS.UNAUTHORIZED);
+        return this.sendErrorResponse(res, STATIC.ERRORS.UNAUTHORIZED);
       }
 
       this.__filterUserFields(user);
       const accessToken = generateAccessToken(user.id);
 
-      return this.setSuccessResponse(STATIC.SUCCESS.OK, { accessToken, user });
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
+        accessToken,
+        user,
+      });
     });
 
-    list = (req, res) =>this.baseWrapper(req, res, async () => {
-      const { page, filter, order, orderType } = req.body;
+  list = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      let page = req.body.page ?? 1;
+      const filter = req.body.filter ?? "";
+      const itemsPerPage = req.body.itemsPerPage ?? 20;
+      const order = req.body.order ?? "id";
+      const orderType = req.body.orderType ?? "desc";
 
+      const countItems = await this.userModel.totalCount(filter);
+      const totalPages =
+        countItems > 0 ? Math.ceil(countItems / itemsPerPage) : 1;
+
+      if (page > totalPages) page = totalPages;
+
+      const start = (page - 1) * itemsPerPage;
+
+      const options = {
+        filter,
+        order,
+        orderType,
+        start,
+        count: itemsPerPage,
+        page,
+        totalPages,
+      };
+
+      const users = await this.userModel.list(options);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
+        items: users,
+        options,
+        countItems,
+      });
+    });
+
+  delete = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const id = req.body.id;
+      this.userModel.delete(id);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
 

@@ -11,12 +11,16 @@ async function isAdmin(request, response, next) {
     if (!isAdmin)
       return response
         .status(STATIC.ERRORS.FORBIDDEN.STATUS)
-        .json({ error: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE });
+        .json({
+          isError: true,
+          message: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE,
+        });
     return next();
   } catch (error) {
-    return response
-      .status(STATIC.ERRORS.UNPREDICTABLE.STATUS)
-      .json({ error: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE });
+    return response.status(STATIC.ERRORS.UNPREDICTABLE.STATUS).json({
+      isError: true,
+      message: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE,
+    });
   }
 }
 
