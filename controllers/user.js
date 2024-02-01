@@ -3,14 +3,14 @@ const { generateAccessToken } = require("../utils");
 const Controller = require("./controller");
 
 class User extends Controller {
-  __filterUserFields = (user) => {
+  filterUserFields = (user) => {
     delete user["password"];
   };
 
-  __noUserByEmailCheck = async (email) => {
-    const userByEmail = await this.userModel.userByEmail(email);
+  noUserByEmailCheck = async (email) => {
+    const getByEmail = await this.userModel.getByEmail(email);
 
-    if (userByEmail)
+    if (getByEmail)
       this.sendErrorResponse(
         res,
         STATIC.ERRORS.DATA_CONFLICT,
@@ -18,14 +18,14 @@ class User extends Controller {
         "Email was registered earlier"
       );
 
-    return userByEmail;
+    return getByEmail;
   };
 
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { name, email } = req.body;
 
-      const resCheck = await this.__noUserByEmailCheck(email);
+      const resCheck = await this.noUserByEmailCheck(email);
       if (resCheck) return;
 
       const id = await this.userModel.create(req.body);
@@ -49,7 +49,7 @@ class User extends Controller {
         active: true,
       };
 
-      const resCheck = await this.__noUserByEmailCheck(email);
+      const resCheck = await this.noUserByEmailCheck(email);
       if (resCheck) return;
 
       await this.userModel.create(userToSave);
@@ -76,7 +76,7 @@ class User extends Controller {
         );
       }
 
-      this.__filterUserFields(user);
+      this.filterUserFields(user);
       const accessToken = generateAccessToken(user.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
@@ -144,7 +144,7 @@ class User extends Controller {
   resetPassword = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email } = req.body;
-      const user = await this.userModel.userByEmail(email);
+      const user = await this.userModel.getByEmail(email);
 
       if (!user) {
         return this.sendErrorResponse(
@@ -201,7 +201,6 @@ class User extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.UNAUTHORIZED);
       }
 
-      this.__filterUserFields(user);
       const accessToken = generateAccessToken(user.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
@@ -215,8 +214,8 @@ class User extends Controller {
       let page = req.body.page ?? 1;
       const filter = req.body.filter ?? "";
       const itemsPerPage = req.body.itemsPerPage ?? 20;
-      const order = req.body.order ?? "id";
-      const orderType = req.body.orderType ?? "desc";
+      const order = req.body.order ?? null;
+      const orderType = req.body.orderType ?? null;
 
       const countItems = await this.userModel.totalCount(filter);
       const totalPages =
@@ -247,9 +246,48 @@ class User extends Controller {
 
   delete = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const id = req.body.id;
+      const { id } = req.body;
       this.userModel.delete(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  getById = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      let user = {};
+
+      if (id && /^\d+$/.test(id)) user = await this.userModel.getById(id);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, user);
+    });
+
+  update = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const id = req.body.id;
+      const email = req.body.email;
+      const dataToSave = req.body;
+
+      const userByEmail = await this.userModel.getByEmail(email);
+
+      let photo = null;
+
+      if (req.file) {
+        photo = this.moveUploadsFileToFolder(req.file, "users");
+        dataToSave["photo"] = photo;
+      }
+
+      if (userByEmail && id != userByEmail.id)
+        throw new Error(`User with email '${email}' already exists`);
+
+      await this.userModel.updateById(id, req.body);
+
+      const data = { id };
+
+      if (photo) {
+        data["photo"] = photo;
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, data);
     });
 }
 

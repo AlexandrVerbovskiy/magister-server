@@ -5,19 +5,21 @@ const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
+const mime = require("mime-types");
 
 const db = require("../database");
 const { UserModel } = require("../models");
 const STATIC = require("../static");
+const { generateRandomString } = require("../utils");
 const CLIENT_URL = process.env.CLIENT_URL;
 
 class Controller {
-  __mailTransporter = null;
+  mailTransporter = null;
 
   constructor() {
     this.userModel = new UserModel(db);
 
-    this.__mailTransporter = nodemailer.createTransport({
+    this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
       auth: {
         user: process.env.MAIL_EMAIL,
@@ -25,7 +27,7 @@ class Controller {
       },
     });
 
-    this.__mailTransporter.use(
+    this.mailTransporter.use(
       "compile",
       hbs({
         viewEngine: {
@@ -37,7 +39,7 @@ class Controller {
     );
   }
 
-  __sendResponse(response, baseInfo, body, message, isError) {
+  sendResponse(response, baseInfo, body, message, isError) {
     response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
       body,
@@ -47,12 +49,11 @@ class Controller {
 
   sendSuccessResponse(response, baseInfo = null, body = {}, message = null) {
     if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
-
-    this.__sendResponse(response, baseInfo, body, message, false);
+    this.sendResponse(response, baseInfo, body, message, false);
   }
 
   sendErrorResponse(response, baseInfo, body = {}, message = null) {
-    this.__sendResponse(response, baseInfo, body, message, true);
+    this.sendResponse(response, baseInfo, body, message, true);
   }
 
   async baseWrapper(req, res, func) {
@@ -70,6 +71,8 @@ class Controller {
 
       await func();
     } catch (e) {
+      console.log(e);
+
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey = Object.keys(STATIC.ERRORS).find(
@@ -92,7 +95,7 @@ class Controller {
     };
 
     try {
-      return await this.__mailTransporter.sendMail(mailOptions);
+      return await this.mailTransporter.sendMail(mailOptions);
     } catch (error) {
       console.error("Error sending email:", error);
     }
@@ -115,6 +118,28 @@ class Controller {
       link: CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token,
       title,
     });
+  }
+
+  moveUploadsFileToFolder(file, folder) {
+    const originalFilePath = file.path;
+    const name = generateRandomString();
+    const type = mime.extension(file.mimetype) || "bin";
+
+    let destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public");
+
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir);
+    }
+
+    destinationDir = path.join(destinationDir, folder);
+
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir);
+    }
+
+    const newFilePath = path.join(destinationDir, name + "." + type);
+    fs.renameSync(originalFilePath, newFilePath);
+    return folder + "/" + name + "." + type;
   }
 }
 

@@ -2,7 +2,7 @@ const { Router } = require("express");
 const router = Router();
 const { isAuth, isNotAuth } = require("../middlewares");
 const { userController } = require("../controllers");
-const { registerValidation, loginValidation } = require("../validations");
+const { registerValidation, loginValidation } = require("../validations/auth");
 
 router.post(
   "/register",
@@ -11,12 +11,7 @@ router.post(
   userController.register
 );
 
-router.post(
-  "/login",
-  isNotAuth,
-  loginValidation,
-  userController.login
-);
+router.post("/login", isNotAuth, loginValidation, userController.login);
 
 /*router.post(
   "/register-admin",

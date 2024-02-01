@@ -52,4 +52,5 @@ module.exports = {
     EMAIL_VERIFICATION: "user/email-verification",
     PASSWORD_RESET: "user/password-reset",
   },
+  MAIN_DIRECTORY: __dirname,
 };
