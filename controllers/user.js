@@ -211,11 +211,14 @@ class User extends Controller {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      let page = req.body.page ?? 1;
-      const filter = req.body.filter ?? "";
-      const itemsPerPage = req.body.itemsPerPage ?? 20;
-      const order = req.body.order ?? null;
-      const orderType = req.body.orderType ?? null;
+      const {
+        filter = "",
+        itemsPerPage = 20,
+        order = null,
+        orderType = null,
+      } = req.body;
+
+      let { page = 1 } = req.body;
 
       const countItems = await this.userModel.totalCount(filter);
       const totalPages =
@@ -263,12 +266,9 @@ class User extends Controller {
 
   update = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const id = req.body.id;
-      const email = req.body.email;
       const dataToSave = req.body;
-
+      const { id, email } = dataToSave;
       const userByEmail = await this.userModel.getByEmail(email);
-
       let photo = null;
 
       if (req.file) {

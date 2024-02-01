@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev-client": "cd ../client & npm run dev",
-    "dev": "concurrently \"npm run dev-server\" \"npm run dev-client\"",
+    "dev": "concurrently \"npm run migrate\" \"npm run dev-server\" \"npm run dev-client\"",
     "dev-server": "nodemon index.js",
     "server": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate": "node migrate.js"
   },
   "author": "",
   "license": "ISC",
@@ -32,7 +33,6 @@
     "nodemon": "^3.0.3",
     "path": "^0.12.7",
     "pg": "^8.11.3",
-    "pg-promise": "^11.5.4",
     "socket.io": "^4.7.4"
   }
 }
