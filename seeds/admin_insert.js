@@ -14,6 +14,7 @@ exports.seed = async function (knex) {
       name: process.env.ADMIN_NAME,
       email: process.env.ADMIN_EMAIL,
       password: password,
+      email_verified: true,
       role: "admin",
     },
   ]);
