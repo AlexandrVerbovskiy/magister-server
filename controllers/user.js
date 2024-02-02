@@ -3,29 +3,28 @@ const { generateAccessToken } = require("../utils");
 const Controller = require("./controller");
 
 class User extends Controller {
-  __filterUserFields = (user) => {
+  filterUserFields = (user) => {
     delete user["password"];
   };
 
-  __noUserByEmailCheck = async (email) => {
-    const userByEmail = await this.userModel.userByEmail(email);
+  noUserByEmailCheck = async (email) => {
+    const getByEmail = await this.userModel.getByEmail(email);
 
-    if (userByEmail)
+    if (getByEmail)
       this.sendErrorResponse(
         res,
         STATIC.ERRORS.DATA_CONFLICT,
-        {},
         "Email was registered earlier"
       );
 
-    return userByEmail;
+    return getByEmail;
   };
 
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { name, email } = req.body;
 
-      const resCheck = await this.__noUserByEmailCheck(email);
+      const resCheck = await this.noUserByEmailCheck(email);
       if (resCheck) return;
 
       const id = await this.userModel.create(req.body);
@@ -36,7 +35,6 @@ class User extends Controller {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.CREATED,
-        {},
         "Account created successfully. An account confirmation letter has been sent to the email"
       );
     });
@@ -49,7 +47,7 @@ class User extends Controller {
         active: true,
       };
 
-      const resCheck = await this.__noUserByEmailCheck(email);
+      const resCheck = await this.noUserByEmailCheck(email);
       if (resCheck) return;
 
       await this.userModel.create(userToSave);
@@ -57,7 +55,6 @@ class User extends Controller {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.CREATED,
-        {},
         "Account created successfully. Try to login on the site"
       );
     });
@@ -71,18 +68,38 @@ class User extends Controller {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.UNAUTHORIZED,
-          {},
           "Incorrect email or password"
         );
       }
 
-      this.__filterUserFields(user);
+      if (!user.emailVerified) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.UNAUTHORIZED,
+          "The mail was not confirmed. Instructions for confirmation were sent to the mail in the letter when the account was created"
+        );
+      }
+
+      //if (!user.twoFactorAuthentication) {
+      this.filterUserFields(user);
       const accessToken = generateAccessToken(user.id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         accessToken,
         user,
+        needCode: false,
       });
+      /*} else {
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          user: {
+            email: user.email,
+            phone: user.phone,
+            id: user.id,
+            name: user.name,
+          },
+          needCode: true,
+        });
+      }*/
     });
 
   setRole = (req, res) =>
@@ -94,8 +111,8 @@ class User extends Controller {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        { id, role },
-        "Role updated successfully"
+        "Role updated successfully",
+        { id, role }
       );
     });
 
@@ -108,12 +125,10 @@ class User extends Controller {
         ? "User activated successfully"
         : "User deactivated successfully";
 
-      return this.sendSuccessResponse(
-        res,
-        STATIC.SUCCESS.OK,
-        { id, active },
-        message
-      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
+        id,
+        active,
+      });
     });
 
   verifyEmail = (req, res) =>
@@ -125,7 +140,6 @@ class User extends Controller {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          {},
           "No user found"
         );
       }
@@ -136,7 +150,6 @@ class User extends Controller {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        {},
         "Mail has been successfully verified. Try to log in"
       );
     });
@@ -144,13 +157,12 @@ class User extends Controller {
   resetPassword = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email } = req.body;
-      const user = await this.userModel.userByEmail(email);
+      const user = await this.userModel.getByEmail(email);
 
       if (!user) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          {},
           "No user found"
         );
       }
@@ -162,7 +174,6 @@ class User extends Controller {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        {},
         '"Password reset" email sent successfully'
       );
     });
@@ -176,7 +187,6 @@ class User extends Controller {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          {},
           "No user found"
         );
       }
@@ -187,7 +197,6 @@ class User extends Controller {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        {},
         "Password updated successfully"
       );
     });
@@ -201,10 +210,9 @@ class User extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.UNAUTHORIZED);
       }
 
-      this.__filterUserFields(user);
       const accessToken = generateAccessToken(user.id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         accessToken,
         user,
       });
@@ -212,11 +220,14 @@ class User extends Controller {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      let page = req.body.page ?? 1;
-      const filter = req.body.filter ?? "";
-      const itemsPerPage = req.body.itemsPerPage ?? 20;
-      const order = req.body.order ?? "id";
-      const orderType = req.body.orderType ?? "desc";
+      const {
+        filter = "",
+        itemsPerPage = 20,
+        order = null,
+        orderType,
+      } = req.body;
+
+      let { page = 1 } = req.body;
 
       const countItems = await this.userModel.totalCount(filter);
       const totalPages =
@@ -229,7 +240,7 @@ class User extends Controller {
       const options = {
         filter,
         order,
-        orderType,
+        orderType: orderType ?? "asc",
         start,
         count: itemsPerPage,
         page,
@@ -238,7 +249,7 @@ class User extends Controller {
 
       const users = await this.userModel.list(options);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         items: users,
         options,
         countItems,
@@ -247,10 +258,114 @@ class User extends Controller {
 
   delete = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const id = req.body.id;
+      const { id } = req.body;
       this.userModel.delete(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
+
+  getById = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      let user = {};
+
+      if (id && /^\d+$/.test(id)) user = await this.userModel.getById(id);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
+    });
+
+  update = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const dataToSave = req.body;
+      const { id, email } = dataToSave;
+      const userByEmail = await this.userModel.getByEmail(email);
+      let photo = null;
+
+      if (req.file) {
+        photo = this.moveUploadsFileToFolder(req.file, "users");
+        dataToSave["photo"] = photo;
+      }
+
+      if (userByEmail && id != userByEmail.id)
+        throw new Error(`User with email '${email}' already exists`);
+
+      await this.userModel.updateById(id, req.body);
+
+      const data = { id };
+
+      if (photo) {
+        data["photo"] = photo;
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
+    });
+
+  sendPhoneVerify = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const { type } = req.body;
+      const resGenerate = await this.userModel.generatePhoneVerifyCode(userId);
+
+      if (!resGenerate) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "No user found"
+        );
+      }
+
+      const { phone, code } = resGenerate;
+
+      if (!phone) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.INVALID_KEY_DATA,
+          "Your account does not have a phone number saved"
+        );
+      }
+
+      this.sendToPhoneVerifyCodeMessage(phone, code, type);
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        "Code successfully sent"
+      );
+    });
+
+  phoneVerify = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { code } = req.body;
+      const { userId } = req.userData;
+      const gotUserId = await this.userModel.getUserIdByPhoneVerifyCode(code);
+
+      if (!gotUserId || gotUserId != userId) {
+        this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.INVALID_KEY_DATA,
+          "Invalid OTP code"
+        );
+      }
+
+      await this.userModel.setPhoneVerified(userId);
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        "Phone number successfully verified"
+      );
+    });
+
+  twoFactorAuthVerify = (req, res) =>
+    this.baseWrapper(req, res, async () => {});
+
+  test = async (req, res) => {
+    try {
+      const result = await this.sendToPhoneMessage("380678811196", "Test");
+      return res.status(200).json(result);
+    } catch (e) {
+      return res.status(200).json(e);
+    }
+  };
 }
 
 module.exports = new User();

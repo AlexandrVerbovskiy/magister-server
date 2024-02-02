@@ -1,16 +1,49 @@
 require("dotenv").config();
 const bcrypt = require("bcrypt");
 const STATIC = require("../static");
-const Model = require("./model");
-const { generateRandomString } = require("../utils");
-const pgp = require("pg-promise")();
+const db = require("../database");
+const { generateRandomString, generateOtp } = require("../utils");
+const twilio = require("twilio");
 
-class User extends Model {
-  userByEmail = async (email) => {
-    const users = await this.db.query("SELECT * from users where email = $1", [
-      email,
-    ]);
-    return users[0];
+class User {
+  visibleFields = [
+    "id",
+    "name",
+    "email",
+    "email_verified as emailVerified",
+    "role",
+    "contact_details as contactDetails",
+    "brief_bio as briefBio",
+    "photo",
+    "phone",
+    "phone_verified as phoneVerified",
+    "linkedin",
+    "facebook",
+    "active",
+    "suspicious",
+  ];
+
+  userFilter(filter) {
+    filter = `%${filter}%`;
+    const searchableFields = ["name", "email", "phone"];
+
+    const conditions = searchableFields
+      .map((field) => `${field} ILIKE ?`)
+      .join(" OR ");
+
+    const props = searchableFields.map((field) => filter);
+    return [conditions, props];
+  }
+
+  getByEmail = async (email) => {
+    return await db("users")
+      .select([
+        ...this.visibleFields,
+        "password",
+        "two_factor_authentication as twoFactorAuthentication",
+      ])
+      .where("email", email)
+      .first();
   };
 
   create = async ({
@@ -30,170 +63,264 @@ class User extends Model {
       password: hashedPassword,
     };
 
-    const { id } = await this.db.one(
-      "INSERT INTO users(role, name, email, password, accepted_term_condition) VALUES(${role}, ${name}, ${email}, ${password}, ${acceptedTermCondition}) RETURNING id",
-      userToSave
-    );
+    const { id } = await db("users")
+      .insert({
+        role: userToSave.role,
+        name: userToSave.name,
+        email: userToSave.email,
+        password: userToSave.password,
+        accepted_term_condition: userToSave.acceptedTermCondition,
+      })
+      .returning("id");
 
     return id;
   };
 
   findByEmailAndPassword = async (email, password) => {
-    const userByEmail = await this.userByEmail(email);
+    const getByEmail = await this.getByEmail(email);
 
-    if (!userByEmail) return null;
+    if (!getByEmail) {
+      return null;
+    }
 
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      userByEmail.password
-    );
+    const isPasswordValid = await bcrypt.compare(password, getByEmail.password);
 
-    if (!isPasswordValid) return null;
+    if (!isPasswordValid) {
+      return null;
+    }
 
-    return userByEmail;
+    return getByEmail;
   };
 
   getById = async (id) => {
-    const users = await this.db.query("SELECT * from users where id = $1", [
-      id,
-    ]);
-    return users[0];
+    return await db("users").select(this.visibleFields).where("id", id).first();
   };
 
-  __checkRole = async (id, role) => {
-    const users = await this.db.query(
-      "SELECT email from users where id = ${id} AND role=${role}",
-      { id, role: role }
-    );
-    return users[0];
+  checkRole = async (id, role) => {
+    return await db("users").select("email").where({ id, role }).first();
   };
 
   checkIsAdmin = (id) => {
-    return this.__checkRole(id, STATIC.ROLES.ADMIN);
+    return this.checkRole(id, STATIC.ROLES.ADMIN);
   };
 
   setRole = async (id, role) => {
-    await this.db.one("UPDATE users SET role=${role} where id = ${id}", {
-      role: role,
-      id,
-    });
+    await db("users").where({ id }).update({ role });
   };
 
   changeActive = async (id) => {
-    const { active } = await this.db.one(
-      "UPDATE users SET active = NOT active where id = $1 RETURNING active",
-      [id]
-    );
+    const { active } = await db("users")
+      .where({ id })
+      .update({ active: db.raw("NOT active") })
+      .returning("active");
 
     return active;
   };
 
   generateEmailVerifyToken = async (id) => {
     const token = generateRandomString();
-    await this.db.none(
-      "INSERT INTO email_verified_tokens (user_id, token) VALUES (${id}, ${token})",
-      { id, token }
-    );
+    await db("email_verified_tokens").insert({ user_id: id, token });
     return token;
   };
 
   getUserIdByEmailVerifiedToken = async (token) => {
-    const tokens = await this.db.query(
-      "SELECT user_id from email_verified_tokens where token = ${token}",
-      { token }
-    );
+    const { user_id } = await db("email_verified_tokens")
+      .select("user_id")
+      .where({ token })
+      .first();
 
-    if (tokens.length < 1) return null;
-
-    return tokens[0].user_id;
+    return user_id;
   };
 
   setEmailVerified = async (id) => {
-    await this.db.none("UPDATE users SET email_verified = true where id = $1", [
-      id,
-    ]);
+    await db("users").where({ id }).update({ email_verified: true });
   };
 
   removeEmailVerifiedToken = async (userId) => {
-    await this.db.none("DELETE FROM users where user_id = $1", [userId]);
+    await db("users").where({ id: userId }).del();
   };
 
   generateResetPasswordToken = async (id) => {
-    const tokens = await this.db.query(
-      "SELECT token from reset_password_tokens where id = $1",
-      [id]
-    );
+    const { token: foundToken } = await db("reset_password_tokens")
+      .select("token")
+      .where({ user_id: id })
+      .first();
 
-    if (tokens.length > 0) return tokens[0].token;
+    if (foundToken) {
+      return foundToken;
+    }
 
     const token = generateRandomString();
-
-    await this.db.none(
-      "INSERT INTO reset_password_tokens (user_id, token) VALUES (${id}, ${token})",
-      { id, token }
-    );
-
+    await db("reset_password_tokens").insert({ user_id: id, token });
     return token;
   };
 
   getUserIdByResetPasswordToken = async (token) => {
-    const tokens = await this.db.query(
-      "SELECT user_id from reset_password_tokens where token = ${token}",
-      { token }
-    );
+    const { user_id } = await db("reset_password_tokens")
+      .select("user_id")
+      .where({ token })
+      .first();
 
-    if (tokens.length < 1) return null;
-
-    return tokens[0].user_id;
+    return user_id;
   };
 
   setNewPassword = async (id, password) => {
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    await this.db.none(
-      "UPDATE users SET password = ${password} where id = ${id}",
-      { id, password: hashedPassword }
-    );
+    await db("users").where({ id }).update({ password: hashedPassword });
   };
 
   removeResetPasswordToken = async (userId) => {
-    await this.db.none("DELETE FROM reset_password_tokens where user_id = $1", [
-      userId,
-    ]);
+    await db("reset_password_tokens").where({ user_id: userId }).del();
   };
 
-  __userFilter =
-    "(email LIKE ${filter} OR name like ${filter} OR phone like ${filter})";
-
   totalCount = async (filter) => {
-    filter = `%${filter}%`;
-    const query = `SELECT COUNT(*) as count FROM users WHERE ${this.__userFilter}`;
-    const res = await this.db.query(query, { filter });
-    return res[0]["count"];
+    const { count } = await db("users")
+      .whereRaw(...this.userFilter(filter))
+      .count("* as count")
+      .first();
+
+    return count;
   };
 
   list = async ({ filter, order, orderType, start, count }) => {
-    filter = `%${filter}%`;
     const canBeOrderField = ["id", "email", "name", "phone"];
-    orderType = orderType.toLowerCase() == "desc" ? "desc" : "asc";
 
-    if (!canBeOrderField.includes(order.toLowerCase())) {
-      order = "id";
-    }
+    if (!order) order = "id";
+    if (!orderType) orderType = "asc";
 
-    return await this.db.query(
-      `SELECT id, name, email, role, phone, active 
-      FROM users WHERE ${this.__userFilter}
-      ORDER BY ${order} ${orderType}
-      LIMIT \${count}
-      OFFSET \${start}`,
-      { filter, start, count }
-    );
+    orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
+    order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
+
+    return await db("users")
+      .select(this.visibleFields)
+      .whereRaw(...this.userFilter(filter))
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
   };
 
   delete = async (id) => {
-    await this.db.none("DELETE FROM users where id = $1", [id]);
+    await db("users").where({ id }).del();
+  };
+
+  getById = async (id) => {
+    return await db("users")
+      .select([
+        ...this.visibleFields,
+        "two_factor_authentication as twoFactorAuthentication",
+      ])
+      .where({ id })
+      .first();
+  };
+
+  updateById = async (id, userData) => {
+    const {
+      name,
+      email,
+      phone,
+      briefBio,
+      linkedin,
+      facebook,
+      contactDetails,
+      twoFactorAuthentication,
+      emailVerified,
+      phoneVerified,
+      active,
+      suspicious,
+      role,
+      photo,
+    } = userData;
+
+    const updateData = {
+      name,
+      email,
+      phone,
+      contact_details: contactDetails,
+      brief_bio: briefBio,
+      linkedin,
+      facebook,
+      two_factor_authentication: twoFactorAuthentication,
+    };
+
+    if (emailVerified !== null) {
+      updateData.email_verified = emailVerified;
+    }
+
+    if (phoneVerified !== null) {
+      updateData.phone_verified = phoneVerified;
+    }
+
+    if (active !== null) {
+      updateData.active = active;
+    }
+
+    if (suspicious !== null) {
+      updateData.suspicious = suspicious;
+    }
+
+    if (role !== null) {
+      updateData.role = role;
+    }
+
+    if (photo !== null) {
+      updateData.photo = photo;
+    }
+
+    await db("users").where("id", id).update(updateData);
+  };
+
+  generatePhoneVerifyCode = async (userId) => {
+    const user = await this.getById(userId);
+    if (!user) return null;
+    if (!user.phone) return { phone: null, code: null };
+
+    const code = generateOtp();
+    await db("phone_verified_codes").insert({ user_id: userId, code });
+    return { phone: null, phone: user.phone };
+  };
+
+  getUserIdByPhoneVerifyCode = async (code) => {
+    const { user_id } = await db("phone_verified_codes")
+      .select("user_id")
+      .where({ code })
+      .first();
+
+    return user_id;
+  };
+
+  setPhoneVerified = async (id) => {
+    await db("users").where({ id }).update({ phone_verified: true });
+  };
+
+  generateTwoAuthCode = async (userId, type) => {
+    const user = await this.getById(userId);
+    if (!user) return null;
+
+    const dataToSave = { user_id: userId };
+
+    if (type == "phone") {
+      if (!user.phone) return { phone: null, code: null };
+      dataToSave["code"] = generateOtp();
+      dataToSave["type_verification"] = "phone";
+      dataToSave["phone"] = user.phone;
+    } else {
+      dataToSave["code"] = generateRandomString();
+      dataToSave["type_verification"] = "email";
+      dataToSave["email"] = user.email;
+    }
+
+    await db("two_factor_auth_codes").insert(dataToSave);
+    return { phone: user.phone, code: dataToSave["code"] };
+  };
+
+  getUserIdByTwoAuthCode = async (code, type) => {
+    const { user_id } = await db("two_factor_auth_codes")
+      .select("user_id")
+      .where({ code, type })
+      .first();
+
+    return user_id;
   };
 }
 
-module.exports = User;
+module.exports = new User();

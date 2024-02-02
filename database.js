@@ -1,12 +1,6 @@
-const pgp = require("pg-promise")();
+const knex = require("knex");
+const config = require("./knexfile");
 
-const name = process.env.DB_USER_NAME;
-const database = process.env.DB_DATABASE;
-const password = process.env.DB_PASSWORD;
-const host = process.env.DB_HOST;
-const port = process.env.DB_PORT;
-
-const connectionString = `postgres://${name}:${password}@${host}:${port}/${database}`;
-const db = pgp(connectionString);
+const db = knex(config);
 
 module.exports = db;
