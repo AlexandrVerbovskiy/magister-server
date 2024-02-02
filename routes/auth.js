@@ -28,5 +28,8 @@ router.post(
 );
 
 router.get("/update-session-info", isAuth, userController.updateSessionInfo);
+router.get("/test", userController.test);
+
+
 
 module.exports = router;

@@ -6,10 +6,7 @@ const db = knex(config);
 db.migrate
   .latest()
   .then(function () {
-    return db.seed.run();
-  })
-  .then(function () {
-    console.log("Migrations and seeds complete.");
+    console.log("Migrations complete.");
   })
   .catch(function (err) {
     console.error("Error running migrations:", err);

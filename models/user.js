@@ -2,20 +2,21 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const STATIC = require("../static");
 const db = require("../database");
-const { generateRandomString } = require("../utils");
+const { generateRandomString, generateOtp } = require("../utils");
+const twilio = require("twilio");
 
 class User {
   visibleFields = [
     "id",
     "name",
     "email",
-    "email_verified",
+    "email_verified as emailVerified",
     "role",
-    "contact_details",
-    "brief_bio",
+    "contact_details as contactDetails",
+    "brief_bio as briefBio",
     "photo",
     "phone",
-    "phone_verified",
+    "phone_verified as phoneVerified",
     "linkedin",
     "facebook",
     "active",
@@ -35,7 +36,14 @@ class User {
   }
 
   getByEmail = async (email) => {
-    return await db("users").select("*").where("email", email).first();
+    return await db("users")
+      .select([
+        ...this.visibleFields,
+        "password",
+        "two_factor_authentication as twoFactorAuthentication",
+      ])
+      .where("email", email)
+      .first();
   };
 
   create = async ({
@@ -197,7 +205,10 @@ class User {
 
   getById = async (id) => {
     return await db("users")
-      .select([...this.visibleFields, "two_factor_authentication"])
+      .select([
+        ...this.visibleFields,
+        "two_factor_authentication as twoFactorAuthentication",
+      ])
       .where({ id })
       .first();
   };
@@ -257,6 +268,59 @@ class User {
 
     await db("users").where("id", id).update(updateData);
   };
+
+  generatePhoneVerifyCode = async (userId) => {
+    const user = await this.getById(userId);
+    if (!user) return null;
+    if (!user.phone) return { phone: null, code: null };
+
+    const code = generateOtp();
+    await db("phone_verified_codes").insert({ user_id: userId, code });
+    return { phone: null, phone: user.phone };
+  };
+
+  getUserIdByPhoneVerifyCode = async (code) => {
+    const { user_id } = await db("phone_verified_codes")
+      .select("user_id")
+      .where({ code })
+      .first();
+
+    return user_id;
+  };
+
+  setPhoneVerified = async (id) => {
+    await db("users").where({ id }).update({ phone_verified: true });
+  };
+
+  generateTwoAuthCode = async (userId, type) => {
+    const user = await this.getById(userId);
+    if (!user) return null;
+
+    const dataToSave = { user_id: userId };
+
+    if (type == "phone") {
+      if (!user.phone) return { phone: null, code: null };
+      dataToSave["code"] = generateOtp();
+      dataToSave["type_verification"] = "phone";
+      dataToSave["phone"] = user.phone;
+    } else {
+      dataToSave["code"] = generateRandomString();
+      dataToSave["type_verification"] = "email";
+      dataToSave["email"] = user.email;
+    }
+
+    await db("two_factor_auth_codes").insert(dataToSave);
+    return { phone: user.phone, code: dataToSave["code"] };
+  };
+
+  getUserIdByTwoAuthCode = async (code, type) => {
+    const { user_id } = await db("two_factor_auth_codes")
+      .select("user_id")
+      .where({ code, type })
+      .first();
+
+    return user_id;
+  };
 }
 
-module.exports = User;
+module.exports = new User();

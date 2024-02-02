@@ -1,9 +1,7 @@
 const STATIC = require("../static");
-const db = require("../database");
-const { UserModel } = require("../models");
+const { userModel } = require("../models");
 
 async function isAdmin(request, response, next) {
-  const userModel = new UserModel(db);
   const { userId } = request.userData;
 
   try {

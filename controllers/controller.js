@@ -7,17 +7,17 @@ const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
 
-const db = require("../database");
-const { UserModel } = require("../models");
+const { userModel } = require("../models");
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
 const CLIENT_URL = process.env.CLIENT_URL;
+const axios = require("axios");
 
 class Controller {
   mailTransporter = null;
 
   constructor() {
-    this.userModel = new UserModel(db);
+    this.userModel = userModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -39,7 +39,7 @@ class Controller {
     );
   }
 
-  sendResponse(response, baseInfo, body, message, isError) {
+  sendResponse(response, baseInfo, message, body, isError) {
     response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
       body,
@@ -47,13 +47,13 @@ class Controller {
     });
   }
 
-  sendSuccessResponse(response, baseInfo = null, body = {}, message = null) {
+  sendSuccessResponse(response, baseInfo = null, message = null, body = {}) {
     if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
-    this.sendResponse(response, baseInfo, body, message, false);
+    this.sendResponse(response, baseInfo, message, body, false);
   }
 
-  sendErrorResponse(response, baseInfo, body = {}, message = null) {
-    this.sendResponse(response, baseInfo, body, message, true);
+  sendErrorResponse(response, baseInfo, message = null, body = {}) {
+    this.sendResponse(response, baseInfo, message, body, true);
   }
 
   async baseWrapper(req, res, func) {
@@ -62,11 +62,9 @@ class Controller {
 
       if (!errors.isEmpty()) {
         const error = errors.array()[0].msg;
-        return this.sendErrorResponse(
-          res,
-          { error },
-          STATIC.ERRORS.BAD_REQUEST.STATUS
-        );
+        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST.STATUS, {
+          error,
+        });
       }
 
       await func();
@@ -79,7 +77,7 @@ class Controller {
         (error) => STATIC.ERRORS[error].KEY === errorType
       );
       const currentError = STATIC.ERRORS[currentErrorKey];
-      this.sendErrorResponse(res, currentError, {
+      this.sendErrorResponse(res, currentError, null, {
         error: e.message,
       });
     }
@@ -140,6 +138,38 @@ class Controller {
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
     return folder + "/" + name + "." + type;
+  }
+
+  async sendToPhoneMessage(phone, text) {
+    const data = {
+      recipients: [phone],
+      sms: {
+        sender: process.env.TURBOSMS_SENDER,
+        text,
+      },
+    };
+
+    const url = `https://api.turbosms.ua/message/send.json?token=${process.env.TURBOSMS_TOKEN}`;
+
+    const res = await axios.post(url, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return res.data.response_result;
+  }
+
+  async sendToPhoneVerifyCodeMessage(phone, code, type) {
+    await this.sendToPhoneMessage(phone, `Your OTP code is: ${code}`, type);
+  }
+
+  async sendToPhoneTwoAuthCodeMessage(phone, code, type) {
+    await this.sendToPhoneMessage(
+      phone,
+      `Your Authorization code is: ${code}`,
+      type
+    );
   }
 }
 
