@@ -1,3 +1,4 @@
+const { Exception } = require("handlebars");
 const STATIC = require("../static");
 const { generateAccessToken } = require("../utils");
 const BaseController = require("./baseController");
@@ -7,11 +8,11 @@ class UserController extends BaseController {
     super();
   }
 
-  filterUserFields(user) {
+  filterUserFields = (user) => {
     delete user["password"];
-  }
+  };
 
-  async noUserByEmailCheck(email) {
+  noUserByEmailCheck = async (email) => {
     const getByEmail = await this.userModel.getByEmail(email);
 
     if (getByEmail)
@@ -22,9 +23,9 @@ class UserController extends BaseController {
       );
 
     return getByEmail;
-  }
+  };
 
-  register = (req, res) => {
+  register = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { name, email } = req.body;
 
@@ -42,9 +43,8 @@ class UserController extends BaseController {
         "Account created successfully. An account confirmation letter has been sent to the email"
       );
     });
-  };
 
-  registerAdmin = (req, res) => {
+  registerAdmin = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userToSave = {
         ...req.body,
@@ -63,12 +63,8 @@ class UserController extends BaseController {
         "Account created successfully. Try to login on the site"
       );
     });
-  };
 
-  login = (req, res) => {
-    console.log(this);
-    console.log(this.baseWrapper);
-
+  login = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email, password } = req.body;
       const user = await this.userModel.findByEmailAndPassword(email, password);
@@ -110,9 +106,8 @@ class UserController extends BaseController {
         });
       }*/
     });
-  };
 
-  setRole = (req, res) => {
+  setRole = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id, role } = req.body;
 
@@ -125,9 +120,8 @@ class UserController extends BaseController {
         { id, role }
       );
     });
-  };
 
-  changeActive = (req, res) => {
+  changeActive = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
       const active = await this.userModel.changeActive(id);
@@ -141,9 +135,8 @@ class UserController extends BaseController {
         active,
       });
     });
-  };
 
-  verifyEmail = (req, res) => {
+  verifyEmail = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token } = req.body;
       const userId = await this.userModel.getUserIdByEmailVerifiedToken(token);
@@ -165,9 +158,8 @@ class UserController extends BaseController {
         "Mail has been successfully verified. Try to log in"
       );
     });
-  };
 
-  resetPassword = (req, res) => {
+  resetPassword = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email } = req.body;
       const user = await this.userModel.getByEmail(email);
@@ -190,9 +182,8 @@ class UserController extends BaseController {
         '"Password reset" email sent successfully'
       );
     });
-  };
 
-  setNewPassword = (req, res) => {
+  setNewPassword = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token, password } = req.body;
       const userId = await this.userModel.getUserIdByResetPasswordToken(token);
@@ -214,9 +205,8 @@ class UserController extends BaseController {
         "Password updated successfully"
       );
     });
-  };
 
-  updateSessionInfo = (req, res) => {
+  updateSessionInfo = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const user = await this.userModel.getById(userId);
@@ -232,36 +222,13 @@ class UserController extends BaseController {
         user,
       });
     });
-  };
 
-  list = (req, res) => {
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const {
-        filter = "",
-        itemsPerPage = 20,
-        order = null,
-        orderType,
-      } = req.body;
-
-      let { page = 1 } = req.body;
-
-      const countItems = await this.userModel.totalCount(filter);
-      const totalPages =
-        countItems > 0 ? Math.ceil(countItems / itemsPerPage) : 1;
-
-      if (page > totalPages) page = totalPages;
-
-      const start = (page - 1) * itemsPerPage;
-
-      const options = {
-        filter,
-        order,
-        orderType: orderType ?? "asc",
-        start,
-        count: itemsPerPage,
-        page,
-        totalPages,
-      };
+      const { options, countItems } = await this.baseListOptions(
+        req,
+        ({ filter }) => this.userModel.totalCount(filter)
+      );
 
       const users = await this.userModel.list(options);
 
@@ -271,28 +238,22 @@ class UserController extends BaseController {
         countItems,
       });
     });
-  };
 
-  delete = (req, res) => {
+  delete = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
       this.userModel.delete(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
-  };
 
-  getById = (req, res) => {
+  getById = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      let user = {};
-
-      if (id && /^\d+$/.test(id)) user = await this.userModel.getById(id);
-
+      const user = await this.userModel.getById(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
     });
-  };
 
-  update = (req, res) => {
+  update = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { id, email } = dataToSave;
@@ -317,9 +278,8 @@ class UserController extends BaseController {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
     });
-  };
 
-  sendPhoneVerify = (req, res) => {
+  sendPhoneVerify = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const { type } = req.body;
@@ -351,9 +311,8 @@ class UserController extends BaseController {
         "Code successfully sent"
       );
     });
-  };
 
-  phoneVerify = (req, res) => {
+  phoneVerify = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { code } = req.body;
       const { userId } = req.userData;
@@ -375,20 +334,14 @@ class UserController extends BaseController {
         "Phone number successfully verified"
       );
     });
-  };
 
-  twoFactorAuthVerify = (req, res) => {
+  twoFactorAuthVerify = (req, res) =>
     this.baseWrapper(req, res, async () => {});
-  };
 
-  test = async (req, res) => {
-    try {
-      const result = await this.sendToPhoneMessage("380678811196", "Test");
-      return res.status(200).json(result);
-    } catch (e) {
-      return res.status(200).json(e);
-    }
-  };
+  test = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      throw new Error("test");
+    });
 }
 
 module.exports = new UserController();

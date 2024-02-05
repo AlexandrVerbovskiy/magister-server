@@ -1,7 +1,8 @@
 const { body } = require("express-validator");
+const requiredId = require("./requiredId");
 
 module.exports = [
-  body("id").notEmpty().isInt().withMessage("User wasn't found"),
+  requiredId,
   body("role")
     .isIn(["admin", "user", "support"])
     .withMessage("Invalid role value"),

@@ -71,5 +71,7 @@ module.exports = {
     PHONE_VERIFIED_CODES: "phone_verified_codes",
     TWO_FACTOR_AUTH_CODES: "two_factor_auth_codes",
     SEED_STATUS: "seeds_status",
+    LOGS: "logs",
+    USER_DOCUMENTS: "user_documents",
   },
 };
