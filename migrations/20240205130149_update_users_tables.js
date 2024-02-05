@@ -6,7 +6,8 @@ const STATIC = require("../static");
  */
 exports.up = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
-    table.unique("email");
+    table.text("social_media_links").nullable().defaultTo(null);
+    table.text("place_work").nullable().defaultTo(null);
   });
 };
 
@@ -16,6 +17,7 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
-    table.dropUnique(["email"]);
+    table.dropColumn("social_media_links");
+    table.dropColumn("place_work");
   });
 };

@@ -7,7 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
 
-const { userModel } = require("../models");
+const { userModel, logModel } = require("../models");
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
 const CLIENT_URL = process.env.CLIENT_URL;
@@ -18,6 +18,7 @@ class Controller {
 
   constructor() {
     this.userModel = userModel;
+    this.logModel = logModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -74,13 +75,18 @@ class Controller {
 
       await func();
     } catch (e) {
-      console.log(e);
-
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey = Object.keys(STATIC.ERRORS).find(
         (error) => STATIC.ERRORS[error].KEY === errorType
       );
+
+      if (errorType === STATIC.ERRORS.UNPREDICTABLE.KEY) {
+        try {
+          this.logModel.saveByBodyError(e.stack, e.message);
+        } catch (localError) {}
+      }
+
       const currentError = STATIC.ERRORS[currentErrorKey];
       this.sendErrorResponse(res, currentError, null, {
         error: e.message,
@@ -175,6 +181,38 @@ class Controller {
       `Your Authorization code is: ${code}`,
       type
     );
+  };
+
+  baseListOptions = async (req, countByFilter) => {
+    const {
+      filter = "",
+      itemsPerPage = 20,
+      order = null,
+      orderType,
+    } = req.body;
+
+    let { page = 1 } = req.body;
+
+    const countItems = await countByFilter(req.body);
+    const totalPages =
+      countItems > 0 ? Math.ceil(countItems / itemsPerPage) : 1;
+
+    if (page > totalPages) page = totalPages;
+
+    const start = (page - 1) * itemsPerPage;
+
+    return {
+      options: {
+        filter,
+        order,
+        orderType: orderType ?? "asc",
+        start,
+        count: itemsPerPage,
+        page,
+        totalPages,
+      },
+      countItems,
+    };
   };
 }
 
