@@ -8,6 +8,9 @@ db.migrate
   .then(function () {
     console.log("Migrations complete.");
   })
+  .then(function () {
+    require("./seeds-run");
+  })
   .catch(function (err) {
     console.error("Error running migrations:", err);
   })
