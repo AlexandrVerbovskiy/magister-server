@@ -3,16 +3,14 @@ const router = Router();
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
-const bodyParser = require("body-parser");
-const jsonParser = bodyParser.json();
-const STATIC = require("../static");
+const STATIC = require("../../static");
 
-const { userController } = require("../controllers");
+const { userController } = require("../../controllers");
 const {
   setRoleValidation,
   changeActiveValidation,
   deleteValidation,
-} = require("../validations/users");
+} = require("../../validations/users");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -28,13 +26,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post("/list", jsonParser, userController.list);
-router.get("/get-by-id/:id", jsonParser, userController.getById);
-router.post("/set-role", jsonParser, setRoleValidation, userController.setRole);
-router.post("/delete", jsonParser, deleteValidation, userController.delete);
+router.post("/list", userController.list);
+router.get("/get-by-id/:id", userController.getById);
+router.post("/set-role", setRoleValidation, userController.setRole);
+router.post("/delete", deleteValidation, userController.delete);
 router.post(
   "/change-active",
-  jsonParser,
   changeActiveValidation,
   userController.changeActive
 );
