@@ -3,11 +3,11 @@ const { generateAccessToken } = require("../utils");
 const Controller = require("./controller");
 
 class User extends Controller {
-  filterUserFields = (user) => {
+  filterUserFields(user) {
     delete user["password"];
-  };
+  }
 
-  noUserByEmailCheck = async (email) => {
+  async noUserByEmailCheck(email) {
     const getByEmail = await this.userModel.getByEmail(email);
 
     if (getByEmail)
@@ -18,9 +18,9 @@ class User extends Controller {
       );
 
     return getByEmail;
-  };
+  }
 
-  register = (req, res) =>
+  register(req, res) {
     this.baseWrapper(req, res, async () => {
       const { name, email } = req.body;
 
@@ -38,8 +38,9 @@ class User extends Controller {
         "Account created successfully. An account confirmation letter has been sent to the email"
       );
     });
+  }
 
-  registerAdmin = (req, res) =>
+  registerAdmin(req, res) {
     this.baseWrapper(req, res, async () => {
       const userToSave = {
         ...req.body,
@@ -58,8 +59,9 @@ class User extends Controller {
         "Account created successfully. Try to login on the site"
       );
     });
+  }
 
-  login = (req, res) =>
+  login(req, res) {
     this.baseWrapper(req, res, async () => {
       const { email, password } = req.body;
       const user = await this.userModel.findByEmailAndPassword(email, password);
@@ -101,8 +103,9 @@ class User extends Controller {
         });
       }*/
     });
+  }
 
-  setRole = (req, res) =>
+  setRole(req, res) {
     this.baseWrapper(req, res, async () => {
       const { id, role } = req.body;
 
@@ -115,8 +118,9 @@ class User extends Controller {
         { id, role }
       );
     });
+  }
 
-  changeActive = (req, res) =>
+  changeActive(req, res) {
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
       const active = await this.userModel.changeActive(id);
@@ -130,8 +134,9 @@ class User extends Controller {
         active,
       });
     });
+  }
 
-  verifyEmail = (req, res) =>
+  verifyEmail(req, res) {
     this.baseWrapper(req, res, async () => {
       const { token } = req.body;
       const userId = await this.userModel.getUserIdByEmailVerifiedToken(token);
@@ -153,8 +158,9 @@ class User extends Controller {
         "Mail has been successfully verified. Try to log in"
       );
     });
+  }
 
-  resetPassword = (req, res) =>
+  resetPassword(req, res) {
     this.baseWrapper(req, res, async () => {
       const { email } = req.body;
       const user = await this.userModel.getByEmail(email);
@@ -177,8 +183,9 @@ class User extends Controller {
         '"Password reset" email sent successfully'
       );
     });
+  }
 
-  setNewPassword = (req, res) =>
+  setNewPassword(req, res) {
     this.baseWrapper(req, res, async () => {
       const { token, password } = req.body;
       const userId = await this.userModel.getUserIdByResetPasswordToken(token);
@@ -200,8 +207,9 @@ class User extends Controller {
         "Password updated successfully"
       );
     });
+  }
 
-  updateSessionInfo = (req, res) =>
+  updateSessionInfo(req, res) {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const user = await this.userModel.getById(userId);
@@ -217,8 +225,9 @@ class User extends Controller {
         user,
       });
     });
+  }
 
-  list = (req, res) =>
+  list(req, res) {
     this.baseWrapper(req, res, async () => {
       const {
         filter = "",
@@ -255,15 +264,17 @@ class User extends Controller {
         countItems,
       });
     });
+  }
 
-  delete = (req, res) =>
+  delete(req, res) {
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
       this.userModel.delete(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
+  }
 
-  getById = (req, res) =>
+  getById(req, res) {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       let user = {};
@@ -272,8 +283,9 @@ class User extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
     });
+  }
 
-  update = (req, res) =>
+  update(req, res) {
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { id, email } = dataToSave;
@@ -298,8 +310,9 @@ class User extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
     });
+  }
 
-  sendPhoneVerify = (req, res) =>
+  sendPhoneVerify(req, res) {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const { type } = req.body;
@@ -331,8 +344,9 @@ class User extends Controller {
         "Code successfully sent"
       );
     });
+  }
 
-  phoneVerify = (req, res) =>
+  phoneVerify(req, res) {
     this.baseWrapper(req, res, async () => {
       const { code } = req.body;
       const { userId } = req.userData;
@@ -354,18 +368,20 @@ class User extends Controller {
         "Phone number successfully verified"
       );
     });
+  }
 
-  twoFactorAuthVerify = (req, res) =>
+  twoFactorAuthVerify(req, res) {
     this.baseWrapper(req, res, async () => {});
+  }
 
-  test = async (req, res) => {
+  async test(req, res) {
     try {
       const result = await this.sendToPhoneMessage("380678811196", "Test");
       return res.status(200).json(result);
     } catch (e) {
       return res.status(200).json(e);
     }
-  };
+  }
 }
 
 module.exports = new User();
