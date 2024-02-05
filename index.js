@@ -71,12 +71,7 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-app.get(
-  "/auth/facebook",
-  passport.authenticate("facebook", {
-    scope: ["email", "profile"],
-  })
-);
+app.get("/auth/facebook", passport.authenticate("facebook"));
 app.get(
   "/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/auth/test" }),
