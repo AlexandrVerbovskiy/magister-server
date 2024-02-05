@@ -4,6 +4,12 @@ const STATIC = require("../static");
 const db = require("../database");
 const { generateRandomString, generateOtp } = require("../utils");
 
+const USERS_TABLE = STATIC.TABLES.USERS;
+const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
+const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES
+const RESET_PASSWORD_TOKENS_TABLE = STATIC.TABLES.RESET_PASSWORD_TOKENS;
+const EMAIL_VERIFIED_TOKENS_TABLE = STATIC.TABLES.EMAIL_VERIFIED_TOKENS;
+
 class User {
   visibleFields = [
     "id",
@@ -35,7 +41,7 @@ class User {
   }
 
   async getByEmail(email) {
-    return await db("users")
+    return await db(USERS_TABLE)
       .select([
         ...this.visibleFields,
         "password",
@@ -56,7 +62,7 @@ class User {
       password: hashedPassword,
     };
 
-    const { id } = await db("users")
+    const { id } = await db(USERS_TABLE)
       .insert({
         role: userToSave.role,
         name: userToSave.name,
@@ -86,11 +92,14 @@ class User {
   }
 
   async getById(id) {
-    return await db("users").select(this.visibleFields).where("id", id).first();
+    return await db(USERS_TABLE)
+      .select(this.visibleFields)
+      .where("id", id)
+      .first();
   }
 
   async checkRole(id, role) {
-    return await db("users").select("email").where({ id, role }).first();
+    return await db(USERS_TABLE).select("email").where({ id, role }).first();
   }
 
   checkIsAdmin(id) {
@@ -98,11 +107,11 @@ class User {
   }
 
   async setRole(id, role) {
-    await db("users").where({ id }).update({ role });
+    await db(USERS_TABLE).where({ id }).update({ role });
   }
 
   async changeActive(id) {
-    const { active } = await db("users")
+    const { active } = await db(USERS_TABLE)
       .where({ id })
       .update({ active: db.raw("NOT active") })
       .returning("active");
@@ -112,12 +121,12 @@ class User {
 
   async generateEmailVerifyToken(id) {
     const token = generateRandomString();
-    await db("email_verified_tokens").insert({ user_id: id, token });
+    await db(EMAIL_VERIFIED_TOKENS_TABLE).insert({ user_id: id, token });
     return token;
   }
 
   async getUserIdByEmailVerifiedToken(token) {
-    const { user_id } = await db("email_verified_tokens")
+    const { user_id } = await db(EMAIL_VERIFIED_TOKENS_TABLE)
       .select("user_id")
       .where({ token })
       .first();
@@ -126,15 +135,15 @@ class User {
   }
 
   async setEmailVerified(id) {
-    await db("users").where({ id }).update({ email_verified: true });
+    await db(USERS_TABLE).where({ id }).update({ email_verified: true });
   }
 
   async removeEmailVerifiedToken(userId) {
-    await db("users").where({ id: userId }).del();
+    await db(USERS_TABLE).where({ id: userId }).del();
   }
 
   async generateResetPasswordToken(id) {
-    const { token: foundToken } = await db("reset_password_tokens")
+    const { token: foundToken } = await db(RESET_PASSWORD_TOKENS_TABLE)
       .select("token")
       .where({ user_id: id })
       .first();
@@ -144,12 +153,12 @@ class User {
     }
 
     const token = generateRandomString();
-    await db("reset_password_tokens").insert({ user_id: id, token });
+    await db(RESET_PASSWORD_TOKENS_TABLE).insert({ user_id: id, token });
     return token;
   }
 
   async getUserIdByResetPasswordToken(token) {
-    const { user_id } = await db("reset_password_tokens")
+    const { user_id } = await db(RESET_PASSWORD_TOKENS_TABLE)
       .select("user_id")
       .where({ token })
       .first();
@@ -159,15 +168,15 @@ class User {
 
   async setNewPassword(id, password) {
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db("users").where({ id }).update({ password: hashedPassword });
+    await db(USERS_TABLE).where({ id }).update({ password: hashedPassword });
   }
 
   async removeResetPasswordToken(userId) {
-    await db("reset_password_tokens").where({ user_id: userId }).del();
+    await db(RESET_PASSWORD_TOKENS_TABLE).where({ user_id: userId }).del();
   }
 
   async totalCount(filter) {
-    const { count } = await db("users")
+    const { count } = await db(USERS_TABLE)
       .whereRaw(...this.userFilter(filter))
       .count("* as count")
       .first();
@@ -184,7 +193,7 @@ class User {
     orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
     order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
 
-    return await db("users")
+    return await db(USERS_TABLE)
       .select(this.visibleFields)
       .whereRaw(...this.userFilter(filter))
       .orderBy(order, orderType)
@@ -193,11 +202,11 @@ class User {
   }
 
   async delete(id) {
-    await db("users").where({ id }).del();
+    await db(USERS_TABLE).where({ id }).del();
   }
 
   async getById(id) {
-    return await db("users")
+    return await db(USERS_TABLE)
       .select([
         ...this.visibleFields,
         "two_factor_authentication as twoFactorAuthentication",
@@ -259,7 +268,7 @@ class User {
       updateData.photo = photo;
     }
 
-    await db("users").where("id", id).update(updateData);
+    await db(USERS_TABLE).where("id", id).update(updateData);
   }
 
   async generatePhoneVerifyCode(userId) {
@@ -268,12 +277,12 @@ class User {
     if (!user.phone) return { phone: null, code: null };
 
     const code = generateOtp();
-    await db("phone_verified_codes").insert({ user_id: userId, code });
+    await db(PHONE_VERIFIED_CODES_TABLE).insert({ user_id: userId, code });
     return { code: null, phone: user.phone };
   }
 
   async getUserIdByPhoneVerifyCode(code) {
-    const { user_id } = await db("phone_verified_codes")
+    const { user_id } = await db(PHONE_VERIFIED_CODES_TABLE)
       .select("user_id")
       .where({ code })
       .first();
@@ -282,7 +291,7 @@ class User {
   }
 
   async setPhoneVerified(id) {
-    await db("users").where({ id }).update({ phone_verified: true });
+    await db(USERS_TABLE).where({ id }).update({ phone_verified: true });
   }
 
   async generateTwoAuthCode(userId, type) {
@@ -302,12 +311,12 @@ class User {
       dataToSave["email"] = user.email;
     }
 
-    await db("two_factor_auth_codes").insert(dataToSave);
+    await db(TWO_FACTOR_AUTH_CODES_TABLE).insert(dataToSave);
     return { phone: user.phone, code: dataToSave["code"] };
   }
 
   async getUserIdByTwoAuthCode(code, type) {
-    const { user_id } = await db("two_factor_auth_codes")
+    const { user_id } = await db(TWO_FACTOR_AUTH_CODES_TABLE)
       .select("user_id")
       .where({ code, type })
       .first();

@@ -40,8 +40,8 @@ passport.use(
     {
       clientID: process.env.FACEBOOK_APP_API,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: process.env.SERVER_URL + "/auth/facebook/callback",
-      scope: ['profile', 'email']
+      callbackURL: "/auth/facebook/callback",
+      profileFields: ["id", "displayName", "email"],
     },
     (token, refreshToken, profile, done) => {
       return done(null, profile);
@@ -54,8 +54,8 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_API,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.SERVER_URL + "/auth/google/callback",
-      scope: ['profile', 'email']
+      callbackURL: "/auth/google/callback",
+      profileFields: ["id", "displayName", "email"],
     },
     (token, tokenSecret, profile, done) => {
       return done(null, profile);
@@ -71,24 +71,36 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-app.get("/auth/facebook", passport.authenticate("facebook"));
+app.get(
+  "/auth/facebook",
+  passport.authenticate("facebook", {
+    scope: ["email", "profile"],
+  })
+);
 app.get(
   "/auth/facebook/callback",
-  passport.authenticate("facebook", { failureRedirect: "/" }),
+  passport.authenticate("facebook", { failureRedirect: "/auth/test" }),
   (req, res) => {
     res.status(200).json(req.user);
   }
 );
 
+app.get("/auth/test", (req, res) => {
+  console.log("redirected");
+  const errorMessage = req.flash("error")[0];
+  console.log(errorMessage);
+  res.status(401).json({ error: errorMessage || "Authentication failed" });
+});
+
 app.get(
   "/auth/google",
   passport.authenticate("google", {
-    scope: ["https://www.googleapis.com/auth/plus.login"],
+    scope: ["email", "profile"],
   })
 );
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
+  passport.authenticate("google", { failureRedirect: "/auth/test" }),
   (req, res) => {
     res.status(200).json(req.user);
   }

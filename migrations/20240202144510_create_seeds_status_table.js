@@ -1,9 +1,11 @@
+const STATIC = require("../static");
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("seeds_status", function (table) {
+  return knex.schema.createTable(STATIC.TABLES.SEED_STATUS, function (table) {
     table.string("seed_name").primary();
     table.boolean("seed_run").defaultTo(false);
   });
@@ -14,5 +16,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("seeds_status");
+  return knex.schema.dropTableIfExists(STATIC.TABLES.SEED_STATUS);
 };
