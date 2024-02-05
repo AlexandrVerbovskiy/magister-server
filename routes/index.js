@@ -1,4 +1,4 @@
 module.exports = {
-  userRoutes: require("./user"),
-  authRoutes: require("./auth"),
+  apiRoutes: require("./api"),
+  initAuthRoutes: require("./initAuthRoutes")
 };

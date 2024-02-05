@@ -39,24 +39,29 @@ class Controller {
     );
   }
 
-  sendResponse(response, baseInfo, message, body, isError) {
+  sendResponse = (response, baseInfo, message, body, isError) => {
     response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
       body,
       isError,
     });
-  }
+  };
 
-  sendSuccessResponse(response, baseInfo = null, message = null, body = {}) {
+  sendSuccessResponse = (
+    response,
+    baseInfo = null,
+    message = null,
+    body = {}
+  ) => {
     if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
     this.sendResponse(response, baseInfo, message, body, false);
-  }
+  };
 
-  sendErrorResponse(response, baseInfo, message = null, body = {}) {
+  sendErrorResponse = (response, baseInfo, message = null, body = {}) => {
     this.sendResponse(response, baseInfo, message, body, true);
-  }
+  };
 
-  async baseWrapper(req, res, func) {
+  baseWrapper = async (req, res, func) => {
     try {
       const errors = validationResult(req);
 
@@ -81,9 +86,9 @@ class Controller {
         error: e.message,
       });
     }
-  }
+  };
 
-  async sendMail(to, subject, template, context) {
+  sendMail = async (to, subject, template, context) => {
     const mailOptions = {
       from: `"${process.env.MAIL_FROM}" ${process.env.MAIL_EMAIL}`,
       to,
@@ -97,9 +102,9 @@ class Controller {
     } catch (error) {
       console.error("Error sending email:", error);
     }
-  }
+  };
 
-  async sendEmailVerificationMail(email, name, token) {
+  sendEmailVerificationMail = async (email, name, token) => {
     const title = "Account Verification";
     this.sendMail(email, title, "emailVerification", {
       name,
@@ -107,18 +112,18 @@ class Controller {
         CLIENT_URL + "/" + STATIC.CLIENT_LINKS.EMAIL_VERIFICATION + "/" + token,
       title,
     });
-  }
+  };
 
-  async sendPasswordResetMail(email, name, token) {
+  sendPasswordResetMail = async (email, name, token) => {
     const title = "Reset Password";
     this.sendMail(email, title, "passwordReset", {
       name,
       link: CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token,
       title,
     });
-  }
+  };
 
-  moveUploadsFileToFolder(file, folder) {
+  moveUploadsFileToFolder = (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
@@ -138,9 +143,9 @@ class Controller {
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
     return folder + "/" + name + "." + type;
-  }
+  };
 
-  async sendToPhoneMessage(phone, text) {
+  sendToPhoneMessage = async (phone, text) => {
     const data = {
       recipients: [phone],
       sms: {
@@ -158,19 +163,19 @@ class Controller {
     });
 
     return res.data.response_result;
-  }
+  };
 
-  async sendToPhoneVerifyCodeMessage(phone, code, type) {
+  sendToPhoneVerifyCodeMessage = async (phone, code, type) => {
     await this.sendToPhoneMessage(phone, `Your OTP code is: ${code}`, type);
-  }
+  };
 
-  async sendToPhoneTwoAuthCodeMessage(phone, code, type) {
+  sendToPhoneTwoAuthCodeMessage = async (phone, code, type) => {
     await this.sendToPhoneMessage(
       phone,
       `Your Authorization code is: ${code}`,
       type
     );
-  }
+  };
 }
 
 module.exports = Controller;

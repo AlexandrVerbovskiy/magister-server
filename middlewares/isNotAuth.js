@@ -1,7 +1,7 @@
 const STATIC = require("../static");
 const { validateToken } = require("../utils");
 
-function generateIsNotAuth(request, response, next) {
+function isNotAuth(request, response, next) {
   const authorization = request.headers.authorization;
 
   if (!authorization) return next();
@@ -20,4 +20,4 @@ function generateIsNotAuth(request, response, next) {
   return next();
 }
 
-module.exports = generateIsNotAuth;
+module.exports = isNotAuth;

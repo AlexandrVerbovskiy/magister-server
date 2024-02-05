@@ -9,12 +9,10 @@ const cors = require("cors");
 const socketIo = require("socket.io");
 const path = require("path");
 
-const bodyParser = require("body-parser");
-const jsonParser = bodyParser.json();
-
 const { isAuth, isAdmin } = require("./middlewares");
-const { authRoutes, userRoutes } = require("./routes");
+const { apiRoutes, initAuthRoutes } = require("./routes");
 const STATIC = require("./static");
+const isNotAuth = require("./middlewares/isNotAuth");
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -71,39 +69,10 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-app.get("/auth/facebook", passport.authenticate("facebook"));
-app.get(
-  "/auth/facebook/callback",
-  passport.authenticate("facebook", { failureRedirect: "/auth/test" }),
-  (req, res) => {
-    res.status(200).json(req.user);
-  }
-);
-
-app.get("/auth/test", (req, res) => {
-  console.log("redirected");
-  const errorMessage = req.flash("error")[0];
-  console.log(errorMessage);
-  res.status(401).json({ error: errorMessage || "Authentication failed" });
-});
-
-app.get(
-  "/auth/google",
-  passport.authenticate("google", {
-    scope: ["email", "profile"],
-  })
-);
-app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/auth/test" }),
-  (req, res) => {
-    res.status(200).json(req.user);
-  }
-);
-
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
-app.use("/api/auth", jsonParser, authRoutes);
-app.use("/api/users", isAuth, isAdmin, userRoutes);
+app.use("/auth", isNotAuth, initAuthRoutes(passport));
+app.use("/api/auth", apiRoutes.authApiRoutes);
+app.use("/api/users", isAuth, isAdmin, apiRoutes.userApiRoutes);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
