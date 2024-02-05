@@ -3,4 +3,5 @@ module.exports = {
   generateAccessToken: require("./generateAccessToken"),
   generateRandomString: require("./generateRandomString"),
   generateOtp: require("./generateOtp"),
+  ...require("./dateHelpers"),
 };

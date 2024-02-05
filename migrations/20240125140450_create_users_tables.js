@@ -34,6 +34,7 @@ exports.up = function (knex) {
     table.boolean("active").defaultTo(false);
 
     table.boolean("suspicious").defaultTo(false);
+    table.timestamps(true, true);
   });
 };
 
