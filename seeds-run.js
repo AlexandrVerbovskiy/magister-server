@@ -2,6 +2,7 @@ const knex = require("knex");
 const config = require("./knexfile");
 const fs = require("fs");
 const path = require("path");
+const STATIC = require("./static")
 
 const db = knex(config);
 
@@ -25,7 +26,7 @@ const runSeeds = async () => {
 };
 
 const checkSeedStatus = async (seedName) => {
-  const result = await db("seeds_status")
+  const result = await db(STATIC.TABLES.SEED_STATUS)
     .select("seed_run")
     .where("seed_name", seedName)
     .first();
@@ -33,7 +34,7 @@ const checkSeedStatus = async (seedName) => {
 };
 
 const markSeedAsRun = async (seedName) => {
-  await db("seeds_status")
+  await db(STATIC.TABLES.SEED_STATUS)
     .insert({ seed_name: seedName, seed_run: true })
     .onConflict("seed_name")
     .merge();

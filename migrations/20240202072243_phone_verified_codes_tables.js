@@ -1,9 +1,11 @@
+const STATIC = require("../static");
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("phone_verified_codes", function (table) {
+  return knex.schema.createTable(STATIC.TABLES.PHONE_VERIFIED_TOKENS, function (table) {
     table.increments("id").primary();
     table.integer("user_id").unsigned();
     table.string("code");
@@ -15,5 +17,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTable("phone_verified_codes");
+  return knex.schema.dropTable(STATIC.TABLES.PHONE_VERIFIED_TOKENS);
 };

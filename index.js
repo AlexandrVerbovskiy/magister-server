@@ -41,7 +41,6 @@ passport.use(
       clientID: process.env.FACEBOOK_APP_API,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
       callbackURL: process.env.SERVER_URL + "/auth/facebook/callback",
-      scope: ['profile', 'email']
     },
     (token, refreshToken, profile, done) => {
       return done(null, profile);
@@ -55,7 +54,6 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_API,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.SERVER_URL + "/auth/google/callback",
-      scope: ['profile', 'email']
     },
     (token, tokenSecret, profile, done) => {
       return done(null, profile);
@@ -71,7 +69,12 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-app.get("/auth/facebook", passport.authenticate("facebook"));
+app.get(
+  "/auth/facebook",
+  passport.authenticate("facebook", {
+    scope: ["https://graph.facebook.com/me?fields=email,name"],
+  })
+);
 app.get(
   "/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/" }),
@@ -83,7 +86,11 @@ app.get(
 app.get(
   "/auth/google",
   passport.authenticate("google", {
-    scope: ["https://www.googleapis.com/auth/plus.login"],
+    scope: [
+      "https://www.googleapis.com/auth/plus.login",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ],
   })
 );
 app.get(
