@@ -63,4 +63,12 @@ module.exports = {
     PASSWORD_RESET: "password-reset",
   },
   MAIN_DIRECTORY: __dirname,
+  TABLES: {
+    USERS: "users",
+    EMAIL_VERIFIED_TOKENS: "email_verified_tokens",
+    RESET_PASSWORD_TOKENS:"reset_password_tokens",
+    PHONE_VERIFIED_CODES: "phone_verified_codes",
+    TWO_FACTOR_AUTH_CODES:"two_factor_auth_codes",
+    SEED_STATUS: "seeds_status"
+  },
 };

@@ -1,10 +1,12 @@
+const STATIC = require("../static");
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.alterTable("users", function (table) {
-    table.unique('email');
+  return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
+    table.unique("email");
   });
 };
 
