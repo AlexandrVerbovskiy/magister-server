@@ -2,6 +2,7 @@ const { Exception } = require("handlebars");
 const STATIC = require("../static");
 const { generateAccessToken } = require("../utils");
 const BaseController = require("./baseController");
+const CLIENT_URL = process.env.CLIENT_URL;
 
 class UserController extends BaseController {
   constructor() {
@@ -333,6 +334,18 @@ class UserController extends BaseController {
         STATIC.SUCCESS.OK,
         "Phone number successfully verified"
       );
+    });
+
+  redirectToFrontMoreInfoForm = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const name = req.user.name[0].givenName;
+      const email = req.user.emails[0].value;
+
+      const user = await this.userModel.getByEmail(email);
+
+      const newLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.PROFILE_COMPETING}?id=${id}`;
+
+      res.redirect(newLink);
     });
 
   twoFactorAuthVerify = (req, res) =>
