@@ -40,7 +40,7 @@ class Controller {
     );
   }
 
-  sendResponse = (response, baseInfo, message, body, isError) => {
+  sendResponse = (response, baseInfo, message, body, isError) => {    
     response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
       body,
@@ -68,7 +68,7 @@ class Controller {
 
       if (!errors.isEmpty()) {
         const error = errors.array()[0].msg;
-        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST.STATUS, {
+        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST, {
           error,
         });
       }

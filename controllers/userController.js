@@ -28,12 +28,18 @@ class UserController extends BaseController {
 
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { name, email } = req.body;
+      const { name, email, password, acceptedTermCondition } = req.body;
 
       const resCheck = await this.noUserByEmailCheck(email);
       if (resCheck) return;
 
-      const id = await this.userModel.create(req.body);
+      const id = await this.userModel.create({
+        name,
+        email,
+        password,
+        acceptedTermCondition,
+      });
+
       const token = await this.userModel.generateEmailVerifyToken(id);
 
       this.sendEmailVerificationMail(email, name, token);
@@ -42,26 +48,6 @@ class UserController extends BaseController {
         res,
         STATIC.SUCCESS.CREATED,
         "Account created successfully. An account confirmation letter has been sent to the email"
-      );
-    });
-
-  registerAdmin = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const userToSave = {
-        ...req.body,
-        role: STATIC.ROLES.ADMIN,
-        active: true,
-      };
-
-      const resCheck = await this.noUserByEmailCheck(email);
-      if (resCheck) return;
-
-      await this.userModel.create(userToSave);
-
-      return this.sendSuccessResponse(
-        res,
-        STATIC.SUCCESS.CREATED,
-        "Account created successfully. Try to login on the site"
       );
     });
 
@@ -210,7 +196,7 @@ class UserController extends BaseController {
   updateSessionInfo = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const user = await this.userModel.getById(userId);
+      const user = await this.userModel.getFullById(userId);
 
       if (!user) {
         return this.sendErrorResponse(res, STATIC.ERRORS.UNAUTHORIZED);
@@ -254,31 +240,46 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
     });
 
+  baseUpdate = async (id, dataToSave, file) => {
+    const { email } = dataToSave;
+    const userByEmail = await this.userModel.getByEmail(email);
+    let photo = null;
+
+    if (file) {
+      photo = this.moveUploadsFileToFolder(file, "users");
+      dataToSave["photo"] = photo;
+    }
+
+    if (userByEmail && id != userByEmail.id)
+      throw new Error(`User with email '${email}' already exists`);
+
+    await this.userModel.updateById(id, dataToSave);
+
+    const data = { id };
+
+    if (photo) {
+      data["photo"] = photo;
+    }
+
+    return data;
+  };
+
   update = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
-      const { id, email } = dataToSave;
-      const userByEmail = await this.userModel.getByEmail(email);
-      let photo = null;
-
-      if (req.file) {
-        photo = this.moveUploadsFileToFolder(req.file, "users");
-        dataToSave["photo"] = photo;
-      }
-
-      if (userByEmail && id != userByEmail.id)
-        throw new Error(`User with email '${email}' already exists`);
-
-      await this.userModel.updateById(id, req.body);
-
-      const data = { id };
-
-      if (photo) {
-        data["photo"] = photo;
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
+      const { id } = dataToSave;
+      const user = await this.baseUpdate(id, dataToSave, req.file);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
+
+  saveProfile = (req, res) => {
+    this.baseWrapper(req, res, async () => {
+      const dataToSave = req.body;
+      const { userId } = req.userData;
+      const user = await this.baseUpdate(userId, dataToSave, req.file);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
+    });
+  };
 
   sendPhoneVerify = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -343,13 +344,89 @@ class UserController extends BaseController {
 
       const user = await this.userModel.getByEmail(email);
 
-      const newLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.PROFILE_COMPETING}?id=${id}`;
+      let userId = null;
 
-      res.redirect(newLink);
+      if (user) {
+        userId = user.id;
+      } else {
+        userId = await this.userModel.create({
+          name,
+          email,
+          acceptedTermCondition: true,
+          emailVerified: true,
+          needSetPassword: true,
+        });
+      }
+
+      const accessToken = generateAccessToken(userId);
+      const authLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.USER_AUTHORIZED}?token=${accessToken}`;
+      return res.redirect(authLink);
     });
 
   twoFactorAuthVerify = (req, res) =>
     this.baseWrapper(req, res, async () => {});
+
+  myInfo = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const user = await this.userModel.getFullById(userId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
+    });
+
+  myDocuments = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const documents = await this.userModel.getDocumentsByUserId(userId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        documents,
+      });
+    });
+
+  getDocumentsByUserId = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.body;
+      const documents = await this.userModel.getDocumentsByUserId(userId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        documents,
+      });
+    });
+
+  setMyPassword = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const { password } = req.body;
+
+      const isEmpty = await this.userModel.checkUserPasswordEmpty(userId);
+
+      if (isEmpty) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST);
+      }
+
+      await this.userModel.setNewPassword(userId, password);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
+    });
+
+  updateMyPassword = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const { currentPassword, newPassword } = req.body;
+
+      const isEqual = await this.userModel.checkUserPasswordEqual(
+        userId,
+        currentPassword
+      );
+
+      if (!isEqual) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.INVALID_KEY_DATA,
+          "The current password is incorrect"
+        );
+      }
+
+      await this.userModel.setNewPassword(userId, newPassword);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
+    });
 
   test = async (req, res) =>
     this.baseWrapper(req, res, async () => {

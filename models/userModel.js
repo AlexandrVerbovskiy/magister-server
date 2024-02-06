@@ -9,6 +9,7 @@ const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
 const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
 const RESET_PASSWORD_TOKENS_TABLE = STATIC.TABLES.RESET_PASSWORD_TOKENS;
 const EMAIL_VERIFIED_TOKENS_TABLE = STATIC.TABLES.EMAIL_VERIFIED_TOKENS;
+const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 
 class UserModel {
   visibleFields = [
@@ -22,10 +23,37 @@ class UserModel {
     "photo",
     "phone",
     "phone_verified as phoneVerified",
-    "linkedin",
-    "facebook",
-    "active",
     "suspicious",
+    "place_work as placeWork",
+    "facebook_url as facebookUrl",
+    "instagram_url as instagramUrl",
+    "linkedin_url as linkedinUrl",
+    "twitter_url as twitterUrl",
+  ];
+
+  allFields = [
+    "id",
+    "name",
+    "email",
+    "email_verified as emailVerified",
+    "role",
+    "contact_details as contactDetails",
+    "brief_bio as briefBio",
+    "photo",
+    "phone",
+    "phone_verified as phoneVerified",
+    "active",
+    "verified",
+    "suspicious",
+    "password",
+    "place_work as placeWork",
+    "need_set_password as needSetPassword",
+    "need_regular_view_info_form as needRegularViewInfoForm",
+    "two_factor_authentication as twoFactorAuthentication",
+    "facebook_url as facebookUrl",
+    "instagram_url as instagramUrl",
+    "linkedin_url as linkedinUrl",
+    "twitter_url as twitterUrl",
   ];
 
   userFilter = (filter) => {
@@ -42,11 +70,14 @@ class UserModel {
 
   getByEmail = async (email) => {
     return await db(USERS_TABLE)
-      .select([
-        ...this.visibleFields,
-        "password",
-        "two_factor_authentication as twoFactorAuthentication",
-      ])
+      .select(this.visibleFields)
+      .where("email", email)
+      .first();
+  };
+
+  getFullByEmail = async (email) => {
+    return await db(USERS_TABLE)
+      .select(this.allFields)
       .where("email", email)
       .first();
   };
@@ -57,8 +88,14 @@ class UserModel {
     password,
     acceptedTermCondition,
     role = null,
+    emailVerified = false,
+    needSetPassword = false,
   }) => {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    let hashedPassword = null;
+
+    if (password) {
+      await bcrypt.hash(password, 10);
+    }
 
     const userToSave = {
       role: role ?? STATIC.ROLES.USER,
@@ -66,23 +103,27 @@ class UserModel {
       email,
       acceptedTermCondition,
       password: hashedPassword,
+      emailVerified,
+      needSetPassword,
     };
 
-    const { id } = await db(USERS_TABLE)
+    const res = await db(USERS_TABLE)
       .insert({
         role: userToSave.role,
         name: userToSave.name,
         email: userToSave.email,
         password: userToSave.password,
         accepted_term_condition: userToSave.acceptedTermCondition,
+        email_verified: emailVerified,
+        need_set_password: needSetPassword,
       })
       .returning("id");
 
-    return id;
+    return res[0].id;
   };
 
   findByEmailAndPassword = async (email, password) => {
-    const getByEmail = await this.getByEmail(email);
+    const getByEmail = await this.getFullByEmail(email);
 
     if (!getByEmail) {
       return null;
@@ -104,6 +145,10 @@ class UserModel {
       .first();
   };
 
+  getFullById = async (id) => {
+    return await db(USERS_TABLE).select(this.allFields).where("id", id).first();
+  };
+
   checkRole = async (id, role) => {
     return await db(USERS_TABLE).select("email").where({ id, role }).first();
   };
@@ -117,12 +162,12 @@ class UserModel {
   };
 
   changeActive = async (id) => {
-    const { active } = await db(USERS_TABLE)
+    const res = await db(USERS_TABLE)
       .where({ id })
       .update({ active: db.raw("NOT active") })
       .returning("active");
 
-    return active;
+    return res[0].active;
   };
 
   generateEmailVerifyToken = async (id) => {
@@ -174,7 +219,10 @@ class UserModel {
 
   setNewPassword = async (id, password) => {
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db(USERS_TABLE).where({ id }).update({ password: hashedPassword });
+
+    await db(USERS_TABLE)
+      .where({ id })
+      .update({ password: hashedPassword, need_set_password: false });
   };
 
   removeResetPasswordToken = async (userId) => {
@@ -211,24 +259,12 @@ class UserModel {
     await db(USERS_TABLE).where({ id }).del();
   };
 
-  getById = async (id) => {
-    return await db(USERS_TABLE)
-      .select([
-        ...this.visibleFields,
-        "two_factor_authentication as twoFactorAuthentication",
-      ])
-      .where({ id })
-      .first();
-  };
-
   updateById = async (id, userData) => {
     const {
       name,
       email,
       phone,
       briefBio,
-      linkedin,
-      facebook,
       contactDetails,
       twoFactorAuthentication,
       emailVerified,
@@ -237,6 +273,12 @@ class UserModel {
       suspicious,
       role,
       photo,
+      placeWork,
+      facebookUrl,
+      instagramUrl,
+      linkedinUrl,
+      twitterUrl,
+      verified,
     } = userData;
 
     const updateData = {
@@ -245,9 +287,12 @@ class UserModel {
       phone,
       contact_details: contactDetails,
       brief_bio: briefBio,
-      linkedin,
-      facebook,
       two_factor_authentication: twoFactorAuthentication,
+      place_work: placeWork,
+      facebook_url: facebookUrl,
+      instagram_url: instagramUrl,
+      linkedin_url: linkedinUrl,
+      twitter_url: twitterUrl,
     };
 
     if (emailVerified !== null) {
@@ -272,6 +317,10 @@ class UserModel {
 
     if (photo !== null) {
       updateData.photo = photo;
+    }
+
+    if (verified !== null) {
+      updateData.verified = verified;
     }
 
     await db(USERS_TABLE).where("id", id).update(updateData);
@@ -328,6 +377,31 @@ class UserModel {
       .first();
 
     return user_id;
+  };
+
+  getDocumentsByUserId = async (id) => {
+    const documents = await db(USER_DOCUMENTS_TABLE)
+      .where({ user_id: id })
+      .first();
+    return documents ?? {};
+  };
+
+  checkUserPasswordEmpty = async (id) => {
+    const { password } = await db(USERS_TABLE)
+      .select("password")
+      .where({ id })
+      .first();
+
+    return !!password;
+  };
+
+  checkUserPasswordEqual = async (id, checkedPassword) => {
+    const { password } = await db(USERS_TABLE)
+      .select("password")
+      .where({ id })
+      .first();
+
+    return await bcrypt.compare(checkedPassword, password);
   };
 }
 

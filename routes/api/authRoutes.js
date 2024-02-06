@@ -2,7 +2,13 @@ const { Router } = require("express");
 const router = Router();
 const { isAuth, isNotAuth } = require("../../middlewares");
 const { userController } = require("../../controllers");
-const { registerValidation, loginValidation } = require("../../validations/auth");
+const {
+  registerValidation,
+  loginValidation,
+  passwordValidation,
+  updatePasswordValidation,
+} = require("../../validations/auth");
+const { upload } = require("../../utils");
 
 router.post(
   "/register",
@@ -29,7 +35,27 @@ router.post(
 
 router.get("/update-session-info", isAuth, userController.updateSessionInfo);
 router.get("/test", userController.test);
+router.post("/my-info", isAuth, userController.myInfo);
+router.post("/my-documents", isAuth, userController.myDocuments);
+router.post(
+  "/save-profile",
+  upload.single("photo"),
+  isAuth,
+  userController.saveProfile
+);
 
+router.post(
+  "/set-my-password",
+  isAuth,
+  passwordValidation,
+  userController.setMyPassword
+);
 
+router.post(
+  "/update-my-password",
+  isAuth,
+  updatePasswordValidation,
+  userController.updateMyPassword
+);
 
 module.exports = router;
