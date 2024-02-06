@@ -338,7 +338,7 @@ class UserController extends BaseController {
 
   redirectToFrontMoreInfoForm = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const name = req.user.name[0].givenName;
+      const name = req.user.displayName;
       const email = req.user.emails[0].value;
 
       const user = await this.userModel.getByEmail(email);
