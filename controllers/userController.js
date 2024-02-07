@@ -13,25 +13,21 @@ class UserController extends BaseController {
     delete user["password"];
   };
 
-  noUserByEmailCheck = async (email) => {
-    const getByEmail = await this.userModel.getByEmail(email);
-
-    if (getByEmail)
-      this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "Email was registered earlier"
-      );
-
-    return getByEmail;
-  };
-
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { name, email, password, acceptedTermCondition } = req.body;
 
-      const resCheck = await this.noUserByEmailCheck(email);
-      if (resCheck) return;
+      console.log(req.body);
+
+      const getByEmail = await this.userModel.getByEmail(email);
+
+      if (getByEmail) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Email was registered earlier"
+        );
+      }
 
       const id = await this.userModel.create({
         name,
@@ -51,26 +47,54 @@ class UserController extends BaseController {
       );
     });
 
+  baseEmailPasswordCheck = async (req) => {
+    const { email, password } = req.body;
+    const user = await this.userModel.findByEmailAndPassword(email, password);
+
+    if (!user) {
+      return {
+        error: true,
+        errorBody: STATIC.ERRORS.UNAUTHORIZED,
+        errorMessage: "Incorrect email or password",
+      };
+    }
+
+    if (!user.emailVerified) {
+      return {
+        error: true,
+        errorBody: STATIC.ERRORS.UNAUTHORIZED,
+        errorMessage:
+          "The mail was not confirmed. Instructions for confirmation were sent to the mail in the letter when the account was created",
+      };
+    }
+
+    if (!user.active) {
+      console.log("72");
+      return {
+        error: true,
+        errorBody: STATIC.ERRORS.UNAUTHORIZED,
+        errorMessage:
+          "Your account has been blocked. For more information, contact the administrator",
+      };
+    }
+
+    return { error: false, user };
+  };
+
   login = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { email, password } = req.body;
-      const user = await this.userModel.findByEmailAndPassword(email, password);
+      const resCheck = await this.baseEmailPasswordCheck(req);
+      resCheck;
 
-      if (!user) {
+      if (resCheck.error) {
         return this.sendErrorResponse(
           res,
-          STATIC.ERRORS.UNAUTHORIZED,
-          "Incorrect email or password"
+          resCheck.errorBody,
+          resCheck.errorMessage
         );
       }
 
-      if (!user.emailVerified) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.UNAUTHORIZED,
-          "The mail was not confirmed. Instructions for confirmation were sent to the mail in the letter when the account was created"
-        );
-      }
+      const user = resCheck.user;
 
       //if (!user.twoFactorAuthentication) {
       this.filterUserFields(user);
@@ -80,6 +104,7 @@ class UserController extends BaseController {
         accessToken,
         user,
         needCode: false,
+        canSendCodeByPhone: user.phoneVerified,
       });
       /*} else {
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -92,6 +117,65 @@ class UserController extends BaseController {
           needCode: true,
         });
       }*/
+    });
+
+  twoFactorAuthGenerate = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const resCheck = await this.baseEmailPasswordCheck(req);
+
+      if (resCheck.error) {
+        return this.sendErrorResponse(
+          res,
+          resCheck.errorBody,
+          resCheck.errorMessage
+        );
+      }
+
+      const { type } = req.body;
+      const user = resCheck.user;
+
+      if (type == "phone" && !user.phoneVerified) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          "Does not have a verified phone number"
+        );
+      }
+
+      const resSave = await this.userModel.generateTwoAuthCode(user.id, type);
+
+      if (type == "phone") {
+        await this.sendToPhoneTwoAuthCodeMessage(user.phone, resSave.code);
+      } else {
+        await this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
+    });
+
+  twoFactorAuthVerify = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { code, type, id } = req.body;
+      const userId = await this.userModel.getUserIdByTwoAuthCode(code, type);
+
+      if (!userId || userId != id) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          "The code is not valid"
+        );
+      }
+
+      const accessToken = generateAccessToken(userId);
+      const user = await this.userModel.getFullById(userId);
+      delete user["password"];
+
+      await this.userModel.removeTwoAuthCode(code, type, userId);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        accessToken,
+        user,
+      });
     });
 
   setRole = (req, res) =>
@@ -125,14 +209,24 @@ class UserController extends BaseController {
 
   verifyEmail = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { token } = req.body;
+      const { email, token } = req.body;
       const userId = await this.userModel.getUserIdByEmailVerifiedToken(token);
 
       if (!userId) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "No user found"
+          "The token is not valid"
+        );
+      }
+
+      const user = await this.userModel.getById(userId);
+
+      if (user.email !== email) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          "The token is not valid"
         );
       }
 
@@ -142,7 +236,7 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        "Mail has been successfully verified. Try to log in"
+        "Mail verified successfully. For further actions, log in to the site"
       );
     });
 
@@ -166,7 +260,7 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        '"Password reset" email sent successfully'
+        "Email sent successfully"
       );
     });
 
@@ -179,7 +273,7 @@ class UserController extends BaseController {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "No user found"
+          "The token is not valid"
         );
       }
 
@@ -253,6 +347,18 @@ class UserController extends BaseController {
     if (userByEmail && id != userByEmail.id)
       throw new Error(`User with email '${email}' already exists`);
 
+    const info = await this.userModel.getById(id);
+
+    const newPhone = dataToSave["phone"];
+
+    if (info.phone != newPhone && dataToSave["phoneVerified"] !== null) {
+      dataToSave["phoneVerified"] = false;
+    }
+
+    if (file && info.photo) {
+      this.removeFile(info.photo);
+    }
+
     await this.userModel.updateById(id, dataToSave);
 
     return { ...dataToSave, id };
@@ -276,10 +382,9 @@ class UserController extends BaseController {
     });
   };
 
-  sendPhoneVerify = (req, res) =>
+  sendVerifyPhone = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const { type } = req.body;
       const resGenerate = await this.userModel.generatePhoneVerifyCode(userId);
 
       if (!resGenerate) {
@@ -300,7 +405,7 @@ class UserController extends BaseController {
         );
       }
 
-      this.sendToPhoneVerifyCodeMessage(phone, code, type);
+      await this.sendToPhoneVerifyCodeMessage(phone, code);
 
       return this.sendSuccessResponse(
         res,
@@ -309,7 +414,7 @@ class UserController extends BaseController {
       );
     });
 
-  phoneVerify = (req, res) =>
+  verifyPhone = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { code } = req.body;
       const { userId } = req.userData;
@@ -357,9 +462,6 @@ class UserController extends BaseController {
       const authLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.USER_AUTHORIZED}?token=${accessToken}`;
       return res.redirect(authLink);
     });
-
-  twoFactorAuthVerify = (req, res) =>
-    this.baseWrapper(req, res, async () => {});
 
   myInfo = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -445,27 +547,27 @@ class UserController extends BaseController {
 
       if (proofOfAddress) {
         proofOfAddress = this.moveUploadsFileToFolder(proofOfAddress, folder);
-        dataToSave["proofOfAddress"] = proofOfAddress;
+        dataToSave["proofOfAddressLink"] = proofOfAddress;
       }
 
       if (reputableBankId) {
         reputableBankId = this.moveUploadsFileToFolder(reputableBankId, folder);
-        dataToSave["newReputableBankId"] = reputableBankId;
+        dataToSave["newReputableBankIdLink"] = reputableBankId;
       }
 
       if (utility) {
         utility = this.moveUploadsFileToFolder(utility, folder);
-        dataToSave["utility"] = utility;
+        dataToSave["utilityLink"] = utility;
       }
 
       if (hmrc) {
         hmrc = this.moveUploadsFileToFolder(hmrc, folder);
-        dataToSave["hmrc"] = hmrc;
+        dataToSave["hmrcLink"] = hmrc;
       }
 
       if (councilTaxBill) {
         councilTaxBill = this.moveUploadsFileToFolder(councilTaxBill, folder);
-        dataToSave["councilTaxBill"] = councilTaxBill;
+        dataToSave["councilTaxBillLink"] = councilTaxBill;
       }
 
       if (passportOrDrivingId) {
@@ -473,7 +575,7 @@ class UserController extends BaseController {
           passportOrDrivingId,
           folder
         );
-        dataToSave["passportOrDrivingId"] = passportOrDrivingId;
+        dataToSave["passportOrDrivingIdLink"] = passportOrDrivingId;
       }
 
       if (confirmMoneyLaunderingChecksAndCompliance) {
@@ -482,18 +584,26 @@ class UserController extends BaseController {
             confirmMoneyLaunderingChecksAndCompliance,
             folder
           );
-        dataToSave["confirmMoneyLaunderingChecksAndCompliance"] =
+        dataToSave["confirmMoneyLaunderingChecksAndComplianceLink"] =
           confirmMoneyLaunderingChecksAndCompliance;
       }
 
-      console.log(dataToSave);
+      if (Object.keys(dataToSave).length > 0) {
+        const currentUserDocuments = await this.userModel.getDocumentsByUserId(
+          userId
+        );
 
-      const hasDocuments = await this.userModel.checkUserHasDocuments(userId);
+        if (Object.keys(currentUserDocuments).length > 0) {
+          await this.userModel.updateUserDocuments(userId, dataToSave);
 
-      if (hasDocuments) {
-        await this.userModel.updateUserDocuments(userId, dataToSave);
-      } else {
-        await this.userModel.createUserDocuments(userId, dataToSave);
+          Object.keys(dataToSave).forEach((key) => {
+            if (currentUserDocuments[key]) {
+              this.removeFile(currentUserDocuments[key]);
+            }
+          });
+        } else {
+          await this.userModel.createUserDocuments(userId, dataToSave);
+        }
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

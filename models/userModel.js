@@ -104,7 +104,7 @@ class UserModel {
     let hashedPassword = null;
 
     if (password) {
-      await bcrypt.hash(password, 10);
+      hashedPassword = await bcrypt.hash(password, 10);
     }
 
     const userToSave = {
@@ -135,7 +135,7 @@ class UserModel {
   findByEmailAndPassword = async (email, password) => {
     const getByEmail = await this.getFullByEmail(email);
 
-    if (!getByEmail) {
+    if (!getByEmail || !getByEmail.password) {
       return null;
     }
 
@@ -187,12 +187,12 @@ class UserModel {
   };
 
   getUserIdByEmailVerifiedToken = async (token) => {
-    const { user_id } = await db(EMAIL_VERIFIED_TOKENS_TABLE)
+    const res = await db(EMAIL_VERIFIED_TOKENS_TABLE)
       .select("user_id")
       .where({ token })
       .first();
 
-    return user_id;
+    return res?.user_id;
   };
 
   setEmailVerified = async (id) => {
@@ -200,17 +200,17 @@ class UserModel {
   };
 
   removeEmailVerifiedToken = async (userId) => {
-    await db(USERS_TABLE).where({ id: userId }).del();
+    await db(EMAIL_VERIFIED_TOKENS_TABLE).where({ user_id: userId }).del();
   };
 
   generateResetPasswordToken = async (id) => {
-    const { token: foundToken } = await db(RESET_PASSWORD_TOKENS_TABLE)
+    const res = await db(RESET_PASSWORD_TOKENS_TABLE)
       .select("token")
       .where({ user_id: id })
       .first();
 
-    if (foundToken) {
-      return foundToken;
+    if (res) {
+      return res.token;
     }
 
     const token = generateRandomString();
@@ -219,12 +219,12 @@ class UserModel {
   };
 
   getUserIdByResetPasswordToken = async (token) => {
-    const { user_id } = await db(RESET_PASSWORD_TOKENS_TABLE)
+    const res = await db(RESET_PASSWORD_TOKENS_TABLE)
       .select("user_id")
       .where({ token })
       .first();
 
-    return user_id;
+    return res?.user_id;
   };
 
   setNewPassword = async (id, password) => {
@@ -347,12 +347,12 @@ class UserModel {
   };
 
   getUserIdByPhoneVerifyCode = async (code) => {
-    const { user_id } = await db(PHONE_VERIFIED_CODES_TABLE)
+    const res = await db(PHONE_VERIFIED_CODES_TABLE)
       .select("user_id")
       .where({ code })
       .first();
 
-    return user_id;
+    return res?.user_id;
   };
 
   setPhoneVerified = async (id) => {
@@ -360,33 +360,34 @@ class UserModel {
   };
 
   generateTwoAuthCode = async (userId, type) => {
-    const user = await this.getById(userId);
-    if (!user) return null;
-
     const dataToSave = { user_id: userId };
 
     if (type == "phone") {
-      if (!user.phone) return { phone: null, code: null };
       dataToSave["code"] = generateOtp();
       dataToSave["type_verification"] = "phone";
-      dataToSave["phone"] = user.phone;
     } else {
       dataToSave["code"] = generateRandomString();
       dataToSave["type_verification"] = "email";
-      dataToSave["email"] = user.email;
     }
 
     await db(TWO_FACTOR_AUTH_CODES_TABLE).insert(dataToSave);
-    return { phone: user.phone, code: dataToSave["code"] };
+    return dataToSave;
   };
 
   getUserIdByTwoAuthCode = async (code, type) => {
-    const { user_id } = await db(TWO_FACTOR_AUTH_CODES_TABLE)
+    const res = await db(TWO_FACTOR_AUTH_CODES_TABLE)
       .select("user_id")
-      .where({ code, type })
+      .where({ code, type_verification: type })
       .first();
 
-    return user_id;
+    return res?.user_id;
+  };
+
+  removeTwoAuthCode = async (code, type, userId) => {
+    await db(TWO_FACTOR_AUTH_CODES_TABLE)
+      .select("user_id")
+      .where({ code, type_verification: type, user_id: userId })
+      .delete();
   };
 
   getDocumentsByUserId = async (id) => {
@@ -415,45 +416,36 @@ class UserModel {
     return await bcrypt.compare(checkedPassword, password);
   };
 
-  checkUserHasDocuments = async (userId) => {
-    const documents = await db(USER_DOCUMENTS_TABLE)
-      .select("id")
-      .where({ user_id: userId })
-      .first();
-
-    return !!documents;
-  };
-
   convertDocumentLinksToSql = (links) => {
     const res = {};
 
-    if (links["proofOfAddress"]) {
-      res["proof_of_address_link"] = links["proofOfAddress"];
+    if (links["proofOfAddressLink"]) {
+      res["proof_of_address_link"] = links["proofOfAddressLink"];
     }
 
-    if (links["newReputableBankId"]) {
-      res["reputable_bank_id_link"] = links["newReputableBankId"];
+    if (links["newReputableBankIdLink"]) {
+      res["reputable_bank_id_link"] = links["newReputableBankIdLink"];
     }
 
-    if (links["utility"]) {
-      res["utility_link"] = links["utility"];
+    if (links["utilityLink"]) {
+      res["utility_link"] = links["utilityLink"];
     }
 
-    if (links["hmrc"]) {
-      res["hmrc_link"] = links["hmrc"];
+    if (links["hmrcLink"]) {
+      res["hmrc_link"] = links["hmrcLink"];
     }
 
-    if (links["councilTaxBill"]) {
-      res["council_tax_bill_link"] = links["councilTaxBill"];
+    if (links["councilTaxBillLink"]) {
+      res["council_tax_bill_link"] = links["councilTaxBillLink"];
     }
 
-    if (links["passportOrDrivingId"]) {
-      res["passport_or_driving_id_link"] = links["passportOrDrivingId"];
+    if (links["passportOrDrivingIdLink"]) {
+      res["passport_or_driving_id_link"] = links["passportOrDrivingIdLink"];
     }
 
-    if (links["confirmMoneyLaunderingChecksAndCompliance"]) {
+    if (links["confirmMoneyLaunderingChecksAndComplianceLink"]) {
       res["confirm_money_laundering_checks_and_compliance_link"] =
-        links["confirmMoneyLaunderingChecksAndCompliance"];
+        links["confirmMoneyLaunderingChecksAndComplianceLink"];
     }
 
     return res;

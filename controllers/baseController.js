@@ -109,7 +109,7 @@ class Controller {
 
   sendEmailVerificationMail = async (email, name, token) => {
     const title = "Account Verification";
-    this.sendMail(email, title, "emailVerification", {
+    await this.sendMail(email, title, "emailVerification", {
       name,
       link:
         CLIENT_URL + "/" + STATIC.CLIENT_LINKS.EMAIL_VERIFICATION + "/" + token,
@@ -119,10 +119,19 @@ class Controller {
 
   sendPasswordResetMail = async (email, name, token) => {
     const title = "Reset Password";
-    this.sendMail(email, title, "passwordReset", {
+    await this.sendMail(email, title, "passwordReset", {
       name,
       link: CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token,
       title,
+    });
+  };
+
+  sendTwoAuthCodeMail = async (email, name, code) => {
+    const title = "Two Authentication Code";
+    console.log(code)
+    await this.sendMail(email, title, "twoAuthCode", {
+      name,
+      code,
     });
   };
 
@@ -140,6 +149,14 @@ class Controller {
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
     return folder + "/" + name + "." + type;
+  };
+
+  removeFile = (filePath) => {
+    const fullPath = path.join(STATIC.MAIN_DIRECTORY, "public", filePath);
+
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
   };
 
   sendToPhoneMessage = async (phone, text) => {
@@ -162,16 +179,12 @@ class Controller {
     return res.data.response_result;
   };
 
-  sendToPhoneVerifyCodeMessage = async (phone, code, type) => {
-    await this.sendToPhoneMessage(phone, `Your OTP code is: ${code}`, type);
+  sendToPhoneVerifyCodeMessage = async (phone, code) => {
+    await this.sendToPhoneMessage(phone, `Your OTP code is: ${code}`);
   };
 
-  sendToPhoneTwoAuthCodeMessage = async (phone, code, type) => {
-    await this.sendToPhoneMessage(
-      phone,
-      `Your Authorization code is: ${code}`,
-      type
-    );
+  sendToPhoneTwoAuthCodeMessage = async (phone, code) => {
+    await this.sendToPhoneMessage(phone, `Your Authorization code is: ${code}`);
   };
 
   baseListOptions = async (req, countByFilter) => {

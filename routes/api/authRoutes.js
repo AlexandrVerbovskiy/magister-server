@@ -7,8 +7,14 @@ const {
   loginValidation,
   passwordValidation,
   updatePasswordValidation,
+  twoFactorAuthGenerateValidation,
+  twoFactorAuthVerifyValidation,
+  verifyEmailValidation,
+  resetPasswordValidation,
 } = require("../../validations/auth");
 const { upload } = require("../../utils");
+const emailValidation = require("../../validations/auth/emailValidation");
+const tokenValidation = require("../../validations/auth/tokenValidation");
 
 router.post(
   "/register",
@@ -25,13 +31,6 @@ router.post("/login", isNotAuth, loginValidation, userController.login);
   registerValidation,
   userController.register
 );*/
-
-router.post(
-  "/reset-password",
-  isNotAuth,
-  registerValidation,
-  userController.resetPassword
-);
 
 router.get("/update-session-info", isAuth, userController.updateSessionInfo);
 router.get("/test", userController.test);
@@ -65,6 +64,40 @@ router.post(
   isAuth,
   isFileLimit,
   userController.updateMyDocuments
+);
+
+router.post(
+  "/two-factor-auth-generate",
+  isNotAuth,
+  twoFactorAuthGenerateValidation,
+  userController.twoFactorAuthGenerate
+);
+
+router.post(
+  "/two-factor-auth-verify",
+  twoFactorAuthVerifyValidation,
+  userController.twoFactorAuthVerify
+);
+
+router.post(
+  "/verify-email",
+  isNotAuth,
+  verifyEmailValidation,
+  userController.verifyEmail
+);
+
+router.post(
+  "/reset-password-send",
+  isNotAuth,
+  emailValidation,
+  userController.resetPassword
+);
+
+router.post(
+  "/reset-password",
+  isNotAuth,
+  resetPasswordValidation,
+  userController.setNewPassword
 );
 
 module.exports = router;
