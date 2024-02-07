@@ -95,27 +95,48 @@ class UserController extends BaseController {
 
       const user = resCheck.user;
 
-      //if (!user.twoFactorAuthentication) {
-      this.filterUserFields(user);
-      const accessToken = generateAccessToken(user.id);
+      if (!user.twoFactorAuthentication) {
+        this.filterUserFields(user);
+        const accessToken = generateAccessToken(user.id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        accessToken,
-        user,
-        needCode: false,
-        canSendCodeByPhone: user.phoneVerified,
-      });
-      /*} else {
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          user: {
-            email: user.email,
-            phone: user.phone,
-            id: user.id,
-            name: user.name,
-          },
-          needCode: true,
+          accessToken,
+          user,
+          needCode: false,
+          canSendCodeByPhone: user.phoneVerified,
         });
-      }*/
+      } else {
+        if (user.phone && user.phoneVerified) {
+          return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+            user: {
+              email: user.email,
+              phone: user.phone,
+              id: user.id,
+              name: user.name,
+            },
+            needCode: true,
+            codeSent: false,
+          });
+        } else {
+          const resSave = await this.userModel.generateTwoAuthCode(
+            user.id,
+            "email"
+          );
+
+          this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
+
+          return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+            user: {
+              email: user.email,
+              phone: user.phone,
+              id: user.id,
+              name: user.name,
+            },
+            needCode: true,
+            codeSent: true,
+          });
+        }
+      }
     });
 
   twoFactorAuthGenerate = (req, res) =>
@@ -144,9 +165,9 @@ class UserController extends BaseController {
       const resSave = await this.userModel.generateTwoAuthCode(user.id, type);
 
       if (type == "phone") {
-        await this.sendToPhoneTwoAuthCodeMessage(user.phone, resSave.code);
+        this.sendToPhoneTwoAuthCodeMessage(user.phone, resSave.code);
       } else {
-        await this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
+        this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
@@ -426,7 +447,7 @@ class UserController extends BaseController {
         );
       }
 
-      await this.sendToPhoneVerifyCodeMessage(phone, code);
+      this.sendToPhoneVerifyCodeMessage(phone, code);
 
       return this.sendSuccessResponse(
         res,

@@ -102,11 +102,23 @@ router.post(
 );
 
 router.post("/generate-my-phone-code", isAuth, userController.sendVerifyPhone);
+
 router.post(
   "/check-my-phone-code",
   isAuth,
   codeValidation,
   userController.verifyPhone
+);
+
+router.post(
+  "/generate-two-factor-code",
+  isNotAuth,
+  userController.twoFactorAuthGenerate
+);
+router.post(
+  "/check-two-factor-code",
+  isNotAuth,
+  userController.twoFactorAuthVerify
 );
 
 module.exports = router;
