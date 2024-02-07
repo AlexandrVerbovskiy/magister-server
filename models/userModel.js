@@ -343,7 +343,7 @@ class UserModel {
 
     const code = generateOtp();
     await db(PHONE_VERIFIED_CODES_TABLE).insert({ user_id: userId, code });
-    return { code: null, phone: user.phone };
+    return { code, phone: user.phone };
   };
 
   getUserIdByPhoneVerifyCode = async (code) => {

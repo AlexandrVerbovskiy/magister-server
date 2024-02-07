@@ -421,7 +421,7 @@ class UserController extends BaseController {
       const gotUserId = await this.userModel.getUserIdByPhoneVerifyCode(code);
 
       if (!gotUserId || gotUserId != userId) {
-        this.sendErrorResponse(
+        return this.sendErrorResponse(
           res,
           STATIC.ERRORS.INVALID_KEY_DATA,
           "Invalid OTP code"

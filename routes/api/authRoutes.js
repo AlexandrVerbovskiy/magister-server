@@ -11,6 +11,7 @@ const {
   twoFactorAuthVerifyValidation,
   verifyEmailValidation,
   resetPasswordValidation,
+  codeValidation,
 } = require("../../validations/auth");
 const { upload } = require("../../utils");
 const emailValidation = require("../../validations/auth/emailValidation");
@@ -98,6 +99,14 @@ router.post(
   isNotAuth,
   resetPasswordValidation,
   userController.setNewPassword
+);
+
+router.post("/generate-my-phone-code", isAuth, userController.sendVerifyPhone);
+router.post(
+  "/check-my-phone-code",
+  isAuth,
+  codeValidation,
+  userController.verifyPhone
 );
 
 module.exports = router;

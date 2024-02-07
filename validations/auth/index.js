@@ -7,4 +7,5 @@ module.exports = {
   twoFactorAuthVerifyValidation: require("./twoFactorAuthVerifyValidation"),
   verifyEmailValidation: require("./verifyEmailValidation"),
   resetPasswordValidation: require("./resetPasswordValidation"),
+  codeValidation: require("./codeValidation"),
 };
