@@ -56,6 +56,16 @@ class UserModel {
     "twitter_url as twitterUrl",
   ];
 
+  documentFields = [
+    "proof_of_address_link as proofOfAddressLink",
+    "reputable_bank_id_link as reputableBankIdLink",
+    "utility_link as utilityLink",
+    "hmrc_link as hmrcLink",
+    "council_tax_bill_link as councilTaxBillLink",
+    "passport_or_driving_id_link as passportOrDrivingIdLink",
+    "confirm_money_laundering_checks_and_compliance_link as confirmMoneyLaunderingChecksAndComplianceLink",
+  ];
+
   userFilter = (filter) => {
     filter = `%${filter}%`;
     const searchableFields = ["name", "email", "phone"];
@@ -381,6 +391,7 @@ class UserModel {
 
   getDocumentsByUserId = async (id) => {
     const documents = await db(USER_DOCUMENTS_TABLE)
+      .select(this.documentFields)
       .where({ user_id: id })
       .first();
     return documents ?? {};
@@ -402,6 +413,63 @@ class UserModel {
       .first();
 
     return await bcrypt.compare(checkedPassword, password);
+  };
+
+  checkUserHasDocuments = async (userId) => {
+    const documents = await db(USER_DOCUMENTS_TABLE)
+      .select("id")
+      .where({ user_id: userId })
+      .first();
+
+    return !!documents;
+  };
+
+  convertDocumentLinksToSql = (links) => {
+    const res = {};
+
+    if (links["proofOfAddress"]) {
+      res["proof_of_address_link"] = links["proofOfAddress"];
+    }
+
+    if (links["newReputableBankId"]) {
+      res["reputable_bank_id_link"] = links["newReputableBankId"];
+    }
+
+    if (links["utility"]) {
+      res["utility_link"] = links["utility"];
+    }
+
+    if (links["hmrc"]) {
+      res["hmrc_link"] = links["hmrc"];
+    }
+
+    if (links["councilTaxBill"]) {
+      res["council_tax_bill_link"] = links["councilTaxBill"];
+    }
+
+    if (links["passportOrDrivingId"]) {
+      res["passport_or_driving_id_link"] = links["passportOrDrivingId"];
+    }
+
+    if (links["confirmMoneyLaunderingChecksAndCompliance"]) {
+      res["confirm_money_laundering_checks_and_compliance_link"] =
+        links["confirmMoneyLaunderingChecksAndCompliance"];
+    }
+
+    return res;
+  };
+
+  createUserDocuments = async (userId, documents) => {
+    await db(USER_DOCUMENTS_TABLE).insert({
+      user_id: userId,
+      ...this.convertDocumentLinksToSql(documents),
+    });
+  };
+
+  updateUserDocuments = async (userId, documents) => {
+    await db(USER_DOCUMENTS_TABLE)
+      .where({ user_id: userId })
+      .update({ ...this.convertDocumentLinksToSql(documents) });
   };
 }
 

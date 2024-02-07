@@ -4,5 +4,6 @@ module.exports = {
   generateRandomString: require("./generateRandomString"),
   generateOtp: require("./generateOtp"),
   upload: require("./upload"),
+  byteConverter: require("./byteConverter"),
   ...require("./dateHelpers"),
 };

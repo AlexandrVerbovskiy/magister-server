@@ -255,13 +255,7 @@ class UserController extends BaseController {
 
     await this.userModel.updateById(id, dataToSave);
 
-    const data = { id };
-
-    if (photo) {
-      data["photo"] = photo;
-    }
-
-    return data;
+    return { ...dataToSave, id };
   };
 
   update = (req, res) =>
@@ -276,6 +270,7 @@ class UserController extends BaseController {
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { userId } = req.userData;
+
       const user = await this.baseUpdate(userId, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
@@ -426,6 +421,84 @@ class UserController extends BaseController {
 
       await this.userModel.setNewPassword(userId, newPassword);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
+    });
+
+  getFileByName = (req, name) =>
+    req.files.find((field) => field.fieldname == name);
+
+  updateMyDocuments = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      let proofOfAddress = this.getFileByName(req, "proofOfAddress");
+      let reputableBankId = this.getFileByName(req, "reputableBankId");
+      let utility = this.getFileByName(req, "utility");
+      let hmrc = this.getFileByName(req, "hmrc");
+      let councilTaxBill = this.getFileByName(req, "councilTaxBill");
+      let passportOrDrivingId = this.getFileByName(req, "passportOrDrivingId");
+      let confirmMoneyLaunderingChecksAndCompliance = this.getFileByName(
+        req,
+        "confirmMoneyLaunderingChecksAndCompliance"
+      );
+
+      const dataToSave = {};
+      const folder = "documents/" + userId;
+
+      if (proofOfAddress) {
+        proofOfAddress = this.moveUploadsFileToFolder(proofOfAddress, folder);
+        dataToSave["proofOfAddress"] = proofOfAddress;
+      }
+
+      if (reputableBankId) {
+        reputableBankId = this.moveUploadsFileToFolder(reputableBankId, folder);
+        dataToSave["newReputableBankId"] = reputableBankId;
+      }
+
+      if (utility) {
+        utility = this.moveUploadsFileToFolder(utility, folder);
+        dataToSave["utility"] = utility;
+      }
+
+      if (hmrc) {
+        hmrc = this.moveUploadsFileToFolder(hmrc, folder);
+        dataToSave["hmrc"] = hmrc;
+      }
+
+      if (councilTaxBill) {
+        councilTaxBill = this.moveUploadsFileToFolder(councilTaxBill, folder);
+        dataToSave["councilTaxBill"] = councilTaxBill;
+      }
+
+      if (passportOrDrivingId) {
+        passportOrDrivingId = this.moveUploadsFileToFolder(
+          passportOrDrivingId,
+          folder
+        );
+        dataToSave["passportOrDrivingId"] = passportOrDrivingId;
+      }
+
+      if (confirmMoneyLaunderingChecksAndCompliance) {
+        confirmMoneyLaunderingChecksAndCompliance =
+          this.moveUploadsFileToFolder(
+            confirmMoneyLaunderingChecksAndCompliance,
+            folder
+          );
+        dataToSave["confirmMoneyLaunderingChecksAndCompliance"] =
+          confirmMoneyLaunderingChecksAndCompliance;
+      }
+
+      console.log(dataToSave);
+
+      const hasDocuments = await this.userModel.checkUserHasDocuments(userId);
+
+      if (hasDocuments) {
+        await this.userModel.updateUserDocuments(userId, dataToSave);
+      } else {
+        await this.userModel.createUserDocuments(userId, dataToSave);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        documents: dataToSave,
+      });
     });
 
   test = async (req, res) =>

@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { isAuth, isNotAuth } = require("../../middlewares");
+const { isAuth, isNotAuth, isFileLimit } = require("../../middlewares");
 const { userController } = require("../../controllers");
 const {
   registerValidation,
@@ -41,6 +41,7 @@ router.post(
   "/save-profile",
   upload.single("photo"),
   isAuth,
+  isFileLimit,
   userController.saveProfile
 );
 
@@ -56,6 +57,14 @@ router.post(
   isAuth,
   updatePasswordValidation,
   userController.updateMyPassword
+);
+
+router.post(
+  "/save-my-documents",
+  upload.any(),
+  isAuth,
+  isFileLimit,
+  userController.updateMyDocuments
 );
 
 module.exports = router;

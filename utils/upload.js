@@ -1,3 +1,4 @@
+require("dotenv").config();
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
@@ -15,4 +16,11 @@ const storage = multer.diskStorage({
   },
 });
 
-module.exports = multer({ storage: storage });
+const maxFileSize = Number(process.env.MAX_FILE_SIZE ?? 26214400);
+
+module.exports = multer({
+  storage: storage,
+  limits: {
+    fileSize: maxFileSize,
+  },
+});

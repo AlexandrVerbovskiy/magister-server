@@ -40,7 +40,7 @@ class Controller {
     );
   }
 
-  sendResponse = (response, baseInfo, message, body, isError) => {    
+  sendResponse = (response, baseInfo, message, body, isError) => {
     response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
       body,
@@ -68,13 +68,12 @@ class Controller {
 
       if (!errors.isEmpty()) {
         const error = errors.array()[0].msg;
-        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST, {
-          error,
-        });
+        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST, error);
       }
 
       await func();
     } catch (e) {
+      console.log(e);
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey = Object.keys(STATIC.ERRORS).find(
@@ -88,9 +87,7 @@ class Controller {
       }
 
       const currentError = STATIC.ERRORS[currentErrorKey];
-      this.sendErrorResponse(res, currentError, null, {
-        error: e.message,
-      });
+      this.sendErrorResponse(res, currentError, e.message);
     }
   };
 
@@ -134,16 +131,10 @@ class Controller {
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
 
-    let destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public");
+    const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public", folder);
 
     if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir);
-    }
-
-    destinationDir = path.join(destinationDir, folder);
-
-    if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir);
+      fs.mkdirSync(destinationDir, { recursive: true });
     }
 
     const newFilePath = path.join(destinationDir, name + "." + type);
