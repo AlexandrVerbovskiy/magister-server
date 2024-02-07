@@ -57,6 +57,7 @@ class UserModel {
   ];
 
   documentFields = [
+    "user_id as userId",
     "proof_of_address_link as proofOfAddressLink",
     "reputable_bank_id_link as reputableBankIdLink",
     "utility_link as utilityLink",
@@ -163,8 +164,16 @@ class UserModel {
     return await db(USERS_TABLE).select("email").where({ id, role }).first();
   };
 
-  checkIsAdmin = (id) => {
-    return this.checkRole(id, STATIC.ROLES.ADMIN);
+  checkIsAdmin = async (id) => {
+    return await this.checkRole(id, STATIC.ROLES.ADMIN);
+  };
+
+  checkIsSupport = async (id) => {
+    const isSupport = await this.checkRole(id, STATIC.ROLES.SUPPORT);
+    if (isSupport) return true;
+
+    const isAdmin = await this.checkIsAdmin(id);
+    return isAdmin;
   };
 
   setRole = async (id, role) => {
@@ -178,6 +187,15 @@ class UserModel {
       .returning("active");
 
     return res[0].active;
+  };
+
+  changeVerified = async (id) => {
+    const res = await db(USERS_TABLE)
+      .where({ id })
+      .update({ verified: db.raw("NOT verified") })
+      .returning("verified");
+
+    return res[0].verified;
   };
 
   generateEmailVerifyToken = async (id) => {
@@ -258,7 +276,7 @@ class UserModel {
     order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
 
     return await db(USERS_TABLE)
-      .select(this.visibleFields)
+      .select([...this.visibleFields, "active", "verified"])
       .whereRaw(...this.userFilter(filter))
       .orderBy(order, orderType)
       .limit(count)

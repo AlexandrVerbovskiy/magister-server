@@ -72,7 +72,7 @@ passport.deserializeUser((obj, done) => {
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
 app.use("/auth", isNotAuth, initAuthRoutes(passport));
 app.use("/api/auth", apiRoutes.authApiRoutes);
-app.use("/api/users", isAuth, isAdmin, apiRoutes.userApiRoutes);
+app.use("/api/users", apiRoutes.userApiRoutes);
 app.use("/api/logs", isAuth, isAdmin, apiRoutes.logApiRoutes);
 
 app.use((req, res, next) => {

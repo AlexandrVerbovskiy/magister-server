@@ -69,7 +69,6 @@ class UserController extends BaseController {
     }
 
     if (!user.active) {
-      console.log("72");
       return {
         error: true,
         errorBody: STATIC.ERRORS.UNAUTHORIZED,
@@ -207,6 +206,21 @@ class UserController extends BaseController {
       });
     });
 
+  changeVerified = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.body;
+      const verified = await this.userModel.changeVerified(id);
+
+      const message = verified
+        ? "User verified successfully"
+        : "User unverified successfully";
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
+        id,
+        verified,
+      });
+    });
+
   verifyEmail = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email, token } = req.body;
@@ -331,6 +345,13 @@ class UserController extends BaseController {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const user = await this.userModel.getById(id);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
+    });
+
+  getFullById = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const user = await this.userModel.getFullById(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
     });
 

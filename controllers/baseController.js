@@ -128,7 +128,6 @@ class Controller {
 
   sendTwoAuthCodeMail = async (email, name, code) => {
     const title = "Two Authentication Code";
-    console.log(code)
     await this.sendMail(email, title, "twoAuthCode", {
       name,
       code,
