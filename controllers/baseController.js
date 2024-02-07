@@ -68,13 +68,12 @@ class Controller {
 
       if (!errors.isEmpty()) {
         const error = errors.array()[0].msg;
-        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST.STATUS, {
-          error,
-        });
+        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST, error);
       }
 
       await func();
     } catch (e) {
+      console.log(e);
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey = Object.keys(STATIC.ERRORS).find(
@@ -88,9 +87,7 @@ class Controller {
       }
 
       const currentError = STATIC.ERRORS[currentErrorKey];
-      this.sendErrorResponse(res, currentError, null, {
-        error: e.message,
-      });
+      this.sendErrorResponse(res, currentError, e.message);
     }
   };
 
@@ -112,7 +109,7 @@ class Controller {
 
   sendEmailVerificationMail = async (email, name, token) => {
     const title = "Account Verification";
-    this.sendMail(email, title, "emailVerification", {
+    await this.sendMail(email, title, "emailVerification", {
       name,
       link:
         CLIENT_URL + "/" + STATIC.CLIENT_LINKS.EMAIL_VERIFICATION + "/" + token,
@@ -122,10 +119,18 @@ class Controller {
 
   sendPasswordResetMail = async (email, name, token) => {
     const title = "Reset Password";
-    this.sendMail(email, title, "passwordReset", {
+    await this.sendMail(email, title, "passwordReset", {
       name,
       link: CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token,
       title,
+    });
+  };
+
+  sendTwoAuthCodeMail = async (email, name, code) => {
+    const title = "Two Authentication Code";
+    await this.sendMail(email, title, "twoAuthCode", {
+      name,
+      code,
     });
   };
 
@@ -134,21 +139,23 @@ class Controller {
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
 
-    let destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public");
+    const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public", folder);
 
     if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir);
-    }
-
-    destinationDir = path.join(destinationDir, folder);
-
-    if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir);
+      fs.mkdirSync(destinationDir, { recursive: true });
     }
 
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
     return folder + "/" + name + "." + type;
+  };
+
+  removeFile = (filePath) => {
+    const fullPath = path.join(STATIC.MAIN_DIRECTORY, "public", filePath);
+
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
   };
 
   sendToPhoneMessage = async (phone, text) => {
@@ -171,16 +178,12 @@ class Controller {
     return res.data.response_result;
   };
 
-  sendToPhoneVerifyCodeMessage = async (phone, code, type) => {
-    await this.sendToPhoneMessage(phone, `Your OTP code is: ${code}`, type);
+  sendToPhoneVerifyCodeMessage = async (phone, code) => {
+    await this.sendToPhoneMessage(phone, `Your OTP code is: ${code}`);
   };
 
-  sendToPhoneTwoAuthCodeMessage = async (phone, code, type) => {
-    await this.sendToPhoneMessage(
-      phone,
-      `Your Authorization code is: ${code}`,
-      type
-    );
+  sendToPhoneTwoAuthCodeMessage = async (phone, code) => {
+    await this.sendToPhoneMessage(phone, `Your Authorization code is: ${code}`);
   };
 
   baseListOptions = async (req, countByFilter) => {

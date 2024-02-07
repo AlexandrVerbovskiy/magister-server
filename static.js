@@ -61,7 +61,8 @@ module.exports = {
   CLIENT_LINKS: {
     EMAIL_VERIFICATION: "email-verification",
     PASSWORD_RESET: "password-reset",
-    PROFILE_COMPETING: "profile-competing",
+    PASSWORD_COMPETING: "password-competing",
+    USER_AUTHORIZED: "user-authorized",
   },
   MAIN_DIRECTORY: __dirname,
   TABLES: {

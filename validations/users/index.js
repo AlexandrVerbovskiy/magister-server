@@ -1,5 +1,5 @@
 module.exports = {
   setRoleValidation: require("./setRoleValidation"),
-  requiredId: require("./requiredId"),
-  linkRequiredId: require("./linkRequiredId"),
+  idValidation: require("./idValidation"),
+  linkValidation: require("./linkValidation"),
 };

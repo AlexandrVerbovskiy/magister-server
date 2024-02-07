@@ -1,32 +1,61 @@
 const { Router } = require("express");
 const router = Router();
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer");
-const STATIC = require("../../static");
-
 const { userController } = require("../../controllers");
-const { setRoleValidation, requiredId, linkRequiredId } = require("../../validations/users");
+const {
+  setRoleValidation,
+  idValidation,
+  linkValidation,
+} = require("../../validations/users");
+const { upload } = require("../../utils");
+const { isFileLimit } = require("../../middlewares");
+const { isAuth, isSupport, isAdmin } = require("../../middlewares");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = path.join(STATIC.MAIN_DIRECTORY, "uploads");
+router.post("/list", isAuth, isSupport, userController.list);
 
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
+router.get("/get-by-id/:id", linkValidation, userController.getById);
 
-    cb(null, dir);
-  },
-});
+router.get(
+  "/get-full-by-id/:id",
+  isAuth,
+  isSupport,
+  linkValidation,
+  userController.getFullById
+);
 
-const upload = multer({ storage: storage });
+router.post(
+  "/set-role",
+  isAuth,
+  isAdmin,
+  setRoleValidation,
+  userController.setRole
+);
 
-router.post("/list", userController.list);
-router.get("/get-by-id/:id", linkRequiredId, userController.getById);
-router.post("/set-role", setRoleValidation, userController.setRole);
-router.post("/delete", requiredId, userController.delete);
-router.post("/change-active", requiredId, userController.changeActive);
-router.post("/update", upload.single("photo"), userController.update);
+router.post("/delete", isAuth, isAdmin, idValidation, userController.delete);
+
+router.post(
+  "/change-active",
+  isAuth,
+  isAdmin,
+  idValidation,
+  userController.changeActive
+);
+router.post(
+  "/change-verified",
+  isAuth,
+  isSupport,
+  idValidation,
+  userController.changeVerified
+);
+
+router.post(
+  "/update",
+  isAuth,
+  isAdmin,
+  upload.single("photo"),
+  isFileLimit,
+  userController.update
+);
+
+router.post("/documents", isAuth, isSupport, userController.getDocumentsByUserId);
 
 module.exports = router;
