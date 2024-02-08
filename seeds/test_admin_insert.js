@@ -8,18 +8,19 @@ const bcrypt = require("bcrypt");
  * @returns { Promise<void> }
  */
 exports.seed = async function (knex) {
-  let password = process.env.ADMIN_PASSWORD;
+  let password = "Test1@gmail.com";
   password = await bcrypt.hash(password, 10);
 
   await knex(STATIC.TABLES.USERS).insert([
     {
-      name: process.env.ADMIN_NAME,
-      email: process.env.ADMIN_EMAIL,
+      name: "test",
+      email: "Test1@gmail.com",
       password: password,
       email_verified: true,
       role: "admin",
       verified: true,
       accepted_term_condition: true,
+      two_factor_authentication: false,
     },
   ]);
 };
