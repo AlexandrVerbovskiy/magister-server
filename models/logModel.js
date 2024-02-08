@@ -2,6 +2,7 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const STATIC = require("../static");
 const db = require("../database");
+const { formatDateToSQLFormat } = require("../utils");
 
 const LOGS_TABLE = STATIC.TABLES.LOGS;
 
@@ -29,18 +30,6 @@ class LogModel {
     return [`(${conditions})`, props];
   };
 
-  formatDateToSQLFormat = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  };
-
   create = async ({ success, message, body, line, symbol, file }) => {
     await db(LOGS_TABLE).insert({
       success,
@@ -66,7 +55,7 @@ class LogModel {
       query = query.where(
         "created_at",
         ">=",
-        this.formatDateToSQLFormat(fromTime)
+        formatDateToSQLFormat(fromTime)
       );
     }
 
@@ -74,7 +63,7 @@ class LogModel {
       query = query.where(
         "created_at",
         "<=",
-        this.formatDateToSQLFormat(toTime)
+        formatDateToSQLFormat(toTime)
       );
     }
 
@@ -107,7 +96,7 @@ class LogModel {
       query = query.where(
         "created_at",
         ">=",
-        this.formatDateToSQLFormat(fromTime)
+        formatDateToSQLFormat(fromTime)
       );
     }
 
@@ -115,7 +104,7 @@ class LogModel {
       query = query.where(
         "created_at",
         "<=",
-        this.formatDateToSQLFormat(toTime)
+        formatDateToSQLFormat(toTime)
       );
     }
 

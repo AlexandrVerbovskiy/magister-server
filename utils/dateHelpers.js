@@ -11,6 +11,7 @@ const timeConverter = (time) => {
 
 const getTodayDate = () => {
   const today = new Date();
+  today.setDate(today.getDate() + 1);
   today.setUTCHours(0, 0, 0, 0);
   return today;
 };

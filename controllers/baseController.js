@@ -12,6 +12,7 @@ const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
 const CLIENT_URL = process.env.CLIENT_URL;
 const axios = require("axios");
+const userVerifyRequestModel = require("../models/userVerifyRequestModel");
 
 class Controller {
   mailTransporter = null;
@@ -19,6 +20,7 @@ class Controller {
   constructor() {
     this.userModel = userModel;
     this.logModel = logModel;
+    this.userVerifyRequestModel = userVerifyRequestModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
