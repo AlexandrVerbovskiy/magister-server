@@ -56,6 +56,15 @@ router.post(
   userController.update
 );
 
+router.post(
+  "/create",
+  isAuth,
+  isAdmin,
+  upload.single("photo"),
+  isFileLimit,
+  userController.create
+);
+
 router.post("/documents", isAuth, isSupport, userController.getDocumentsByUserId);
 
 module.exports = router;

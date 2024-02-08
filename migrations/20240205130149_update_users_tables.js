@@ -6,8 +6,8 @@ const STATIC = require("../static");
  */
 exports.up = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
-    table.text("social_media_links").nullable().defaultTo(null);
-    table.text("place_work").nullable().defaultTo(null);
+    table.text("social_media_links");
+    table.text("place_work");
   });
 };
 

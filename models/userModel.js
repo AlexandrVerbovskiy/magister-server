@@ -16,13 +16,11 @@ class UserModel {
     "id",
     "name",
     "email",
-    "email_verified as emailVerified",
     "role",
     "contact_details as contactDetails",
     "brief_bio as briefBio",
     "photo",
     "phone",
-    "phone_verified as phoneVerified",
     "suspicious",
     "place_work as placeWork",
     "facebook_url as facebookUrl",
@@ -57,7 +55,7 @@ class UserModel {
   ];
 
   documentFields = [
-    "user_id as userId",
+    `${USER_DOCUMENTS_TABLE}.user_id as userId`,
     "proof_of_address_link as proofOfAddressLink",
     "reputable_bank_id_link as reputableBankIdLink",
     "utility_link as utilityLink",
@@ -81,7 +79,13 @@ class UserModel {
 
   getByEmail = async (email) => {
     return await db(USERS_TABLE)
-      .select(this.visibleFields)
+      .select([
+        ...this.visibleFields,
+        "email_verified as emailVerified",
+        "phone_verified as phoneVerified",
+        "need_regular_view_info_form as needRegularViewInfoForm",
+        "active",
+      ])
       .where("email", email)
       .first();
   };
@@ -130,6 +134,89 @@ class UserModel {
       })
       .returning("id");
 
+    return res[0].id;
+  };
+
+  convertFullUserDataToSave = (userData) => {
+    const {
+      name,
+      email,
+      phone,
+      briefBio,
+      contactDetails,
+      twoFactorAuthentication,
+      emailVerified,
+      phoneVerified,
+      active,
+      suspicious,
+      role,
+      photo,
+      placeWork,
+      facebookUrl,
+      instagramUrl,
+      linkedinUrl,
+      twitterUrl,
+      verified,
+      acceptedTermCondition,
+      needRegularViewInfoForm,
+    } = userData;
+
+    const updateData = {
+      name,
+      email,
+      phone,
+      contact_details: contactDetails,
+      brief_bio: briefBio,
+      two_factor_authentication: twoFactorAuthentication,
+      place_work: placeWork,
+      facebook_url: facebookUrl,
+      instagram_url: instagramUrl,
+      linkedin_url: linkedinUrl,
+      twitter_url: twitterUrl,
+    };
+
+    if (emailVerified !== null) {
+      updateData.email_verified = emailVerified;
+    }
+
+    if (acceptedTermCondition !== null) {
+      updateData.accepted_term_condition = acceptedTermCondition;
+    }
+
+    if (needRegularViewInfoForm !== null) {
+      updateData.need_regular_view_info_form = needRegularViewInfoForm;
+    }
+
+    if (phoneVerified !== null) {
+      updateData.phone_verified = phoneVerified;
+    }
+
+    if (active !== null) {
+      updateData.active = active;
+    }
+
+    if (suspicious !== null) {
+      updateData.suspicious = suspicious;
+    }
+
+    if (role !== null) {
+      updateData.role = role;
+    }
+
+    if (photo !== null) {
+      updateData.photo = photo;
+    }
+
+    if (verified !== null) {
+      updateData.verified = verified;
+    }
+
+    return updateData;
+  };
+
+  createFull = async (userData) => {
+    const dataToSave = this.convertFullUserDataToSave(userData);
+    const res = await db(USERS_TABLE).insert(dataToSave).returning("id");
     return res[0].id;
   };
 
@@ -187,6 +274,21 @@ class UserModel {
       .returning("active");
 
     return res[0].active;
+  };
+
+  setVerified = async (id, verified) => {
+    await db(USERS_TABLE).where({ id }).update({ verified });
+  };
+
+  changeTwoFactorAuth = async (id) => {
+    const res = await db(USERS_TABLE)
+      .where({ id })
+      .update({
+        two_factor_authentication: db.raw("NOT two_factor_authentication"),
+      })
+      .returning("two_factor_authentication as twoFactorAuthentication");
+
+    return res[0].twoFactorAuthentication;
   };
 
   changeVerified = async (id) => {
@@ -288,70 +390,8 @@ class UserModel {
   };
 
   updateById = async (id, userData) => {
-    const {
-      name,
-      email,
-      phone,
-      briefBio,
-      contactDetails,
-      twoFactorAuthentication,
-      emailVerified,
-      phoneVerified,
-      active,
-      suspicious,
-      role,
-      photo,
-      placeWork,
-      facebookUrl,
-      instagramUrl,
-      linkedinUrl,
-      twitterUrl,
-      verified,
-    } = userData;
-
-    const updateData = {
-      name,
-      email,
-      phone,
-      contact_details: contactDetails,
-      brief_bio: briefBio,
-      two_factor_authentication: twoFactorAuthentication,
-      place_work: placeWork,
-      facebook_url: facebookUrl,
-      instagram_url: instagramUrl,
-      linkedin_url: linkedinUrl,
-      twitter_url: twitterUrl,
-    };
-
-    if (emailVerified !== null) {
-      updateData.email_verified = emailVerified;
-    }
-
-    if (phoneVerified !== null) {
-      updateData.phone_verified = phoneVerified;
-    }
-
-    if (active !== null) {
-      updateData.active = active;
-    }
-
-    if (suspicious !== null) {
-      updateData.suspicious = suspicious;
-    }
-
-    if (role !== null) {
-      updateData.role = role;
-    }
-
-    if (photo !== null) {
-      updateData.photo = photo;
-    }
-
-    if (verified !== null) {
-      updateData.verified = verified;
-    }
-
-    await db(USERS_TABLE).where("id", id).update(updateData);
+    const dataToSave = this.convertFullUserDataToSave(userData);
+    await db(USERS_TABLE).where("id", id).update(dataToSave);
   };
 
   generatePhoneVerifyCode = async (userId) => {

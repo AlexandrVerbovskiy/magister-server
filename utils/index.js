@@ -5,5 +5,6 @@ module.exports = {
   generateOtp: require("./generateOtp"),
   upload: require("./upload"),
   byteConverter: require("./byteConverter"),
+  formatDateToSQLFormat: require("./formatDateToSQLFormat"),
   ...require("./dateHelpers"),
 };
