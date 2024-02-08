@@ -1,8 +1,21 @@
 const { Router } = require("express");
 const router = Router();
-const { isAuth, isNotAuth } = require("../../middlewares");
+const { isAuth, isNotAuth, isFileLimit } = require("../../middlewares");
 const { userController } = require("../../controllers");
-const { registerValidation, loginValidation } = require("../../validations/auth");
+const {
+  registerValidation,
+  loginValidation,
+  passwordValidation,
+  updatePasswordValidation,
+  twoFactorAuthGenerateValidation,
+  twoFactorAuthVerifyValidation,
+  verifyEmailValidation,
+  resetPasswordValidation,
+  codeValidation,
+} = require("../../validations/auth");
+const { upload } = require("../../utils");
+const emailValidation = require("../../validations/auth/emailValidation");
+const tokenValidation = require("../../validations/auth/tokenValidation");
 
 router.post(
   "/register",
@@ -20,16 +33,92 @@ router.post("/login", isNotAuth, loginValidation, userController.login);
   userController.register
 );*/
 
+router.get("/update-session-info", isAuth, userController.updateSessionInfo);
+router.get("/test", userController.test);
+router.post("/my-info", isAuth, userController.myInfo);
+router.post("/my-documents", isAuth, userController.myDocuments);
 router.post(
-  "/reset-password",
+  "/save-profile",
+  upload.single("photo"),
+  isAuth,
+  isFileLimit,
+  userController.saveProfile
+);
+
+router.post(
+  "/set-my-password",
+  isAuth,
+  passwordValidation,
+  userController.setMyPassword
+);
+
+router.post(
+  "/update-my-password",
+  isAuth,
+  updatePasswordValidation,
+  userController.updateMyPassword
+);
+
+router.post(
+  "/save-my-documents",
+  upload.any(),
+  isAuth,
+  isFileLimit,
+  userController.updateMyDocuments
+);
+
+router.post(
+  "/two-factor-auth-generate",
   isNotAuth,
-  registerValidation,
+  twoFactorAuthGenerateValidation,
+  userController.twoFactorAuthGenerate
+);
+
+router.post(
+  "/two-factor-auth-verify",
+  twoFactorAuthVerifyValidation,
+  userController.twoFactorAuthVerify
+);
+
+router.post(
+  "/verify-email",
+  isNotAuth,
+  verifyEmailValidation,
+  userController.verifyEmail
+);
+
+router.post(
+  "/reset-password-send",
+  isNotAuth,
+  emailValidation,
   userController.resetPassword
 );
 
-router.get("/update-session-info", isAuth, userController.updateSessionInfo);
-router.get("/test", userController.test);
+router.post(
+  "/reset-password",
+  isNotAuth,
+  resetPasswordValidation,
+  userController.setNewPassword
+);
 
+router.post("/generate-my-phone-code", isAuth, userController.sendVerifyPhone);
 
+router.post(
+  "/check-my-phone-code",
+  isAuth,
+  codeValidation,
+  userController.verifyPhone
+);
+
+router.post(
+  "/generate-two-factor-code",
+  isNotAuth,
+  userController.twoFactorAuthGenerate
+);
+router.post(
+  "/check-two-factor-code",
+  isNotAuth,
+  userController.twoFactorAuthVerify
+);
 
 module.exports = router;

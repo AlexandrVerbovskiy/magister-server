@@ -13,9 +13,6 @@ class LogController extends BaseController {
         req.body.fromTime ?? timeConverter(getYesterdayDate());
       req.body.toTime = req.body.toTime ?? timeConverter(getTodayDate());
 
-      console.log(req.body.fromTime);
-      console.log(req.body.toTime);
-
       const { options, countItems } = await this.baseListOptions(
         req,
         ({ filter, fromTime, toTime }) =>

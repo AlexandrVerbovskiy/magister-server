@@ -1,3 +1,3 @@
 module.exports = {
-  requiredId: require("./requiredId"),
+  idValidation: require("./idValidation"),
 };

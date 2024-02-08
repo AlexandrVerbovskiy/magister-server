@@ -1,4 +1,6 @@
 const { body } = require("express-validator");
+const emailValidation = require("./emailValidation");
+const passwordValidation = require("./passwordValidation");
 
 module.exports = [
   body("name").isLength({ min: 1 }).withMessage("Name is a required field"),
@@ -13,12 +15,6 @@ module.exports = [
     })
     .exists({ checkNull: true, checkFalsy: true })
     .withMessage("To use the site, you must accept our term & condition"),
-  body("email")
-    .isLength({ min: 1 })
-    .withMessage("Email is a required field")
-    .isEmail()
-    .withMessage("Please enter a valid email"),
-  body("password")
-    .isLength({ min: 8 })
-    .withMessage("Password must contain at least 8 characters"),
+  emailValidation,
+  passwordValidation,
 ];

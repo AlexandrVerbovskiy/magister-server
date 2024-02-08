@@ -11,14 +11,13 @@ const timeConverter = (time) => {
 
 const getTodayDate = () => {
   const today = new Date();
-  today.setDate(today.getDate() - 4);
   today.setUTCHours(0, 0, 0, 0);
   return today;
 };
 
 const getYesterdayDate = () => {
   const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 5);
+  yesterday.setDate(yesterday.getDate() - 1);
   yesterday.setUTCHours(0, 0, 0, 0);
   return yesterday;
 };

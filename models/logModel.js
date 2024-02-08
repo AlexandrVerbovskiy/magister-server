@@ -126,16 +126,30 @@ class LogModel {
     const errorRows = body.split("\n");
     const mainErrorInfo = errorRows[1];
 
-    let [filename, lineInfo] = mainErrorInfo.split(".js:");
-    filename = filename.replaceAll(" at ", "").trim();
-    const [lineNumber, symbolNumber] = lineInfo.split(":");
+    let filename = "-";
+    let lineNumber = "-";
+    let symbolNumber = "-";
+
+    if (mainErrorInfo.includes(".js:")) {
+      const splitRes1 = mainErrorInfo.split(".js:");
+      filename = splitRes1[0];
+      filename = filename.replaceAll(" at ", "").trim() + ".js";
+
+      const lineInfo = splitRes1[1];
+
+      if (lineInfo.includes(":")) {
+        const splitRes2 = lineInfo.split(":");
+        lineNumber = splitRes2[0];
+        symbolNumber = splitRes2[1];
+      }
+    }
 
     await this.create({
       success: false,
       body: body,
       message: message,
       line: lineNumber,
-      file: filename + ".js",
+      file: filename,
       symbol: symbolNumber,
     });
   };
