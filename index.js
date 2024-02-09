@@ -14,6 +14,7 @@ const { isAuth, isAdmin } = require("./middlewares");
 const { apiRoutes, initAuthRoutes } = require("./routes");
 const STATIC = require("./static");
 const isNotAuth = require("./middlewares/isNotAuth");
+
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -37,31 +38,31 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(
-  new FacebookStrategy(
-    {
-      clientID: process.env.FACEBOOK_APP_API,
-      clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: "/auth/facebook/callback",
-      profileFields: ["id", "displayName", "email"],
-    },
-    (accessToken, refreshToken, profile, done) => {
-      return done(null, profile);
-    }
-  )
+    new FacebookStrategy(
+        {
+            clientID: process.env.FACEBOOK_APP_API,
+            clientSecret: process.env.FACEBOOK_APP_SECRET,
+            callbackURL: `${process.env.SERVER_URL}/auth/facebook/callback`,
+            profileFields: ["id", "displayName", "email"],
+        },
+        (accessToken, refreshToken, profile, done) => {
+            return done(null, profile);
+        }
+    )
 );
 
 passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_API,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback",
-      profileFields: ["id", "displayName", "email"],
-    },
-    (token, tokenSecret, profile, done) => {
-      return done(null, profile);
-    }
-  )
+    new GoogleStrategy(
+        {
+            clientID: process.env.GOOGLE_CLIENT_API,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
+            profileFields: ["id", "displayName", "email"],
+        },
+        (token, tokenSecret, profile, done) => {
+            return done(null, profile);
+        }
+    )
 );
 
 passport.serializeUser((user, done) => {

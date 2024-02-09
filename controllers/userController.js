@@ -613,10 +613,11 @@ class UserController extends BaseController {
         resLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.PROFILE_EDIT_LINK}`;
       }
 
+      console.log(accessToken);
+
       const cookie = generateBearerCookie(accessToken, true);
       res.cookie(cookie.name, cookie.value, cookie.options);
-
-      return res.redirect(authLink);
+      return res.redirect(resLink);
     });
 
   myInfo = (req, res) =>

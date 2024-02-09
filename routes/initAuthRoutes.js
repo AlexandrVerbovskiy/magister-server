@@ -1,44 +1,51 @@
 require("dotenv").config();
-const { TokenError } = require("passport-oauth2");
+const {TokenError} = require("passport-oauth2");
 
-const { Router } = require("express");
+const {Router} = require("express");
 const router = Router();
-const { isNotAuth } = require("../middlewares");
-const { userController } = require("../controllers");
+const {isNotAuth} = require("../middlewares");
+const {userController} = require("../controllers");
 
 const handleTokenError = (redirectUrl) => (err, req, res, next) => {
-  if (err instanceof TokenError && err.message === "Bad Request") {
-    return res.redirect(redirectUrl);
-  }
-  next(err);
+    console.log(err)
+
+    if (err instanceof TokenError && err.message === "Bad Request") {
+        return res.redirect(redirectUrl);
+    }
+    next(err);
 };
 
 function initAuthRouters(passport) {
-  router.get("/facebook", passport.authenticate("facebook"));
-  router.get(
-    "/facebook/callback",
-    passport.authenticate("facebook", { failureRedirect: "/auth/facebook" }),
-    handleTokenError("/auth/facebook"),
-    userController.frontPostAuth
-  );
+    router.get("/facebook", isNotAuth, passport.authenticate("facebook"));
 
-  router.get(
-    "/google",
-    isNotAuth,
-    passport.authenticate("google", {
-      scope: ["email", "profile"],
-    })
-  );
+    router.get(
+        "/facebook/callback",
+        passport.authenticate("facebook"),
+        handleTokenError("/auth/test"),
+        userController.frontPostAuth
+    );
 
-  router.get(
-    "/google/callback",
-    isNotAuth,
-    passport.authenticate("google", { failureRedirect: "/auth/google" }),
-    handleTokenError("/auth/google"),
-    userController.frontPostAuth
-  );
+    router.get("/google", isNotAuth, passport.authenticate("google", {
+            scope: ["email", "profile"],
+        })
+    );
 
-  return router;
+    router.get(
+        "/google/callback",
+        isNotAuth,
+        passport.authenticate("google"),
+        handleTokenError("/auth/test"),
+        userController.frontPostAuth
+    );
+
+    router.get(
+        "/test",
+        (req, res) => {
+            res.send("error test")
+        }
+    );
+
+    return router;
 }
 
 module.exports = initAuthRouters;
