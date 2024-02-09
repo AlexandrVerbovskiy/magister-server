@@ -86,6 +86,7 @@ class UserModel {
         "email_verified as emailVerified",
         "phone_verified as phoneVerified",
         "need_regular_view_info_form as needRegularViewInfoForm",
+        "need_set_password as needSetPassword",
         "active",
       ])
       .where("email", email)
@@ -399,8 +400,6 @@ class UserModel {
     const userToken = await db(TWO_FACTOR_AUTH_CODES_TABLE)
       .where({ user_id: userId })
       .first();
-
-    console.log(userToken);
 
     if (userToken) {
       await db(TWO_FACTOR_AUTH_CODES_TABLE)

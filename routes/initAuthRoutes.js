@@ -19,7 +19,7 @@ function initAuthRouters(passport) {
     "/facebook/callback",
     passport.authenticate("facebook", { failureRedirect: "/auth/facebook" }),
     handleTokenError("/auth/facebook"),
-    userController.redirectToFrontMoreInfoForm
+    userController.frontPostAuth
   );
 
   router.get(
@@ -35,7 +35,7 @@ function initAuthRouters(passport) {
     isNotAuth,
     passport.authenticate("google", { failureRedirect: "/auth/google" }),
     handleTokenError("/auth/google"),
-    userController.redirectToFrontMoreInfoForm
+    userController.frontPostAuth
   );
 
   return router;

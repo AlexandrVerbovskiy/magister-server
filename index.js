@@ -8,6 +8,7 @@ const session = require("express-session");
 const cors = require("cors");
 const socketIo = require("socket.io");
 const path = require("path");
+const cookieParser = require("cookie-parser");
 
 const { isAuth, isAdmin } = require("./middlewares");
 const { apiRoutes, initAuthRoutes } = require("./routes");
@@ -24,6 +25,8 @@ app.use(
     saveUninitialized: true,
   })
 );
+
+app.use(cookieParser());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

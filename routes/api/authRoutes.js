@@ -29,7 +29,6 @@ router.post(
 
 router.post("/login", isNotAuth, loginValidation, userController.login);
 
-router.get("/update-session-info", isAuth, userController.updateSessionInfo);
 router.get("/test", userController.test);
 router.post("/my-info", isAuth, userController.myInfo);
 router.post("/my-documents", isAuth, userController.myDocuments);
