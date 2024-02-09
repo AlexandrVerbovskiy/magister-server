@@ -1,10 +1,10 @@
 module.exports = {
   validateToken: require("./validateToken"),
   generateAccessToken: require("./generateAccessToken"),
+  generateVerifyToken: require("./generateVerifyToken"),
   generateRandomString: require("./generateRandomString"),
   generateOtp: require("./generateOtp"),
   upload: require("./upload"),
   byteConverter: require("./byteConverter"),
-  formatDateToSQLFormat: require("./formatDateToSQLFormat"),
   ...require("./dateHelpers"),
 };

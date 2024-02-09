@@ -1,5 +1,9 @@
 const STATIC = require("../static");
-const { generateAccessToken } = require("../utils");
+const {
+  generateAccessToken,
+  generateVerifyToken,
+  validateToken,
+} = require("../utils");
 const BaseController = require("./baseController");
 const CLIENT_URL = process.env.CLIENT_URL;
 
@@ -33,9 +37,9 @@ class UserController extends BaseController {
         acceptedTermCondition,
       });
 
-      const token = await this.userModel.generateEmailVerifyToken(id);
+      const emailVerifyToken = generateVerifyToken({ userId: id });
 
-      this.sendEmailVerificationMail(email, name, token);
+      this.sendEmailVerificationMail(email, name, emailVerifyToken);
 
       return this.sendSuccessResponse(
         res,
@@ -57,11 +61,9 @@ class UserController extends BaseController {
         );
       }
 
-      const token = await this.userModel.generateEmailVerifyToken(
-        getByEmail.id
-      );
+      const emailVerifyToken = generateVerifyToken({ userId: getByEmail.id });
 
-      this.sendEmailVerificationMail(email, getByEmail.name, token);
+      this.sendEmailVerificationMail(email, getByEmail.name, emailVerifyToken);
 
       return this.sendSuccessResponse(
         res,
@@ -106,6 +108,7 @@ class UserController extends BaseController {
   login = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const resCheck = await this.baseEmailPasswordCheck(req);
+      resCheck;
 
       if (resCheck.error) {
         return this.sendErrorResponse(
@@ -116,11 +119,10 @@ class UserController extends BaseController {
       }
 
       const user = resCheck.user;
-      const rememberMe = req.body.rememberMe ?? false;
 
       if (!user.twoFactorAuthentication) {
         this.filterUserFields(user);
-        const accessToken = generateAccessToken(user.id, rememberMe);
+        const accessToken = generateAccessToken(user.id);
 
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
           accessToken,
@@ -200,7 +202,6 @@ class UserController extends BaseController {
     this.baseWrapper(req, res, async () => {
       const { code, type, id } = req.body;
       const userId = await this.userModel.getUserIdByTwoAuthCode(code, type);
-      const rememberMe = req.body.rememberMe ?? false;
 
       if (!userId || userId != id) {
         return this.sendErrorResponse(
@@ -210,7 +211,7 @@ class UserController extends BaseController {
         );
       }
 
-      const accessToken = generateAccessToken(userId, rememberMe);
+      const accessToken = generateAccessToken(userId);
       const user = await this.userModel.getFullById(userId);
       delete user["password"];
 
@@ -286,28 +287,28 @@ class UserController extends BaseController {
   verifyEmail = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email, token } = req.body;
-      const userId = await this.userModel.getUserIdByEmailVerifiedToken(token);
+      const resValidate = validateToken(token);
 
-      if (!userId) {
+      if (!resValidate || !resValidate.userId) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "The token is not valid"
+          "Token is not valid"
         );
       }
 
+      const userId = resValidate.userId;
       const user = await this.userModel.getById(userId);
 
       if (user.email !== email) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "The token is not valid"
+          "Token is not valid"
         );
       }
 
       await this.userModel.setEmailVerified(userId);
-      await this.userModel.removeEmailVerifiedToken(userId);
 
       return this.sendSuccessResponse(
         res,
@@ -329,9 +330,9 @@ class UserController extends BaseController {
         );
       }
 
-      const token = await this.userModel.generateResetPasswordToken(user.id);
+      const resetPasswordToken = generateVerifyToken({ userId: user.id });
 
-      this.sendPasswordResetMail(email, user.name, token);
+      this.sendPasswordResetMail(email, user.name, resetPasswordToken);
 
       return this.sendSuccessResponse(
         res,
@@ -343,18 +344,19 @@ class UserController extends BaseController {
   setNewPassword = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token, password } = req.body;
-      const userId = await this.userModel.getUserIdByResetPasswordToken(token);
+      const resValidate = validateToken(token);
 
-      if (!userId) {
+      if (!resValidate || !resValidate.userId) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "The token is not valid"
+          "Token is not valid"
         );
       }
 
+      const userId = resValidate.userId;
+
       await this.userModel.setNewPassword(userId, password);
-      await this.userModel.removeResetPasswordToken(userId);
 
       return this.sendSuccessResponse(
         res,

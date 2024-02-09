@@ -59,7 +59,7 @@ module.exports = {
   },
   JWT_DEFAULT_ACCESS_LIFETIME: "7d",
   JWT_REMEMBER_ACCESS_LIFETIME: "90d",
-  JWT_ACCEPT_LIFETIME: "1h",
+  JWT_VERIFY_LIFETIME: "1h",
   CLIENT_LINKS: {
     EMAIL_VERIFICATION: "email-verification",
     PASSWORD_RESET: "password-reset",
@@ -70,8 +70,6 @@ module.exports = {
   TABLES: {
     USERS: "users",
     USER_VERIFY_REQUESTS:"user_verify_requests",
-    EMAIL_VERIFIED_TOKENS: "email_verified_tokens",
-    RESET_PASSWORD_TOKENS: "reset_password_tokens",
     PHONE_VERIFIED_CODES: "phone_verified_codes",
     TWO_FACTOR_AUTH_CODES: "two_factor_auth_codes",
     SEED_STATUS: "seeds_status",
