@@ -604,20 +604,7 @@ class UserController extends BaseController {
       }
 
       const accessToken = generateAccessToken(userId, true);
-
-      let resLink = CLIENT_URL;
-
-      if (needSetPassword) {
-        resLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.MORE_INFO_COMPETING_LINK}`;
-      } else if (needRegularViewInfoForm) {
-        resLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.PROFILE_EDIT_LINK}`;
-      }
-
-      console.log(accessToken);
-
-      const cookie = generateBearerCookie(accessToken, true);
-      res.cookie(cookie.name, cookie.value, cookie.options);
-      return res.redirect(resLink);
+      return res.redirect(`${CLIENT_URL}/${STATIC.CLIENT_LINKS.USER_AUTHORIZED}?token=${accessToken}`);
     });
 
   myInfo = (req, res) =>
