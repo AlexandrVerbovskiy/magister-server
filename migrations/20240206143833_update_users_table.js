@@ -10,10 +10,10 @@ exports.up = function (knex) {
     table.dropColumn("linkedin");
     table.dropColumn("facebook");
 
-    table.text("facebook_url").nullable().defaultTo(null);
-    table.text("twitter_url").nullable().defaultTo(null);
-    table.text("linkedin_url").nullable().defaultTo(null);
-    table.text("instagram_url").nullable().defaultTo(null);
+    table.text("facebook_url");
+    table.text("twitter_url");
+    table.text("linkedin_url");
+    table.text("instagram_url");
   });
 };
 
@@ -23,7 +23,7 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
-    table.text("social_media_links").nullable().defaultTo(null);
+    table.text("social_media_links");
     table.string("linkedin").nullable().defaultTo(null);
     table.string("facebook").nullable().defaultTo(null);
 

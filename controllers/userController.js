@@ -1,6 +1,10 @@
-const { Exception } = require("handlebars");
 const STATIC = require("../static");
-const { generateAccessToken } = require("../utils");
+const {
+  generateAccessToken,
+  generateVerifyToken,
+  validateToken,
+  generateBearerCookie,
+} = require("../utils");
 const BaseController = require("./baseController");
 const CLIENT_URL = process.env.CLIENT_URL;
 
@@ -16,8 +20,6 @@ class UserController extends BaseController {
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { name, email, password, acceptedTermCondition } = req.body;
-
-      console.log(req.body);
 
       const getByEmail = await this.userModel.getByEmail(email);
 
@@ -36,14 +38,38 @@ class UserController extends BaseController {
         acceptedTermCondition,
       });
 
-      const token = await this.userModel.generateEmailVerifyToken(id);
+      const emailVerifyToken = generateVerifyToken({ userId: id });
 
-      this.sendEmailVerificationMail(email, name, token);
+      this.sendEmailVerificationMail(email, name, emailVerifyToken);
 
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.CREATED,
         "Account created successfully. An account confirmation letter has been sent to the email"
+      );
+    });
+
+  sendVerifyEmail = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { email } = req.body;
+      const getByEmail = await this.userModel.getByEmail(email);
+
+      if (!getByEmail) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Email wasn't found"
+        );
+      }
+
+      const emailVerifyToken = generateVerifyToken({ userId: getByEmail.id });
+
+      this.sendEmailVerificationMail(email, getByEmail.name, emailVerifyToken);
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.CREATED,
+        "Letter created successfully. An account confirmation letter has been sent to the email"
       );
     });
 
@@ -83,7 +109,6 @@ class UserController extends BaseController {
   login = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const resCheck = await this.baseEmailPasswordCheck(req);
-      resCheck;
 
       if (resCheck.error) {
         return this.sendErrorResponse(
@@ -94,17 +119,26 @@ class UserController extends BaseController {
       }
 
       const user = resCheck.user;
+      const rememberMe = req.body.rememberMe ?? false;
 
       if (!user.twoFactorAuthentication) {
         this.filterUserFields(user);
-        const accessToken = generateAccessToken(user.id);
+        const accessToken = generateAccessToken(user.id, rememberMe);
 
-        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          accessToken,
-          user,
-          needCode: false,
-          canSendCodeByPhone: user.phoneVerified,
-        });
+        const cookieInfo = [generateBearerCookie(accessToken, rememberMe)];
+
+        return this.sendSuccessResponse(
+          res,
+          STATIC.SUCCESS.OK,
+          null,
+          {
+            accessToken,
+            user,
+            needCode: false,
+            canSendCodeByPhone: user.phoneVerified,
+          },
+          cookieInfo
+        );
       } else {
         if (user.phone && user.phoneVerified) {
           return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -186,16 +220,26 @@ class UserController extends BaseController {
         );
       }
 
-      const accessToken = generateAccessToken(userId);
+      const rememberMe = req.body.rememberMe ?? false;
+      const accessToken = generateAccessToken(userId, rememberMe);
+
       const user = await this.userModel.getFullById(userId);
       delete user["password"];
 
       await this.userModel.removeTwoAuthCode(code, type, userId);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        accessToken,
-        user,
-      });
+      const cookieInfo = [generateBearerCookie(accessToken, rememberMe)];
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        null,
+        {
+          accessToken,
+          user,
+        },
+        cookieInfo
+      );
     });
 
   setRole = (req, res) =>
@@ -227,6 +271,23 @@ class UserController extends BaseController {
       });
     });
 
+  changeTwoFactorAuth = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const twoFactorAuthentication = await this.userModel.changeTwoFactorAuth(
+        userId
+      );
+
+      const message = twoFactorAuthentication
+        ? "Two-Factor Authentication activated successfully"
+        : "Two-Factor Authentication deactivated successfully";
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
+        id: userId,
+        twoFactorAuthentication,
+      });
+    });
+
   changeVerified = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
@@ -245,28 +306,28 @@ class UserController extends BaseController {
   verifyEmail = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email, token } = req.body;
-      const userId = await this.userModel.getUserIdByEmailVerifiedToken(token);
+      const resValidate = validateToken(token);
 
-      if (!userId) {
+      if (!resValidate || !resValidate.userId) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "The token is not valid"
+          "Token is not valid"
         );
       }
 
+      const userId = resValidate.userId;
       const user = await this.userModel.getById(userId);
 
       if (user.email !== email) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "The token is not valid"
+          "Token is not valid"
         );
       }
 
       await this.userModel.setEmailVerified(userId);
-      await this.userModel.removeEmailVerifiedToken(userId);
 
       return this.sendSuccessResponse(
         res,
@@ -288,9 +349,9 @@ class UserController extends BaseController {
         );
       }
 
-      const token = await this.userModel.generateResetPasswordToken(user.id);
+      const resetPasswordToken = generateVerifyToken({ userId: user.id });
 
-      this.sendPasswordResetMail(email, user.name, token);
+      this.sendPasswordResetMail(email, user.name, resetPasswordToken);
 
       return this.sendSuccessResponse(
         res,
@@ -302,41 +363,25 @@ class UserController extends BaseController {
   setNewPassword = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token, password } = req.body;
-      const userId = await this.userModel.getUserIdByResetPasswordToken(token);
+      const resValidate = validateToken(token);
 
-      if (!userId) {
+      if (!resValidate || !resValidate.userId) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
-          "The token is not valid"
+          "Token is not valid"
         );
       }
 
+      const userId = resValidate.userId;
+
       await this.userModel.setNewPassword(userId, password);
-      await this.userModel.removeResetPasswordToken(userId);
 
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
         "Password updated successfully"
       );
-    });
-
-  updateSessionInfo = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const user = await this.userModel.getFullById(userId);
-
-      if (!user) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.UNAUTHORIZED);
-      }
-
-      const accessToken = generateAccessToken(user.id);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        accessToken,
-        user,
-      });
     });
 
   list = (req, res) =>
@@ -358,6 +403,17 @@ class UserController extends BaseController {
   delete = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
+
+      if (isNaN(id)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const { userId: currentId } = req.userData;
+
+      if (id == currentId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
       this.userModel.delete(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
@@ -365,6 +421,11 @@ class UserController extends BaseController {
   getById = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+
+      if (isNaN(id)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       const user = await this.userModel.getById(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
     });
@@ -372,22 +433,34 @@ class UserController extends BaseController {
   getFullById = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+
+      if (isNaN(id)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       const user = await this.userModel.getFullById(id);
+
+      if (!user) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
     });
 
-  baseUpdate = async (id, dataToSave, file) => {
+  baseCheckEmailUnique = async (dataToSave, id = null) => {
     const { email } = dataToSave;
     const userByEmail = await this.userModel.getByEmail(email);
-    let photo = null;
-
-    if (file) {
-      photo = this.moveUploadsFileToFolder(file, "users");
-      dataToSave["photo"] = photo;
-    }
 
     if (userByEmail && id != userByEmail.id)
       throw new Error(`User with email '${email}' already exists`);
+  };
+
+  baseUpdate = async (id, dataToSave, file) => {
+    await this.baseCheckEmailUnique(dataToSave, id);
+
+    if (file) {
+      dataToSave["photo"] = this.moveUploadsFileToFolder(file, "users");
+    }
 
     const info = await this.userModel.getById(id);
 
@@ -410,14 +483,37 @@ class UserController extends BaseController {
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { id } = dataToSave;
+      const { userId: currentId } = req.userData;
+
+      if (id == currentId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
       const user = await this.baseUpdate(id, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
+    });
+
+  create = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const dataToSave = req.body;
+      await this.baseCheckEmailUnique(dataToSave);
+
+      if (req.file) {
+        dataToSave["photo"] = this.moveUploadsFileToFolder(req.file, "users");
+      }
+
+      const userId = await this.userModel.createFull(dataToSave);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        id: userId,
+      });
     });
 
   saveProfile = (req, res) => {
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { userId } = req.userData;
+
+      dataToSave["needRegularViewInfoForm"] = false;
 
       const user = await this.baseUpdate(userId, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
@@ -427,6 +523,7 @@ class UserController extends BaseController {
   sendVerifyPhone = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
+
       const resGenerate = await this.userModel.generatePhoneVerifyCode(userId);
 
       if (!resGenerate) {
@@ -460,6 +557,7 @@ class UserController extends BaseController {
     this.baseWrapper(req, res, async () => {
       const { code } = req.body;
       const { userId } = req.userData;
+
       const gotUserId = await this.userModel.getUserIdByPhoneVerifyCode(code);
 
       if (!gotUserId || gotUserId != userId) {
@@ -479,29 +577,45 @@ class UserController extends BaseController {
       );
     });
 
-  redirectToFrontMoreInfoForm = (req, res) =>
+  frontPostAuth = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const name = req.user.displayName;
       const email = req.user.emails[0].value;
 
       const user = await this.userModel.getByEmail(email);
 
+      let emailVerified = true;
+      let needSetPassword = true;
+      let needRegularViewInfoForm = true;
+
       let userId = null;
 
       if (user) {
         userId = user.id;
+        needSetPassword = user.needSetPassword;
+        needRegularViewInfoForm = user.needSetPassword;
       } else {
         userId = await this.userModel.create({
           name,
           email,
-          acceptedTermCondition: true,
-          emailVerified: true,
-          needSetPassword: true,
+          emailVerified,
+          needSetPassword,
         });
       }
 
-      const accessToken = generateAccessToken(userId);
-      const authLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.USER_AUTHORIZED}?token=${accessToken}`;
+      const accessToken = generateAccessToken(userId, true);
+
+      let resLink = CLIENT_URL;
+
+      if (needSetPassword) {
+        resLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.MORE_INFO_COMPETING_LINK}`;
+      } else if (needRegularViewInfoForm) {
+        resLink = `${CLIENT_URL}/${STATIC.CLIENT_LINKS.PROFILE_EDIT_LINK}`;
+      }
+
+      const cookie = generateBearerCookie(accessToken, true);
+      res.cookie(cookie.name, cookie.value, cookie.options);
+
       return res.redirect(authLink);
     });
 
@@ -515,6 +629,7 @@ class UserController extends BaseController {
   myDocuments = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
+
       const documents = await this.userModel.getDocumentsByUserId(userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
@@ -524,16 +639,21 @@ class UserController extends BaseController {
   getDocumentsByUserId = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.body;
+
+      if (isNaN(userId)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       const documents = await this.userModel.getDocumentsByUserId(userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
       });
     });
 
-  setMyPassword = (req, res) =>
+  updateShortInfo = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const { password } = req.body;
+      const { password, acceptedTermCondition } = req.body;
 
       const isEmpty = await this.userModel.checkUserPasswordEmpty(userId);
 
@@ -542,6 +662,7 @@ class UserController extends BaseController {
       }
 
       await this.userModel.setNewPassword(userId, password);
+      await this.userModel.updateById(userId, { acceptedTermCondition });
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
     });
 

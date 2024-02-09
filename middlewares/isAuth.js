@@ -2,25 +2,31 @@ const STATIC = require("../static");
 const { validateToken } = require("../utils");
 
 function isAuth(request, response, next) {
-  const authorization = request.headers.authorization;
+  const token = request.cookies.Bearer;
 
-  if (!authorization)
+  if (!token)
     return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
       isError: true,
       message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
     });
 
-  const token = authorization.split(" ")[1];
-  const userId = validateToken(token);
+  const resValidate = validateToken(token);
 
-  if (!userId)
+  if (!resValidate || !resValidate.userId)
     return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
       isError: true,
       message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
     });
+    
+  if (isNaN(resValidate.userId)) {
+    return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
+      isError: true,
+      message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
+    });
+  }
 
   request.userData = {
-    userId,
+    userId: resValidate.userId,
   };
   return next();
 }
