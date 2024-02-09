@@ -18,6 +18,8 @@ exports.seed = async function (knex) {
       password: password,
       email_verified: true,
       role: "admin",
+      verified: true,
+      accepted_term_condition: true,
     },
   ]);
 };

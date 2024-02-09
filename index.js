@@ -8,6 +8,7 @@ const session = require("express-session");
 const cors = require("cors");
 const socketIo = require("socket.io");
 const path = require("path");
+const cookieParser = require("cookie-parser");
 
 const { isAuth, isAdmin } = require("./middlewares");
 const { apiRoutes, initAuthRoutes } = require("./routes");
@@ -24,6 +25,8 @@ app.use(
     saveUninitialized: true,
   })
 );
+
+app.use(cookieParser());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -73,6 +76,7 @@ app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
 app.use("/auth", isNotAuth, initAuthRoutes(passport));
 app.use("/api/auth", apiRoutes.authApiRoutes);
 app.use("/api/users", apiRoutes.userApiRoutes);
+app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestRoutes);
 app.use("/api/logs", isAuth, isAdmin, apiRoutes.logApiRoutes);
 
 app.use((req, res, next) => {

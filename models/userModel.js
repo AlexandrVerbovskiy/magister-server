@@ -2,13 +2,15 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const STATIC = require("../static");
 const db = require("../database");
-const { generateRandomString, generateOtp } = require("../utils");
+const {
+  generateOtp,
+  getOneHourAgo,
+  generateRandomString,
+} = require("../utils");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
 const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
-const RESET_PASSWORD_TOKENS_TABLE = STATIC.TABLES.RESET_PASSWORD_TOKENS;
-const EMAIL_VERIFIED_TOKENS_TABLE = STATIC.TABLES.EMAIL_VERIFIED_TOKENS;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 
 class UserModel {
@@ -16,13 +18,11 @@ class UserModel {
     "id",
     "name",
     "email",
-    "email_verified as emailVerified",
     "role",
     "contact_details as contactDetails",
     "brief_bio as briefBio",
     "photo",
     "phone",
-    "phone_verified as phoneVerified",
     "suspicious",
     "place_work as placeWork",
     "facebook_url as facebookUrl",
@@ -57,7 +57,7 @@ class UserModel {
   ];
 
   documentFields = [
-    "user_id as userId",
+    `${USER_DOCUMENTS_TABLE}.user_id as userId`,
     "proof_of_address_link as proofOfAddressLink",
     "reputable_bank_id_link as reputableBankIdLink",
     "utility_link as utilityLink",
@@ -81,7 +81,14 @@ class UserModel {
 
   getByEmail = async (email) => {
     return await db(USERS_TABLE)
-      .select(this.visibleFields)
+      .select([
+        ...this.visibleFields,
+        "email_verified as emailVerified",
+        "phone_verified as phoneVerified",
+        "need_regular_view_info_form as needRegularViewInfoForm",
+        "need_set_password as needSetPassword",
+        "active",
+      ])
       .where("email", email)
       .first();
   };
@@ -130,6 +137,89 @@ class UserModel {
       })
       .returning("id");
 
+    return res[0].id;
+  };
+
+  convertFullUserDataToSave = (userData) => {
+    const {
+      name,
+      email,
+      phone,
+      briefBio,
+      contactDetails,
+      twoFactorAuthentication,
+      emailVerified,
+      phoneVerified,
+      active,
+      suspicious,
+      role,
+      photo,
+      placeWork,
+      facebookUrl,
+      instagramUrl,
+      linkedinUrl,
+      twitterUrl,
+      verified,
+      acceptedTermCondition,
+      needRegularViewInfoForm,
+    } = userData;
+
+    const updateData = {
+      name,
+      email,
+      phone,
+      contact_details: contactDetails,
+      brief_bio: briefBio,
+      two_factor_authentication: twoFactorAuthentication,
+      place_work: placeWork,
+      facebook_url: facebookUrl,
+      instagram_url: instagramUrl,
+      linkedin_url: linkedinUrl,
+      twitter_url: twitterUrl,
+    };
+
+    if (emailVerified !== null) {
+      updateData.email_verified = emailVerified;
+    }
+
+    if (acceptedTermCondition !== null) {
+      updateData.accepted_term_condition = acceptedTermCondition;
+    }
+
+    if (needRegularViewInfoForm !== null) {
+      updateData.need_regular_view_info_form = needRegularViewInfoForm;
+    }
+
+    if (phoneVerified !== null) {
+      updateData.phone_verified = phoneVerified;
+    }
+
+    if (active !== null) {
+      updateData.active = active;
+    }
+
+    if (suspicious !== null) {
+      updateData.suspicious = suspicious;
+    }
+
+    if (role !== null) {
+      updateData.role = role;
+    }
+
+    if (photo !== null) {
+      updateData.photo = photo;
+    }
+
+    if (verified !== null) {
+      updateData.verified = verified;
+    }
+
+    return updateData;
+  };
+
+  createFull = async (userData) => {
+    const dataToSave = this.convertFullUserDataToSave(userData);
+    const res = await db(USERS_TABLE).insert(dataToSave).returning("id");
     return res[0].id;
   };
 
@@ -189,6 +279,21 @@ class UserModel {
     return res[0].active;
   };
 
+  setVerified = async (id, verified) => {
+    await db(USERS_TABLE).where({ id }).update({ verified });
+  };
+
+  changeTwoFactorAuth = async (id) => {
+    const res = await db(USERS_TABLE)
+      .where({ id })
+      .update({
+        two_factor_authentication: db.raw("NOT two_factor_authentication"),
+      })
+      .returning("two_factor_authentication as twoFactorAuthentication");
+
+    return res[0].twoFactorAuthentication;
+  };
+
   changeVerified = async (id) => {
     const res = await db(USERS_TABLE)
       .where({ id })
@@ -198,51 +303,8 @@ class UserModel {
     return res[0].verified;
   };
 
-  generateEmailVerifyToken = async (id) => {
-    const token = generateRandomString();
-    await db(EMAIL_VERIFIED_TOKENS_TABLE).insert({ user_id: id, token });
-    return token;
-  };
-
-  getUserIdByEmailVerifiedToken = async (token) => {
-    const res = await db(EMAIL_VERIFIED_TOKENS_TABLE)
-      .select("user_id")
-      .where({ token })
-      .first();
-
-    return res?.user_id;
-  };
-
   setEmailVerified = async (id) => {
     await db(USERS_TABLE).where({ id }).update({ email_verified: true });
-  };
-
-  removeEmailVerifiedToken = async (userId) => {
-    await db(EMAIL_VERIFIED_TOKENS_TABLE).where({ user_id: userId }).del();
-  };
-
-  generateResetPasswordToken = async (id) => {
-    const res = await db(RESET_PASSWORD_TOKENS_TABLE)
-      .select("token")
-      .where({ user_id: id })
-      .first();
-
-    if (res) {
-      return res.token;
-    }
-
-    const token = generateRandomString();
-    await db(RESET_PASSWORD_TOKENS_TABLE).insert({ user_id: id, token });
-    return token;
-  };
-
-  getUserIdByResetPasswordToken = async (token) => {
-    const res = await db(RESET_PASSWORD_TOKENS_TABLE)
-      .select("user_id")
-      .where({ token })
-      .first();
-
-    return res?.user_id;
   };
 
   setNewPassword = async (id, password) => {
@@ -251,10 +313,6 @@ class UserModel {
     await db(USERS_TABLE)
       .where({ id })
       .update({ password: hashedPassword, need_set_password: false });
-  };
-
-  removeResetPasswordToken = async (userId) => {
-    await db(RESET_PASSWORD_TOKENS_TABLE).where({ user_id: userId }).del();
   };
 
   totalCount = async (filter) => {
@@ -288,70 +346,8 @@ class UserModel {
   };
 
   updateById = async (id, userData) => {
-    const {
-      name,
-      email,
-      phone,
-      briefBio,
-      contactDetails,
-      twoFactorAuthentication,
-      emailVerified,
-      phoneVerified,
-      active,
-      suspicious,
-      role,
-      photo,
-      placeWork,
-      facebookUrl,
-      instagramUrl,
-      linkedinUrl,
-      twitterUrl,
-      verified,
-    } = userData;
-
-    const updateData = {
-      name,
-      email,
-      phone,
-      contact_details: contactDetails,
-      brief_bio: briefBio,
-      two_factor_authentication: twoFactorAuthentication,
-      place_work: placeWork,
-      facebook_url: facebookUrl,
-      instagram_url: instagramUrl,
-      linkedin_url: linkedinUrl,
-      twitter_url: twitterUrl,
-    };
-
-    if (emailVerified !== null) {
-      updateData.email_verified = emailVerified;
-    }
-
-    if (phoneVerified !== null) {
-      updateData.phone_verified = phoneVerified;
-    }
-
-    if (active !== null) {
-      updateData.active = active;
-    }
-
-    if (suspicious !== null) {
-      updateData.suspicious = suspicious;
-    }
-
-    if (role !== null) {
-      updateData.role = role;
-    }
-
-    if (photo !== null) {
-      updateData.photo = photo;
-    }
-
-    if (verified !== null) {
-      updateData.verified = verified;
-    }
-
-    await db(USERS_TABLE).where("id", id).update(updateData);
+    const dataToSave = this.convertFullUserDataToSave(userData);
+    await db(USERS_TABLE).where("id", id).update(dataToSave);
   };
 
   generatePhoneVerifyCode = async (userId) => {
@@ -360,7 +356,19 @@ class UserModel {
     if (!user.phone) return { phone: null, code: null };
 
     const code = generateOtp();
-    await db(PHONE_VERIFIED_CODES_TABLE).insert({ user_id: userId, code });
+
+    const userToken = await db(PHONE_VERIFIED_CODES_TABLE)
+      .where({ user_id: userId })
+      .first();
+
+    if (userToken) {
+      await db(PHONE_VERIFIED_CODES_TABLE)
+        .where({ user_id: userId })
+        .update({ code, updated_at: db.fn.now() });
+    } else {
+      await db(PHONE_VERIFIED_CODES_TABLE).insert({ user_id: userId, code });
+    }
+
     return { code, phone: user.phone };
   };
 
@@ -368,6 +376,7 @@ class UserModel {
     const res = await db(PHONE_VERIFIED_CODES_TABLE)
       .select("user_id")
       .where({ code })
+      .where("updated_at", ">", db.raw("?", [getOneHourAgo()]))
       .first();
 
     return res?.user_id;
@@ -388,7 +397,18 @@ class UserModel {
       dataToSave["type_verification"] = "email";
     }
 
-    await db(TWO_FACTOR_AUTH_CODES_TABLE).insert(dataToSave);
+    const userToken = await db(TWO_FACTOR_AUTH_CODES_TABLE)
+      .where({ user_id: userId })
+      .first();
+
+    if (userToken) {
+      await db(TWO_FACTOR_AUTH_CODES_TABLE)
+        .where({ user_id: userId })
+        .update({ ...dataToSave, updated_at: db.fn.now() });
+    } else {
+      await db(TWO_FACTOR_AUTH_CODES_TABLE).insert(dataToSave);
+    }
+
     return dataToSave;
   };
 
@@ -396,6 +416,7 @@ class UserModel {
     const res = await db(TWO_FACTOR_AUTH_CODES_TABLE)
       .select("user_id")
       .where({ code, type_verification: type })
+      .where("updated_at", ">", db.raw("?", [getOneHourAgo()]))
       .first();
 
     return res?.user_id;

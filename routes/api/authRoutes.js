@@ -1,11 +1,14 @@
 const { Router } = require("express");
 const router = Router();
 const { isAuth, isNotAuth, isFileLimit } = require("../../middlewares");
-const { userController } = require("../../controllers");
+const {
+  userController,
+  userVerifyRequestController,
+} = require("../../controllers");
 const {
   registerValidation,
   loginValidation,
-  passwordValidation,
+  updateShortInfoValidation,
   updatePasswordValidation,
   twoFactorAuthGenerateValidation,
   twoFactorAuthVerifyValidation,
@@ -14,8 +17,8 @@ const {
   codeValidation,
 } = require("../../validations/auth");
 const { upload } = require("../../utils");
+
 const emailValidation = require("../../validations/auth/emailValidation");
-const tokenValidation = require("../../validations/auth/tokenValidation");
 
 router.post(
   "/register",
@@ -26,14 +29,6 @@ router.post(
 
 router.post("/login", isNotAuth, loginValidation, userController.login);
 
-/*router.post(
-  "/register-admin",
-  isNotAuth,
-  registerValidation,
-  userController.register
-);*/
-
-router.get("/update-session-info", isAuth, userController.updateSessionInfo);
 router.get("/test", userController.test);
 router.post("/my-info", isAuth, userController.myInfo);
 router.post("/my-documents", isAuth, userController.myDocuments);
@@ -46,10 +41,10 @@ router.post(
 );
 
 router.post(
-  "/set-my-password",
+  "/update-short-info",
   isAuth,
-  passwordValidation,
-  userController.setMyPassword
+  updateShortInfoValidation,
+  userController.updateShortInfo
 );
 
 router.post(
@@ -104,6 +99,12 @@ router.post(
 router.post("/generate-my-phone-code", isAuth, userController.sendVerifyPhone);
 
 router.post(
+  "/generate-my-email-code",
+  isNotAuth,
+  userController.sendVerifyEmail
+);
+
+router.post(
   "/check-my-phone-code",
   isAuth,
   codeValidation,
@@ -119,6 +120,18 @@ router.post(
   "/check-two-factor-code",
   isNotAuth,
   userController.twoFactorAuthVerify
+);
+
+router.post(
+  "/change-two-factor-auth",
+  isAuth,
+  userController.changeTwoFactorAuth
+);
+
+router.post(
+  "/can-send-verify-request",
+  isAuth,
+  userVerifyRequestController.checkUserCanVerifyRequest
 );
 
 module.exports = router;
