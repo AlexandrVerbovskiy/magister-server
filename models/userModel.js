@@ -2,13 +2,15 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const STATIC = require("../static");
 const db = require("../database");
-const { generateRandomString, generateOtp } = require("../utils");
+const {
+  generateOtp,
+  getOneHourAgo,
+  generateRandomString,
+} = require("../utils");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
 const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
-const RESET_PASSWORD_TOKENS_TABLE = STATIC.TABLES.RESET_PASSWORD_TOKENS;
-const EMAIL_VERIFIED_TOKENS_TABLE = STATIC.TABLES.EMAIL_VERIFIED_TOKENS;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 
 class UserModel {
@@ -300,51 +302,8 @@ class UserModel {
     return res[0].verified;
   };
 
-  generateEmailVerifyToken = async (id) => {
-    const token = generateRandomString();
-    await db(EMAIL_VERIFIED_TOKENS_TABLE).insert({ user_id: id, token });
-    return token;
-  };
-
-  getUserIdByEmailVerifiedToken = async (token) => {
-    const res = await db(EMAIL_VERIFIED_TOKENS_TABLE)
-      .select("user_id")
-      .where({ token })
-      .first();
-
-    return res?.user_id;
-  };
-
   setEmailVerified = async (id) => {
     await db(USERS_TABLE).where({ id }).update({ email_verified: true });
-  };
-
-  removeEmailVerifiedToken = async (userId) => {
-    await db(EMAIL_VERIFIED_TOKENS_TABLE).where({ user_id: userId }).del();
-  };
-
-  generateResetPasswordToken = async (id) => {
-    const res = await db(RESET_PASSWORD_TOKENS_TABLE)
-      .select("token")
-      .where({ user_id: id })
-      .first();
-
-    if (res) {
-      return res.token;
-    }
-
-    const token = generateRandomString();
-    await db(RESET_PASSWORD_TOKENS_TABLE).insert({ user_id: id, token });
-    return token;
-  };
-
-  getUserIdByResetPasswordToken = async (token) => {
-    const res = await db(RESET_PASSWORD_TOKENS_TABLE)
-      .select("user_id")
-      .where({ token })
-      .first();
-
-    return res?.user_id;
   };
 
   setNewPassword = async (id, password) => {
@@ -353,10 +312,6 @@ class UserModel {
     await db(USERS_TABLE)
       .where({ id })
       .update({ password: hashedPassword, need_set_password: false });
-  };
-
-  removeResetPasswordToken = async (userId) => {
-    await db(RESET_PASSWORD_TOKENS_TABLE).where({ user_id: userId }).del();
   };
 
   totalCount = async (filter) => {
@@ -400,7 +355,19 @@ class UserModel {
     if (!user.phone) return { phone: null, code: null };
 
     const code = generateOtp();
-    await db(PHONE_VERIFIED_CODES_TABLE).insert({ user_id: userId, code });
+
+    const userToken = await db(PHONE_VERIFIED_CODES_TABLE)
+      .where({ user_id: userId })
+      .first();
+
+    if (userToken) {
+      await db(PHONE_VERIFIED_CODES_TABLE)
+        .where({ user_id: userId })
+        .update({ code, updated_at: db.fn.now() });
+    } else {
+      await db(PHONE_VERIFIED_CODES_TABLE).insert({ user_id: userId, code });
+    }
+
     return { code, phone: user.phone };
   };
 
@@ -408,6 +375,7 @@ class UserModel {
     const res = await db(PHONE_VERIFIED_CODES_TABLE)
       .select("user_id")
       .where({ code })
+      .where("updated_at", ">", db.raw("?", [getOneHourAgo()]))
       .first();
 
     return res?.user_id;
@@ -428,7 +396,20 @@ class UserModel {
       dataToSave["type_verification"] = "email";
     }
 
-    await db(TWO_FACTOR_AUTH_CODES_TABLE).insert(dataToSave);
+    const userToken = await db(TWO_FACTOR_AUTH_CODES_TABLE)
+      .where({ user_id: userId })
+      .first();
+
+    console.log(userToken);
+
+    if (userToken) {
+      await db(TWO_FACTOR_AUTH_CODES_TABLE)
+        .where({ user_id: userId })
+        .update({ ...dataToSave, updated_at: db.fn.now() });
+    } else {
+      await db(TWO_FACTOR_AUTH_CODES_TABLE).insert(dataToSave);
+    }
+
     return dataToSave;
   };
 
@@ -436,6 +417,7 @@ class UserModel {
     const res = await db(TWO_FACTOR_AUTH_CODES_TABLE)
       .select("user_id")
       .where({ code, type_verification: type })
+      .where("updated_at", ">", db.raw("?", [getOneHourAgo()]))
       .first();
 
     return res?.user_id;

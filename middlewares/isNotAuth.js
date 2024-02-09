@@ -7,15 +7,13 @@ function isNotAuth(request, response, next) {
   if (!authorization) return next();
 
   const token = authorization.split(" ")[1];
-  const userId = validateToken(token);
+  const resValidate = validateToken(token);
 
-  if (userId)
-    return response
-      .status(STATIC.ERRORS.FORBIDDEN.STATUS)
-      .json({
-        isError: true,
-        message: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE,
-      });
+  if (resValidate && resValidate.userId)
+    return response.status(STATIC.ERRORS.FORBIDDEN.STATUS).json({
+      isError: true,
+      message: STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE,
+    });
 
   return next();
 }
