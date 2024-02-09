@@ -6,5 +6,6 @@ module.exports = {
   generateOtp: require("./generateOtp"),
   upload: require("./upload"),
   byteConverter: require("./byteConverter"),
+  ...require("./cookieResponse"),
   ...require("./dateHelpers"),
 };

@@ -35,6 +35,11 @@ class LogController extends BaseController {
   getById = (req, res) => {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+
+      if (isNaN(id)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       const log = await this.logModel.getById(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, log);
     });

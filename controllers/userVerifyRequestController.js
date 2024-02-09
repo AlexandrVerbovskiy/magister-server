@@ -35,6 +35,11 @@ class UserVerifyRequestController extends BaseController {
   getById = (req, res) => {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+
+      if (isNaN(id)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       const request = await this.userVerifyRequestModel.getById(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, request);
     });
@@ -81,6 +86,11 @@ class UserVerifyRequestController extends BaseController {
   updateUserVerifyRequest = (req, res) => {
     this.baseWrapper(req, res, async () => {
       const { id, verified } = req.body;
+
+      if (isNaN(id)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       const description = req.body.description ?? "";
       const userId = await this.userVerifyRequestModel.getUserIdById(id);
 
