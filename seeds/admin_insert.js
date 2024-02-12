@@ -20,6 +20,7 @@ exports.seed = async function (knex) {
       role: "admin",
       verified: true,
       accepted_term_condition: true,
+      two_factor_authentication: false
     },
   ]);
 };
