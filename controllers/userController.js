@@ -3,7 +3,6 @@ const {
   generateAccessToken,
   generateVerifyToken,
   validateToken,
-  generateBearerCookie,
 } = require("../utils");
 const BaseController = require("./baseController");
 const CLIENT_URL = process.env.CLIENT_URL;
@@ -125,8 +124,6 @@ class UserController extends BaseController {
         this.filterUserFields(user);
         const accessToken = generateAccessToken(user.id, rememberMe);
 
-        const cookieInfo = [generateBearerCookie(accessToken, rememberMe)];
-
         return this.sendSuccessResponse(
           res,
           STATIC.SUCCESS.OK,
@@ -136,8 +133,7 @@ class UserController extends BaseController {
             user,
             needCode: false,
             canSendCodeByPhone: user.phoneVerified,
-          },
-          cookieInfo
+          }
         );
       } else {
         if (user.phone && user.phoneVerified) {
@@ -228,8 +224,6 @@ class UserController extends BaseController {
 
       await this.userModel.removeTwoAuthCode(code, type, userId);
 
-      const cookieInfo = [generateBearerCookie(accessToken, rememberMe)];
-
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
@@ -237,8 +231,7 @@ class UserController extends BaseController {
         {
           accessToken,
           user,
-        },
-        cookieInfo
+        }
       );
     });
 
