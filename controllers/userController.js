@@ -6,6 +6,8 @@ const {
 } = require("../utils");
 const BaseController = require("./baseController");
 const CLIENT_URL = process.env.CLIENT_URL;
+const fetch = require('node-fetch');
+const { OAuth2Client } = require('google-auth-library');
 
 class UserController extends BaseController {
   constructor() {
@@ -15,6 +17,28 @@ class UserController extends BaseController {
   filterUserFields = (user) => {
     delete user["password"];
   };
+
+  getUserEmailByFacebookToken = async(token)=>{
+      const query = `https://graph.facebook.com/me?fields=email&access_token=${token}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.email;
+  }
+
+  getUserEmailByGoogleToken = async(token)=>{
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_API);
+      try {
+          const ticket = await client.verifyIdToken({
+              idToken: token,
+              audience: process.env.GOOGLE_CLIENT_API,
+          });
+          const payload = ticket.getPayload();
+          const userEmail = payload['email'];
+          return userEmail;
+      } catch (error) {
+          return null;
+      }
+  }
 
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
