@@ -10,6 +10,7 @@ const generateBearerCookie = (token, remember) => {
     value: token,
     options: {
       maxAge: duration,
+      httpOnly: true
     },
   };
 };
