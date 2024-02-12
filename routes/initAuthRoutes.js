@@ -38,13 +38,6 @@ function initAuthRouters(passport) {
         userController.frontPostAuth
     );
 
-    router.get(
-        "/test",
-        (req, res) => {
-            res.send("error test")
-        }
-    );
-
     return router;
 }
 
