@@ -23,7 +23,7 @@ app.use(
   session({
     secret: process.env.APP_SESSION_SECRET,
     resave: true,
-    saveUninitialized: true,
+    saveUninitialized: true
   })
 );
 
@@ -32,7 +32,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true, exposedHeaders: ["set-cookie"] }));
 
 app.use(passport.initialize());
 app.use(passport.session());
