@@ -47,15 +47,8 @@ class Controller {
     baseInfo,
     message,
     body,
-    isError,
-    cookies = null
-  ) => {
-    if (cookies) {
-      cookies.forEach((cookieInfo) =>
-        response.cookie(cookieInfo.name, cookieInfo.value, cookieInfo.options)
-      );
-    }
-
+    isError
+    ) => {
     return response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
       body,
@@ -67,21 +60,19 @@ class Controller {
     response,
     baseInfo = null,
     message = null,
-    body = {},
-    cookies = null
+    body = {}
   ) => {
     if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
-    return this.sendResponse(response, baseInfo, message, body, false, cookies);
+    return this.sendResponse(response, baseInfo, message, body, false);
   };
 
   sendErrorResponse = (
     response,
     baseInfo,
     message = null,
-    body = {},
-    cookies = null
+    body = {}
   ) => {
-    return this.sendResponse(response, baseInfo, message, body, true, cookies);
+    return this.sendResponse(response, baseInfo, message, body, true);
   };
 
   baseWrapper = async (req, res, func) => {
