@@ -9,4 +9,5 @@ module.exports = {
   resetPasswordValidation: require("./resetPasswordValidation"),
   codeValidation: require("./codeValidation"),
   updateShortInfoValidation: require("./updateShortInfoValidation"),
+  getTokenByProviderValidation: require("./getTokenByProviderValidation"),
 };

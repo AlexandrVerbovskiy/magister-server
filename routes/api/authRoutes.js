@@ -15,6 +15,7 @@ const {
   verifyEmailValidation,
   resetPasswordValidation,
   codeValidation,
+  getTokenByProviderValidation
 } = require("../../validations/auth");
 const { upload } = require("../../utils");
 
@@ -132,6 +133,13 @@ router.post(
   "/can-send-verify-request",
   isAuth,
   userVerifyRequestController.checkUserCanVerifyRequest
+);
+
+router.post(
+    "/auth-by-provider",
+    isNotAuth,
+    getTokenByProviderValidation,
+    userController.authByProvider
 );
 
 module.exports = router;
