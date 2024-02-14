@@ -332,6 +332,14 @@ class UserController extends BaseController {
         );
       }
 
+      if (!user.hasPasswordAccess) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          "The user can log into the account only through Google or Facebook"
+        );
+      }
+
       const resetPasswordToken = generateVerifyToken({ userId: user.id });
 
       this.sendPasswordResetMail(email, user.name, resetPasswordToken);
@@ -568,21 +576,22 @@ class UserController extends BaseController {
       const user = await this.userModel.getByEmail(email);
 
       let emailVerified = true;
-      let needSetPassword = true;
+      let hasPasswordAccess = false;
       let needRegularViewInfoForm = true;
 
       let userId = null;
 
       if (user) {
         userId = user.id;
-        needSetPassword = user.needSetPassword;
-        needRegularViewInfoForm = user.needSetPassword;
+        hasPasswordAccess = user.hasPasswordAccess;
+        needRegularViewInfoForm = user.needRegularViewInfoForm;
       } else {
         userId = await this.userModel.create({
           name,
           email,
           emailVerified,
-          needSetPassword,
+          hasPasswordAccess,
+          acceptedTermCondition: true
         });
       }
 
@@ -621,22 +630,6 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
       });
-    });
-
-  updateShortInfo = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const { password, acceptedTermCondition } = req.body;
-
-      const isEmpty = await this.userModel.checkUserPasswordEmpty(userId);
-
-      if (isEmpty) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST);
-      }
-
-      await this.userModel.setNewPassword(userId, password);
-      await this.userModel.updateById(userId, { acceptedTermCondition });
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
     });
 
   updateMyPassword = (req, res) =>
@@ -745,6 +738,16 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents: dataToSave,
       });
+    });
+
+  noNeedRegularViewInfoForm = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      await this.userModel.noNeedRegularViewInfoForm(
+        userId
+      );
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
 

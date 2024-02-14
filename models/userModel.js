@@ -47,7 +47,7 @@ class UserModel {
     "suspicious",
     "password",
     "place_work as placeWork",
-    "need_set_password as needSetPassword",
+    "has_password_access as hasPasswordAccess",
     "need_regular_view_info_form as needRegularViewInfoForm",
     "two_factor_authentication as twoFactorAuthentication",
     "facebook_url as facebookUrl",
@@ -86,7 +86,7 @@ class UserModel {
         "email_verified as emailVerified",
         "phone_verified as phoneVerified",
         "need_regular_view_info_form as needRegularViewInfoForm",
-        "need_set_password as needSetPassword",
+        "has_password_access as hasPasswordAccess",
         "active",
       ])
       .where("email", email)
@@ -107,7 +107,7 @@ class UserModel {
     acceptedTermCondition,
     role = null,
     emailVerified = false,
-    needSetPassword = false,
+    hasPasswordAccess = true,
   }) => {
     let hashedPassword = null;
 
@@ -122,7 +122,7 @@ class UserModel {
       acceptedTermCondition,
       password: hashedPassword,
       emailVerified,
-      needSetPassword,
+      hasPasswordAccess,
     };
 
     const res = await db(USERS_TABLE)
@@ -133,7 +133,7 @@ class UserModel {
         password: userToSave.password,
         accepted_term_condition: userToSave.acceptedTermCondition,
         email_verified: emailVerified,
-        need_set_password: needSetPassword,
+        has_password_access: hasPasswordAccess,
       })
       .returning("id");
 
@@ -303,6 +303,12 @@ class UserModel {
     return res[0].verified;
   };
 
+  noNeedRegularViewInfoForm = async (id) => {
+    await db(USERS_TABLE)
+      .where({ id })
+      .update({ need_regular_view_info_form: false });
+  };
+
   setEmailVerified = async (id) => {
     await db(USERS_TABLE).where({ id }).update({ email_verified: true });
   };
@@ -312,7 +318,7 @@ class UserModel {
 
     await db(USERS_TABLE)
       .where({ id })
-      .update({ password: hashedPassword, need_set_password: false });
+      .update({ password: hashedPassword, has_password_access: true });
   };
 
   totalCount = async (filter) => {
