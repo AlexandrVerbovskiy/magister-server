@@ -40,13 +40,6 @@ router.post(
 );
 
 router.post(
-  "/update-short-info",
-  isAuth,
-  updateShortInfoValidation,
-  userController.updateShortInfo
-);
-
-router.post(
   "/update-my-password",
   isAuth,
   updatePasswordValidation,
@@ -125,6 +118,12 @@ router.post(
   "/change-two-factor-auth",
   isAuth,
   userController.changeTwoFactorAuth
+);
+
+router.post(
+  "/no-need-regular-view-info-form",
+  isAuth,
+  userController.noNeedRegularViewInfoForm
 );
 
 router.post(
