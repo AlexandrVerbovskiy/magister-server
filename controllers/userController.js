@@ -196,13 +196,15 @@ class UserController extends BaseController {
 
       if (!user.twoFactorAuthentication) {
         this.filterUserFields(user);
-        const accessToken = generateAccessToken(user.id, rememberMe);
+        const authToken = generateAccessToken(user.id, rememberMe);
 
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          accessToken,
           user,
+          authToken,
+          userId: user.id,
           needCode: false,
           canSendCodeByPhone: user.phoneVerified,
+          needRegularViewInfoForm: user.needRegularViewInfoForm,
         });
       } else {
         if (user.phone && user.phoneVerified) {
@@ -286,7 +288,7 @@ class UserController extends BaseController {
       }
 
       const rememberMe = req.body.rememberMe ?? false;
-      const accessToken = generateAccessToken(userId, rememberMe);
+      const authToken = generateAccessToken(userId, rememberMe);
 
       const user = await this.userModel.getFullById(userId);
       delete user["password"];
@@ -294,8 +296,10 @@ class UserController extends BaseController {
       await this.userModel.removeTwoAuthCode(code, type, userId);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        accessToken,
         user,
+        authToken,
+        userId: user.id,
+        needRegularViewInfoForm: user.needRegularViewInfoForm,
       });
     });
 
@@ -639,39 +643,6 @@ class UserController extends BaseController {
         res,
         STATIC.SUCCESS.OK,
         "Phone number successfully verified"
-      );
-    });
-
-  frontPostAuth = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const name = req.user.displayName;
-      const email = req.user.emails[0].value;
-
-      const user = await this.userModel.getByEmail(email);
-
-      let emailVerified = true;
-      let hasPasswordAccess = false;
-      let needRegularViewInfoForm = true;
-
-      let userId = null;
-
-      if (user) {
-        userId = user.id;
-        hasPasswordAccess = user.hasPasswordAccess;
-        needRegularViewInfoForm = user.needRegularViewInfoForm;
-      } else {
-        userId = await this.userModel.create({
-          name,
-          email,
-          emailVerified,
-          hasPasswordAccess,
-          acceptedTermCondition: true,
-        });
-      }
-
-      const accessToken = generateAccessToken(userId, true);
-      return res.redirect(
-        `${CLIENT_URL}/${STATIC.CLIENT_LINKS.USER_AUTHORIZED}?token=${accessToken}`
       );
     });
 
