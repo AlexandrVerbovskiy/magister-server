@@ -5,6 +5,8 @@ const {
   validateToken,
 } = require("../utils");
 const BaseController = require("./baseController");
+const fetch = require("node-fetch");
+const { OAuth2Client } = require("google-auth-library");
 const CLIENT_URL = process.env.CLIENT_URL;
 
 class UserController extends BaseController {
@@ -15,6 +17,78 @@ class UserController extends BaseController {
   filterUserFields = (user) => {
     delete user["password"];
   };
+
+  getEmailByFacebookToken = async (authToken) => {
+    const url = `https://graph.facebook.com/me?fields=email&access_token=${authToken}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.email;
+  };
+
+  getEmailByGoogleToken = async (idToken) => {
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_API);
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_API,
+      });
+      const payload = ticket.getPayload();
+      const userEmail = payload["email"];
+      return userEmail;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  authByProvider = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { name, email, token, provider } = req.body;
+      let emailByToken = null;
+
+      if (provider.toLowerCase() == "google") {
+        emailByToken = await this.getEmailByGoogleToken(token);
+      }
+
+      if (provider.toLowerCase() == "facebook") {
+        emailByToken = await this.getEmailByFacebookToken(token);
+      }
+
+      if (!emailByToken || email !== emailByToken) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Invalid token"
+        );
+      }
+
+      const user = await this.userModel.getByEmail(email);
+
+      let emailVerified = true;
+      let needRegularViewInfoForm = true;
+
+      let userId = null;
+
+      if (user) {
+        userId = user.id;
+        needRegularViewInfoForm = user.needRegularViewInfoForm;
+      } else {
+        userId = await this.userModel.create({
+          name,
+          email,
+          emailVerified,
+          acceptedTermCondition: true,
+          hasPasswordAccess: false,
+        });
+      }
+
+      const authToken = generateAccessToken(userId, true);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        needRegularViewInfoForm,
+        authToken,
+        userId,
+      });
+    });
 
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -591,7 +665,7 @@ class UserController extends BaseController {
           email,
           emailVerified,
           hasPasswordAccess,
-          acceptedTermCondition: true
+          acceptedTermCondition: true,
         });
       }
 
@@ -743,9 +817,7 @@ class UserController extends BaseController {
   noNeedRegularViewInfoForm = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      await this.userModel.noNeedRegularViewInfoForm(
-        userId
-      );
+      await this.userModel.noNeedRegularViewInfoForm(userId);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
