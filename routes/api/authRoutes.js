@@ -8,13 +8,13 @@ const {
 const {
   registerValidation,
   loginValidation,
-  updateShortInfoValidation,
   updatePasswordValidation,
   twoFactorAuthGenerateValidation,
   twoFactorAuthVerifyValidation,
   verifyEmailValidation,
   resetPasswordValidation,
   codeValidation,
+  authByProviderValidation
 } = require("../../validations/auth");
 const { upload } = require("../../utils");
 
@@ -131,5 +131,13 @@ router.post(
   isAuth,
   userVerifyRequestController.checkUserCanVerifyRequest
 );
+
+router.post(
+  "/auth-by-provider",
+  isNotAuth,
+  authByProviderValidation,
+  userController.authByProvider
+);
+
 
 module.exports = router;
