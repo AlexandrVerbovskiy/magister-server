@@ -5,6 +5,8 @@ const {
   validateToken,
 } = require("../utils");
 const BaseController = require("./baseController");
+const fetch = require("node-fetch");
+const { OAuth2Client } = require("google-auth-library");
 const CLIENT_URL = process.env.CLIENT_URL;
 
 class UserController extends BaseController {
@@ -15,6 +17,78 @@ class UserController extends BaseController {
   filterUserFields = (user) => {
     delete user["password"];
   };
+
+  getEmailByFacebookToken = async (authToken) => {
+    const url = `https://graph.facebook.com/me?fields=email&access_token=${authToken}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.email;
+  };
+
+  getEmailByGoogleToken = async (idToken) => {
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_API);
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_API,
+      });
+      const payload = ticket.getPayload();
+      const userEmail = payload["email"];
+      return userEmail;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  authByProvider = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { name, email, token, provider } = req.body;
+      let emailByToken = null;
+
+      if (provider.toLowerCase() == "google") {
+        emailByToken = await this.getEmailByGoogleToken(token);
+      }
+
+      if (provider.toLowerCase() == "facebook") {
+        emailByToken = await this.getEmailByFacebookToken(token);
+      }
+
+      if (!emailByToken || email !== emailByToken) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Invalid token"
+        );
+      }
+
+      const user = await this.userModel.getByEmail(email);
+
+      let emailVerified = true;
+      let needRegularViewInfoForm = true;
+
+      let userId = null;
+
+      if (user) {
+        userId = user.id;
+        needRegularViewInfoForm = user.needRegularViewInfoForm;
+      } else {
+        userId = await this.userModel.create({
+          name,
+          email,
+          emailVerified,
+          acceptedTermCondition: true,
+          hasPasswordAccess: false,
+        });
+      }
+
+      const authToken = generateAccessToken(userId, true);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        needRegularViewInfoForm,
+        authToken,
+        userId,
+      });
+    });
 
   register = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -122,19 +196,16 @@ class UserController extends BaseController {
 
       if (!user.twoFactorAuthentication) {
         this.filterUserFields(user);
-        const accessToken = generateAccessToken(user.id, rememberMe);
+        const authToken = generateAccessToken(user.id, rememberMe);
 
-        return this.sendSuccessResponse(
-          res,
-          STATIC.SUCCESS.OK,
-          null,
-          {
-            accessToken,
-            user,
-            needCode: false,
-            canSendCodeByPhone: user.phoneVerified,
-          }
-        );
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          user,
+          authToken,
+          userId: user.id,
+          needCode: false,
+          canSendCodeByPhone: user.phoneVerified,
+          needRegularViewInfoForm: user.needRegularViewInfoForm,
+        });
       } else {
         if (user.phone && user.phoneVerified) {
           return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -217,22 +288,19 @@ class UserController extends BaseController {
       }
 
       const rememberMe = req.body.rememberMe ?? false;
-      const accessToken = generateAccessToken(userId, rememberMe);
+      const authToken = generateAccessToken(userId, rememberMe);
 
       const user = await this.userModel.getFullById(userId);
       delete user["password"];
 
       await this.userModel.removeTwoAuthCode(code, type, userId);
 
-      return this.sendSuccessResponse(
-        res,
-        STATIC.SUCCESS.OK,
-        null,
-        {
-          accessToken,
-          user,
-        }
-      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        user,
+        authToken,
+        userId: user.id,
+        needRegularViewInfoForm: user.needRegularViewInfoForm,
+      });
     });
 
   setRole = (req, res) =>
@@ -339,6 +407,14 @@ class UserController extends BaseController {
           res,
           STATIC.ERRORS.BAD_REQUEST,
           "No user found"
+        );
+      }
+
+      if (!user.hasPasswordAccess) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          "The user can log into the account only through Google or Facebook"
         );
       }
 
@@ -570,36 +646,6 @@ class UserController extends BaseController {
       );
     });
 
-  frontPostAuth = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const name = req.user.displayName;
-      const email = req.user.emails[0].value;
-
-      const user = await this.userModel.getByEmail(email);
-
-      let emailVerified = true;
-      let needSetPassword = true;
-      let needRegularViewInfoForm = true;
-
-      let userId = null;
-
-      if (user) {
-        userId = user.id;
-        needSetPassword = user.needSetPassword;
-        needRegularViewInfoForm = user.needSetPassword;
-      } else {
-        userId = await this.userModel.create({
-          name,
-          email,
-          emailVerified,
-          needSetPassword,
-        });
-      }
-
-      const accessToken = generateAccessToken(userId, true);
-      return res.redirect(`${CLIENT_URL}/${STATIC.CLIENT_LINKS.USER_AUTHORIZED}?token=${accessToken}`);
-    });
-
   myInfo = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
@@ -629,22 +675,6 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
       });
-    });
-
-  updateShortInfo = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const { password, acceptedTermCondition } = req.body;
-
-      const isEmpty = await this.userModel.checkUserPasswordEmpty(userId);
-
-      if (isEmpty) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST);
-      }
-
-      await this.userModel.setNewPassword(userId, password);
-      await this.userModel.updateById(userId, { acceptedTermCondition });
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
     });
 
   updateMyPassword = (req, res) =>
@@ -755,9 +785,12 @@ class UserController extends BaseController {
       });
     });
 
-  test = async (req, res) =>
+  noNeedRegularViewInfoForm = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      throw new Error("test");
+      const { userId } = req.userData;
+      await this.userModel.noNeedRegularViewInfoForm(userId);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
 

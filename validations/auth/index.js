@@ -8,5 +8,5 @@ module.exports = {
   verifyEmailValidation: require("./verifyEmailValidation"),
   resetPasswordValidation: require("./resetPasswordValidation"),
   codeValidation: require("./codeValidation"),
-  updateShortInfoValidation: require("./updateShortInfoValidation"),
+  authByProviderValidation: require("./authByProviderValidation")
 };

@@ -11,7 +11,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const { isAuth, isAdmin } = require("./middlewares");
-const { apiRoutes, initAuthRoutes } = require("./routes");
+const { apiRoutes } = require("./routes");
 const STATIC = require("./static");
 const isNotAuth = require("./middlewares/isNotAuth");
 
@@ -74,7 +74,6 @@ passport.deserializeUser((obj, done) => {
 });
 
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
-app.use("/auth", isNotAuth, initAuthRoutes(passport));
 app.use("/api/auth", apiRoutes.authApiRoutes);
 app.use("/api/users", apiRoutes.userApiRoutes);
 app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestRoutes);

@@ -8,13 +8,13 @@ const {
 const {
   registerValidation,
   loginValidation,
-  updateShortInfoValidation,
   updatePasswordValidation,
   twoFactorAuthGenerateValidation,
   twoFactorAuthVerifyValidation,
   verifyEmailValidation,
   resetPasswordValidation,
   codeValidation,
+  authByProviderValidation
 } = require("../../validations/auth");
 const { upload } = require("../../utils");
 
@@ -29,7 +29,6 @@ router.post(
 
 router.post("/login", isNotAuth, loginValidation, userController.login);
 
-router.get("/test", userController.test);
 router.post("/my-info", isAuth, userController.myInfo);
 router.post("/my-documents", isAuth, userController.myDocuments);
 router.post(
@@ -38,13 +37,6 @@ router.post(
   isAuth,
   isFileLimit,
   userController.saveProfile
-);
-
-router.post(
-  "/update-short-info",
-  isAuth,
-  updateShortInfoValidation,
-  userController.updateShortInfo
 );
 
 router.post(
@@ -129,9 +121,23 @@ router.post(
 );
 
 router.post(
+  "/no-need-regular-view-info-form",
+  isAuth,
+  userController.noNeedRegularViewInfoForm
+);
+
+router.post(
   "/can-send-verify-request",
   isAuth,
   userVerifyRequestController.checkUserCanVerifyRequest
 );
+
+router.post(
+  "/auth-by-provider",
+  isNotAuth,
+  authByProviderValidation,
+  userController.authByProvider
+);
+
 
 module.exports = router;
