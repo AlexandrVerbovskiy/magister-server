@@ -142,8 +142,8 @@ class UserModel {
 
   convertFullUserDataToSave = (userData) => {
     const {
-      name,
       email,
+      name,
       phone,
       briefBio,
       contactDetails,
@@ -166,7 +166,6 @@ class UserModel {
 
     const updateData = {
       name,
-      email,
       phone,
       contact_details: contactDetails,
       brief_bio: briefBio,
@@ -177,6 +176,10 @@ class UserModel {
       linkedin_url: linkedinUrl,
       twitter_url: twitterUrl,
     };
+
+    if (email !== null) {
+      updateData.email = email;
+    }
 
     if (emailVerified !== null) {
       updateData.email_verified = emailVerified;
@@ -237,6 +240,11 @@ class UserModel {
     }
 
     return getByEmail;
+  };
+
+  checkUserPasswordEqual = async (userId, newPassword) => {
+    const user = await this.getFullById(userId);
+    return await bcrypt.compare(newPassword, user.password);
   };
 
   getById = async (id) => {
