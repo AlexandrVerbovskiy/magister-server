@@ -444,6 +444,19 @@ class UserController extends BaseController {
 
       const userId = resValidate.userId;
 
+      const checkPasswordEquals = await this.checkUserPasswordEqual(
+        userId,
+        password
+      );
+
+      if (checkPasswordEquals) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          "New password can't be equal with current password"
+        );
+      }
+
       await this.userModel.setNewPassword(userId, password);
 
       return this.sendSuccessResponse(
@@ -525,7 +538,9 @@ class UserController extends BaseController {
   };
 
   baseUpdate = async (id, dataToSave, file) => {
-    await this.baseCheckEmailUnique(dataToSave, id);
+    if (dataToSave["email"]) {
+      await this.baseCheckEmailUnique(dataToSave, id);
+    }
 
     if (file) {
       dataToSave["photo"] = this.moveUploadsFileToFolder(file, "users");
@@ -583,6 +598,7 @@ class UserController extends BaseController {
       const { userId } = req.userData;
 
       dataToSave["needRegularViewInfoForm"] = false;
+      delete dataToSave["email"];
 
       const user = await this.baseUpdate(userId, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
