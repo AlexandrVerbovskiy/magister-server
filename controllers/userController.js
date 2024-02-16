@@ -485,7 +485,7 @@ class UserController extends BaseController {
   delete = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
-
+      
       if (isNaN(id)) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -496,7 +496,7 @@ class UserController extends BaseController {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      this.userModel.delete(id);
+      await this.userModel.delete(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
