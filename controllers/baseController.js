@@ -7,12 +7,17 @@ const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
 
-const { userModel, logModel } = require("../models");
+const {
+  userModel,
+  logModel,
+  userVerifyRequestModel,
+  systemOptionModel,
+  userEventLogModel,
+} = require("../models");
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
 const CLIENT_URL = process.env.CLIENT_URL;
 const axios = require("axios");
-const userVerifyRequestModel = require("../models/userVerifyRequestModel");
 
 class Controller {
   mailTransporter = null;
@@ -21,6 +26,8 @@ class Controller {
     this.userModel = userModel;
     this.logModel = logModel;
     this.userVerifyRequestModel = userVerifyRequestModel;
+    this.systemOptionModel = systemOptionModel;
+    this.userEventLogModel = userEventLogModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -42,13 +49,7 @@ class Controller {
     );
   }
 
-  sendResponse = (
-    response,
-    baseInfo,
-    message,
-    body,
-    isError
-    ) => {
+  sendResponse = (response, baseInfo, message, body, isError) => {
     return response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
       body,
@@ -66,12 +67,7 @@ class Controller {
     return this.sendResponse(response, baseInfo, message, body, false);
   };
 
-  sendErrorResponse = (
-    response,
-    baseInfo,
-    message = null,
-    body = {}
-  ) => {
+  sendErrorResponse = (response, baseInfo, message = null, body = {}) => {
     return this.sendResponse(response, baseInfo, message, body, true);
   };
 
@@ -229,6 +225,21 @@ class Controller {
       },
       countItems,
     };
+  };
+
+  saveUserAction = async (req, event_name) => {
+    const { userId } = req.userData;
+    const active = await this.systemOptionModel.getUserLogActive();
+    if (!active) return;
+
+    const user = await this.userModel.getById(userId);
+
+    await this.userEventLogModel.create({
+      user_id: userId,
+      user_email: user["email"],
+      user_role: user["role"],
+      event_name,
+    });
   };
 }
 
