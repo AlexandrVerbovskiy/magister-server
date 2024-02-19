@@ -23,7 +23,7 @@ app.use(
   session({
     secret: process.env.APP_SESSION_SECRET,
     resave: true,
-    saveUninitialized: true
+    saveUninitialized: true,
   })
 );
 
@@ -32,37 +32,43 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true, exposedHeaders: ["set-cookie"] }));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+    exposedHeaders: ["set-cookie"],
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(
-    new FacebookStrategy(
-        {
-            clientID: process.env.FACEBOOK_APP_API,
-            clientSecret: process.env.FACEBOOK_APP_SECRET,
-            callbackURL: `${process.env.SERVER_URL}/auth/facebook/callback`,
-            profileFields: ["id", "displayName", "email"],
-        },
-        (accessToken, refreshToken, profile, done) => {
-            return done(null, profile);
-        }
-    )
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_APP_API,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      callbackURL: `${process.env.SERVER_URL}/auth/facebook/callback`,
+      profileFields: ["id", "displayName", "email"],
+    },
+    (accessToken, refreshToken, profile, done) => {
+      return done(null, profile);
+    }
+  )
 );
 
 passport.use(
-    new GoogleStrategy(
-        {
-            clientID: process.env.GOOGLE_CLIENT_API,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
-            profileFields: ["id", "displayName", "email"],
-        },
-        (token, tokenSecret, profile, done) => {
-            return done(null, profile);
-        }
-    )
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_API,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
+      profileFields: ["id", "displayName", "email"],
+    },
+    (token, tokenSecret, profile, done) => {
+      return done(null, profile);
+    }
+  )
 );
 
 passport.serializeUser((user, done) => {
@@ -76,8 +82,15 @@ passport.deserializeUser((obj, done) => {
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
 app.use("/api/auth", apiRoutes.authApiRoutes);
 app.use("/api/users", apiRoutes.userApiRoutes);
-app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestRoutes);
+app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestApiRoutes);
 app.use("/api/logs", isAuth, isAdmin, apiRoutes.logApiRoutes);
+app.use(
+  "/api/user-event-logs",
+  isAuth,
+  isAdmin,
+  apiRoutes.userEventLogApiRoutes
+);
+app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

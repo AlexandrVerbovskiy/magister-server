@@ -101,6 +101,13 @@ class UserVerifyRequestController extends BaseController {
       await this.userModel.setVerified(userId, verified);
       await this.userVerifyRequestModel.updateUserVerifyById(id, description);
 
+      this.saveUserAction(
+        req,
+        verified
+          ? `Accepted user with ${id} verified request`
+          : `Rejected user with ${id} verify request`
+      );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
   };

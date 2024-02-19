@@ -2,5 +2,7 @@ module.exports = {
   userApiRoutes: require("./userRoutes"),
   authApiRoutes: require("./authRoutes"),
   logApiRoutes: require("./logRoutes"),
-  userVerifyRequestRoutes: require("./userVerifyRequestRoutes"),
+  userVerifyRequestApiRoutes: require("./userVerifyRequestRoutes"),
+  userEventLogApiRoutes: require("./userEventLogRoutes"),
+  systemApiRoutes: require("./systemRoutes"),
 };
