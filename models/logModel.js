@@ -1,5 +1,4 @@
 require("dotenv").config();
-const bcrypt = require("bcrypt");
 const STATIC = require("../static");
 const db = require("../database");
 const { formatDateToSQLFormat } = require("../utils");

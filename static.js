@@ -79,5 +79,7 @@ module.exports = {
     USER_DOCUMENTS: "user_documents",
     EMAIL_VERIFIED_TOKENS: "email_verified_tokens",
     RESET_PASSWORD_TOKENS: "reset_password_tokens",
+    USER_EVENT_LOGS: "user_event_logs",
+    SYSTEM: "system",
   },
 };
