@@ -1,6 +1,11 @@
 const { Router } = require("express");
 const router = Router();
-const { isAuth, isNotAuth, isFileLimit } = require("../../middlewares");
+const {
+  isAuth,
+  isNotAuth,
+  isFileLimit,
+  isUnverified,
+} = require("../../middlewares");
 const {
   userController,
   userVerifyRequestController,
@@ -14,7 +19,7 @@ const {
   verifyEmailValidation,
   resetPasswordValidation,
   codeValidation,
-  authByProviderValidation
+  authByProviderValidation,
 } = require("../../validations/auth");
 const { upload } = require("../../utils");
 
@@ -50,6 +55,7 @@ router.post(
   "/save-my-documents",
   upload.any(),
   isAuth,
+  isUnverified,
   isFileLimit,
   userController.updateMyDocuments
 );
@@ -138,6 +144,5 @@ router.post(
   authByProviderValidation,
   userController.authByProvider
 );
-
 
 module.exports = router;

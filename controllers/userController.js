@@ -307,7 +307,16 @@ class UserController extends BaseController {
     this.baseWrapper(req, res, async () => {
       const { id, role } = req.body;
 
+      if (role === "admin") {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
       await this.userModel.setRole(id, role);
+
+      this.saveUserAction(
+        req,
+        `Set role '${role}' for the user with id '${id}'`
+      );
 
       return this.sendSuccessResponse(
         res,
@@ -320,11 +329,17 @@ class UserController extends BaseController {
   changeActive = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
+
       const active = await this.userModel.changeActive(id);
 
       const message = active
         ? "User activated successfully"
         : "User deactivated successfully";
+
+      this.saveUserAction(
+        req,
+        `Made user with id '${id}' ${active ? "active" : "inactive"}`
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
         id,
@@ -358,6 +373,10 @@ class UserController extends BaseController {
         ? "User verified successfully"
         : "User unverified successfully";
 
+      this.saveUserAction(
+        req,
+        `Made user with id '${id}' ${verified ? "verified" : "unverified"}`
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
         id,
         verified,
@@ -485,7 +504,7 @@ class UserController extends BaseController {
   delete = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
-      
+
       if (isNaN(id)) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -496,7 +515,10 @@ class UserController extends BaseController {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      await this.userModel.delete(id);
+      this.userModel.delete(id);
+
+      this.saveUserAction(req, `Removed user with id '${id}'`);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
@@ -566,14 +588,17 @@ class UserController extends BaseController {
   update = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
-      const { id } = dataToSave;
+      const { id, role } = dataToSave;
       const { userId: currentId } = req.userData;
 
-      if (id == currentId) {
+      if (id == currentId || role === "admin") {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       const user = await this.baseUpdate(id, dataToSave, req.file);
+
+      this.saveUserAction(req, `Updated user with id '${id}'`);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
 
@@ -587,6 +612,9 @@ class UserController extends BaseController {
       }
 
       const userId = await this.userModel.createFull(dataToSave);
+
+      this.saveUserAction(req, `Created user. Generated id '${id}'`);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         id: userId,
       });

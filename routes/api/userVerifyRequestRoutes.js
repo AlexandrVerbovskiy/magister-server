@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const { userVerifyRequestController } = require("../../controllers");
-const { isAuth, isSupport } = require("../../middlewares");
+const { isAuth, isSupport, isUnverified } = require("../../middlewares");
 
 router.post("/list", isAuth, isSupport, userVerifyRequestController.list);
 
@@ -15,6 +15,7 @@ router.get(
 router.post(
   "/create",
   isAuth,
+  isUnverified,
   userVerifyRequestController.createUserVerifyRequest
 );
 

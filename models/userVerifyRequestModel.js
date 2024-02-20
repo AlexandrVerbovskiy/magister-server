@@ -1,4 +1,4 @@
-const { userModel } = require(".");
+const userModel = require("./userModel");
 const db = require("../database");
 const STATIC = require("../static");
 const { formatDateToSQLFormat } = require("../utils");

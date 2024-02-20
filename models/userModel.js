@@ -267,6 +267,13 @@ class UserModel {
     return await this.checkRole(id, STATIC.ROLES.ADMIN);
   };
 
+  checkIsVerified = async (id) => {
+    return await db(USERS_TABLE)
+      .select("email")
+      .where({ id, verified: true })
+      .first();
+  };
+
   checkIsSupport = async (id) => {
     const isSupport = await this.checkRole(id, STATIC.ROLES.SUPPORT);
     if (isSupport) return true;
