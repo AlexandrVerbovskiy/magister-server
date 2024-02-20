@@ -104,8 +104,8 @@ class UserVerifyRequestController extends BaseController {
       this.saveUserAction(
         req,
         verified
-          ? `Accepted user with ${id} verified request`
-          : `Rejected user with ${id} verify request`
+          ? `Accepted user with '${id}' verified request`
+          : `Rejected user with '${id}' verify request`
       );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);

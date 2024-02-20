@@ -69,7 +69,10 @@ class UserEventLogModel {
       "created_at",
     ];
 
-    if (!order) order = "id";
+    if (!order) {
+      order = "id";
+      orderType = "desc";
+    }
     if (!orderType) orderType = "asc";
 
     orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
