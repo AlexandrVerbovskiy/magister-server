@@ -356,7 +356,12 @@ class UserModel {
     order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
 
     return await db(USERS_TABLE)
-      .select([...this.visibleFields, "active", "verified"])
+      .select([...this.visibleFields,
+        "active",
+        "verified",
+        "email_verified as emailVerified",
+        "phone_verified as phoneVerified"
+      ])
       .whereRaw(...this.userFilter(filter))
       .orderBy(order, orderType)
       .limit(count)
