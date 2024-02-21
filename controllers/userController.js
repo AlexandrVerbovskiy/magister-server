@@ -463,7 +463,7 @@ class UserController extends BaseController {
 
       const userId = resValidate.userId;
 
-      const checkPasswordEquals = await this.checkUserPasswordEqual(
+      const checkPasswordEquals = await this.userModel.checkUserPasswordEqual(
         userId,
         password
       );
