@@ -69,6 +69,14 @@ class UserController extends BaseController {
       let userId = null;
 
       if (user) {
+        if (!user.active) {
+          return this.sendSuccessResponse(
+            res,
+            STATIC.ERRORS.UNAUTHORIZED,
+            "Your account has been blocked. For more information, contact the administrator"
+          );
+        }
+
         userId = user.id;
         needRegularViewInfoForm = user.needRegularViewInfoForm;
       } else {
