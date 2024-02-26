@@ -1,11 +1,11 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
-const { formatDateToSQLFormat } = require("../utils");
+const BaseModel = require("./baseModel");
 
 const USER_EVENT_LOGS_TABLE = STATIC.TABLES.USER_EVENT_LOGS;
 
-class UserEventLogModel {
+class UserEventLogModel extends BaseModel {
   visibleFields = [
     "id",
     "user_id as userId",
@@ -36,31 +36,17 @@ class UserEventLogModel {
     return [`(${conditions})`, props];
   };
 
-  totalCount = async (filter, fromTime, toTime) => {
+  totalCount = async (filter, serverFromTime, serverToTime) => {
     let query = db(USER_EVENT_LOGS_TABLE).whereRaw(...this.logFilter(filter));
-
-    if (fromTime) {
-      query = query.where("created_at", ">=", formatDateToSQLFormat(fromTime));
-    }
-
-    if (toTime) {
-      query = query.where("created_at", "<=", formatDateToSQLFormat(toTime));
-    }
-
+    query = this.baseListTimeFilter({ serverFromTime, serverToTime }, query);
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  list = async ({
-    filter,
-    order,
-    orderType,
-    start,
-    count,
-    fromTime,
-    toTime,
-  }) => {
-    const canBeOrderField = [
+  list = async (props) => {
+    const { filter, start, count } = props;
+
+    const canBeOrderFields = [
       "id",
       "user_id",
       "user_email",
@@ -69,24 +55,9 @@ class UserEventLogModel {
       "created_at",
     ];
 
-    if (!order) {
-      order = "id";
-      orderType = "desc";
-    }
-    if (!orderType) orderType = "asc";
-
-    orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
-    order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
-
     let query = db(USER_EVENT_LOGS_TABLE).whereRaw(...this.logFilter(filter));
-
-    if (fromTime) {
-      query = query.where("created_at", ">=", formatDateToSQLFormat(fromTime));
-    }
-
-    if (toTime) {
-      query = query.where("created_at", "<=", formatDateToSQLFormat(toTime));
-    }
+    query = this.baseListTimeFilter(props, query);
+    const { order, orderType } = this.baseListOrder(props, canBeOrderFields);
 
     return await query
       .select(this.visibleFields)

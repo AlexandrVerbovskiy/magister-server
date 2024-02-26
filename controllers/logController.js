@@ -13,7 +13,7 @@ class LogController extends BaseController {
         req.body.fromTime ?? timeConverter(getYesterdayDate());
       req.body.toTime = req.body.toTime ?? timeConverter(getTodayDate());
 
-      const { options, countItems } = await this.baseListOptions(
+      const { options, countItems } = await this.baseList(
         req,
         ({ filter, fromTime, toTime }) =>
           this.logModel.totalCount(filter, fromTime, toTime)

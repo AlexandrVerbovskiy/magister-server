@@ -1,6 +1,5 @@
 const BaseController = require("./baseController");
 const STATIC = require("../static");
-const { timeConverter, getYesterdayDate, getTodayDate } = require("../utils");
 
 class UserVerifyRequestController extends BaseController {
   constructor() {
@@ -9,18 +8,17 @@ class UserVerifyRequestController extends BaseController {
 
   list = (req, res) => {
     this.baseWrapper(req, res, async () => {
-      req.body.fromTime =
-        req.body.fromTime ?? timeConverter(getYesterdayDate());
-      req.body.toTime = req.body.toTime ?? timeConverter(getTodayDate());
+      const timeInfos = await this.listTimeOption(req);
 
-      const { options, countItems } = await this.baseListOptions(
-        req,
-        ({ filter, fromTime, toTime }) =>
-          this.userVerifyRequestModel.totalCount(filter, fromTime, toTime)
+      const { options, countItems } = await this.baseList(req, ({ filter }) =>
+        this.userVerifyRequestModel.totalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
       );
 
-      options["fromTime"] = req.body.fromTime;
-      options["toTime"] = req.body.toTime;
+      Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
       const requests = await this.userVerifyRequestModel.list(options);
 

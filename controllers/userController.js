@@ -495,9 +495,8 @@ class UserController extends BaseController {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { options, countItems } = await this.baseListOptions(
-        req,
-        ({ filter }) => this.userModel.totalCount(filter)
+      const { options, countItems } = await this.baseList(req, ({ filter }) =>
+        this.userModel.totalCount(filter)
       );
 
       const users = await this.userModel.list(options);
@@ -589,8 +588,7 @@ class UserController extends BaseController {
     }
 
     await this.userModel.updateById(id, dataToSave);
-
-    return { ...dataToSave, id };
+    return await this.userModel.getFullById(id);
   };
 
   update = (req, res) =>
@@ -604,9 +602,7 @@ class UserController extends BaseController {
       }
 
       const user = await this.baseUpdate(id, dataToSave, req.file);
-
       this.saveUserAction(req, `Updated user with id '${id}'`);
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
 
@@ -620,11 +616,15 @@ class UserController extends BaseController {
       }
 
       const userId = await this.userModel.createFull(dataToSave);
+      const user = await this.userModel.getFullById(userId);
 
-      this.saveUserAction(req, `Created user. Generated id '${id}'`);
+      this.saveUserAction(req, `Created user. Generated id '${userId}'`);
+
+      const resetPasswordToken = generateVerifyToken({ userId });
+      this.sendAccountCreationMail(user.email, user.name, resetPasswordToken);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        id: userId,
+        user,
       });
     });
 
