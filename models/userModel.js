@@ -12,6 +12,7 @@ const USERS_TABLE = STATIC.TABLES.USERS;
 const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
 const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
+const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
 
 class UserModel {
   visibleFields = [
@@ -266,6 +267,13 @@ class UserModel {
     return await this.checkRole(id, STATIC.ROLES.ADMIN);
   };
 
+  checkIsVerified = async (id) => {
+    return await db(USERS_TABLE)
+      .select("email")
+      .where({ id, verified: true })
+      .first();
+  };
+
   checkIsSupport = async (id) => {
     const isSupport = await this.checkRole(id, STATIC.ROLES.SUPPORT);
     if (isSupport) return true;
@@ -348,7 +356,12 @@ class UserModel {
     order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
 
     return await db(USERS_TABLE)
-      .select([...this.visibleFields, "active", "verified"])
+      .select([...this.visibleFields,
+        "active",
+        "verified",
+        "email_verified as emailVerified",
+        "phone_verified as phoneVerified"
+      ])
       .whereRaw(...this.userFilter(filter))
       .orderBy(order, orderType)
       .limit(count)
@@ -356,6 +369,8 @@ class UserModel {
   };
 
   delete = async (id) => {
+    await db(USER_DOCUMENTS_TABLE).where("user_id", id).del();
+    await db(USER_VERIFY_REQUESTS_TABLE).where("user_id", id).del();
     await db(USERS_TABLE).where({ id }).del();
   };
 
