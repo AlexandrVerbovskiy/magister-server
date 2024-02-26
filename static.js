@@ -81,5 +81,6 @@ module.exports = {
     RESET_PASSWORD_TOKENS: "reset_password_tokens",
     USER_EVENT_LOGS: "user_event_logs",
     SYSTEM: "system",
+    LISTINGS: "listings",
   },
 };

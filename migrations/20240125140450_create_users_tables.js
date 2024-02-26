@@ -17,16 +17,11 @@ exports.up = function (knex) {
     table.text("brief_bio").defaultTo("");
     table.string("photo").defaultTo("");
 
-    //1.4 Document Submission
-    //1.5 Address Verification
-
     table.string("phone").nullable().defaultTo(null);
     table.boolean("phone_verified").defaultTo(false);
 
     table.string("linkedin").nullable().defaultTo(null);
     table.string("facebook").nullable().defaultTo(null);
-
-    //1.8 Background Check (Optional)
 
     table.boolean("two_factor_authentication").defaultTo(true);
 

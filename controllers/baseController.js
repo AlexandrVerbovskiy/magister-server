@@ -6,6 +6,13 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
+const {
+  timeConverter,
+  getYesterdayClientStartDate,
+  getTodayClientEndDate,
+  adaptClientTimeToServer,
+  clientServerHoursDifference,
+} = require("../utils");
 
 const {
   userModel,
@@ -135,6 +142,15 @@ class Controller {
     });
   };
 
+  sendAccountCreationMail = async (email, name, token) => {
+    const title = "Account Creation";
+    await this.sendMail(email, title, "accountCreation", {
+      name,
+      link: CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token,
+      title,
+    });
+  };
+
   sendTwoAuthCodeMail = async (email, name, code) => {
     const title = "Two Authentication Code";
     await this.sendMail(email, title, "twoAuthCode", {
@@ -195,7 +211,7 @@ class Controller {
     await this.sendToPhoneMessage(phone, `Your Authorization code is: ${code}`);
   };
 
-  baseListOptions = async (req, countByFilter) => {
+  baseList = async (req, countByFilter) => {
     const {
       filter = "",
       itemsPerPage = 20,
@@ -225,6 +241,29 @@ class Controller {
       },
       countItems,
     };
+  };
+
+  listTimeOption = async (req) => {
+    const { clientTime } = req.body;
+    const clientServerHoursDiff = clientServerHoursDifference(clientTime);
+
+    let { fromTime, toTime } = req.body;
+
+    if (!fromTime) {
+      fromTime = timeConverter(getYesterdayClientStartDate(clientTime));
+    }
+
+    if (!toTime) {
+      toTime = timeConverter(getTodayClientEndDate(clientTime));
+    }
+
+    const serverFromTime = adaptClientTimeToServer(
+      fromTime,
+      clientServerHoursDiff
+    );
+    const serverToTime = adaptClientTimeToServer(toTime, clientServerHoursDiff);
+
+    return { fromTime, serverFromTime, toTime, serverToTime };
   };
 
   saveUserAction = async (req, event_name) => {

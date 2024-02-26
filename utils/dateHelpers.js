@@ -1,25 +1,26 @@
 const timeConverter = (time) => {
-  const dateObject = new Date(time);
+  const date = new Date(time);
 
-  const formattedDate = dateObject.toLocaleDateString("en-US");
-  const formattedTime = dateObject.toLocaleTimeString("en-US", {
-    hour12: false,
-  });
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
 
-  return `${formattedDate} ${formattedTime}`;
+  return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
 };
 
-const getTodayDate = () => {
-  const today = new Date();
-  today.setDate(today.getDate() + 1);
-  today.setUTCHours(0, 0, 0, 0);
+const getTodayClientEndDate = (clientCurrentTime) => {
+  const today = new Date(clientCurrentTime);
+  today.setHours(23, 59, 59, 999);
   return today;
 };
 
-const getYesterdayDate = () => {
-  const yesterday = new Date();
+const getYesterdayClientStartDate = (clientCurrentTime) => {
+  const yesterday = new Date(clientCurrentTime);
   yesterday.setDate(yesterday.getDate() - 1);
-  yesterday.setUTCHours(0, 0, 0, 0);
+  yesterday.setHours(0, 0, 0, 0);
   return yesterday;
 };
 
@@ -39,10 +40,35 @@ const formatDateToSQLFormat = (dateString) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
+const clientServerHoursDifference = (clientTime) => {
+  const serverTime = Date.now();
+  const timeDifference = clientTime - serverTime;
+  const hoursDiff = timeDifference / (1000 * 60 * 60);
+  return Math.round(hoursDiff);
+};
+
+const adaptTimeByHoursDiff = (dateStr, hoursDiff) => {
+  const [datePart, timePart] = dateStr.split(" ");
+  const [month, day, year] = datePart.split("/").map(Number);
+  const [hours, minutes, seconds] = timePart.split(":").map(Number);
+  let date = new Date(year, month - 1, day, hours, minutes, seconds);
+  date.setHours(date.getHours() - hoursDiff);
+  return timeConverter(date);
+};
+
+const adaptServerTimeToClient = (serverDateStr, clientServerHoursDiff) =>
+  adaptTimeByHoursDiff(serverDateStr, -clientServerHoursDiff);
+
+const adaptClientTimeToServer = (clientDateStr, clientServerHoursDiff) =>
+  adaptTimeByHoursDiff(clientDateStr, clientServerHoursDiff);
+
 module.exports = {
-  getYesterdayDate,
-  getTodayDate,
+  getYesterdayClientStartDate,
+  getTodayClientEndDate,
   timeConverter,
   getOneHourAgo,
   formatDateToSQLFormat,
+  clientServerHoursDifference,
+  adaptClientTimeToServer,
+  adaptServerTimeToClient,
 };

@@ -1,5 +1,4 @@
 const STATIC = require("../static");
-const { timeConverter, getYesterdayDate, getTodayDate } = require("../utils");
 const BaseController = require("./baseController");
 
 class UserEventLogController extends BaseController {
@@ -9,18 +8,17 @@ class UserEventLogController extends BaseController {
 
   list = (req, res) => {
     this.baseWrapper(req, res, async () => {
-      req.body.fromTime =
-        req.body.fromTime ?? timeConverter(getYesterdayDate());
-      req.body.toTime = req.body.toTime ?? timeConverter(getTodayDate());
+      const timeInfos = await this.listTimeOption(req);
 
-      const { options, countItems } = await this.baseListOptions(
-        req,
-        ({ filter, fromTime, toTime }) =>
-          this.userEventLogModel.totalCount(filter, fromTime, toTime)
+      const { options, countItems } = await this.baseList(req, ({ filter }) =>
+        this.userEventLogModel.totalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
       );
 
-      options["fromTime"] = req.body.fromTime;
-      options["toTime"] = req.body.toTime;
+      Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
       const logs = await this.userEventLogModel.list(options);
 
