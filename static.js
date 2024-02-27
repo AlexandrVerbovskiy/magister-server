@@ -82,5 +82,9 @@ module.exports = {
     USER_EVENT_LOGS: "user_event_logs",
     SYSTEM: "system",
     LISTINGS: "listings",
+    LISTING_CATEGORIES: "listing_categories",
+    SEARCHED_WORDS: "searched_words",
+    NEW_CATEGORY_USER_NOTIFICATION: "new_category_user_notifications",
+    LISTING_IMAGES: "listing_images",
   },
 };

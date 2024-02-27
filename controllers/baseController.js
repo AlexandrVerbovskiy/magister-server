@@ -20,6 +20,7 @@ const {
   userVerifyRequestModel,
   systemOptionModel,
   userEventLogModel,
+  listingCategoriesModel
 } = require("../models");
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
@@ -35,6 +36,7 @@ class Controller {
     this.userVerifyRequestModel = userVerifyRequestModel;
     this.systemOptionModel = systemOptionModel;
     this.userEventLogModel = userEventLogModel;
+    this.listingCategoriesModel = listingCategoriesModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,

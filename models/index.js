@@ -4,4 +4,5 @@ module.exports = {
   userVerifyRequestModel: require("./userVerifyRequestModel"),
   systemOptionModel: require("./systemOptionModel"),
   userEventLogModel: require("./userEventLogModel"),
+  listingCategoriesModel: require("./listingCategoriesModel"),
 };

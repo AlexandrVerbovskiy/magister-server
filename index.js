@@ -90,6 +90,9 @@ app.use(
   isAdmin,
   apiRoutes.userEventLogApiRoutes
 );
+
+app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes);
+
 app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes);
 
 app.use((req, res, next) => {
