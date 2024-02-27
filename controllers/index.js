@@ -4,4 +4,5 @@ module.exports = {
   userEventLogController: require("./userEventLogController"),
   userVerifyRequestController: require("./userVerifyRequestController"),
   systemController: require("./systemController"),
+  listingCategoriesController: require("./listingCategoriesController"),
 };

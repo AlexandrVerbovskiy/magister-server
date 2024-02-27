@@ -5,4 +5,5 @@ module.exports = {
   userVerifyRequestApiRoutes: require("./userVerifyRequestRoutes"),
   userEventLogApiRoutes: require("./userEventLogRoutes"),
   systemApiRoutes: require("./systemRoutes"),
+  listingCategoryRoutes: require("./listingCategoryRoutes"),
 };
