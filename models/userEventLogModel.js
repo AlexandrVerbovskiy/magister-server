@@ -15,6 +15,17 @@ class UserEventLogModel extends BaseModel {
     "created_at as createdAt",
   ];
 
+  strFilterFields = ["user_email", "user_role", "event_name"];
+
+  orderFields = [
+    "id",
+    "user_id",
+    "user_email",
+    "user_role",
+    "event_name",
+    "created_at",
+  ];
+
   create = async ({ user_id, user_email, user_role, event_name }) => {
     await db(USER_EVENT_LOGS_TABLE).insert({
       user_id,
@@ -24,20 +35,10 @@ class UserEventLogModel extends BaseModel {
     });
   };
 
-  logFilter = (filter) => {
-    filter = `%${filter}%`;
-    const searchableFields = ["user_email", "user_role", "event_name"];
-
-    const conditions = searchableFields
-      .map((field) => `${field} ILIKE ?`)
-      .join(" OR ");
-
-    const props = searchableFields.map((field) => filter);
-    return [`(${conditions})`, props];
-  };
-
   totalCount = async (filter, serverFromTime, serverToTime) => {
-    let query = db(USER_EVENT_LOGS_TABLE).whereRaw(...this.logFilter(filter));
+    let query = db(USER_EVENT_LOGS_TABLE).whereRaw(
+      ...this.baseStrFilter(filter)
+    );
     query = this.baseListTimeFilter({ serverFromTime, serverToTime }, query);
     const { count } = await query.count("* as count").first();
     return count;
@@ -45,19 +46,13 @@ class UserEventLogModel extends BaseModel {
 
   list = async (props) => {
     const { filter, start, count } = props;
+    const { order, orderType } = this.getOrderInfo(props);
 
-    const canBeOrderFields = [
-      "id",
-      "user_id",
-      "user_email",
-      "user_role",
-      "event_name",
-      "created_at",
-    ];
-
-    let query = db(USER_EVENT_LOGS_TABLE).whereRaw(...this.logFilter(filter));
+    let query = db(USER_EVENT_LOGS_TABLE).whereRaw(
+      ...this.baseStrFilter(filter)
+    );
+    
     query = this.baseListTimeFilter(props, query);
-    const { order, orderType } = this.baseListOrder(props, canBeOrderFields);
 
     return await query
       .select(this.visibleFields)

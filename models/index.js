@@ -5,4 +5,5 @@ module.exports = {
   systemOptionModel: require("./systemOptionModel"),
   userEventLogModel: require("./userEventLogModel"),
   listingCategoriesModel: require("./listingCategoriesModel"),
+  searchedWordModel: require("./searchedWordModel"),
 };

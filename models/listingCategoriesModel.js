@@ -1,27 +1,17 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
+const BaseModel = require("./baseModel");
 
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 
-class ListingCategoriesModel {
-  visibleFields = [
-    `${LISTING_CATEGORIES_TABLE}.id`,
-    `${LISTING_CATEGORIES_TABLE}.name`,
-    `${LISTING_CATEGORIES_TABLE}.level`,
-    `${LISTING_CATEGORIES_TABLE}.parent_id as parentId`,
-    `${LISTING_CATEGORIES_TABLE}.popular`,
-  ];
+class ListingCategoriesModel extends BaseModel {
+  visibleFields = ["id", "name", "level", "parent_id as parentId", "popular"];
 
   listGroupedByLevel = async () => {
     const list = await db(LISTING_CATEGORIES_TABLE)
-      .leftJoin(
-        `${LISTING_CATEGORIES_TABLE} as parent`,
-        "parent.id",
-        "=",
-        `${LISTING_CATEGORIES_TABLE}.parent_id`
-      )
-      .select([...this.visibleFields, "parent.name as parentName"]);
+      .orderBy("id", "desc")
+      .select(this.visibleFields);
 
     const res = {
       firstLevel: [],
@@ -72,9 +62,32 @@ class ListingCategoriesModel {
     });
   };
 
-  deleteList = async (ids, level) => {
-    await db(LISTING_CATEGORIES_TABLE).where({ level }).whereIn("id", ids).delete();
+  deleteList = async (ids) => {
+    await db(LISTING_CATEGORIES_TABLE).whereIn("id", ids).delete();
   };
+
+  listByName = async (name) => {
+    const list = await db(LISTING_CATEGORIES_TABLE)
+      .where("name", "like", `%${name}%`)
+      .orderBy("popular", "desc")
+      .orderBy("level", "asc")
+      .select(["name"])
+      .limit(20);
+
+    return list.map((elem) => elem.name);
+  };
+
+  popularList = async () => {
+    const list = await db(LISTING_CATEGORIES_TABLE)
+      .where("popular", true)
+      .orderBy("level", "asc")
+      .select(["name"])
+      .limit(20);
+
+    return list.map((elem) => elem.name);
+  };
+
+  getById = (id) => this.baseGetById(id, LISTING_CATEGORIES_TABLE);
 }
 
 module.exports = new ListingCategoriesModel();

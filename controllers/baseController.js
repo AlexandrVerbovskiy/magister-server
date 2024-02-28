@@ -20,7 +20,8 @@ const {
   userVerifyRequestModel,
   systemOptionModel,
   userEventLogModel,
-  listingCategoriesModel
+  listingCategoriesModel,
+  searchedWordModel,
 } = require("../models");
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
@@ -37,6 +38,7 @@ class Controller {
     this.systemOptionModel = systemOptionModel;
     this.userEventLogModel = userEventLogModel;
     this.listingCategoriesModel = listingCategoriesModel;
+    this.searchedWordModel = searchedWordModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -280,6 +282,24 @@ class Controller {
       user_email: user["email"],
       user_role: user["role"],
       event_name,
+    });
+  };
+
+  baseGetById = (req, res, model, method = ["getById"]) => {
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+
+      if (isNaN(id)) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const entity = await model[method](id);
+
+      if (!entity) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, entity);
     });
   };
 }

@@ -529,34 +529,10 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
-  getById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const user = await this.userModel.getById(id);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
-    });
+  getById = (req, res) => this.baseGetById(req, res, this.userModel);
 
   getFullById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const user = await this.userModel.getFullById(id);
-
-      if (!user) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
-    });
+    this.baseGetById(req, res, this.userModel, "getFullById");
 
   baseCheckEmailUnique = async (dataToSave, id = null) => {
     const { email } = dataToSave;

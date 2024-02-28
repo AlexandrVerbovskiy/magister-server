@@ -92,8 +92,8 @@ app.use(
 );
 
 app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes);
-
 app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes);
+app.use("/api/searched-words", apiRoutes.searchedWordsRoutes);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

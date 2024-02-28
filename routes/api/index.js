@@ -6,4 +6,5 @@ module.exports = {
   userEventLogApiRoutes: require("./userEventLogRoutes"),
   systemApiRoutes: require("./systemRoutes"),
   listingCategoryRoutes: require("./listingCategoryRoutes"),
+  searchedWordsRoutes: require("./searchedWordsRoutes"),
 };

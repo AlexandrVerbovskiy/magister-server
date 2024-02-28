@@ -16,6 +16,19 @@ class ListingCategoriesController extends BaseController {
     });
   };
 
+  popularList = (req, res) => {
+    this.baseWrapper(req, res, async () => {
+      const popularCategories = await this.listingCategoriesModel.popularList();
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        null,
+        {popularCategories}
+      );
+    });
+  };
+
   findCategoryByName = (categories, name) => {
     let res = null;
 
@@ -39,7 +52,7 @@ class ListingCategoriesController extends BaseController {
 
   saveList = (req, res) => {
     this.baseWrapper(req, res, async () => {
-      const listToSave = req.body;
+      const listToSave = { ...req.body };
 
       const groupedList =
         await this.listingCategoriesModel.listGroupedByLevel();
@@ -98,7 +111,7 @@ class ListingCategoriesController extends BaseController {
             }
           }
 
-          toCreate[level].push({ ...category, level: numberLevel });
+          toCreate[level].unshift({ ...category, level: numberLevel });
         }
 
         categoriesCurrentLevelIds.forEach((categoryId) => {
@@ -126,10 +139,10 @@ class ListingCategoriesController extends BaseController {
         });
       }
 
-      levels.forEach((level) => {
-        const numberLevel = this.getNumberLevelByName(level);
+      levels.forEach(async (level) => {
         const ids = toDelete[level].map((category) => category.id);
-        this.listingCategoriesModel.deleteList(ids, numberLevel);
+        await this.searchedWordModel.unsetCategoryList(ids);
+        await this.listingCategoriesModel.deleteList(ids);
       });
 
       for (let i = 0; i < levels.length; i++) {
@@ -153,7 +166,7 @@ class ListingCategoriesController extends BaseController {
 
       Object.keys(toUpdate).forEach((level) => {
         toUpdate[level].forEach((elem, index) => {
-          if (!toCreate[level][index]["parentId"] && level !== "firstLevel") {
+          if (!toUpdate[level][index]["parentId"] && level !== "firstLevel") {
             const created = this.findCategoryByName(
               toCreate,
               elem["parentName"]
@@ -165,10 +178,29 @@ class ListingCategoriesController extends BaseController {
         });
       });
 
+      const resList = { ...req.body };
+      levels.forEach((level) => {
+        resList[level].forEach((elem, index) => {
+          if (!elem.id) {
+            const created = this.findCategoryByName(toCreate, elem["name"]);
+            resList[level][index]["id"] = created["id"];
+          }
+
+          if (!elem.parentId && elem.parentName) {
+            const created = this.findCategoryByName(
+              toCreate,
+              elem["parentName"]
+            );
+            resList[level][index]["parentId"] = created["id"];
+          }
+        });
+      });
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        "List saved successfully"
+        "List saved successfully",
+        resList
       );
     });
   };

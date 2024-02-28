@@ -1,19 +1,39 @@
 const { formatDateToSQLFormat } = require("../utils");
+const db = require("../database");
 
 class BaseModel {
-  baseListOrder = (props, canBeOrderFields) => {
+  strFilterFields = [];
+
+  orderFields = [];
+
+  getOrderInfo = (
+    props,
+    defaultOrderField = "id",
+    defaultOrderType = "asc"
+  ) => {
     let { order, orderType } = props;
 
-    if (!order) {
-      order = "id";
-      orderType = "desc";
-    }
-    if (!orderType) orderType = "asc";
+    if (!order) order = defaultOrderField;
+    if (!orderType) orderType = defaultOrderType;
 
     orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
-    order = canBeOrderFields.includes(order.toLowerCase()) ? order : "id";
+    order = this.orderFields.includes(order.toLowerCase())
+      ? order
+      : defaultOrderField;
 
     return { orderType, order };
+  };
+
+  baseStrFilter = (filter) => {
+    filter = `%${filter}%`;
+    const searchableFields = this.strFilterFields;
+
+    const conditions = searchableFields
+      .map((field) => `${field} ILIKE ?`)
+      .join(" OR ");
+
+    const props = searchableFields.map((field) => filter);
+    return [`(${conditions})`, props];
   };
 
   baseListTimeFilter = (props, query) => {
@@ -36,6 +56,10 @@ class BaseModel {
     }
 
     return query;
+  };
+
+  baseGetById = async (id, model) => {
+    return await db(model).where("id", id).select(this.visibleFields).first();
   };
 }
 
