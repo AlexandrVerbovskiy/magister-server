@@ -2,22 +2,13 @@ const userModel = require("./userModel");
 const db = require("../database");
 const STATIC = require("../static");
 const { formatDateToSQLFormat } = require("../utils");
+const BaseModel = require("./baseModel");
 const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 
-class UserVerifyRequestModel {
-  requestFilter = (filter) => {
-    filter = `%${filter}%`;
-    const searchableFields = [`${USERS_TABLE}.name`, `${USERS_TABLE}.email`];
-
-    const conditions = searchableFields
-      .map((field) => `${field} ILIKE ?`)
-      .join(" OR ");
-
-    const props = searchableFields.map((field) => filter);
-    return [`(${conditions})`, props];
-  };
+class UserVerifyRequestModel extends BaseModel {
+  strFilterFields = [`${USERS_TABLE}.name`, `${USERS_TABLE}.email`];
 
   create = async (userId) => {
     await db(USER_VERIFY_REQUESTS_TABLE).insert({
@@ -52,7 +43,7 @@ class UserVerifyRequestModel {
   totalCount = async (filter, fromTime, toTime) => {
     let query = db(USER_VERIFY_REQUESTS_TABLE)
       .where({ has_response: false })
-      .whereRaw(...this.requestFilter(filter))
+      .whereRaw(...this.baseStrFilter(filter))
       .join(
         USERS_TABLE,
         `${USERS_TABLE}.id`,
@@ -118,7 +109,7 @@ class UserVerifyRequestModel {
         `${USER_VERIFY_REQUESTS_TABLE}.user_id`
       )
       .where({ has_response: false })
-      .whereRaw(...this.requestFilter(filter));
+      .whereRaw(...this.baseStrFilter(filter));
 
     if (fromTime) {
       query = query.where(

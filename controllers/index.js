@@ -5,4 +5,5 @@ module.exports = {
   userVerifyRequestController: require("./userVerifyRequestController"),
   systemController: require("./systemController"),
   listingCategoriesController: require("./listingCategoriesController"),
+  searchedWordController: require("./searchedWordController"),
 };

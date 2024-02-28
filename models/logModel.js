@@ -2,10 +2,11 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const { formatDateToSQLFormat } = require("../utils");
+const BaseModel = require("./baseModel");
 
 const LOGS_TABLE = STATIC.TABLES.LOGS;
 
-class LogModel {
+class LogModel extends BaseModel {
   visibleFields = [
     "id",
     "success",
@@ -17,17 +18,9 @@ class LogModel {
     "symbol",
   ];
 
-  logFilter = (filter) => {
-    filter = `%${filter}%`;
-    const searchableFields = ["line", "file", "message"];
+  strFilterFields = ["line", "file", "message"];
 
-    const conditions = searchableFields
-      .map((field) => `${field} ILIKE ?`)
-      .join(" OR ");
-
-    const props = searchableFields.map((field) => filter);
-    return [`(${conditions})`, props];
-  };
+  orderFields = ["id", "line", "file", "created_at"];
 
   create = async ({ success, message, body, line, symbol, file }) => {
     await db(LOGS_TABLE).insert({
@@ -40,72 +33,24 @@ class LogModel {
     });
   };
 
-  getById = async (id) => {
-    return await db(LOGS_TABLE)
-      .where("id", id)
-      .select(this.visibleFields)
-      .first();
-  };
+  getById = (id) => this.baseGetById(id, LOGS_TABLE);
 
-  totalCount = async (filter, fromTime, toTime) => {
-    let query = db(LOGS_TABLE).whereRaw(...this.logFilter(filter));
-
-    if (fromTime) {
-      query = query.where(
-        "created_at",
-        ">=",
-        formatDateToSQLFormat(fromTime)
-      );
-    }
-
-    if (toTime) {
-      query = query.where(
-        "created_at",
-        "<=",
-        formatDateToSQLFormat(toTime)
-      );
-    }
-
+  totalCount = async (filter, serverFromTime, serverToTime) => {
+    let query = db(LOGS_TABLE).whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListTimeFilter({ serverFromTime, serverToTime }, query);
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  list = async ({
-    filter,
-    order,
-    orderType,
-    start,
-    count,
-    fromTime,
-    toTime,
-  }) => {
-    const canBeOrderField = ["id", "line", "file", "created_at"];
-
-    if (!order) order = "id";
-    if (!orderType) orderType = "asc";
-
-    orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
-    order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
+  list = async (props) => {
+    const { filter, start, count } = props;
+    const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(LOGS_TABLE)
       .select(this.visibleFields)
-      .whereRaw(...this.logFilter(filter));
+      .whereRaw(...this.baseStrFilter(filter));
 
-    if (fromTime) {
-      query = query.where(
-        "created_at",
-        ">=",
-        formatDateToSQLFormat(fromTime)
-      );
-    }
-
-    if (toTime) {
-      query = query.where(
-        "created_at",
-        "<=",
-        formatDateToSQLFormat(toTime)
-      );
-    }
+    query = this.baseListTimeFilter(props, query);
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };

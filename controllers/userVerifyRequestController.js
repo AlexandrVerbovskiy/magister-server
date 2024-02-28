@@ -30,18 +30,8 @@ class UserVerifyRequestController extends BaseController {
     });
   };
 
-  getById = (req, res) => {
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const request = await this.userVerifyRequestModel.getById(id);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, request);
-    });
-  };
+  getById = (req, res) =>
+    this.baseGetById(req, res, this.userVerifyRequestModel);
 
   createUserVerifyRequest = (req, res) => {
     this.baseWrapper(req, res, async () => {

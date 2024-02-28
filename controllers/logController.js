@@ -1,5 +1,4 @@
 const STATIC = require("../static");
-const { timeConverter, getYesterdayDate, getTodayDate } = require("../utils");
 const BaseController = require("./baseController");
 
 class LogController extends BaseController {
@@ -9,41 +8,29 @@ class LogController extends BaseController {
 
   list = (req, res) => {
     this.baseWrapper(req, res, async () => {
-      req.body.fromTime =
-        req.body.fromTime ?? timeConverter(getYesterdayDate());
-      req.body.toTime = req.body.toTime ?? timeConverter(getTodayDate());
+      const timeInfos = await this.listTimeOption(req);
 
-      const { options, countItems } = await this.baseList(
-        req,
-        ({ filter, fromTime, toTime }) =>
-          this.logModel.totalCount(filter, fromTime, toTime)
+      const { options, countItems } = await this.baseList(req, ({ filter }) =>
+        this.logModel.totalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
       );
 
-      options["fromTime"] = req.body.fromTime;
-      options["toTime"] = req.body.toTime;
+      Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
-      const logs = await this.logModel.list(options);
+      const requests = await this.logModel.list(options);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        items: logs,
+        items: requests,
         options,
         countItems,
       });
     });
   };
 
-  getById = (req, res) => {
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const log = await this.logModel.getById(id);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, log);
-    });
-  };
+  getById = (req, res) => this.baseGetById(req, res, this.logModel);
 }
 
 module.exports = new LogController();
