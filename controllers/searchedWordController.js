@@ -1,7 +1,7 @@
 const STATIC = require("../static");
-const BaseController = require("./baseController");
+const Controller = require("./Controller");
 
-class SearchedWordController extends BaseController {
+class SearchedWordController extends Controller {
   constructor() {
     super();
   }

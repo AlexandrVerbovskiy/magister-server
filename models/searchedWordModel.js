@@ -1,11 +1,11 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
-const BaseModel = require("./baseModel");
+const Model = require("./Model");
 
 const SEARCHED_WORDS_TABLE = STATIC.TABLES.SEARCHED_WORDS;
 
-class SearchedWord extends BaseModel {
+class SearchedWord extends Model {
   visibleFields = [
     "id",
     "name",

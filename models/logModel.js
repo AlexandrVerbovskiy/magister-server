@@ -1,12 +1,11 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
-const { formatDateToSQLFormat } = require("../utils");
-const BaseModel = require("./baseModel");
+const Model = require("./Model");
 
 const LOGS_TABLE = STATIC.TABLES.LOGS;
 
-class LogModel extends BaseModel {
+class LogModel extends Model {
   visibleFields = [
     "id",
     "success",

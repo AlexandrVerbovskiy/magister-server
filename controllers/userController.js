@@ -4,12 +4,12 @@ const {
   generateVerifyToken,
   validateToken,
 } = require("../utils");
-const BaseController = require("./baseController");
+const Controller = require("./Controller");
 const fetch = require("node-fetch");
 const { OAuth2Client } = require("google-auth-library");
 const CLIENT_URL = process.env.CLIENT_URL;
 
-class UserController extends BaseController {
+class UserController extends Controller {
   constructor() {
     super();
   }

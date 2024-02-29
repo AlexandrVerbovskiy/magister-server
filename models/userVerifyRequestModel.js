@@ -2,12 +2,12 @@ const userModel = require("./userModel");
 const db = require("../database");
 const STATIC = require("../static");
 const { formatDateToSQLFormat } = require("../utils");
-const BaseModel = require("./baseModel");
+const Model = require("./Model");
 const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 
-class UserVerifyRequestModel extends BaseModel {
+class UserVerifyRequestModel extends Model {
   strFilterFields = [`${USERS_TABLE}.name`, `${USERS_TABLE}.email`];
 
   create = async (userId) => {
