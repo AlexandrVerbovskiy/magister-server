@@ -1,7 +1,7 @@
 const { formatDateToSQLFormat } = require("../utils");
 const db = require("../database");
 
-class BaseModel {
+class Model {
   strFilterFields = [];
 
   orderFields = [];
@@ -63,4 +63,4 @@ class BaseModel {
   };
 }
 
-module.exports = BaseModel;
+module.exports = Model;

@@ -1,11 +1,11 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
-const BaseModel = require("./baseModel");
+const Model = require("./Model");
 
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 
-class ListingCategoriesModel extends BaseModel {
+class ListingCategoriesModel extends Model {
   visibleFields = ["id", "name", "level", "parent_id as parentId", "popular"];
 
   listGroupedByLevel = async () => {

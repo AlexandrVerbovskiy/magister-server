@@ -1,8 +1,8 @@
 const STATIC = require("../static");
-const BaseController = require("./baseController");
+const Controller = require("./Controller");
 const lodash = require("lodash");
 
-class ListingCategoriesController extends BaseController {
+class ListingCategoriesController extends Controller {
   getList = (req, res) => {
     this.baseWrapper(req, res, async () => {
       const groupedList =

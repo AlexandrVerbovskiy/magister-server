@@ -1,10 +1,11 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
+const Model = require("./Model");
 
 const SYSTEM_TABLE = STATIC.TABLES.SYSTEM;
 
-class SystemOptionModel {
+class SystemOptionModel extends Model {
   getByKey = async (key) => {
     const res = await db(SYSTEM_TABLE).where("key", key).first();
     return res["value"];

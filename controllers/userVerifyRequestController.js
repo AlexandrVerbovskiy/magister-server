@@ -1,7 +1,7 @@
-const BaseController = require("./baseController");
+const Controller = require("./Controller");
 const STATIC = require("../static");
 
-class UserVerifyRequestController extends BaseController {
+class UserVerifyRequestController extends Controller {
   constructor() {
     super();
   }

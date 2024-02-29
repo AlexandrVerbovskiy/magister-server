@@ -7,7 +7,7 @@ const {
   getOneHourAgo,
   generateRandomString,
 } = require("../utils");
-const BaseModel = require("./baseModel");
+const Model = require("./Model");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
@@ -15,7 +15,7 @@ const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
 
-class UserModel extends BaseModel {
+class UserModel extends Model {
   visibleFields = [
     "id",
     "name",

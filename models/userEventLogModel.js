@@ -1,11 +1,11 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
-const BaseModel = require("./baseModel");
+const Model = require("./Model");
 
 const USER_EVENT_LOGS_TABLE = STATIC.TABLES.USER_EVENT_LOGS;
 
-class UserEventLogModel extends BaseModel {
+class UserEventLogModel extends Model {
   visibleFields = [
     "id",
     "user_id as userId",
