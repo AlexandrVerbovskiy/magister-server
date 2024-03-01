@@ -22,7 +22,9 @@ const {
   userEventLogModel,
   listingCategoriesModel,
   searchedWordModel,
+  listingModel,
 } = require("../models");
+
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
 const CLIENT_URL = process.env.CLIENT_URL;
@@ -39,6 +41,7 @@ class Controller {
     this.userEventLogModel = userEventLogModel;
     this.listingCategoriesModel = listingCategoriesModel;
     this.searchedWordModel = searchedWordModel;
+    this.listingModel = listingModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -285,7 +288,7 @@ class Controller {
     });
   };
 
-  baseGetById = (req, res, model, method = ["getById"]) => {
+  baseGetById = (req, res, model, method = ["getById"]) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
 
@@ -301,7 +304,9 @@ class Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, entity);
     });
-  };
+
+  getFileByName = (req, name) =>
+    req.files.find((field) => field.fieldname == name);
 }
 
 module.exports = Controller;

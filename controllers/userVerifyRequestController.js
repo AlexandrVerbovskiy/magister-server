@@ -6,7 +6,7 @@ class UserVerifyRequestController extends Controller {
     super();
   }
 
-  list = (req, res) => {
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const timeInfos = await this.listTimeOption(req);
 
@@ -28,12 +28,11 @@ class UserVerifyRequestController extends Controller {
         countItems,
       });
     });
-  };
 
   getById = (req, res) =>
     this.baseGetById(req, res, this.userVerifyRequestModel);
 
-  createUserVerifyRequest = (req, res) => {
+  createUserVerifyRequest = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const has =
@@ -49,9 +48,8 @@ class UserVerifyRequestController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
-  };
 
-  checkUserCanVerifyRequest = (req, res) => {
+  checkUserCanVerifyRequest = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const has =
@@ -69,9 +67,8 @@ class UserVerifyRequestController extends Controller {
         lastAnswerDescription,
       });
     });
-  };
 
-  updateUserVerifyRequest = (req, res) => {
+  updateUserVerifyRequest = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id, verified } = req.body;
 
@@ -98,7 +95,6 @@ class UserVerifyRequestController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
-  };
 }
 
 module.exports = new UserVerifyRequestController();

@@ -604,7 +604,7 @@ class UserController extends Controller {
       });
     });
 
-  saveProfile = (req, res) => {
+  saveProfile = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { userId } = req.userData;
@@ -615,7 +615,6 @@ class UserController extends Controller {
       const user = await this.baseUpdate(userId, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
-  };
 
   sendVerifyPhone = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -726,9 +725,6 @@ class UserController extends Controller {
       await this.userModel.setNewPassword(userId, newPassword);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
     });
-
-  getFileByName = (req, name) =>
-    req.files.find((field) => field.fieldname == name);
 
   updateMyDocuments = (req, res) =>
     this.baseWrapper(req, res, async () => {

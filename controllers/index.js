@@ -6,4 +6,6 @@ module.exports = {
   systemController: require("./systemController"),
   listingCategoriesController: require("./listingCategoriesController"),
   searchedWordController: require("./searchedWordController"),
+  listingController: require("./listingController"),
+  baseController: require("./baseController"),
 };

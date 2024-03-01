@@ -3,7 +3,7 @@ const Controller = require("./Controller");
 const lodash = require("lodash");
 
 class ListingCategoriesController extends Controller {
-  getList = (req, res) => {
+  getList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const groupedList =
         await this.listingCategoriesModel.listGroupedByLevel();
@@ -14,20 +14,6 @@ class ListingCategoriesController extends Controller {
         groupedList
       );
     });
-  };
-
-  popularList = (req, res) => {
-    this.baseWrapper(req, res, async () => {
-      const popularCategories = await this.listingCategoriesModel.popularList();
-
-      return this.sendSuccessResponse(
-        res,
-        STATIC.SUCCESS.OK,
-        null,
-        {popularCategories}
-      );
-    });
-  };
 
   findCategoryByName = (categories, name) => {
     let res = null;
@@ -50,7 +36,7 @@ class ListingCategoriesController extends Controller {
     return numberLevel;
   };
 
-  saveList = (req, res) => {
+  saveList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listToSave = { ...req.body };
 
@@ -203,7 +189,6 @@ class ListingCategoriesController extends Controller {
         resList
       );
     });
-  };
 }
 
 module.exports = new ListingCategoriesController();

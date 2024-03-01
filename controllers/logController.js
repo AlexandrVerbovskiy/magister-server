@@ -6,7 +6,7 @@ class LogController extends Controller {
     super();
   }
 
-  list = (req, res) => {
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const timeInfos = await this.listTimeOption(req);
 
@@ -28,7 +28,6 @@ class LogController extends Controller {
         countItems,
       });
     });
-  };
 
   getById = (req, res) => this.baseGetById(req, res, this.logModel);
 }

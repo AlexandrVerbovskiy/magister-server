@@ -7,4 +7,6 @@ module.exports = {
   systemApiRoutes: require("./systemRoutes"),
   listingCategoryRoutes: require("./listingCategoryRoutes"),
   searchedWordsRoutes: require("./searchedWordsRoutes"),
+  listingRoutes: require("./listingRoutes"),
+  baseRoutes: require("./baseRoutes"),
 };

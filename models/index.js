@@ -6,4 +6,5 @@ module.exports = {
   userEventLogModel: require("./userEventLogModel"),
   listingCategoriesModel: require("./listingCategoriesModel"),
   searchedWordModel: require("./searchedWordModel"),
+  listingModel: require("./listingModel"),
 };
