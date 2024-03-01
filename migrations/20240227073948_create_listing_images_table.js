@@ -10,7 +10,7 @@ exports.up = function (knex) {
     function (table) {
       table.increments("id").primary();
       table.integer("listing_id").unsigned();
-      table.string("link_location");
+      table.string("type");
       table.string("link");
     }
   );

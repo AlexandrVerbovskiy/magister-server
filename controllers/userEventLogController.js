@@ -6,7 +6,7 @@ class UserEventLogController extends Controller {
     super();
   }
 
-  list = (req, res) => {
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const timeInfos = await this.listTimeOption(req);
 
@@ -28,7 +28,6 @@ class UserEventLogController extends Controller {
         countItems,
       });
     });
-  };
 }
 
 module.exports = new UserEventLogController();

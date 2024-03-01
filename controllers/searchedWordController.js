@@ -6,7 +6,7 @@ class SearchedWordController extends Controller {
     super();
   }
 
-  list = (req, res) => {
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { accepted, viewed } = req.body;
 
@@ -25,7 +25,6 @@ class SearchedWordController extends Controller {
         countItems,
       });
     });
-  };
 
   getById = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -58,7 +57,7 @@ class SearchedWordController extends Controller {
       });
     });
 
-  tipsList = (req, res) => {
+  tipsList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const searchValue = req.query.search;
       const list = await this.listingCategoriesModel.listByName(searchValue);
@@ -71,15 +70,13 @@ class SearchedWordController extends Controller {
         list,
       });
     });
-  };
 
-  search = (req, res) => {
+  search = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const searchValue = req.query.search;
     });
-  };
 
-  createCategory = (req, res) => {
+  createCategory = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { name, level, parentId, searchedWordId } = req.body;
       const createdId = await this.listingCategoriesModel.create({
@@ -99,7 +96,6 @@ class SearchedWordController extends Controller {
         popular: false,
       });
     });
-  };
 }
 
 module.exports = new SearchedWordController();

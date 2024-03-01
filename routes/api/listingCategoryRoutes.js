@@ -4,7 +4,6 @@ const { listingCategoriesController } = require("../../controllers");
 const { isAuth, isAdmin } = require("../../middlewares");
 
 router.get("/list", listingCategoriesController.getList);
-router.get("/popular", listingCategoriesController.popularList);
 
 router.post("/save", isAuth, isAdmin, listingCategoriesController.saveList);
 

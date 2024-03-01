@@ -87,6 +87,25 @@ class ListingCategoriesModel extends Model {
     return list.map((elem) => elem.name);
   };
 
+  getRecursiveCategoryList = async (categoryId) => {
+    const categoriesWithParents = await db.raw(
+      `
+    WITH RECURSIVE category_tree AS (
+      SELECT id, name, parent_id
+      FROM categories
+      WHERE id = ?
+      UNION ALL
+      SELECT c.id, c.name, c.parent_id
+      FROM categories c
+      JOIN category_tree ct ON c.parent_id = ct.id
+    )
+    SELECT * FROM category_tree;
+  `,
+      [categoryId]
+    );
+    return categoriesWithParents;
+  };
+
   getById = (id) => this.baseGetById(id, LISTING_CATEGORIES_TABLE);
 }
 
