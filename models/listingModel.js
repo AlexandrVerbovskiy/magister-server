@@ -12,6 +12,7 @@ class ListingsModel extends Model {
   visibleFields = [
     "id",
     "name",
+    "city",
     "category_id as categoryId",
     "compensation_cost as compensationCost",
     "count_stored_items as countStoredItems",
@@ -44,8 +45,8 @@ class ListingsModel extends Model {
     const res = await db(LISTING_IMAGES_TABLE)
       .insert({
         listing_id: listingId,
-        type,
         link,
+        type,
       })
       .returning("id");
 
@@ -69,6 +70,7 @@ class ListingsModel extends Model {
     approved = false,
     minimumRentalDays = null,
     listingImages = [],
+    city,
   }) => {
     const res = await db(LISTINGS_TABLE)
       .insert({
@@ -87,6 +89,7 @@ class ListingsModel extends Model {
         count_stored_items: countStoredItems,
         owner_id: ownerId,
         key_words: keyWords,
+        city,
       })
       .returning("id");
 
@@ -111,7 +114,7 @@ class ListingsModel extends Model {
   };
 
   getById = async (id) => {
-    const listing = await db(LISTING_IMAGES_TABLE)
+    const listing = await db(LISTINGS_TABLE)
       .where({ id })
       .select(this.visibleFields)
       .first();
@@ -124,7 +127,7 @@ class ListingsModel extends Model {
   };
 
   getFullById = async (id) => {
-    const listing = await db(LISTING_IMAGES_TABLE)
+    const listing = await db(LISTINGS_TABLE)
       .join(
         USERS_TABLE,
         `${USERS_TABLE}.id`,
@@ -134,10 +137,10 @@ class ListingsModel extends Model {
       .where({ id })
       .select([
         ...this.visibleFields,
-        `${LISTING_IMAGES_TABLE}.id as user_id`,
-        `${LISTING_IMAGES_TABLE}.name as user_name`,
-        `${LISTING_IMAGES_TABLE}.email as user_email`,
-        `${LISTING_IMAGES_TABLE}.photo as user_photo`,
+        `${LISTINGS_TABLE}.id as user_id`,
+        `${LISTINGS_TABLE}.name as user_name`,
+        `${LISTINGS_TABLE}.email as user_email`,
+        `${LISTINGS_TABLE}.photo as user_photo`,
       ])
       .first();
 
@@ -167,9 +170,11 @@ class ListingsModel extends Model {
     minimumRentalDays = null,
     listingImages = [],
     keyWords,
+    city,
   }) => {
     await db(LISTINGS_TABLE).where({ id }).update({
       name,
+      city,
       description,
       postcode,
       approved,
