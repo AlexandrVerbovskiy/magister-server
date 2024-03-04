@@ -22,7 +22,7 @@ exports.up = function (knex) {
     table.text("rental_terms");
 
     table.text("postcode");
-    table.string("country");
+    table.string("city");
 
     table.string("rental_lat");
     table.string("rental_lng");

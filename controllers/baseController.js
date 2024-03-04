@@ -20,6 +20,14 @@ class BaseController extends Controller {
         popularCategories,
       });
     });
+
+  getListingListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+      });
+    });
 }
 
 module.exports = new BaseController();

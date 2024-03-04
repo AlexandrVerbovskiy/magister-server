@@ -21,6 +21,7 @@ const {
   codeValidation,
   authByProviderValidation,
 } = require("../../validations/auth");
+
 const { upload } = require("../../utils");
 
 const emailValidation = require("../../validations/auth/emailValidation");

@@ -38,7 +38,7 @@ class ListingController extends Controller {
     });
 
   localGetFiles = (req) => {
-    let listingImages = req.body["listingImages"] ?? [];
+    let listingImages = JSON.parse(req.body["listingImages"] ?? "[]");
 
     const folder = "listings";
     const filesToSave = [];
@@ -55,15 +55,16 @@ class ListingController extends Controller {
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { userId } = req.userData;
-      dataToSave["listingImages"] = this.localGetFiles(req);
       dataToSave["ownerId"] = userId;
+      dataToSave["listingImages"] = this.localGetFiles(req);
 
-      console.log(dataToSave);
+      const id = await this.listingModel.create(dataToSave);
 
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        "Created successfully"
+        "Created successfully",
+        { listingId: id, listingImages: dataToSave["listingImages"] }
       );
     });
 
@@ -81,8 +82,8 @@ class ListingController extends Controller {
   baseUpdate = (req, res) => {
     const dataToSave = req.body;
     const { userId } = req.userData;
-    dataToSave["listingImages"] = this.localGetFiles(req);
     dataToSave["ownerId"] = userId;
+    dataToSave["listingImages"] = this.localGetFiles(req);
 
     return this.sendSuccessResponse(
       res,
