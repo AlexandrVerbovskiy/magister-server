@@ -5,8 +5,8 @@ const { isAuth, isAdmin, isFileLimit } = require("../../middlewares");
 const { upload } = require("../../utils");
 
 router.get("/list", listingController.getList);
-router.get("/get-short-by-id/{id}", listingController.getShortById);
-router.get("/get-full-by-id/{id}", listingController.getFullById);
+router.get("/get-short-by-id/:id", listingController.getShortById);
+router.get("/get-full-by-id/:id", listingController.getFullById);
 router.post(
   "/create",
   upload.any(),
@@ -14,7 +14,13 @@ router.post(
   isAuth,
   listingController.create
 );
-router.post("/update", isAuth, listingController.update);
+router.post(
+  "/update",
+  upload.any(),
+  isFileLimit,
+  isAuth,
+  listingController.update
+);
 router.post("/delete", isAuth, listingController.delete);
 router.post(
   "/update-by-admin",
@@ -31,5 +37,9 @@ router.post(
   isAdmin,
   listingController.deleteByAdmin
 );
+
+router.post("/list", listingController.getCurrentUserList);
+
+router.post("/user-list", isAuth, listingController.getCurrentUserList);
 
 module.exports = router;

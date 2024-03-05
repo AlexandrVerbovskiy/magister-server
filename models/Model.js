@@ -8,7 +8,7 @@ class Model {
 
   getOrderInfo = (
     props,
-    defaultOrderField = "id",
+    defaultOrderField = this.orderFields[0] ?? "id",
     defaultOrderType = "asc"
   ) => {
     let { order, orderType } = props;
