@@ -6,24 +6,29 @@ class SearchedWordController extends Controller {
     super();
   }
 
+  baseSearchedWordList = async (req) => {
+    const { accepted, viewed } = req.body;
+
+    const { options, countItems } = await this.baseList(req, ({ filter }) =>
+      this.searchedWordModel.totalCount(filter, accepted, viewed)
+    );
+
+    options["accepted"] = accepted ?? "all";
+    options["viewed"] = viewed ?? "all";
+
+    const requests = await this.searchedWordModel.list(options);
+
+    return {
+      items: requests,
+      options,
+      countItems,
+    };
+  };
+
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { accepted, viewed } = req.body;
-
-      const { options, countItems } = await this.baseList(req, ({ filter }) =>
-        this.searchedWordModel.totalCount(filter, accepted, viewed)
-      );
-
-      options["accepted"] = accepted ?? "all";
-      options["viewed"] = viewed ?? "all";
-
-      const requests = await this.searchedWordModel.list(options);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        items: requests,
-        options,
-        countItems,
-      });
+      const result = await this.searchedWordModel.baseSearchedWordList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   getById = (req, res) =>
