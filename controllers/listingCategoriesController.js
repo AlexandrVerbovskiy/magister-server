@@ -3,7 +3,7 @@ const Controller = require("./Controller");
 const lodash = require("lodash");
 
 class ListingCategoriesController extends Controller {
-  getList = (req, res) =>
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const groupedList =
         await this.listingCategoriesModel.listGroupedByLevel();

@@ -4,7 +4,7 @@ const { listingController } = require("../../controllers");
 const { isAuth, isAdmin, isFileLimit } = require("../../middlewares");
 const { upload } = require("../../utils");
 
-router.get("/list", listingController.getList);
+router.get("/list", listingController.list);
 router.get("/get-short-by-id/:id", listingController.getShortById);
 router.get("/get-full-by-id/:id", listingController.getFullById);
 router.post(

@@ -6,7 +6,7 @@ class UserVerifyRequestController extends Controller {
     super();
   }
 
-  userVerifyRequestList = async (req) => {
+  baseUserVerifyRequestList = async (req) => {
     const timeInfos = await this.listTimeOption(req);
 
     const { options, countItems } = await this.baseList(req, ({ filter }) =>
@@ -30,7 +30,7 @@ class UserVerifyRequestController extends Controller {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = this.userVerifyRequestList(req);
+      const result = this.baseUserVerifyRequestList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

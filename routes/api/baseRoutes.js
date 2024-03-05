@@ -25,4 +25,39 @@ router.post(
   baseController.getUserListingListPageOptions
 );
 
+router.post(
+  "/admin-user-list-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminUserListPageOptions
+);
+
+router.post(
+  "/admin-log-list-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminLogListPageOptions
+);
+
+router.post(
+  "/admin-user-event-log-list-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminUserEventLogListPageOptions
+);
+
+router.post(
+  "/admin-user-verify-request-list-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminUserUserVerifyRequestListPageOptions
+);
+
+router.post(
+  "/admin-searched-word-list-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminSearchedWordListPageOptions
+);
+
 module.exports = router;
