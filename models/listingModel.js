@@ -35,7 +35,7 @@ class ListingsModel extends Model {
   strFilterFields = [`${LISTINGS_TABLE}.name`, "key_words"];
 
   orderFields = [
-    `${LISTINGS_TABLE}.id`,
+    `id`,
     "line",
     "min_rental_days",
     "count_stored_items",

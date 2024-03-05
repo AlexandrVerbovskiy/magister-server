@@ -3,6 +3,11 @@ const STATIC = require("../static");
 const db = require("../database");
 const Controller = require("./Controller");
 const listingController = require("./listingController");
+const userController = require("./userController");
+const logController = require("./logController");
+const userEventLogController = require("./userEventLogController");
+const userVerifyRequestController = require("./userVerifyRequestController");
+const searchedWordController = require("./searchedWordController");
 
 class BaseController extends Controller {
   getIndexPageOptions = (req, res) =>
@@ -59,6 +64,49 @@ class BaseController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
+      });
+    });
+
+  getAdminUserListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const userListOptions = await userController.baseUserList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...userListOptions,
+      });
+    });
+
+  getAdminLogListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const logListOptions = await logController.baseLogList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...logListOptions,
+      });
+    });
+
+  getAdminUserEventLogListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const eventLogListOptions =
+        await userEventLogController.baseUserEventLogList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...eventLogListOptions,
+      });
+    });
+
+  getAdminUserUserVerifyRequestListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const userVerifyRequestListOptions =
+        await userVerifyRequestController.baseUserVerifyRequestList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...userVerifyRequestListOptions,
+      });
+    });
+
+  getAdminSearchedWordListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const searchedWordListOptions =
+        await searchedWordController.baseSearchedWordList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...searchedWordListOptions,
       });
     });
 }

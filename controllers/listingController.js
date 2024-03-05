@@ -27,7 +27,7 @@ class ListingController extends Controller {
     };
   };
 
-  getList = (req, res) =>
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await this.baseListingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
