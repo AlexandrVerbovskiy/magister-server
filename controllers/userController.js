@@ -522,7 +522,7 @@ class UserController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      this.userModel.delete(id);
+      await this.userModel.delete(id);
 
       this.saveUserAction(req, `Removed user with id '${id}'`);
 
