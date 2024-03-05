@@ -493,19 +493,24 @@ class UserController extends Controller {
       );
     });
 
+  baseUserList = async (req) => {
+    const { options, countItems } = await this.baseList(req, ({ filter }) =>
+      this.userModel.totalCount(filter)
+    );
+
+    const users = await this.userModel.list(options);
+
+    return {
+      items: users,
+      options,
+      countItems,
+    };
+  };
+
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { options, countItems } = await this.baseList(req, ({ filter }) =>
-        this.userModel.totalCount(filter)
-      );
-
-      const users = await this.userModel.list(options);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        items: users,
-        options,
-        countItems,
-      });
+      const result = await this.baseUserList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   delete = (req, res) =>
