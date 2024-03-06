@@ -32,11 +32,16 @@ class ListingsModel extends Model {
 
   listingImageVisibleFields = ["id", "listing_id as listingId", "type", "link"];
 
-  strFilterFields = [`${LISTINGS_TABLE}.name`, "key_words"];
+  strFilterFields = [
+    `${LISTINGS_TABLE}.name`,
+    `${LISTINGS_TABLE}.city`,
+    "key_words",
+  ];
 
   orderFields = [
-    `id`,
-    "line",
+    "id",
+    "name",
+    "city",
     "min_rental_days",
     "count_stored_items",
     "price_per_day",
@@ -179,6 +184,7 @@ class ListingsModel extends Model {
     listingImages = [],
     keyWords,
     city,
+    ownerId,
   }) => {
     await db(LISTINGS_TABLE).where({ id }).update({
       name,
@@ -196,6 +202,7 @@ class ListingsModel extends Model {
       compensation_cost: compensationCost,
       count_stored_items: countStoredItems,
       key_words: keyWords,
+      owner_id: ownerId,
     });
 
     const currentImages = await this.getListingImages(id);
@@ -260,7 +267,6 @@ class ListingsModel extends Model {
     if (userId) {
       query = query.where({ owner_id: userId });
     }
-
     const { count } = await query.count("* as count").first();
     return count;
   };
@@ -273,7 +279,9 @@ class ListingsModel extends Model {
       .select([
         ...this.visibleFields,
         `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
+        `${USERS_TABLE}.name as userName`,
       ])
+      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .join(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
@@ -287,6 +295,15 @@ class ListingsModel extends Model {
     }
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
+  };
+
+  changeApprove = async (id) => {
+    const res = await db(LISTINGS_TABLE)
+      .where({ id })
+      .update({ approved: db.raw("NOT approved") })
+      .returning("approved");
+
+    return res[0].approved;
   };
 }
 

@@ -9,12 +9,14 @@ class UserVerifyRequestController extends Controller {
   baseUserVerifyRequestList = async (req) => {
     const timeInfos = await this.listTimeOption(req);
 
-    const { options, countItems } = await this.baseList(req, ({ filter }) =>
-      this.userVerifyRequestModel.totalCount(
-        filter,
-        timeInfos["serverFromTime"],
-        timeInfos["serverToTime"]
-      )
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.userVerifyRequestModel.totalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
     );
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
@@ -52,25 +54,6 @@ class UserVerifyRequestController extends Controller {
       await this.userVerifyRequestModel.create(userId);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
-
-  checkUserCanVerifyRequest = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const has =
-        await this.userVerifyRequestModel.checkUserHasUnansweredRequest(userId);
-
-      const lastAnswer =
-        await this.userVerifyRequestModel.getLastUserAnsweredRequest(userId);
-
-      const lastAnswerDescription = lastAnswer
-        ? lastAnswer.failedDescription
-        : null;
-
-      this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        canSend: !has,
-        lastAnswerDescription,
-      });
     });
 
   updateUserVerifyRequest = (req, res) =>

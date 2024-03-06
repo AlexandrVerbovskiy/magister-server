@@ -494,8 +494,9 @@ class UserController extends Controller {
     });
 
   baseUserList = async (req) => {
-    const { options, countItems } = await this.baseList(req, ({ filter }) =>
-      this.userModel.totalCount(filter)
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) => this.userModel.totalCount(filter)
     );
 
     const users = await this.userModel.list(options);
@@ -683,16 +684,6 @@ class UserController extends Controller {
       const { userId } = req.userData;
       const user = await this.userModel.getFullById(userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
-    });
-
-  myDocuments = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      const documents = await this.userModel.getDocumentsByUserId(userId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        documents,
-      });
     });
 
   getDocumentsByUserId = (req, res) =>

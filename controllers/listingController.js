@@ -4,10 +4,12 @@ const lodash = require("lodash");
 
 class ListingController extends Controller {
   baseListingList = async (req, userId = null) => {
-    const { options, countItems } = await this.baseList(req, ({ filter }) =>
-      this.listingModel.totalCount(filter, userId)
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) => this.listingModel.totalCount(filter, userId)
     );
 
+    options["userId"] = userId;
     const listings = await this.listingModel.list(options);
 
     const ids = listings.map((listing) => listing.id);
@@ -28,6 +30,12 @@ class ListingController extends Controller {
   };
 
   list = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseListingList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await this.baseListingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
@@ -130,8 +138,6 @@ class ListingController extends Controller {
 
   baseUpdate = async (req, res) => {
     const dataToSave = req.body;
-    const { userId } = req.userData;
-    dataToSave["ownerId"] = userId;
     dataToSave["listingImages"] = this.localGetFiles(req);
 
     const listingId = dataToSave["listingId"];
@@ -161,7 +167,21 @@ class ListingController extends Controller {
       const forbidden = await this.checkForbidden(req);
       if (forbidden) return forbidden;
 
+      const { userId } = req.userData;
+      req.body["ownerId"] = userId;
       return await this.baseUpdate(req, res);
+    });
+
+  changeApprove = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const id = req.body.id;
+      const approved = await this.listingModel.changeApprove(id);
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        "Updated successfully",
+        { id, approved }
+      );
     });
 
   updateByAdmin = (req, res) =>

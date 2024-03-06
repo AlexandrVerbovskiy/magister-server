@@ -25,6 +25,19 @@ router.post(
   baseController.getUserListingListPageOptions
 );
 
+router.get(
+  "/current-user-documents-options",
+  isAuth,
+  baseController.getCurrentUserDocumentsPageOptions
+);
+
+router.get(
+  "/admin-update-listing-options/:id",
+  isAuth,
+  isAdmin,
+  baseController.getAdminListingEditPageOptions
+);
+
 router.post(
   "/admin-user-list-options",
   isAuth,
@@ -58,6 +71,18 @@ router.post(
   isAuth,
   isAdmin,
   baseController.getAdminSearchedWordListPageOptions
+);
+
+router.post(
+  "/admin-listing-list-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminListingListPageOptions
+);
+
+router.post(
+  "/user-name-id-list",
+  baseController.userNameIdList
 );
 
 module.exports = router;
