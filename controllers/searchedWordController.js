@@ -9,8 +9,10 @@ class SearchedWordController extends Controller {
   baseSearchedWordList = async (req) => {
     const { accepted, viewed } = req.body;
 
-    const { options, countItems } = await this.baseList(req, ({ filter }) =>
-      this.searchedWordModel.totalCount(filter, accepted, viewed)
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.searchedWordModel.totalCount(filter, accepted, viewed)
     );
 
     options["accepted"] = accepted ?? "all";
@@ -27,7 +29,7 @@ class SearchedWordController extends Controller {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.searchedWordModel.baseSearchedWordList(req);
+      const result = await this.baseSearchedWordList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

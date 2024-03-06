@@ -109,6 +109,66 @@ class BaseController extends Controller {
         ...searchedWordListOptions,
       });
     });
+
+  getAdminListingListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const listingListOptions = await listingController.baseListingList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...listingListOptions,
+      });
+    });
+
+  getCurrentUserDocumentsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      const documents = await this.userModel.getDocumentsByUserId(userId);
+
+      const hasUnansweredRequest =
+        await this.userVerifyRequestModel.checkUserHasUnansweredRequest(userId);
+
+      const lastAnsweredRequest =
+        await this.userVerifyRequestModel.getLastUserAnsweredRequest(userId);
+
+      const lastAnswerDescription = lastAnsweredRequest
+        ? lastAnsweredRequest.failedDescription
+        : null;
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        documents,
+        canSend: !hasUnansweredRequest,
+        lastAnswerDescription,
+      });
+    });
+
+  getAdminListingEditPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const id = req.params.id;
+      const listing = await this.listingModel.getFullById(id);
+
+      if (!listing) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        listing,
+      });
+    });
+
+  userNameIdList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { page = 1, perPage = 20, filter = "" } = req.body;
+      const startIndex = (page - 1) * perPage;
+      const list = await this.userModel.getNameIdList(
+        startIndex,
+        perPage,
+        filter
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { list });
+    });
 }
 
 module.exports = new BaseController();

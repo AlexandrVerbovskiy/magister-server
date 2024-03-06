@@ -9,12 +9,14 @@ class UserEventLogController extends Controller {
   baseUserEventLogList = async (req) => {
     const timeInfos = await this.listTimeOption(req);
 
-    const { options, countItems } = await this.baseList(req, ({ filter }) =>
-      this.userEventLogModel.totalCount(
-        filter,
-        timeInfos["serverFromTime"],
-        timeInfos["serverToTime"]
-      )
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.userEventLogModel.totalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
     );
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));

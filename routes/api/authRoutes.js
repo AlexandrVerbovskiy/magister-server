@@ -36,7 +36,6 @@ router.post(
 router.post("/login", isNotAuth, loginValidation, userController.login);
 
 router.post("/my-info", isAuth, userController.myInfo);
-router.post("/my-documents", isAuth, userController.myDocuments);
 router.post(
   "/save-profile",
   upload.single("photo"),
@@ -133,11 +132,6 @@ router.post(
   userController.noNeedRegularViewInfoForm
 );
 
-router.post(
-  "/can-send-verify-request",
-  isAuth,
-  userVerifyRequestController.checkUserCanVerifyRequest
-);
 
 router.post(
   "/auth-by-provider",

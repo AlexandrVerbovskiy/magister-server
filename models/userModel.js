@@ -515,6 +515,15 @@ class UserModel extends Model {
       .where({ user_id: userId })
       .update({ ...this.convertDocumentLinksToSql(documents) });
   };
+
+  getNameIdList = async (start, count, filter) => {
+    const res = await db(USERS_TABLE)
+      .select(["id as value", "name as title"])
+      .whereILike("name", `%${filter}%`)
+      .limit(count)
+      .offset(start);
+    return res;
+  };
 }
 
 module.exports = new UserModel();
