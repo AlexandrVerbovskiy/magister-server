@@ -8,5 +8,6 @@ module.exports = {
   listingCategoryRoutes: require("./listingCategoryRoutes"),
   searchedWordsRoutes: require("./searchedWordsRoutes"),
   listingRoutes: require("./listingRoutes"),
+  listingApprovalRequestRoutes: require("./listingApprovalRequestRoutes"),
   baseRoutes: require("./baseRoutes"),
 };

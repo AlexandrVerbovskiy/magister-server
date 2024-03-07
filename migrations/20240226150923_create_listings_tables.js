@@ -30,7 +30,7 @@ exports.up = function (knex) {
 
     table.boolean("approved").defaultTo(false);
 
-    table.timestamps();
+    table.timestamps(true, true);
   });
 };
 

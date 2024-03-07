@@ -8,7 +8,23 @@ const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 
 class UserVerifyRequestModel extends Model {
+  visibleFields = [
+    `${USER_VERIFY_REQUESTS_TABLE}.id`,
+    `${USER_VERIFY_REQUESTS_TABLE}.created_at as createdAt`,
+    `${USERS_TABLE}.name as userName`,
+    `${USERS_TABLE}.email as userEmail`,
+    `${USERS_TABLE}.id as userId`,
+  ];
+
   strFilterFields = [`${USERS_TABLE}.name`, `${USERS_TABLE}.email`];
+
+  orderFields = [
+    `${USER_VERIFY_REQUESTS_TABLE}.id`,
+    `${USERS_TABLE}.name`,
+    `${USERS_TABLE}.email`,
+    `${USERS_TABLE}.id`,
+    `${USER_VERIFY_REQUESTS_TABLE}.created_at`,
+  ];
 
   create = async (userId) => {
     await db(USER_VERIFY_REQUESTS_TABLE).insert({
@@ -40,94 +56,48 @@ class UserVerifyRequestModel extends Model {
       .first();
   };
 
-  totalCount = async (filter, fromTime, toTime) => {
+  totalCount = async (filter, serverFromTime, serverToTime) => {
     let query = db(USER_VERIFY_REQUESTS_TABLE)
-      .where({ has_response: false })
-      .whereRaw(...this.baseStrFilter(filter))
       .join(
         USERS_TABLE,
         `${USERS_TABLE}.id`,
+        "=",
         `${USER_VERIFY_REQUESTS_TABLE}.user_id`
-      );
-
-    if (fromTime) {
-      query = query.where(
-        `${USER_VERIFY_REQUESTS_TABLE}.created_at`,
-        ">=",
-        formatDateToSQLFormat(fromTime)
-      );
-    }
-
-    if (toTime) {
-      query = query.where(
-        `${USER_VERIFY_REQUESTS_TABLE}.created_at`,
-        "<=",
-        formatDateToSQLFormat(toTime)
-      );
-    }
-
+      )
+      .whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListTimeFilter(
+      { serverFromTime, serverToTime },
+      query,
+      `${USER_VERIFY_REQUESTS_TABLE}.created_at`
+    );
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  list = async ({
-    filter,
-    order,
-    orderType,
-    start,
-    count,
-    fromTime,
-    toTime,
-  }) => {
-    const canBeOrderField = [
-      `${USER_VERIFY_REQUESTS_TABLE}.id`,
-      `${USERS_TABLE}.name as userName`,
-      `${USERS_TABLE}.email as userEmail`,
-      `${USERS_TABLE}.id as userId`,
-      `${USER_VERIFY_REQUESTS_TABLE}.created_at`,
-    ];
-
-    if (!order) order = `${USER_VERIFY_REQUESTS_TABLE}.id`;
-    if (!orderType) orderType = "asc";
-
-    orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
-    order = canBeOrderField.includes(order.toLowerCase())
-      ? order
-      : `${USER_VERIFY_REQUESTS_TABLE}.id`;
+  list = async (props) => {
+    const { filter, start, count } = props;
+    const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(USER_VERIFY_REQUESTS_TABLE)
-      .select([
-        `${USER_VERIFY_REQUESTS_TABLE}.id`,
-        `${USER_VERIFY_REQUESTS_TABLE}.created_at as createdAt`,
-        `${USERS_TABLE}.name as userName`,
-        `${USERS_TABLE}.email as userEmail`,
-        `${USERS_TABLE}.id as userId`,
-      ])
       .join(
         USERS_TABLE,
         `${USERS_TABLE}.id`,
+        "=",
         `${USER_VERIFY_REQUESTS_TABLE}.user_id`
       )
-      .where({ has_response: false })
       .whereRaw(...this.baseStrFilter(filter));
 
-    if (fromTime) {
-      query = query.where(
-        `${USER_VERIFY_REQUESTS_TABLE}.created_at`,
-        ">=",
-        formatDateToSQLFormat(fromTime)
-      );
-    }
+    query = this.baseListTimeFilter(
+      props,
+      query,
+      `${USER_VERIFY_REQUESTS_TABLE}.created_at`
+    );
 
-    if (toTime) {
-      query = query.where(
-        `${USER_VERIFY_REQUESTS_TABLE}.created_at`,
-        "<=",
-        formatDateToSQLFormat(toTime)
-      );
-    }
-
-    return await query.orderBy(order, orderType).limit(count).offset(start);
+    return await query
+      .select(this.visibleFields)
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
   };
 
   updateUserVerifyById = async (id, description) => {

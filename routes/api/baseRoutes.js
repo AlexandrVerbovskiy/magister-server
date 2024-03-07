@@ -19,12 +19,6 @@ router.get(
   baseController.getUpdateListingPageOptions
 );
 
-router.post(
-  "/user-listing-list-options",
-  isAuth,
-  baseController.getUserListingListPageOptions
-);
-
 router.get(
   "/current-user-documents-options",
   isAuth,
@@ -74,15 +68,38 @@ router.post(
 );
 
 router.post(
+  "/user-listing-list-options",
+  isAuth,
+  baseController.getUserListingListPageOptions
+);
+
+router.post(
   "/admin-listing-list-options",
   isAuth,
   isAdmin,
   baseController.getAdminListingListPageOptions
 );
 
+router.post("/user-name-id-list", baseController.userNameIdList);
+
 router.post(
-  "/user-name-id-list",
-  baseController.userNameIdList
+  "/user-listing-approval-request-list-options",
+  isAuth,
+  baseController.getUserListingApprovalRequestListPageOptions
+);
+
+router.post(
+  "/admin-listing-approval-request-list-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminListingApprovalRequestListPageOptions
+);
+
+router.get(
+  "/admin-listing-approval-request-options/:id",
+  isAuth,
+  isAdmin,
+  baseController.getAdminListingApprovalRequestPageOptions
 );
 
 module.exports = router;

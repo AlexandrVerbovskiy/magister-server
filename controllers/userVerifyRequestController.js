@@ -32,7 +32,7 @@ class UserVerifyRequestController extends Controller {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = this.baseUserVerifyRequestList(req);
+      const result = await this.baseUserVerifyRequestList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

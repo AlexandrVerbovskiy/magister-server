@@ -12,8 +12,8 @@ exports.up = function(knex) {
         table.string("value");
         table.boolean("sent").defaultTo(false);
 
-        table.timestamps();
-      });
+        table.timestamps(true, true);
+    });
 };
 
 /**

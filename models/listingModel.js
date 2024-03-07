@@ -8,18 +8,19 @@ const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const LISTING_IMAGES_TABLE = STATIC.TABLES.LISTING_IMAGES;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
+const LISTING_APPROVAL_REQUESTS_TABLE = STATIC.TABLES.LISTING_APPROVAL_REQUESTS;
 
 class ListingsModel extends Model {
   visibleFields = [
     `${LISTINGS_TABLE}.id`,
     `${LISTINGS_TABLE}.name`,
+    `${LISTINGS_TABLE}.approved`,
     "city",
     "category_id as categoryId",
     "compensation_cost as compensationCost",
     "count_stored_items as countStoredItems",
     "description",
     "postcode",
-    "approved",
     "owner_id as ownerId",
     "price_per_day as pricePerDay",
     "min_rental_days as minimumRentalDays",
@@ -141,6 +142,12 @@ class ListingsModel extends Model {
   getFullById = async (id) => {
     const listing = await db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+      .join(
+        LISTING_CATEGORIES_TABLE,
+        `${LISTING_CATEGORIES_TABLE}.id`,
+        "=",
+        `${LISTINGS_TABLE}.category_id`
+      )
       .where(`${LISTINGS_TABLE}.id`, id)
       .select([
         ...this.visibleFields,
@@ -154,6 +161,8 @@ class ListingsModel extends Model {
         `${USERS_TABLE}.facebook_url as userFacebookUrl`,
         `${USERS_TABLE}.twitter_url as userTwitterUrl`,
         `${USERS_TABLE}.place_work as userPlaceWork`,
+        `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
+        `${LISTING_CATEGORIES_TABLE}.level as categoryLevel`,
       ])
       .first();
 
@@ -289,6 +298,67 @@ class ListingsModel extends Model {
         `${LISTINGS_TABLE}.category_id`
       )
       .whereRaw(...this.baseStrFilter(filter));
+
+    if (props.userId) {
+      query = query.where({ owner_id: props.userId });
+    }
+
+    return await query.orderBy(order, orderType).limit(count).offset(start);
+  };
+
+  listWithLastRequests = async (props) => {
+    const { filter, start, count, status } = props;
+    const { order, orderType } = this.getOrderInfo(props);
+
+    const subquery = db
+      .select("id")
+      .from(LISTING_APPROVAL_REQUESTS_TABLE)
+      .groupBy("id")
+      .orderBy("id", "desc")
+      .limit(1);
+
+    let query = db(LISTINGS_TABLE)
+      .select([
+        ...this.visibleFields,
+        `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
+        `${USERS_TABLE}.name as userName`,
+        `${LISTING_APPROVAL_REQUESTS_TABLE}.id as requestId`,
+        `${LISTING_APPROVAL_REQUESTS_TABLE}.approved as requestApproved`,
+      ])
+      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+      .join(
+        LISTING_CATEGORIES_TABLE,
+        `${LISTING_CATEGORIES_TABLE}.id`,
+        "=",
+        `${LISTINGS_TABLE}.category_id`
+      )
+      .leftJoin(LISTING_APPROVAL_REQUESTS_TABLE, function () {
+        this.on(
+          `${LISTING_APPROVAL_REQUESTS_TABLE}.listing_id`,
+          "=",
+          `${LISTINGS_TABLE}.id`
+        ).andOn(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "=", subquery);
+      })
+      .whereRaw(...this.baseStrFilter(filter));
+
+    const statusWhere = (isData) =>
+      `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
+
+    if (status == "approved") {
+      query = query.whereRaw(statusWhere("TRUE"));
+    }
+
+    if (status == "unapproved") {
+      query = query.whereRaw(
+        `(${statusWhere(
+          "FALSE"
+        )} OR ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL)`
+      );
+    }
+
+    if (status == "not_processed") {
+      query = query.whereRaw(statusWhere("NULL"));
+    }
 
     if (props.userId) {
       query = query.where({ owner_id: props.userId });

@@ -8,6 +8,7 @@ const logController = require("./logController");
 const userEventLogController = require("./userEventLogController");
 const userVerifyRequestController = require("./userVerifyRequestController");
 const searchedWordController = require("./searchedWordController");
+const listingApprovalRequestController = require("./listingApprovalRequestController");
 
 class BaseController extends Controller {
   getIndexPageOptions = (req, res) =>
@@ -41,6 +42,11 @@ class BaseController extends Controller {
       const userId = req.userData.userId;
       const listing = await this.listingModel.getById(id);
 
+      const lastRequestInfo =
+        await this.listingApprovalRequestModel.lastListingApprovalRequestInfo(
+          id
+        );
+
       if (!listing) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -54,13 +60,17 @@ class BaseController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         listing,
+        lastRequestInfo,
       });
     });
 
   getUserListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
-      const result = await listingController.baseListingList(req, userId);
+      const result = await listingController.baseListingWithStatusesList(
+        req,
+        userId
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
@@ -69,9 +79,9 @@ class BaseController extends Controller {
 
   getAdminUserListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const userListOptions = await userController.baseUserList(req);
+      const result = await userController.baseUserList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...userListOptions,
+        ...result,
       });
     });
 
@@ -168,6 +178,48 @@ class BaseController extends Controller {
         filter
       );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { list });
+    });
+
+  getUserListingApprovalRequestListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
+      const result = await listingApprovalRequestController.baseRequestsList(
+        req,
+        userId
+      );
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminListingApprovalRequestListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await listingApprovalRequestController.baseRequestsList(
+        req
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminListingApprovalRequestPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const request = await this.listingApprovalRequestModel.getById(id);
+
+      if (!request) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const { listingId } = request;
+
+      const listing = await this.listingModel.getFullById(listingId);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        request,
+        listing,
+      });
     });
 }
 

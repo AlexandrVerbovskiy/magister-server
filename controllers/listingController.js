@@ -1,6 +1,5 @@
 const STATIC = require("../static");
 const Controller = require("./Controller");
-const lodash = require("lodash");
 
 class ListingController extends Controller {
   baseListingList = async (req, userId = null) => {
@@ -29,9 +28,45 @@ class ListingController extends Controller {
     };
   };
 
+  baseListingWithStatusesList = async (req, userId = null) => {
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) => this.listingModel.totalCount(filter, userId)
+    );
+
+    const status = req.body.status ?? "all";
+    options["userId"] = userId;
+    options["status"] = status;
+    const listings = await this.listingModel.listWithLastRequests(options);
+
+    const ids = listings.map((listing) => listing.id);
+    const listingImages = await this.listingModel.getListingListImages(ids);
+
+    const listingsWithImages = listings.map((listing) => {
+      listing["images"] = listingImages.filter(
+        (image) => image.listingId === listing.id
+      );
+      return listing;
+    });
+
+    return {
+      items: listingsWithImages,
+      options,
+      countItems,
+    };
+  };
+
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseListingList(req);
+      const userId = req.userData.userId;
+      const result = await this.baseListingList(req, userId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  userList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
+      const result = await this.baseListingWithStatusesList(req, userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -44,7 +79,7 @@ class ListingController extends Controller {
   getCurrentUserList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
-      const result = await this.baseListingList(req, userId);
+      const result = await this.baseListingWithStatusesList(req, userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

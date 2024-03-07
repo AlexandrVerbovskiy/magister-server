@@ -36,23 +36,15 @@ class Model {
     return [`(${conditions})`, props];
   };
 
-  baseListTimeFilter = (props, query) => {
+  baseListTimeFilter = (props, query, field = "created_at") => {
     const { serverFromTime, serverToTime } = props;
 
     if (serverFromTime) {
-      query = query.where(
-        "created_at",
-        ">=",
-        formatDateToSQLFormat(serverFromTime)
-      );
+      query = query.where(field, ">=", formatDateToSQLFormat(serverFromTime));
     }
 
     if (serverToTime) {
-      query = query.where(
-        "created_at",
-        "<=",
-        formatDateToSQLFormat(serverToTime)
-      );
+      query = query.where(field, "<=", formatDateToSQLFormat(serverToTime));
     }
 
     return query;

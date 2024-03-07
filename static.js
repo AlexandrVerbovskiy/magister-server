@@ -86,5 +86,6 @@ module.exports = {
     SEARCHED_WORDS: "searched_words",
     NEW_CATEGORY_USER_NOTIFICATION: "new_category_user_notifications",
     LISTING_IMAGES: "listing_images",
+    LISTING_APPROVAL_REQUESTS: "listing_approval_requests",
   },
 };
