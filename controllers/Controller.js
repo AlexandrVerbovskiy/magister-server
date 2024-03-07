@@ -23,6 +23,7 @@ const {
   listingCategoriesModel,
   searchedWordModel,
   listingModel,
+  listingApprovalRequestModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -42,6 +43,7 @@ class Controller {
     this.listingCategoriesModel = listingCategoriesModel;
     this.searchedWordModel = searchedWordModel;
     this.listingModel = listingModel;
+    this.listingApprovalRequestModel = listingApprovalRequestModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,

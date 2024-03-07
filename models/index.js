@@ -7,4 +7,5 @@ module.exports = {
   listingCategoriesModel: require("./listingCategoriesModel"),
   searchedWordModel: require("./searchedWordModel"),
   listingModel: require("./listingModel"),
+  listingApprovalRequestModel: require("./listingApprovalRequestModel"),
 };

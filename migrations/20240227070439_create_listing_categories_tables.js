@@ -15,7 +15,7 @@ exports.up = function (knex) {
       table.integer("parent_id").unsigned().nullable().defaultTo(null);
       table.boolean("popular").defaultTo(false);
 
-      table.timestamps();
+      table.timestamps(true, true);
     }
   );
 };
