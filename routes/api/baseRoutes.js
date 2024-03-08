@@ -1,19 +1,21 @@
 const { Router } = require("express");
 const router = Router();
 const { baseController } = require("../../controllers");
-const { isAuth, isAdmin } = require("../../middlewares");
+const { isAuth, isVerified, isAdmin } = require("../../middlewares");
 
 router.get("/index-options", baseController.getIndexPageOptions);
 
 router.get(
   "/create-listing-options",
   isAuth,
+  isVerified,
   baseController.getCreateListingPageOptions
 );
 
 router.get(
   "/update-listing-options/:id",
   isAuth,
+  isVerified,
   baseController.getUpdateListingPageOptions
 );
 
@@ -21,6 +23,13 @@ router.get(
   "/current-user-documents-options",
   isAuth,
   baseController.getCurrentUserDocumentsPageOptions
+);
+
+router.get(
+  "/admin-create-listing-options",
+  isAuth,
+  isAdmin,
+  baseController.getAdminListingCreatePageOptions
 );
 
 router.get(
@@ -68,6 +77,7 @@ router.post(
 router.post(
   "/user-listing-list-options",
   isAuth,
+  isVerified,
   baseController.getUserListingListPageOptions
 );
 

@@ -163,6 +163,15 @@ class BaseController extends Controller {
       });
     });
 
+  getAdminListingCreatePageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+      });
+    });
+
   getAdminListingEditPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const id = req.params.id;

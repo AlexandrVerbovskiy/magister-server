@@ -231,6 +231,27 @@ class ListingController extends Controller {
       return await this.baseUpdate(req, res);
     });
 
+  createByAdmin = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const dataToSave = req.body;
+      dataToSave["listingImages"] = this.localGetFiles(req);
+
+      const listingId = await this.listingModel.create(dataToSave);
+
+      const listingImagesToRes = dataToSave["listingImages"].map((info) => ({
+        type: info.type,
+        link: info.link,
+        listingId,
+      }));
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        "Created successfully",
+        { ...dataToSave, listingId, listingImages: listingImagesToRes }
+      );
+    });
+
   baseDelete = async (req, res) => {
     const { id } = req.body;
     const { deletedImagesInfos } = await this.listingModel.deleteById(id);
