@@ -4,8 +4,9 @@ const { listingController } = require("../../controllers");
 const { isAuth, isAdmin, isFileLimit } = require("../../middlewares");
 const { upload } = require("../../utils");
 
-router.post("/list", isAuth, listingController.list);
+router.post("/list", listingController.mainList);
 router.post("/admin-list", isAuth, isAdmin, listingController.adminList);
+router.post("/user-list", isAuth, listingController.getCurrentUserList);
 
 router.get("/get-short-by-id/:id", listingController.getShortById);
 router.get("/get-full-by-id/:id", listingController.getFullById);
@@ -44,7 +45,5 @@ router.post(
   isAdmin,
   listingController.deleteByAdmin
 );
-
-router.post("/user-list", isAuth, listingController.getCurrentUserList);
 
 module.exports = router;

@@ -270,8 +270,29 @@ class ListingsModel extends Model {
     return { deletedImagesInfos };
   };
 
-  totalCount = async (filter, userId = null) => {
-    let query = db(LISTINGS_TABLE).whereRaw(...this.baseStrFilter(filter));
+  totalCount = async ({
+    serverFromTime,
+    serverToTime,
+    cities = [],
+    categories = [],
+    userId = null,
+  }) => {
+    let query = db(LISTINGS_TABLE)
+      .join(
+        LISTING_CATEGORIES_TABLE,
+        `${LISTING_CATEGORIES_TABLE}.id`,
+        "=",
+        `${LISTINGS_TABLE}.category_id`
+      )
+      .where("approved", true);
+
+    if (cities.length > 0) {
+      query.whereIn("city", cities);
+    }
+
+    if (categories.length > 0) {
+      query.whereIn(`${LISTINGS_TABLE}.name`, categories);
+    }
 
     if (userId) {
       query = query.where({ owner_id: userId });
@@ -280,15 +301,66 @@ class ListingsModel extends Model {
     return count;
   };
 
+  totalCountWithLastRequests = async (
+    filter,
+    userId = null,
+    status = "all"
+  ) => {
+    const subquery = db
+      .select("id")
+      .from(LISTING_APPROVAL_REQUESTS_TABLE)
+      .groupBy("id")
+      .orderBy("id", "desc")
+      .limit(1);
+
+    let query = db(LISTINGS_TABLE)
+      .leftJoin(LISTING_APPROVAL_REQUESTS_TABLE, function () {
+        this.on(
+          `${LISTING_APPROVAL_REQUESTS_TABLE}.listing_id`,
+          "=",
+          `${LISTINGS_TABLE}.id`
+        ).andOn(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "=", subquery);
+      })
+      .whereRaw(...this.baseStrFilter(filter));
+
+    const statusWhere = (isData) =>
+      `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
+
+    if (status == "approved") {
+      query = query.whereRaw(statusWhere("TRUE"));
+    }
+
+    if (status == "unapproved") {
+      query = query.whereRaw(
+        `(${statusWhere(
+          "FALSE"
+        )} OR ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL)`
+      );
+    }
+
+    if (status == "not_processed") {
+      query = query.whereRaw(statusWhere("NULL"));
+    }
+
+    if (userId) {
+      query = query.where({ owner_id: userId });
+    }
+
+    const { count } = await query.count("* as count").first();
+    return count;
+  };
+
   list = async (props) => {
-    const { filter, start, count } = props;
-    const { order, orderType } = this.getOrderInfo(props);
+    const { serverFromTime, serverToTime, cities, categories, start, count } =
+      props;
 
     let query = db(LISTINGS_TABLE)
       .select([
         ...this.visibleFields,
         `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
         `${USERS_TABLE}.name as userName`,
+        `${USERS_TABLE}.photo as userPhoto`,
+        `${USERS_TABLE}.id as userId`,
       ])
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .join(
@@ -297,13 +369,44 @@ class ListingsModel extends Model {
         "=",
         `${LISTINGS_TABLE}.category_id`
       )
-      .whereRaw(...this.baseStrFilter(filter));
+      .where("approved", true);
+
+    if (cities.length > 0) {
+      query.whereIn("city", cities);
+    }
+
+    if (categories.length > 0) {
+      query.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, categories);
+    }
 
     if (props.userId) {
       query = query.where({ owner_id: props.userId });
     }
 
-    return await query.orderBy(order, orderType).limit(count).offset(start);
+    const { order = "default" } = props;
+
+    let orderField = "id";
+    let orderType = "asc";
+
+    if (order == "latest") {
+      orderField = "id";
+      orderType = "desc";
+    }
+
+    if (order == "price_to_high") {
+      orderField = "price_per_day";
+      orderType = "asc";
+    }
+
+    if (order == "price_to_low") {
+      orderField = "price_per_day";
+      orderType = "desc";
+    }
+
+    return await query
+      .orderBy(orderField, orderType)
+      .limit(count)
+      .offset(start);
   };
 
   listWithLastRequests = async (props) => {

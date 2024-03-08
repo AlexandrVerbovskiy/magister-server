@@ -120,9 +120,21 @@ class BaseController extends Controller {
       });
     });
 
-  getAdminListingListPageOptions = (req, res) =>
+  getMainListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions = await listingController.baseListingList(req);
+      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...listingListOptions,
+        categories,
+      });
+    });
+
+  getAdminListingListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const listingListOptions =
+        await listingController.baseListingWithStatusesList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
       });

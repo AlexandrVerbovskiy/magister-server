@@ -3,14 +3,27 @@ const Controller = require("./Controller");
 
 class ListingController extends Controller {
   baseListingList = async (req, userId = null) => {
-    const { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) => this.listingModel.totalCount(filter, userId)
+    const cities = req.body.cities ?? [];
+    const categories = req.body.categories ?? [];
+    const timeInfos = await this.listTimeOption(req, 0, 2);
+
+    const { options, countItems } = await this.baseList(req, () =>
+      this.listingModel.totalCount({
+        serverFromTime: timeInfos["serverFromTime"],
+        serverToTime: timeInfos["serverToTime"],
+        cities,
+        categories,
+        userId,
+      })
     );
 
     options["userId"] = userId;
-    const listings = await this.listingModel.list(options);
+    options["cities"] = cities;
+    options["categories"] = categories;
 
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+
+    const listings = await this.listingModel.list(options);
     const ids = listings.map((listing) => listing.id);
     const listingImages = await this.listingModel.getListingListImages(ids);
 
@@ -29,12 +42,14 @@ class ListingController extends Controller {
   };
 
   baseListingWithStatusesList = async (req, userId = null) => {
+    const status = req.body.status ?? "all";
+
     const { options, countItems } = await this.baseList(
       req,
-      ({ filter = "" }) => this.listingModel.totalCount(filter, userId)
+      ({ filter = "" }) =>
+        this.listingModel.totalCountWithLastRequests(filter, userId, status)
     );
 
-    const status = req.body.status ?? "all";
     options["userId"] = userId;
     options["status"] = status;
     const listings = await this.listingModel.listWithLastRequests(options);
@@ -56,23 +71,15 @@ class ListingController extends Controller {
     };
   };
 
-  list = (req, res) =>
+  mainList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const userId = req.userData.userId;
-      const result = await this.baseListingList(req, userId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
-  userList = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const userId = req.userData.userId;
-      const result = await this.baseListingWithStatusesList(req, userId);
+      const result = await this.baseListingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseListingList(req);
+      const result = await this.baseListingWithStatusesList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

@@ -11,17 +11,18 @@ const timeConverter = (time) => {
   return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
 };
 
-const getTodayClientEndDate = (clientCurrentTime) => {
-  const today = new Date(clientCurrentTime);
-  today.setHours(23, 59, 59, 999);
-  return today;
+const getDateByCurrentAdd = (clientCurrentTime, daysToAdd = 0) => {
+  const date = new Date(clientCurrentTime);
+  date.setDate(date.getDate() + daysToAdd);
+  date.setHours(23, 59, 59, 999);
+  return date;
 };
 
-const getYesterdayClientStartDate = (clientCurrentTime) => {
-  const yesterday = new Date(clientCurrentTime);
-  yesterday.setDate(yesterday.getDate() - 1);
-  yesterday.setHours(0, 0, 0, 0);
-  return yesterday;
+const getDateByCurrentReject = (clientCurrentTime, daysToReject = 0) => {
+  const date = new Date(clientCurrentTime);
+  date.setDate(date.getDate() - daysToReject);
+  date.setHours(0, 0, 0, 0);
+  return date;
 };
 
 const getOneHourAgo = () => {
@@ -63,12 +64,12 @@ const adaptClientTimeToServer = (clientDateStr, clientServerHoursDiff) =>
   adaptTimeByHoursDiff(clientDateStr, clientServerHoursDiff);
 
 module.exports = {
-  getYesterdayClientStartDate,
-  getTodayClientEndDate,
   timeConverter,
   getOneHourAgo,
   formatDateToSQLFormat,
   clientServerHoursDifference,
   adaptClientTimeToServer,
   adaptServerTimeToClient,
+  getDateByCurrentAdd,
+  getDateByCurrentReject
 };
