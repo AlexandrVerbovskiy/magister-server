@@ -1,12 +1,22 @@
 const { Router } = require("express");
 const router = Router();
 const { listingController } = require("../../controllers");
-const { isAuth, isAdmin, isFileLimit } = require("../../middlewares");
+const {
+  isAuth,
+  isAdmin,
+  isFileLimit,
+  isVerified,
+} = require("../../middlewares");
 const { upload } = require("../../utils");
 
 router.post("/list", listingController.mainList);
 router.post("/admin-list", isAuth, isAdmin, listingController.adminList);
-router.post("/user-list", isAuth, listingController.getCurrentUserList);
+router.post(
+  "/user-list",
+  isAuth,
+  isVerified,
+  listingController.getCurrentUserList
+);
 
 router.get("/get-short-by-id/:id", listingController.getShortById);
 router.get("/get-full-by-id/:id", listingController.getFullById);
@@ -16,6 +26,7 @@ router.post(
   upload.any(),
   isFileLimit,
   isAuth,
+  isVerified,
   listingController.create
 );
 
@@ -24,10 +35,20 @@ router.post(
   upload.any(),
   isFileLimit,
   isAuth,
+  isVerified,
   listingController.update
 );
 
 router.post("/delete", isAuth, listingController.delete);
+
+router.post(
+  "/create-by-admin",
+  isAuth,
+  isAdmin,
+  upload.any(),
+  isFileLimit,
+  listingController.createByAdmin
+);
 
 router.post(
   "/update-by-admin",
@@ -35,7 +56,6 @@ router.post(
   isAdmin,
   upload.any(),
   isFileLimit,
-
   listingController.updateByAdmin
 );
 
