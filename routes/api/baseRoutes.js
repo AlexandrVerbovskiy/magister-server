@@ -5,8 +5,6 @@ const { isAuth, isAdmin } = require("../../middlewares");
 
 router.get("/index-options", baseController.getIndexPageOptions);
 
-router.get("/listing-list-options", baseController.getListingListPageOptions);
-
 router.get(
   "/create-listing-options",
   isAuth,
@@ -71,6 +69,11 @@ router.post(
   "/user-listing-list-options",
   isAuth,
   baseController.getUserListingListPageOptions
+);
+
+router.post(
+  "/listing-list-options",
+  baseController.getMainListingListPageOptions
 );
 
 router.post(

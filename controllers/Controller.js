@@ -8,8 +8,8 @@ const path = require("path");
 const mime = require("mime-types");
 const {
   timeConverter,
-  getYesterdayClientStartDate,
-  getTodayClientEndDate,
+  getDateByCurrentAdd,
+  getDateByCurrentReject,
   adaptClientTimeToServer,
   clientServerHoursDifference,
 } = require("../utils");
@@ -252,18 +252,26 @@ class Controller {
     };
   };
 
-  listTimeOption = async (req) => {
+  listTimeOption = async (
+    req,
+    startFromCurrentDaysAdd = 1,
+    endToCurrentDaysReject = 0
+  ) => {
     const { clientTime } = req.body;
     const clientServerHoursDiff = clientServerHoursDifference(clientTime);
 
     let { fromTime, toTime } = req.body;
 
     if (!fromTime) {
-      fromTime = timeConverter(getYesterdayClientStartDate(clientTime));
+      fromTime = timeConverter(
+        getDateByCurrentReject(clientTime, startFromCurrentDaysAdd)
+      );
     }
 
     if (!toTime) {
-      toTime = timeConverter(getTodayClientEndDate(clientTime));
+      toTime = timeConverter(
+        getDateByCurrentAdd(clientTime, endToCurrentDaysReject)
+      );
     }
 
     const serverFromTime = adaptClientTimeToServer(
