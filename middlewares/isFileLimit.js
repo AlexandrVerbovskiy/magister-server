@@ -3,10 +3,9 @@ const STATIC = require("../static");
 const multer = require("multer");
 const byteConverter = require("../utils/byteConverter");
 
-const isFileLimit = (err, req, res, next) => {
+const isBaseFileLimit = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    const size = byteConverter(Number(process.env.MAX_FILE_SIZE));
-    console.log(err.message);
+    const size = byteConverter(Number(baseLimit));
 
     return res.status(STATIC.ERRORS.BAD_REQUEST.STATUS).json({
       isError: true,
@@ -16,4 +15,10 @@ const isFileLimit = (err, req, res, next) => {
   next(err);
 };
 
-module.exports = isFileLimit;
+const isFileLimit = (err, req, res, next) =>
+  isBaseFileLimit(err, req, res, next, process.env.MAX_FILE_SIZE);
+
+const isSmallFileLimit = (err, req, res, next) =>
+  isBaseFileLimit(err, req, res, next, process.env.MAX_SMALL_FILE_SIZE);
+
+module.exports = { isFileLimit, isSmallFileLimit };

@@ -6,7 +6,14 @@ const Model = require("./Model");
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 
 class ListingCategoriesModel extends Model {
-  visibleFields = ["id", "name", "level", "parent_id as parentId", "popular"];
+  visibleFields = [
+    "id",
+    "name",
+    "level",
+    "image",
+    "parent_id as parentId",
+    "popular",
+  ];
 
   listGroupedByLevel = async () => {
     const list = await db(LISTING_CATEGORIES_TABLE)
@@ -40,23 +47,38 @@ class ListingCategoriesModel extends Model {
     return !category;
   };
 
-  create = async ({ name, level, parentId = null, popular = false }) => {
+  create = async ({
+    name,
+    level,
+    image = null,
+    parentId = null,
+    popular = false,
+  }) => {
     const res = await db(LISTING_CATEGORIES_TABLE)
       .insert({
         name,
         level,
         parent_id: parentId,
         popular,
+        image,
       })
       .returning("id");
 
     return res[0]["id"];
   };
 
-  update = async ({ id, name, level, parentId = null, popular = false }) => {
+  update = async ({
+    id,
+    name,
+    image = null,
+    level,
+    parentId = null,
+    popular = false,
+  }) => {
     await db(LISTING_CATEGORIES_TABLE).where({ id }).update({
       name,
       level,
+      image,
       parent_id: parentId,
       popular,
     });

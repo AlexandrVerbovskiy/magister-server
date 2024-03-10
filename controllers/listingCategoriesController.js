@@ -36,9 +36,53 @@ class ListingCategoriesController extends Controller {
     return numberLevel;
   };
 
+  getFileLevelAndIndex = (fileFieldName) => {
+    const match = fileFieldName.match(/\[([^\[\]]+)\]\[(\d+)\]/);
+    const level = match[1];
+    const index = parseInt(match[2]);
+    return { level, index };
+  };
+
   saveList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const listToSave = { ...req.body };
+      const levels = ["firstLevel", "secondLevel", "thirdLevel"];
+
+      console.log(req.body.categoriesToReplace);
+
+      return;
+
+      const categoriesToSave = {
+        firstLevel: [],
+        secondLevel: [],
+        thirdLevel: [],
+        ...req.body.categoriesToSave,
+      };
+
+      Object.keys(categoriesToSave).forEach((level) => {
+        categoriesToSave[level].forEach((elem, index) => {
+          categoriesToSave[level][index] = { ...elem };
+
+          if (elem.id) {
+            categoriesToSave[level][index]["id"] = Number(elem.id);
+          }
+
+          if (elem.popular) {
+            categoriesToSave[level][index]["popular"] = true;
+          }
+        });
+      });
+
+      const listToSave = { ...categoriesToSave };
+
+      const folder = "listingCategories";
+
+      req.files.forEach((file) => {
+        const filePath = this.moveUploadsFileToFolder(file, folder);
+
+        const { level, index } = this.getFileLevelAndIndex(file.fieldname);
+        listToSave[level][index]["image"] = filePath;
+        categoriesToSave[level][index]["image"] = filePath;
+      });
 
       const groupedList =
         await this.listingCategoriesModel.listGroupedByLevel();
@@ -47,13 +91,13 @@ class ListingCategoriesController extends Controller {
       const toCreate = { firstLevel: [], secondLevel: [], thirdLevel: [] };
       const toUpdate = { firstLevel: [], secondLevel: [], thirdLevel: [] };
 
-      const levels = ["firstLevel", "secondLevel", "thirdLevel"];
+      const filesToDelete = [];
 
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         const numberLevel = this.getNumberLevelByName(level);
-        const categoriesToSaveLevel = listToSave[level];
-        const categoriesCurrentLevel = groupedList[level];
+        const categoriesToSaveLevel = listToSave[level] ?? [];
+        const categoriesCurrentLevel = groupedList[level] ?? [];
 
         const categoriesToSaveLevelIds = categoriesToSaveLevel.map(
           (category) => category.id
@@ -64,8 +108,13 @@ class ListingCategoriesController extends Controller {
         );
 
         categoriesCurrentLevel
-          .filter((category) => !categoriesToSaveLevelIds.includes(category.id))
-          .forEach((category) => toDelete[level].push(category));
+          .filter(
+            (category) =>
+              category.id && !categoriesToSaveLevelIds.includes(category.id)
+          )
+          .forEach((category) => {
+            toDelete[level].push(category);
+          });
 
         const categoriesToCreate = categoriesToSaveLevel.filter(
           (category) => !category.id
@@ -121,6 +170,13 @@ class ListingCategoriesController extends Controller {
             !lodash.isEqual(savingCategoryDataToCompare, currentCategoryData)
           ) {
             toUpdate[level].push({ ...savingCategoryData, level: numberLevel });
+
+            if (
+              currentCategoryData.image &&
+              currentCategoryData.image != savingCategoryData.image
+            ) {
+              filesToDelete.push(currentCategoryData.image);
+            }
           }
         });
       }
@@ -164,7 +220,8 @@ class ListingCategoriesController extends Controller {
         });
       });
 
-      const resList = { ...req.body };
+      const resList = { ...categoriesToSave };
+
       levels.forEach((level) => {
         resList[level].forEach((elem, index) => {
           if (!elem.id) {
@@ -181,6 +238,8 @@ class ListingCategoriesController extends Controller {
           }
         });
       });
+
+      filesToDelete.forEach((file) => this.removeFile(file));
 
       return this.sendSuccessResponse(
         res,

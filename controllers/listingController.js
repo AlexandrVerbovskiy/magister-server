@@ -125,11 +125,10 @@ class ListingController extends Controller {
   localGetFiles = (req) => {
     const listingImages = JSON.parse(req.body["listingImages"] ?? "[]");
 
-    const folder = "listings";
     const filesToSave = [];
 
     req.files.forEach((file) => {
-      const filePath = this.moveUploadsFileToFolder(file, folder);
+      const filePath = this.moveUploadsFileToFolder(file, "listings");
       filesToSave.push({ type: "storage", link: filePath });
     });
 
