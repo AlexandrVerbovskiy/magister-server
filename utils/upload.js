@@ -18,9 +18,20 @@ const storage = multer.diskStorage({
 
 const maxFileSize = Number(process.env.MAX_FILE_SIZE ?? 26214400);
 
-module.exports = multer({
+const upload = multer({
   storage: storage,
   limits: {
     fileSize: maxFileSize,
   },
 });
+
+const maxSmallFileSize = Number(process.env.MAX_SMALL_FILE_SIZE ?? 1048576);
+
+const smallUpload = multer({
+  storage: storage,
+  limits: {
+    fileSize: maxSmallFileSize,
+  },
+});
+
+module.exports = { upload, smallUpload };
