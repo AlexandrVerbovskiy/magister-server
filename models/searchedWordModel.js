@@ -33,7 +33,7 @@ class SearchedWord extends Model {
     if (searchedCount) {
       await db(SEARCHED_WORDS_TABLE)
         .where({ name })
-        .insert({ search_count: searchedCount + 1 });
+        .update({ search_count: searchedCount + 1 });
     } else {
       await db(SEARCHED_WORDS_TABLE).insert({ name });
     }
@@ -48,6 +48,12 @@ class SearchedWord extends Model {
   setCategoryId = async (id, categoryId) => {
     await db(SEARCHED_WORDS_TABLE)
       .where({ id })
+      .update({ listing_categories_id: categoryId });
+  };
+
+  setCategoryByName = async (name, categoryId) => {
+    await db(SEARCHED_WORDS_TABLE)
+      .where({ name })
       .update({ listing_categories_id: categoryId });
   };
 

@@ -9,4 +9,5 @@ module.exports = {
   listingController: require("./listingController"),
   listingApprovalRequestController: require("./listingApprovalRequestController"),
   baseController: require("./baseController"),
+  listingCategoryCreateNotificationController: require("./listingCategoryCreateNotificationController"),
 };

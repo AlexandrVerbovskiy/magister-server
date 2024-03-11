@@ -1,6 +1,7 @@
 const STATIC = require("../static");
 const Controller = require("./Controller");
 const lodash = require("lodash");
+const listingCategoryCreateNotificationController = require("./listingCategoryCreateNotificationController");
 
 class ListingCategoriesController extends Controller {
   list = (req, res) =>
@@ -254,6 +255,23 @@ class ListingCategoriesController extends Controller {
       });
 
       filesToDelete.forEach((file) => this.removeFile(file));
+
+      this.saveUserAction(req, `Update listing category list`);
+
+      levels.forEach((level) => {
+        const newCategories = [];
+
+        [...toCreate[level], ...toUpdate[level]].forEach((category) => {
+          listingCategoryCreateNotificationController.onCreateCategory(
+            category.name
+          );
+          newCategories.push({ name: category.name, id: category.id });
+        });
+
+        newCategories.forEach((info) =>
+          this.searchedWordModel.setCategoryByName(info.name, info.id)
+        );
+      });
 
       return this.sendSuccessResponse(
         res,

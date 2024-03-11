@@ -49,9 +49,9 @@ class ListingApprovalRequestController extends Controller {
       const userId = req.userData.userId;
       const { listingId } = req.body;
 
-      const hasAccess = await this.listingModel.hasAccess(listingId, userId);
+      const listing = await this.listingModel.hasAccess(listingId, userId);
 
-      if (!hasAccess) {
+      if (!listing) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -72,6 +72,11 @@ class ListingApprovalRequestController extends Controller {
         listingId
       );
 
+      this.saveUserAction(
+        req,
+        `Send a request to create a listing with name ${listing.name}`
+      );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         id: requestId,
       });
@@ -82,15 +87,30 @@ class ListingApprovalRequestController extends Controller {
       const { listingId } = req.body;
       await this.listingApprovalRequestModel.approve(listingId);
 
+      const listing = await this.listingModel.getById(listingId);
+
+      this.saveUserAction(
+        req,
+        `Accepted a request to create a listing with name ${listing.name}`
+      );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
     });
 
   reject = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { listingId, description } = req.body;
+
       await this.listingApprovalRequestModel.rejectApprove(
         listingId,
         description
+      );
+
+      const listing = await this.listingModel.getById(listingId);
+
+      this.saveUserAction(
+        req,
+        `Rejected a request to create a listing with name ${listing.name}`
       );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);

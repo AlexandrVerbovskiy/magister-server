@@ -9,5 +9,6 @@ module.exports = {
   searchedWordsRoutes: require("./searchedWordsRoutes"),
   listingRoutes: require("./listingRoutes"),
   listingApprovalRequestRoutes: require("./listingApprovalRequestRoutes"),
+  listingCategoryCreateNotificationRoutes: require("./listingCategoryCreateNotificationRoutes"),
   baseRoutes: require("./baseRoutes"),
 };

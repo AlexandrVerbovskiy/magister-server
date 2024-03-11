@@ -8,4 +8,5 @@ module.exports = {
   searchedWordModel: require("./searchedWordModel"),
   listingModel: require("./listingModel"),
   listingApprovalRequestModel: require("./listingApprovalRequestModel"),
+  listingCategoryCreateNotificationModel: require("./listingCategoryCreateNotificationModel"),
 };

@@ -67,6 +67,7 @@ module.exports = {
     EMAIL_VERIFICATION: "email-verification",
     PASSWORD_RESET: "password-reset",
     USER_AUTHORIZED: "user-authorized",
+    LISTING_PAGE:"listing-list"
   },
   MAIN_DIRECTORY: __dirname,
   TABLES: {
@@ -84,8 +85,9 @@ module.exports = {
     LISTINGS: "listings",
     LISTING_CATEGORIES: "listing_categories",
     SEARCHED_WORDS: "searched_words",
-    NEW_CATEGORY_USER_NOTIFICATION: "new_category_user_notifications",
     LISTING_IMAGES: "listing_images",
     LISTING_APPROVAL_REQUESTS: "listing_approval_requests",
+    LISTING_CATEGORY_CREATE_NOTIFICATIONS:
+      "listing_category_create_notifications",
   },
 };
