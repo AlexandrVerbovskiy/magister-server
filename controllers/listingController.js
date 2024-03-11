@@ -2,10 +2,46 @@ const STATIC = require("../static");
 const Controller = require("./Controller");
 
 class ListingController extends Controller {
+  checkUserCanGetNotificationOnCreateCategory = async (
+    categories,
+    optionCategories,
+    userId = null
+  ) => {
+    let canSendCreateNotifyRequest = false;
+
+    if (optionCategories.length == 1) {
+      canSendCreateNotifyRequest = true;
+      const searchedCategoryName = optionCategories[0];
+
+      ["firstLevel", "secondLevel", "thirdLevel"].forEach((level) => {
+        categories[level].forEach((category) => {
+          if (category.name == searchedCategoryName) {
+            canSendCreateNotifyRequest = false;
+          }
+        });
+      });
+
+      if (canSendCreateNotifyRequest && userId) {
+        const resCheck =
+          await this.listingCategoryCreateNotificationModel.checkNameHasCategoryNotify(
+            userId,
+            searchedCategoryName
+          );
+
+        if (resCheck) {
+          canSendCreateNotifyRequest = false;
+        }
+      }
+    }
+
+    return canSendCreateNotifyRequest;
+  };
+
   baseListingList = async (req, userId = null) => {
     const cities = req.body.cities ?? [];
     const categories = req.body.categories ?? [];
     const timeInfos = await this.listTimeOption(req, 0, 2);
+    const { userId: sessionUserId = null } = req.userData;
 
     const { options, countItems } = await this.baseList(req, () =>
       this.listingModel.totalCount({
@@ -34,10 +70,25 @@ class ListingController extends Controller {
       return listing;
     });
 
+    const dbCategories = await this.listingCategoriesModel.listGroupedByLevel();
+    const canSendCreateNotifyRequest =
+      await this.checkUserCanGetNotificationOnCreateCategory(
+        dbCategories,
+        options["categories"],
+        sessionUserId
+      );
+
+    if (options["categories"].length == 1 && countItems == 0) {
+      console.log("2");
+      this.searchedWordModel.updateSearchCount(options["categories"][0]);
+    }
+
     return {
       items: listingsWithImages,
       options,
       countItems,
+      canSendCreateNotifyRequest,
+      categories: dbCategories,
     };
   };
 
@@ -135,27 +186,39 @@ class ListingController extends Controller {
     return [...filesToSave, ...listingImages];
   };
 
+  baseCreate = async (req, res) => {
+    const dataToSave = req.body;
+    dataToSave["listingImages"] = this.localGetFiles(req);
+
+    const listingId = await this.listingModel.create(dataToSave);
+
+    const listingImagesToRes = dataToSave["listingImages"].map((info) => ({
+      type: info.type,
+      link: info.link,
+      listingId,
+    }));
+
+    return this.sendSuccessResponse(
+      res,
+      STATIC.SUCCESS.OK,
+      "Created successfully",
+      { ...dataToSave, listingId, listingImages: listingImagesToRes }
+    );
+  };
+
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const dataToSave = req.body;
       const { userId } = req.userData;
-      dataToSave["ownerId"] = userId;
-      dataToSave["listingImages"] = this.localGetFiles(req);
+      req.body.ownerId = userId;
 
-      const listingId = await this.listingModel.create(dataToSave);
+      const result = await this.baseCreate(req, res);
 
-      const listingImagesToRes = dataToSave["listingImages"].map((info) => ({
-        type: info.type,
-        link: info.link,
-        listingId,
-      }));
-
-      return this.sendSuccessResponse(
-        res,
-        STATIC.SUCCESS.OK,
-        "Created successfully",
-        { ...dataToSave, listingId, listingImages: listingImagesToRes }
+      this.saveUserAction(
+        req,
+        `User create a listing with name '${req.body.name}'`
       );
+
+      return result;
     });
 
   checkForbidden = async (req) => {
@@ -210,7 +273,14 @@ class ListingController extends Controller {
 
       const { userId } = req.userData;
       req.body["ownerId"] = userId;
-      return await this.baseUpdate(req, res);
+      const result = await this.baseUpdate(req, res);
+
+      this.saveUserAction(
+        req,
+        `User create a listing with name '${req.body.name}'`
+      );
+
+      return result;
     });
 
   changeApprove = (req, res) =>
@@ -227,34 +297,33 @@ class ListingController extends Controller {
 
   updateByAdmin = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      return await this.baseUpdate(req, res);
+      const result = await this.baseUpdate(req, res);
+
+      this.saveUserAction(
+        req,
+        `Admin update a listing with name '${req.body.name}'`
+      );
+
+      return result;
     });
 
   createByAdmin = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const dataToSave = req.body;
-      dataToSave["listingImages"] = this.localGetFiles(req);
+      const result = await this.baseCreate(req, res);
 
-      const listingId = await this.listingModel.create(dataToSave);
-
-      const listingImagesToRes = dataToSave["listingImages"].map((info) => ({
-        type: info.type,
-        link: info.link,
-        listingId,
-      }));
-
-      return this.sendSuccessResponse(
-        res,
-        STATIC.SUCCESS.OK,
-        "Created successfully",
-        { ...dataToSave, listingId, listingImages: listingImagesToRes }
+      this.saveUserAction(
+        req,
+        `Admin create a listing with name '${req.body.name}'`
       );
+
+      return result;
     });
 
   baseDelete = async (req, res) => {
     const { id } = req.body;
     const { deletedImagesInfos } = await this.listingModel.deleteById(id);
     this.removeListingImages(deletedImagesInfos);
+
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
   };
 
@@ -263,12 +332,32 @@ class ListingController extends Controller {
       const forbidden = await this.checkForbidden(req);
       if (forbidden) return forbidden;
 
-      return await this.baseDelete(req, res);
+      const result = await this.baseDelete(req, res);
+
+      const { id } = req.body;
+      const listing = await this.listingModel.getById(id);
+
+      this.saveUserAction(
+        req,
+        `User delete a listing with name '${listing.name}'`
+      );
+
+      return result;
     });
 
   deleteByAdmin = async (req, res) =>
     this.baseWrapper(req, res, async () => {
-      return await this.baseDelete(req, res);
+      const result = await this.baseDelete(req, res);
+
+      const { id } = req.body;
+      const listing = await this.listingModel.getById(id);
+
+      this.saveUserAction(
+        req,
+        `Admin delete a listing with name '${listing.name}'`
+      );
+
+      return result;
     });
 }
 

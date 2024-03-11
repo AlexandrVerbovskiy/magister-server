@@ -252,7 +252,7 @@ class ListingsModel extends Model {
     const listing = await db(LISTINGS_TABLE)
       .where({ id: listingId, owner_id: userId })
       .first();
-    return !!listing;
+    return listing;
   };
 
   deleteById = async (listingId) => {

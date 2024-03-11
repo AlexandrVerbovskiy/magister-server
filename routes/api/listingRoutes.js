@@ -6,10 +6,11 @@ const {
   isAdmin,
   isFileLimit,
   isVerified,
+  authId,
 } = require("../../middlewares");
 const { upload } = require("../../utils");
 
-router.post("/list", listingController.mainList);
+router.post("/list", authId, listingController.mainList);
 router.post("/admin-list", isAuth, isAdmin, listingController.adminList);
 router.post(
   "/user-list",

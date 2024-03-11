@@ -123,11 +123,9 @@ class BaseController extends Controller {
   getMainListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions = await listingController.baseListingList(req);
-      const categories = await this.listingCategoriesModel.listGroupedByLevel();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
-        categories,
       });
     });
 

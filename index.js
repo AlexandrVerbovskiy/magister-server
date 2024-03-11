@@ -97,7 +97,14 @@ app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes);
 app.use("/api/listings", apiRoutes.listingRoutes);
 app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes);
 app.use("/api/searched-words", apiRoutes.searchedWordsRoutes);
-app.use("/api/listing-approval-requests", apiRoutes.listingApprovalRequestRoutes);
+app.use(
+  "/api/listing-approval-requests",
+  apiRoutes.listingApprovalRequestRoutes
+);
+app.use(
+  "/api/listing-category-create-notification",
+  apiRoutes.listingCategoryCreateNotificationRoutes
+);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

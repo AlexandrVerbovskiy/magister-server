@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const { baseController } = require("../../controllers");
-const { isAuth, isVerified, isAdmin } = require("../../middlewares");
+const { isAuth, isVerified, isAdmin, authId } = require("../../middlewares");
 
 router.get("/index-options", baseController.getIndexPageOptions);
 
@@ -83,6 +83,7 @@ router.post(
 
 router.post(
   "/listing-list-options",
+  authId,
   baseController.getMainListingListPageOptions
 );
 

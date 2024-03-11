@@ -24,6 +24,7 @@ const {
   searchedWordModel,
   listingModel,
   listingApprovalRequestModel,
+  listingCategoryCreateNotificationModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -44,6 +45,8 @@ class Controller {
     this.searchedWordModel = searchedWordModel;
     this.listingModel = listingModel;
     this.listingApprovalRequestModel = listingApprovalRequestModel;
+    this.listingCategoryCreateNotificationModel =
+      listingCategoryCreateNotificationModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -134,34 +137,58 @@ class Controller {
 
   sendEmailVerificationMail = async (email, name, token) => {
     const title = "Account Verification";
+    const link =
+      CLIENT_URL + "/" + STATIC.CLIENT_LINKS.EMAIL_VERIFICATION + "/" + token;
+
     await this.sendMail(email, title, "emailVerification", {
       name,
-      link:
-        CLIENT_URL + "/" + STATIC.CLIENT_LINKS.EMAIL_VERIFICATION + "/" + token,
+      link,
+      title,
+    });
+  };
+
+  sendCreatedListingCategory = async (email, categoryName) => {
+    const title = "A new listing category has been created";
+    const link =
+      CLIENT_URL +
+      "/" +
+      STATIC.CLIENT_LINKS.LISTING_PAGE +
+      "?categories=" +
+      categoryName;
+
+    await this.sendMail(email, title, "createdListingCategory", {
+      link,
       title,
     });
   };
 
   sendPasswordResetMail = async (email, name, token) => {
     const title = "Reset Password";
+    const link =
+      CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token;
+
     await this.sendMail(email, title, "passwordReset", {
       name,
-      link: CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token,
+      link,
       title,
     });
   };
 
   sendAccountCreationMail = async (email, name, token) => {
     const title = "Account Creation";
+    const link =
+      CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token;
+
     await this.sendMail(email, title, "accountCreation", {
       name,
-      link: CLIENT_URL + "/" + STATIC.CLIENT_LINKS.PASSWORD_RESET + "/" + token,
+      link,
       title,
     });
   };
 
   sendTwoAuthCodeMail = async (email, name, code) => {
     const title = "Two Authentication Code";
+
     await this.sendMail(email, title, "twoAuthCode", {
       name,
       code,
@@ -230,7 +257,8 @@ class Controller {
 
     let { page = 1 } = req.body;
 
-    const countItems = await countByFilter(req.body);
+    let countItems = await countByFilter(req.body);
+    countItems = Number(countItems);
     const totalPages =
       countItems > 0 ? Math.ceil(countItems / itemsPerPage) : 1;
 

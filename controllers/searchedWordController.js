@@ -1,5 +1,6 @@
 const STATIC = require("../static");
 const Controller = require("./Controller");
+const listingCategoryCreateNotificationController = require("./listingCategoryCreateNotificationController");
 
 class SearchedWordController extends Controller {
   constructor() {
@@ -69,10 +70,6 @@ class SearchedWordController extends Controller {
       const searchValue = req.query.search;
       const list = await this.listingCategoriesModel.listByName(searchValue);
 
-      if (list.length < 1) {
-        this.searchedWordModel.updateSearchCount(searchValue);
-      }
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         list,
       });
@@ -94,6 +91,13 @@ class SearchedWordController extends Controller {
       });
 
       await this.searchedWordModel.setCategoryId(searchedWordId, createdId);
+
+      listingCategoryCreateNotificationController.onCreateCategory(name);
+
+      this.saveUserAction(
+        req,
+        `Created a listing category by searched request '${name}'`
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         id: createdId,
