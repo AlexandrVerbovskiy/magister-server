@@ -291,7 +291,7 @@ class ListingsModel extends Model {
     }
 
     if (categories.length > 0) {
-      query.whereIn(`${LISTINGS_TABLE}.name`, categories);
+      query.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, categories);
     }
 
     if (userId) {
@@ -477,6 +477,14 @@ class ListingsModel extends Model {
       .returning("approved");
 
     return res[0].approved;
+  };
+
+  replaceOldNewCategories = async (oldNewCategoriesIds = []) => {
+    for (let i = 0; i < oldNewCategoriesIds.length; i++) {
+      await db(LISTINGS_TABLE)
+        .where({ category_id: oldNewCategoriesIds[i]["prevId"] })
+        .update({ category_id: oldNewCategoriesIds[i]["newId"] });
+    }
   };
 }
 

@@ -47,16 +47,14 @@ class ListingCategoriesController extends Controller {
     this.baseWrapper(req, res, async () => {
       const levels = ["firstLevel", "secondLevel", "thirdLevel"];
 
-      console.log(req.body.categoriesToReplace);
-
-      return;
-
       const categoriesToSave = {
         firstLevel: [],
         secondLevel: [],
         thirdLevel: [],
         ...req.body.categoriesToSave,
       };
+
+      const categoriesToReplace = req.body.categoriesToReplace ?? [];
 
       Object.keys(categoriesToSave).forEach((level) => {
         categoriesToSave[level].forEach((elem, index) => {
@@ -181,12 +179,6 @@ class ListingCategoriesController extends Controller {
         });
       }
 
-      levels.forEach(async (level) => {
-        const ids = toDelete[level].map((category) => category.id);
-        await this.searchedWordModel.unsetCategoryList(ids);
-        await this.listingCategoriesModel.deleteList(ids);
-      });
-
       for (let i = 0; i < levels.length; i++) {
         const level = levels[i];
 
@@ -205,6 +197,28 @@ class ListingCategoriesController extends Controller {
           toCreate[level][index]["id"] = id;
         }
       }
+
+      categoriesToReplace.forEach((categoryToReplace, index) => {
+        Object.keys(toCreate).forEach((level) => {
+          toCreate[level].forEach((createdCategory) => {
+            const levelNumber = this.getNumberLevelByName(level);
+            if (
+              categoryToReplace.newLevel == levelNumber &&
+              categoryToReplace.newName == createdCategory.name
+            ) {
+              categoriesToReplace[index]["newId"] = createdCategory.id;
+            }
+          });
+        });
+      });
+
+      await this.listingModel.replaceOldNewCategories(categoriesToReplace);
+
+      levels.forEach(async (level) => {
+        const ids = toDelete[level].map((category) => category.id);
+        await this.searchedWordModel.unsetCategoryList(ids);
+        await this.listingCategoriesModel.deleteList(ids);
+      });
 
       Object.keys(toUpdate).forEach((level) => {
         toUpdate[level].forEach((elem, index) => {
