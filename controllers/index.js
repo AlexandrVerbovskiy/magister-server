@@ -8,6 +8,6 @@ module.exports = {
   searchedWordController: require("./searchedWordController"),
   listingController: require("./listingController"),
   listingApprovalRequestController: require("./listingApprovalRequestController"),
-  baseController: require("./baseController"),
+  mainController: require("./mainController"),
   listingCategoryCreateNotificationController: require("./listingCategoryCreateNotificationController"),
 };

@@ -38,6 +38,8 @@ class UserVerifyRequestModel extends Model {
       .where(`${USER_VERIFY_REQUESTS_TABLE}.id`, id)
       .select([
         `${USER_VERIFY_REQUESTS_TABLE}.id`,
+        `${USER_VERIFY_REQUESTS_TABLE}.has_response as hasResponse`,
+        `${USER_VERIFY_REQUESTS_TABLE}.failed_description as failedDescription`,
         `${USERS_TABLE}.name as userName`,
         `${USERS_TABLE}.email as userEmail`,
         ...userModel.documentFields,
@@ -64,6 +66,7 @@ class UserVerifyRequestModel extends Model {
         "=",
         `${USER_VERIFY_REQUESTS_TABLE}.user_id`
       )
+      .where("has_response", false)
       .whereRaw(...this.baseStrFilter(filter));
     query = this.baseListTimeFilter(
       { serverFromTime, serverToTime },
@@ -85,6 +88,7 @@ class UserVerifyRequestModel extends Model {
         "=",
         `${USER_VERIFY_REQUESTS_TABLE}.user_id`
       )
+      .where("has_response", false)
       .whereRaw(...this.baseStrFilter(filter));
 
     query = this.baseListTimeFilter(

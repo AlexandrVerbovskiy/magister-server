@@ -60,10 +60,6 @@ class UserVerifyRequestController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id, verified } = req.body;
 
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
       const description = req.body.description ?? "";
       const userId = await this.userVerifyRequestModel.getUserIdById(id);
 

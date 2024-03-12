@@ -1,4 +1,6 @@
-const emailValidation = require("./emailValidation");
-const passwordValidation = require("./passwordValidation");
+const { emailValidation, validatePassword } = require("../base");
 
-module.exports = [emailValidation, passwordValidation];
+module.exports = [
+  ...emailValidation,
+  ...validatePassword({ field: "password", fieldName: "Password" }),
+];

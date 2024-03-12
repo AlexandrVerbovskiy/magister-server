@@ -9,38 +9,65 @@ const {
   authId,
 } = require("../../middlewares");
 const { upload } = require("../../utils");
+const {
+  deleteValidation,
+  listValidation,
+  listStatusValidation,
+  idParamValidation,
+  createByAdminValidation,
+  updateByAdminValidation,
+  createValidation,
+  updateValidation,
+} = require("../../validations/listing");
 
-router.post("/list", authId, listingController.mainList);
-router.post("/admin-list", isAuth, isAdmin, listingController.adminList);
+router.post("/list", authId, listValidation, listingController.mainList);
+router.post(
+  "/admin-list",
+  isAuth,
+  isAdmin,
+  listStatusValidation,
+  listingController.adminList
+);
 router.post(
   "/user-list",
   isAuth,
   isVerified,
+  listStatusValidation,
   listingController.getCurrentUserList
 );
 
-router.get("/get-short-by-id/:id", listingController.getShortById);
-router.get("/get-full-by-id/:id", listingController.getFullById);
+router.get(
+  "/get-short-by-id/:id",
+  idParamValidation,
+  listingController.getShortById
+);
+router.get(
+  "/get-full-by-id/:id",
+  idParamValidation,
+  listingController.getFullById
+);
 
 router.post(
   "/create",
-  upload.any(),
-  isFileLimit,
   isAuth,
   isVerified,
+  upload.any(),
+  isFileLimit,
+  createValidation,
   listingController.create
 );
 
 router.post(
   "/update",
-  upload.any(),
-  isFileLimit,
   isAuth,
   isVerified,
+  upload.any(),
+  isFileLimit,
+  updateValidation,
   listingController.update
 );
 
-router.post("/delete", isAuth, listingController.delete);
+router.post("/delete", isAuth, deleteValidation, listingController.delete);
 
 router.post(
   "/create-by-admin",
@@ -48,6 +75,7 @@ router.post(
   isAdmin,
   upload.any(),
   isFileLimit,
+  createByAdminValidation,
   listingController.createByAdmin
 );
 
@@ -57,6 +85,7 @@ router.post(
   isAdmin,
   upload.any(),
   isFileLimit,
+  updateByAdminValidation,
   listingController.updateByAdmin
 );
 
@@ -64,6 +93,7 @@ router.post(
   "/delete-by-admin",
   isAuth,
   isAdmin,
+  deleteValidation,
   listingController.deleteByAdmin
 );
 

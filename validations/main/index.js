@@ -1,0 +1,16 @@
+module.exports = {
+  adminLogListOptionsValidation: require("./adminLogListOptionsValidation"),
+  updateListingOptionsValidation: require("./updateListingOptionsValidation"),
+  adminUserListOptionsValidation: require("./adminUserListOptionsValidation"),
+  adminUpdateListingOptionsValidation: require("./adminUpdateListingOptionsValidation"),
+  adminUserEventLogListOptionsValidation: require("./adminUserEventLogListOptionsValidation"),
+  adminUserVerifyRequestListOptionsValidation: require("./adminUserVerifyRequestListOptionsValidation"),
+  adminSearchedWordListOptionsValidation: require("./adminSearchedWordListOptionsValidation"),
+  userListingListOptionsValidation: require("./userListingListOptionsValidation"),
+  adminListingListOptionsValidation: require("./adminListingListOptionsValidation"),
+  listingListOptionsValidation: require("./listingListOptionsValidation"),
+  userNameIdListValidation: require("./userNameIdListValidation"),
+  adminListingApprovalRequestListOptionsValidation: require("./adminListingApprovalRequestListOptionsValidation"),
+  adminListingApprovalRequestOptionsValidation: require("./adminListingApprovalRequestOptionsValidation"),
+  userDocumentsOptionsValidation: require("./userDocumentsOptionsValidation"),
+};

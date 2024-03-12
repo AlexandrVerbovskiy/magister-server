@@ -1,5 +1,3 @@
-const { body } = require("express-validator");
+const { validateSmallStringBody } = require("../base/validateString");
 
-module.exports = [
-  body("code").isLength({ min: 1 }).withMessage("Code is a required field"),
-];
+module.exports = validateSmallStringBody({ field: "code", fieldName: "Code" });

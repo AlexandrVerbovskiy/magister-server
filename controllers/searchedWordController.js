@@ -8,7 +8,7 @@ class SearchedWordController extends Controller {
   }
 
   baseSearchedWordList = async (req) => {
-    const { accepted, viewed } = req.body;
+    const { accepted = null, viewed = null } = req.body;
 
     const { options, countItems } = await this.baseList(
       req,
@@ -38,10 +38,6 @@ class SearchedWordController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
 
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
       const searchedWord = await this.searchedWordModel.getById(id);
       const groupedCategories =
         await this.listingCategoriesModel.listGroupedByLevel();
@@ -67,17 +63,12 @@ class SearchedWordController extends Controller {
 
   tipsList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const searchValue = req.query.search;
+      const searchValue = req.query.search ?? "";
       const list = await this.listingCategoriesModel.listByName(searchValue);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         list,
       });
-    });
-
-  search = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const searchValue = req.query.search;
     });
 
   createCategory = (req, res) =>
