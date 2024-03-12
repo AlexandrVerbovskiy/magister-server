@@ -1,10 +1,11 @@
-const { body } = require("express-validator");
-const emailValidation = require("./emailValidation");
-const tokenValidation = require("./tokenValidation");
+const { validateSmallStringBody, emailValidation } = require("../base");
 
 module.exports = [
-    emailValidation,
-    tokenValidation,
-    body("name").isLength({ min: 1 }).withMessage("Name is a required field"),
-    body("provider").isLength({ min: 1 }).withMessage("Provider is a required field"),
+  ...emailValidation,
+  ...validateSmallStringBody({
+    field: "token",
+    fieldName: "Token",
+  }),
+  ...validateSmallStringBody({ field: "name", fieldName: "Name" }),
+  ...validateSmallStringBody({ field: "provider", fieldName: "Provider" }),
 ];

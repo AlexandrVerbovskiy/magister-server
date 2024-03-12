@@ -518,10 +518,6 @@ class UserController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
 
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
       const { userId: currentId } = req.userData;
 
       if (id == currentId) {
@@ -559,7 +555,7 @@ class UserController extends Controller {
 
     const info = await this.userModel.getById(id);
 
-    const newPhone = dataToSave["phone"];
+    const newPhone = dataToSave["phone"] ?? null;
 
     if (info.phone != newPhone && dataToSave["phoneVerified"] !== null) {
       dataToSave["phoneVerified"] = false;
@@ -689,10 +685,6 @@ class UserController extends Controller {
   getDocumentsByUserId = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.body;
-
-      if (isNaN(userId)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
 
       const documents = await this.userModel.getDocumentsByUserId(userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

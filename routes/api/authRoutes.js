@@ -6,10 +6,7 @@ const {
   isFileLimit,
   isUnverified,
 } = require("../../middlewares");
-const {
-  userController,
-  userVerifyRequestController,
-} = require("../../controllers");
+const { userController } = require("../../controllers");
 const {
   registerValidation,
   loginValidation,
@@ -20,11 +17,14 @@ const {
   resetPasswordValidation,
   codeValidation,
   authByProviderValidation,
+  saveProfileValidation,
+  typeValidation,
+  checkTwoFactorCodeValidation
 } = require("../../validations/auth");
 
 const { upload } = require("../../utils");
 
-const emailValidation = require("../../validations/auth/emailValidation");
+const { emailValidation } = require("../../validations/base");
 
 router.post(
   "/register",
@@ -41,6 +41,7 @@ router.post(
   upload.single("photo"),
   isAuth,
   isFileLimit,
+  saveProfileValidation,
   userController.saveProfile
 );
 
@@ -53,9 +54,9 @@ router.post(
 
 router.post(
   "/save-my-documents",
-  upload.any(),
   isAuth,
   isUnverified,
+  upload.any(),
   isFileLimit,
   userController.updateMyDocuments
 );
@@ -99,6 +100,7 @@ router.post("/generate-my-phone-code", isAuth, userController.sendVerifyPhone);
 router.post(
   "/generate-my-email-code",
   isNotAuth,
+  emailValidation,
   userController.sendVerifyEmail
 );
 
@@ -112,11 +114,13 @@ router.post(
 router.post(
   "/generate-two-factor-code",
   isNotAuth,
+  typeValidation,
   userController.twoFactorAuthGenerate
 );
 router.post(
   "/check-two-factor-code",
   isNotAuth,
+  checkTwoFactorCodeValidation,
   userController.twoFactorAuthVerify
 );
 
@@ -131,7 +135,6 @@ router.post(
   isAuth,
   userController.noNeedRegularViewInfoForm
 );
-
 
 router.post(
   "/auth-by-provider",

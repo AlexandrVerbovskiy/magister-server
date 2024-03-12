@@ -138,10 +138,10 @@ class UserModel extends Model {
     const {
       email,
       name,
-      phone,
+      phone = null,
       briefBio,
       contactDetails,
-      twoFactorAuthentication,
+      twoFactorAuthentication = true,
       emailVerified,
       phoneVerified,
       active,

@@ -1,12 +1,14 @@
 module.exports = {
-  registerValidation: require("./registerValidation"),
+  authByProviderValidation: require("./authByProviderValidation"),
+  checkTwoFactorCodeValidation: require("./checkTwoFactorCodeValidation"),
+  codeValidation: require("./codeValidation"),
+  typeValidation: require("./typeValidation"),
   loginValidation: require("./loginValidation"),
-  passwordValidation: require("./passwordValidation"),
-  updatePasswordValidation: require("./updatePasswordValidation"),
+  registerValidation: require("./registerValidation"),
+  resetPasswordValidation: require("./resetPasswordValidation"),
+  saveProfileValidation: require("./saveProfileValidation"),
   twoFactorAuthGenerateValidation: require("./twoFactorAuthGenerateValidation"),
   twoFactorAuthVerifyValidation: require("./twoFactorAuthVerifyValidation"),
+  updatePasswordValidation: require("./updatePasswordValidation"),
   verifyEmailValidation: require("./verifyEmailValidation"),
-  resetPasswordValidation: require("./resetPasswordValidation"),
-  codeValidation: require("./codeValidation"),
-  authByProviderValidation: require("./authByProviderValidation")
 };

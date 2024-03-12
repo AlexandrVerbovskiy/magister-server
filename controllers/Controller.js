@@ -252,7 +252,7 @@ class Controller {
       filter = "",
       itemsPerPage = 20,
       order = null,
-      orderType,
+      orderType = null,
     } = req.body;
 
     let { page = 1 } = req.body;
@@ -286,9 +286,8 @@ class Controller {
     endToCurrentDaysReject = 0
   ) => {
     const { clientTime } = req.body;
-    const clientServerHoursDiff = clientServerHoursDifference(clientTime);
-
     let { fromTime, toTime } = req.body;
+    const clientServerHoursDiff = clientServerHoursDifference(clientTime);
 
     if (!fromTime) {
       fromTime = timeConverter(
@@ -329,10 +328,6 @@ class Controller {
   baseGetById = (req, res, model, method = ["getById"]) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
 
       const entity = await model[method](id);
 

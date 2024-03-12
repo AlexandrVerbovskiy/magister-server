@@ -79,7 +79,6 @@ class ListingController extends Controller {
       );
 
     if (options["categories"].length == 1 && countItems == 0) {
-      console.log("2");
       this.searchedWordModel.updateSearchCount(options["categories"][0]);
     }
 
