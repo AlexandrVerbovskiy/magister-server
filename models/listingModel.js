@@ -172,6 +172,9 @@ class ListingsModel extends Model {
     const categoryInfo = await listingCategoriesModel.getRecursiveCategoryList(
       listing["categoryId"]
     );
+
+    console.log(categoryInfo);
+
     return { ...listing, listingImages, categoryInfo };
   };
 
@@ -253,6 +256,14 @@ class ListingsModel extends Model {
       .where({ id: listingId, owner_id: userId })
       .first();
     return listing;
+  };
+
+  approve = async (listingId) => {
+    await db(LISTINGS_TABLE)
+      .where({
+        id: listingId,
+      })
+      .update({ approved: true });
   };
 
   deleteById = async (listingId) => {
@@ -351,8 +362,14 @@ class ListingsModel extends Model {
   };
 
   list = async (props) => {
-    const { serverFromTime, serverToTime, cities, categories, start, count } =
-      props;
+    const {
+      serverFromTime = null,
+      serverToTime = null,
+      cities = [],
+      categories = [],
+      start,
+      count,
+    } = props;
 
     let query = db(LISTINGS_TABLE)
       .select([
@@ -413,13 +430,6 @@ class ListingsModel extends Model {
     const { filter, start, count, status } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    const subquery = db
-      .select("id")
-      .from(LISTING_APPROVAL_REQUESTS_TABLE)
-      .groupBy("id")
-      .orderBy("id", "desc")
-      .limit(1);
-
     let query = db(LISTINGS_TABLE)
       .select([
         ...this.visibleFields,
@@ -440,7 +450,12 @@ class ListingsModel extends Model {
           `${LISTING_APPROVAL_REQUESTS_TABLE}.listing_id`,
           "=",
           `${LISTINGS_TABLE}.id`
-        ).andOn(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "=", subquery);
+        ).andOnIn(
+          `${LISTING_APPROVAL_REQUESTS_TABLE}.id`,
+          db.raw(
+            `(select max(id) from ${LISTING_APPROVAL_REQUESTS_TABLE} group by listing_id)`
+          )
+        );
       })
       .whereRaw(...this.baseStrFilter(filter));
 
@@ -485,6 +500,22 @@ class ListingsModel extends Model {
         .where({ category_id: oldNewCategoriesIds[i]["prevId"] })
         .update({ category_id: oldNewCategoriesIds[i]["newId"] });
     }
+  };
+
+  getTopListings = () => this.list({ start: 0, count: 4, order: "latest" });
+
+  listingsByImages = async (listings) => {
+    const ids = listings.map((listing) => listing.id);
+    const listingImages = await this.getListingListImages(ids);
+
+    const listingsWithImages = listings.map((listing) => {
+      listing["images"] = listingImages.filter(
+        (image) => image.listingId === listing.id
+      );
+      return listing;
+    });
+
+    return listingsWithImages;
   };
 }
 

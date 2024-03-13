@@ -13,10 +13,16 @@ const listingApprovalRequestController = require("./listingApprovalRequestContro
 class MainController extends Controller {
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const popularCategories = await this.listingCategoriesModel.popularList();
+      const categoriesInfos =
+        await this.listingCategoriesModel.getFullInfoList();
+      const topListings = await this.listingModel.getTopListings();
+      const topListingsWithImages = await this.listingModel.listingsByImages(
+        topListings
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        popularCategories,
+        categoriesInfos,
+        topListings: topListingsWithImages,
       });
     });
 

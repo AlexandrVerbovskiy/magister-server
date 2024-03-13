@@ -8,11 +8,11 @@ module.exports = [
   ...listPaginationStringFilterValidation,
   ...listPaginationFilterValidation,
   body("cities")
-    .optional()
+    .optional({ nullable: true })
     .isArray()
     .withMessage("Field 'Cities' must be an array"),
   body("categories")
-    .optional()
+    .optional({ nullable: true })
     .isArray()
     .withMessage("Field 'Categories' must be an array"),
 ];

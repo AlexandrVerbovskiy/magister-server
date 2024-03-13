@@ -9,14 +9,14 @@ class Model {
   getOrderInfo = (
     props,
     defaultOrderField = this.orderFields[0] ?? "id",
-    defaultOrderType = "asc"
+    defaultOrderType = "desc"
   ) => {
     let { order, orderType } = props;
 
     if (!order) order = defaultOrderField;
     if (!orderType) orderType = defaultOrderType;
 
-    orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
+    orderType = orderType.toLowerCase() === "asc" ? "asc" : "desc";
     order = this.orderFields.includes(order.toLowerCase())
       ? order
       : defaultOrderField;

@@ -49,7 +49,7 @@ module.exports = [
     .custom((value) => {
       try {
         const images = JSON.parse(value);
-        if (!Array.isArray(images) || images.length === 0) {
+        if (!Array.isArray(images)) {
           throw new Error(
             "Field 'listingImages' must be an array with at least one element"
           );
@@ -70,7 +70,7 @@ module.exports = [
 
         return true;
       } catch (error) {
-        throw new Error("Field 'listingImages' must be a valid JSON array");
+        throw new Error(error.message);
       }
     }),
 ];

@@ -270,7 +270,7 @@ class Controller {
       options: {
         filter,
         order,
-        orderType: orderType ?? "asc",
+        orderType: orderType ?? "desc",
         start,
         count: itemsPerPage,
         page,

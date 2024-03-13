@@ -11,10 +11,6 @@ module.exports = [
     fieldName: "Name",
   }),
   ...validateSmallStringBody({
-    field: "name",
-    fieldName: "Name",
-  }),
-  ...validateSmallStringBody({
     field: "phone",
     fieldName: "Phone",
     required: false,
