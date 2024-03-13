@@ -51,7 +51,7 @@ class UserEventLogModel extends Model {
     let query = db(USER_EVENT_LOGS_TABLE).whereRaw(
       ...this.baseStrFilter(filter)
     );
-    
+
     query = this.baseListTimeFilter(props, query);
 
     return await query

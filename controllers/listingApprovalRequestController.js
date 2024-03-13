@@ -86,6 +86,7 @@ class ListingApprovalRequestController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { listingId } = req.body;
       await this.listingApprovalRequestModel.approve(listingId);
+      await this.listingModel.approve(listingId);
 
       const listing = await this.listingModel.getById(listingId);
 

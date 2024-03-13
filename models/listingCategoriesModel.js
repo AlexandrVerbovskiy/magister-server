@@ -4,13 +4,14 @@ const db = require("../database");
 const Model = require("./Model");
 
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
+const LISTING_TABLE = STATIC.TABLES.LISTINGS;
 
 class ListingCategoriesModel extends Model {
   visibleFields = [
-    "id",
-    "name",
+    `${LISTING_CATEGORIES_TABLE}.id`,
+    `${LISTING_CATEGORIES_TABLE}.name`,
     "level",
-    "image",
+    `${LISTING_CATEGORIES_TABLE}.image`,
     "parent_id as parentId",
     "popular",
   ];
@@ -91,6 +92,7 @@ class ListingCategoriesModel extends Model {
   listByName = async (name) => {
     const list = await db(LISTING_CATEGORIES_TABLE)
       .where("name", "like", `%${name}%`)
+      .whereIn("level", [2, 3])
       .orderBy("popular", "desc")
       .orderBy("level", "asc")
       .select(["name"])
@@ -118,12 +120,39 @@ class ListingCategoriesModel extends Model {
         UNION
         SELECT ${this.visibleFields.map((field) => `c.${field}`).join(", ")}
         FROM ${LISTING_CATEGORIES_TABLE} c
-        JOIN bfs_categories bc ON c.parent_id = bc.id
+        JOIN bfs_categories bc ON c.id = parentId
       )
       SELECT * FROM bfs_categories;`,
       [categoryId]
     );
     return categoriesWithParents.rows;
+  };
+
+  getFullInfoList = async () => {
+    const list = await db(LISTING_CATEGORIES_TABLE)
+      .select([
+        ...this.visibleFields,
+        db.raw(`COALESCE(COUNT(${LISTING_TABLE}.id), 0) as "countListings"`),
+      ])
+      .leftJoin(LISTING_TABLE, function () {
+        this.on(
+          `${LISTING_TABLE}.category_id`,
+          "=",
+          `${LISTING_CATEGORIES_TABLE}.id`
+        ).andOnVal(`${LISTING_TABLE}.approved`, true);
+      })
+      .groupBy([
+        `${LISTING_CATEGORIES_TABLE}.id`,
+        `${LISTING_CATEGORIES_TABLE}.name`,
+        "level",
+        `${LISTING_CATEGORIES_TABLE}.image`,
+        "parent_id",
+        "popular",
+      ])
+      .orderBy(db.raw(`COALESCE(COUNT(${LISTING_TABLE}.id), 0)`), "desc")
+      .limit(17);
+
+    return list;
   };
 
   getById = (id) => this.baseGetById(id, LISTING_CATEGORIES_TABLE);

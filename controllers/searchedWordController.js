@@ -73,12 +73,20 @@ class SearchedWordController extends Controller {
 
   createCategory = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { name, level, parentId, searchedWordId } = req.body;
+      const { name, level, parentId = null, searchedWordId } = req.body;
+
+      let image = null;
+
+      if (req.file) {
+        image = this.moveUploadsFileToFolder(req.file, "listingCategories");
+      }
+
       const createdId = await this.listingCategoriesModel.create({
         name,
         level,
         parentId,
         popular: false,
+        image,
       });
 
       await this.searchedWordModel.setCategoryId(searchedWordId, createdId);

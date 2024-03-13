@@ -18,6 +18,7 @@ const {
   adminListingApprovalRequestOptionsValidation,
   userDocumentsOptionsValidation
 } = require("../../validations/main");
+const isSupport = require("../../middlewares/isSupport");
 
 router.get("/index-options", mainController.getIndexPageOptions);
 
@@ -60,7 +61,7 @@ router.get(
 router.post(
   "/admin-user-list-options",
   isAuth,
-  isAdmin,
+  isSupport,
   adminUserListOptionsValidation,
   mainController.getAdminUserListPageOptions
 );
@@ -84,7 +85,7 @@ router.post(
 router.post(
   "/admin-user-verify-request-list-options",
   isAuth,
-  isAdmin,
+  isSupport,
   adminUserVerifyRequestListOptionsValidation,
   mainController.getAdminUserUserVerifyRequestListPageOptions
 );

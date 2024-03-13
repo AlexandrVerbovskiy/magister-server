@@ -60,15 +60,9 @@ class ListingController extends Controller {
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
     const listings = await this.listingModel.list(options);
-    const ids = listings.map((listing) => listing.id);
-    const listingImages = await this.listingModel.getListingListImages(ids);
-
-    const listingsWithImages = listings.map((listing) => {
-      listing["images"] = listingImages.filter(
-        (image) => image.listingId === listing.id
-      );
-      return listing;
-    });
+    const listingsWithImages = await this.listingModel.listingsByImages(
+      listings
+    );
 
     const dbCategories = await this.listingCategoriesModel.listGroupedByLevel();
     const canSendCreateNotifyRequest =
@@ -104,15 +98,9 @@ class ListingController extends Controller {
     options["status"] = status;
     const listings = await this.listingModel.listWithLastRequests(options);
 
-    const ids = listings.map((listing) => listing.id);
-    const listingImages = await this.listingModel.getListingListImages(ids);
-
-    const listingsWithImages = listings.map((listing) => {
-      listing["images"] = listingImages.filter(
-        (image) => image.listingId === listing.id
-      );
-      return listing;
-    });
+    const listingsWithImages = await this.listingModel.listingsByImages(
+      listings
+    );
 
     return {
       items: listingsWithImages,
@@ -201,7 +189,12 @@ class ListingController extends Controller {
       res,
       STATIC.SUCCESS.OK,
       "Created successfully",
-      { ...dataToSave, listingId, listingImages: listingImagesToRes }
+      {
+        ...dataToSave,
+        id: listingId,
+        listingId,
+        listingImages: listingImagesToRes,
+      }
     );
   };
 
@@ -239,7 +232,7 @@ class ListingController extends Controller {
     toRemovePaths.forEach((path) => this.removeFile(path));
   };
 
-  baseUpdate = async (req, res) => {
+  baseUpdate = async (req, res, canApprove = false) => {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
 
@@ -256,6 +249,10 @@ class ListingController extends Controller {
       link: info.link,
       listingId,
     }));
+
+    if (canApprove && dataToSave["approved"] === "true") {
+      await this.listingApprovalRequestModel.approve(listingId);
+    }
 
     return this.sendSuccessResponse(
       res,
@@ -296,7 +293,9 @@ class ListingController extends Controller {
 
   updateByAdmin = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseUpdate(req, res);
+      req.body["listingId"] = req.body["id"];
+
+      const result = await this.baseUpdate(req, res, true);
 
       this.saveUserAction(
         req,
@@ -320,6 +319,7 @@ class ListingController extends Controller {
 
   baseDelete = async (req, res) => {
     const { id } = req.body;
+    await this.listingApprovalRequestModel.deleteByListing(id);
     const { deletedImagesInfos } = await this.listingModel.deleteById(id);
     this.removeListingImages(deletedImagesInfos);
 
@@ -331,10 +331,10 @@ class ListingController extends Controller {
       const forbidden = await this.checkForbidden(req);
       if (forbidden) return forbidden;
 
-      const result = await this.baseDelete(req, res);
-
       const { id } = req.body;
       const listing = await this.listingModel.getById(id);
+
+      const result = await this.baseDelete(req, res);
 
       this.saveUserAction(
         req,
@@ -346,10 +346,10 @@ class ListingController extends Controller {
 
   deleteByAdmin = async (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseDelete(req, res);
-
       const { id } = req.body;
       const listing = await this.listingModel.getById(id);
+
+      const result = await this.baseDelete(req, res);
 
       this.saveUserAction(
         req,

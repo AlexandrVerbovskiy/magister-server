@@ -53,12 +53,14 @@ class ListingApprovalRequestModel extends Model {
       })
       .whereNull("approved")
       .update({ approved: true });
+  };
 
-    await db(LISTINGS_TABLE)
+  deleteByListing = async (listingId) => {
+    await db(LISTING_APPROVAL_REQUESTS_TABLE)
       .where({
-        id: listingId,
+        listing_id: listingId,
       })
-      .update({ approved: true });
+      .delete();
   };
 
   rejectApprove = async (listingId, rejectDescription) => {

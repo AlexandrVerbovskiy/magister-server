@@ -8,6 +8,7 @@ const {
   idValidation,
   tipsListValidation,
 } = require("../../validations/searchedWord");
+const { smallUpload } = require("../../utils");
 
 router.post(
   "/list",
@@ -18,6 +19,7 @@ router.post(
 );
 router.post(
   "/create-category",
+  smallUpload.single("photo"),
   isAuth,
   isAdmin,
   createCategoryValidation,
