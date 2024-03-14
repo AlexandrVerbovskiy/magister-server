@@ -173,8 +173,6 @@ class ListingsModel extends Model {
       listing["categoryId"]
     );
 
-    console.log(categoryInfo);
-
     return { ...listing, listingImages, categoryInfo };
   };
 
@@ -504,7 +502,7 @@ class ListingsModel extends Model {
 
   getTopListings = () => this.list({ start: 0, count: 4, order: "latest" });
 
-  listingsByImages = async (listings) => {
+  listingsBindImages = async (listings) => {
     const ids = listings.map((listing) => listing.id);
     const listingImages = await this.getListingListImages(ids);
 

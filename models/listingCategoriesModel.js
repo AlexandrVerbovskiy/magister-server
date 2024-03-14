@@ -7,6 +7,15 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const LISTING_TABLE = STATIC.TABLES.LISTINGS;
 
 class ListingCategoriesModel extends Model {
+  modelFields = [
+    "id",
+    "name",
+    "level",
+    "image",
+    "parent_id as parentId",
+    "popular",
+  ];
+
   visibleFields = [
     `${LISTING_CATEGORIES_TABLE}.id`,
     `${LISTING_CATEGORIES_TABLE}.name`,
@@ -114,11 +123,11 @@ class ListingCategoriesModel extends Model {
   getRecursiveCategoryList = async (categoryId) => {
     const categoriesWithParents = await db.raw(
       `WITH RECURSIVE bfs_categories AS (
-        SELECT ${this.visibleFields.join(", ")}
+        SELECT ${this.modelFields.join(", ")}
         FROM ${LISTING_CATEGORIES_TABLE}
         WHERE id = ?
         UNION
-        SELECT ${this.visibleFields.map((field) => `c.${field}`).join(", ")}
+        SELECT ${this.modelFields.map((field) => `c.${field}`).join(", ")}
         FROM ${LISTING_CATEGORIES_TABLE} c
         JOIN bfs_categories bc ON c.id = parentId
       )

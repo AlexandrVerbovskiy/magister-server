@@ -11,24 +11,31 @@ const searchedWordController = require("./searchedWordController");
 const listingApprovalRequestController = require("./listingApprovalRequestController");
 
 class MainController extends Controller {
+  getNavigationCategories = () =>
+    this.listingCategoriesModel.listGroupedByLevel();
+
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const categoriesInfos =
-        await this.listingCategoriesModel.getFullInfoList();
+      const topCategories = await this.listingCategoriesModel.getFullInfoList();
+
       const topListings = await this.listingModel.getTopListings();
-      const topListingsWithImages = await this.listingModel.listingsByImages(
+
+      const topListingsWithImages = await this.listingModel.listingsBindImages(
         topListings
       );
 
+      const categories = await this.getNavigationCategories();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        categoriesInfos,
+        topCategories,
         topListings: topListingsWithImages,
+        categories,
       });
     });
 
   getListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+      const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
       });
@@ -36,7 +43,7 @@ class MainController extends Controller {
 
   getCreateListingPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+      const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
       });
@@ -61,7 +68,7 @@ class MainController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+      const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
@@ -78,8 +85,11 @@ class MainController extends Controller {
         userId
       );
 
+      const categories = await this.getNavigationCategories();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
+        categories,
       });
     });
 
@@ -129,9 +139,31 @@ class MainController extends Controller {
   getMainListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions = await listingController.baseListingList(req);
+      const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
+        categories,
+      });
+    });
+
+  getListingFullByIdOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const listing = await this.listingModel.getFullById(id);
+
+      if (!listing) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Listing wasn't found"
+        );
+      }
+
+      const categories = await this.getNavigationCategories();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        listing,
+        categories,
       });
     });
 
@@ -160,10 +192,13 @@ class MainController extends Controller {
         ? lastAnsweredRequest.failedDescription
         : null;
 
+      const categories = await this.getNavigationCategories();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
         canSend: !hasUnansweredRequest,
         lastAnswerDescription,
+        categories,
       });
     });
 
@@ -181,7 +216,7 @@ class MainController extends Controller {
 
   getAdminListingCreatePageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+      const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
@@ -197,7 +232,7 @@ class MainController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      const categories = await this.listingCategoriesModel.listGroupedByLevel();
+      const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
@@ -257,6 +292,24 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         request,
         listing,
+      });
+    });
+
+  getUserProfileEditPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+      });
+    });
+
+  getSettingsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
       });
     });
 }

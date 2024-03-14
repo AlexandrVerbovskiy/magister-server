@@ -16,7 +16,8 @@ const {
   userNameIdListValidation,
   adminListingApprovalRequestListOptionsValidation,
   adminListingApprovalRequestOptionsValidation,
-  userDocumentsOptionsValidation
+  userDocumentsOptionsValidation,
+  listingFullByIdOptionsValidation,
 } = require("../../validations/main");
 const isSupport = require("../../middlewares/isSupport");
 
@@ -105,6 +106,12 @@ router.post(
   mainController.getMainListingListPageOptions
 );
 
+router.get(
+  "/listing-full-by-id-options/:id",
+  listingFullByIdOptionsValidation,
+  mainController.getListingFullByIdOptions
+);
+
 router.post(
   "/user-listing-list-options",
   isAuth,
@@ -147,6 +154,18 @@ router.get(
   "/user-documents-options/:id",
   userDocumentsOptionsValidation,
   mainController.getUserDocumentsPageOption
+);
+
+router.get(
+  "/user-profile-edit-options",
+  isAuth,
+  mainController.getUserProfileEditPageOptions
+);
+
+router.get(
+  "/settings-options",
+  isAuth,
+  mainController.getSettingsPageOptions
 );
 
 module.exports = router;

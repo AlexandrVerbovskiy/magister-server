@@ -60,7 +60,7 @@ class ListingController extends Controller {
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
     const listings = await this.listingModel.list(options);
-    const listingsWithImages = await this.listingModel.listingsByImages(
+    const listingsWithImages = await this.listingModel.listingsBindImages(
       listings
     );
 
@@ -98,7 +98,7 @@ class ListingController extends Controller {
     options["status"] = status;
     const listings = await this.listingModel.listWithLastRequests(options);
 
-    const listingsWithImages = await this.listingModel.listingsByImages(
+    const listingsWithImages = await this.listingModel.listingsBindImages(
       listings
     );
 
