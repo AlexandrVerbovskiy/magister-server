@@ -20,6 +20,7 @@ exports.up = function (knex) {
 
     table.text("description");
     table.text("rental_terms");
+    table.text("address");
 
     table.text("postcode");
     table.string("city");
