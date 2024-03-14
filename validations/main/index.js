@@ -13,4 +13,5 @@ module.exports = {
   adminListingApprovalRequestListOptionsValidation: require("./adminListingApprovalRequestListOptionsValidation"),
   adminListingApprovalRequestOptionsValidation: require("./adminListingApprovalRequestOptionsValidation"),
   userDocumentsOptionsValidation: require("./userDocumentsOptionsValidation"),
+  listingFullByIdOptionsValidation: require("./listingFullByIdOptionsValidation"),
 };
