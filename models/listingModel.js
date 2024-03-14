@@ -15,6 +15,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.id`,
     `${LISTINGS_TABLE}.name`,
     `${LISTINGS_TABLE}.approved`,
+    "address",
     "city",
     "category_id as categoryId",
     "compensation_cost as compensationCost",
@@ -61,6 +62,7 @@ class ListingsModel extends Model {
   };
 
   create = async ({
+    address,
     name,
     categoryId,
     compensationCost,
@@ -84,6 +86,7 @@ class ListingsModel extends Model {
         name,
         description,
         postcode,
+        address,
         approved,
         rental_lat: rentalLat,
         rental_lng: rentalLng,
@@ -195,6 +198,7 @@ class ListingsModel extends Model {
     keyWords,
     city,
     ownerId,
+    address,
   }) => {
     await db(LISTINGS_TABLE).where({ id }).update({
       name,
@@ -213,6 +217,7 @@ class ListingsModel extends Model {
       count_stored_items: countStoredItems,
       key_words: keyWords,
       owner_id: ownerId,
+      address,
     });
 
     const currentImages = await this.getListingImages(id);

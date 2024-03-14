@@ -20,6 +20,11 @@ module.exports = [
     required: false,
   }),
   ...validateBigStringBody({
+    field: "address",
+    fieldName: "address",
+    required: false,
+  }),
+  ...validateBigStringBody({
     field: "rentalTerms",
     fieldName: "Rental terms",
     required: false,
