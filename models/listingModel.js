@@ -384,6 +384,18 @@ class ListingsModel extends Model {
         "=",
         `${LISTINGS_TABLE}.category_id`
       )
+      .leftJoin(
+        `${LISTING_CATEGORIES_TABLE} as c2`,
+        `${LISTING_CATEGORIES_TABLE}.parent_id`,
+        "=",
+        `c2.id`
+      )
+      .leftJoin(
+        `${LISTING_CATEGORIES_TABLE} as c3`,
+        `c2.parent_id`,
+        "=",
+        `c3.id`
+      )
       .where("approved", true);
 
     if (cities.length > 0) {
@@ -391,7 +403,10 @@ class ListingsModel extends Model {
     }
 
     if (categories.length > 0) {
-      query.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, categories);
+      query
+        .whereIn(`${LISTING_CATEGORIES_TABLE}.name`, categories)
+        .orWhereIn(`c2.name`, categories)
+        .orWhereIn(`c3.name`, categories);
     }
 
     if (props.userId) {
@@ -417,6 +432,11 @@ class ListingsModel extends Model {
       orderField = "price_per_day";
       orderType = "desc";
     }
+
+    console.log(
+      "Query: ",
+      query.orderBy(orderField, orderType).limit(count).offset(start).toQuery()
+    );
 
     return await query
       .orderBy(orderField, orderType)

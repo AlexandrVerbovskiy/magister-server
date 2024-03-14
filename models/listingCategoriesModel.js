@@ -159,7 +159,7 @@ class ListingCategoriesModel extends Model {
         "popular",
       ])
       .orderBy(db.raw(`COALESCE(COUNT(${LISTING_TABLE}.id), 0)`), "desc")
-      .limit(17);
+      .limit(11);
 
     return list;
   };
