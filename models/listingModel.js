@@ -368,16 +368,32 @@ class ListingsModel extends Model {
       categories = [],
       start,
       count,
+      lat = null,
+      lng = null,
+      order = "default",
     } = props;
 
+    const selectParams = [
+      ...this.visibleFields,
+      `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
+      `${USERS_TABLE}.name as userName`,
+      `${USERS_TABLE}.photo as userPhoto`,
+      `${USERS_TABLE}.id as userId`,
+    ];
+
+    let canUseDefaultCoordsOrder = false;
+
+    if (lat && lng && order) {
+      const generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (jobs.lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - jobs.lng) * COS(jobs.lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
+      selectParams.push(
+        knex.raw(`${generateDistanceRow} AS distanceFromCenter`)
+      );
+
+      canUseDefaultCoordsOrder = true;
+    }
+
     let query = db(LISTINGS_TABLE)
-      .select([
-        ...this.visibleFields,
-        `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
-        `${USERS_TABLE}.name as userName`,
-        `${USERS_TABLE}.photo as userPhoto`,
-        `${USERS_TABLE}.id as userId`,
-      ])
+      .select(selectParams)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .join(
         LISTING_CATEGORIES_TABLE,
@@ -414,8 +430,6 @@ class ListingsModel extends Model {
       query = query.where({ owner_id: props.userId });
     }
 
-    const { order = "default" } = props;
-
     let orderField = "id";
     let orderType = "asc";
 
@@ -434,10 +448,10 @@ class ListingsModel extends Model {
       orderType = "desc";
     }
 
-    console.log(
-      "Query: ",
-      query.orderBy(orderField, orderType).limit(count).offset(start).toQuery()
-    );
+    if (order == "default" && canUseDefaultCoordsOrder) {
+      orderField = "distanceFromCenter";
+      orderType = "asc";
+    }
 
     return await query
       .orderBy(orderField, orderType)

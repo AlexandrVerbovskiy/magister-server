@@ -67,7 +67,7 @@ module.exports = {
     EMAIL_VERIFICATION: "email-verification",
     PASSWORD_RESET: "password-reset",
     USER_AUTHORIZED: "user-authorized",
-    LISTING_PAGE:"listing-list"
+    LISTING_PAGE: "listing-list",
   },
   MAIN_DIRECTORY: __dirname,
   TABLES: {
@@ -90,4 +90,6 @@ module.exports = {
     LISTING_CATEGORY_CREATE_NOTIFICATIONS:
       "listing_category_create_notifications",
   },
+  LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
+  DEGREES_TO_RADIANS: 57.3,
 };
