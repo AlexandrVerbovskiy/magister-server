@@ -25,18 +25,14 @@ class ListingCategoriesModel extends Model {
     "popular",
   ];
 
-  listGroupedByLevel = async () => {
-    const list = await db(LISTING_CATEGORIES_TABLE)
-      .orderBy("id", "desc")
-      .select(this.visibleFields);
-
+  groupCategoriesByLevel = (categories) => {
     const res = {
       firstLevel: [],
       secondLevel: [],
       thirdLevel: [],
     };
 
-    list.forEach((category) => {
+    categories.forEach((category) => {
       if (category.level == 1) {
         res.firstLevel.push(category);
       } else if (category.level == 2) {
@@ -47,6 +43,14 @@ class ListingCategoriesModel extends Model {
     });
 
     return res;
+  };
+
+  listGroupedByLevel = async () => {
+    const categories = await db(LISTING_CATEGORIES_TABLE)
+      .orderBy("id", "desc")
+      .select(this.visibleFields);
+
+    return this.groupCategoriesByLevel(categories);
   };
 
   checkNameUnique = async (name, level) => {
@@ -138,7 +142,7 @@ class ListingCategoriesModel extends Model {
   };
 
   getFullInfoList = async () => {
-    const list = await db(LISTING_CATEGORIES_TABLE)
+    const categories = await db(LISTING_CATEGORIES_TABLE)
       .select([
         ...this.visibleFields,
         db.raw(`COALESCE(COUNT(${LISTING_TABLE}.id), 0) as "countListings"`),
@@ -158,10 +162,9 @@ class ListingCategoriesModel extends Model {
         "parent_id",
         "popular",
       ])
-      .orderBy(db.raw(`COALESCE(COUNT(${LISTING_TABLE}.id), 0)`), "desc")
-      .limit(11);
+      .orderBy(db.raw(`COALESCE(COUNT(${LISTING_TABLE}.id), 0)`), "desc");
 
-    return list;
+    return this.groupCategoriesByLevel(categories);
   };
 
   getById = (id) => this.baseGetById(id, LISTING_CATEGORIES_TABLE);

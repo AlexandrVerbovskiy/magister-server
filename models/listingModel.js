@@ -117,17 +117,13 @@ class ListingsModel extends Model {
     return listingId;
   };
 
-  getListingImages = async (listingId) => {
-    return await db(LISTING_IMAGES_TABLE)
-      .where({ listing_id: listingId })
-      .select(this.listingImageVisibleFields);
-  };
-
   getListingListImages = async (listingIds) => {
     return await db(LISTING_IMAGES_TABLE)
       .whereIn("listing_id", listingIds)
       .select(this.listingImageVisibleFields);
   };
+
+  getListingImages = (listingId) => this.getListingListImages([listingId]);
 
   getById = async (id) => {
     const listing = await db(LISTINGS_TABLE)
