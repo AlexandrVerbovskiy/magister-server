@@ -16,7 +16,7 @@ class MainController extends Controller {
 
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const topCategories = await this.listingCategoriesModel.getFullInfoList();
+      const categories = await this.listingCategoriesModel.getFullInfoList();
 
       const topListings = await this.listingModel.getTopListings();
 
@@ -24,10 +24,7 @@ class MainController extends Controller {
         topListings
       );
 
-      const categories = await this.getNavigationCategories();
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        topCategories,
         topListings: topListingsWithImages,
         categories,
       });
