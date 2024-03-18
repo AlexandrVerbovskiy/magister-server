@@ -135,11 +135,10 @@ class MainController extends Controller {
 
   getMainListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const listingListOptions = await listingController.baseListingList(req);
+      //const listingListOptions = await listingController.baseListingList(req);
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...listingListOptions,
         categories,
       });
     });
