@@ -67,6 +67,7 @@ module.exports = {
     EMAIL_VERIFICATION: "email-verification",
     PASSWORD_RESET: "password-reset",
     USER_AUTHORIZED: "user-authorized",
+    LISTING_PAGE: "listing-list",
   },
   MAIN_DIRECTORY: __dirname,
   TABLES: {
@@ -81,5 +82,14 @@ module.exports = {
     RESET_PASSWORD_TOKENS: "reset_password_tokens",
     USER_EVENT_LOGS: "user_event_logs",
     SYSTEM: "system",
+    LISTINGS: "listings",
+    LISTING_CATEGORIES: "listing_categories",
+    SEARCHED_WORDS: "searched_words",
+    LISTING_IMAGES: "listing_images",
+    LISTING_APPROVAL_REQUESTS: "listing_approval_requests",
+    LISTING_CATEGORY_CREATE_NOTIFICATIONS:
+      "listing_category_create_notifications",
   },
+  LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
+  DEGREES_TO_RADIANS: 57.3,
 };

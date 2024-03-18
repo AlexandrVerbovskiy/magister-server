@@ -1,4 +1,9 @@
-const tokenValidation = require("./tokenValidation");
-const passwordValidation = require("./passwordValidation");
+const { validateSmallStringBody, validatePassword } = require("../base");
 
-module.exports = [tokenValidation, passwordValidation];
+module.exports = [
+  ...validateSmallStringBody({
+    field: "token",
+    fieldName: "Token",
+  }),
+  ...validatePassword({ field: "password", fieldName: "Password" }),
+];

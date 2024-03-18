@@ -1,8 +1,8 @@
-const typeValidation = require("./typeValidation");
-const { body } = require("express-validator");
+const { validateSmallStringBody } = require("../base");
+const { validateIntegerBody } = require("../base/validateInteger");
 
 module.exports = [
-  typeValidation,
-  body("code").isLength({ min: 1 }).withMessage("Code is a required field"),
-  body("id").notEmpty().isInt().withMessage("Invalid user id field"),
+  ...validateSmallStringBody({ field: "type", fieldName: "Type" }),
+  ...validateSmallStringBody({ field: "code", fieldName: "Code" }),
+  ...validateIntegerBody({field:"id", fieldName:"Id"})
 ];

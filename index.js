@@ -80,6 +80,8 @@ passport.deserializeUser((obj, done) => {
 });
 
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
+
+app.use("/api/main", apiRoutes.mainRoutes);
 app.use("/api/auth", apiRoutes.authApiRoutes);
 app.use("/api/users", apiRoutes.userApiRoutes);
 app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestApiRoutes);
@@ -90,7 +92,19 @@ app.use(
   isAdmin,
   apiRoutes.userEventLogApiRoutes
 );
+
+app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes);
+app.use("/api/listings", apiRoutes.listingRoutes);
 app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes);
+app.use("/api/searched-words", apiRoutes.searchedWordsRoutes);
+app.use(
+  "/api/listing-approval-requests",
+  apiRoutes.listingApprovalRequestRoutes
+);
+app.use(
+  "/api/listing-category-create-notification",
+  apiRoutes.listingCategoryCreateNotificationRoutes
+);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

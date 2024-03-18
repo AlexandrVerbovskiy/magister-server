@@ -3,22 +3,25 @@ const router = Router();
 const { userController } = require("../../controllers");
 const {
   setRoleValidation,
-  idValidation,
-  linkValidation,
-} = require("../../validations/users");
+  idBodyValidation,
+  idParamValidation,
+  updateValidation,
+  createValidation,
+  listValidation,
+} = require("../../validations/user");
 const { upload } = require("../../utils");
 const { isFileLimit } = require("../../middlewares");
 const { isAuth, isSupport, isAdmin } = require("../../middlewares");
 
-router.post("/list", isAuth, isSupport, userController.list);
+router.post("/list", isAuth, isSupport, listValidation, userController.list);
 
-router.get("/get-by-id/:id", linkValidation, userController.getById);
+router.get("/get-by-id/:id", idParamValidation, userController.getById);
 
 router.get(
   "/get-full-by-id/:id",
   isAuth,
   isSupport,
-  linkValidation,
+  idParamValidation,
   userController.getFullById
 );
 
@@ -30,20 +33,26 @@ router.post(
   userController.setRole
 );
 
-router.post("/delete", isAuth, isAdmin, idValidation, userController.delete);
+router.post(
+  "/delete",
+  isAuth,
+  isAdmin,
+  idBodyValidation,
+  userController.delete
+);
 
 router.post(
   "/change-active",
   isAuth,
   isAdmin,
-  idValidation,
+  idBodyValidation,
   userController.changeActive
 );
 router.post(
   "/change-verified",
   isAuth,
   isSupport,
-  idValidation,
+  idBodyValidation,
   userController.changeVerified
 );
 
@@ -53,6 +62,7 @@ router.post(
   isAdmin,
   upload.single("photo"),
   isFileLimit,
+  updateValidation,
   userController.update
 );
 
@@ -62,9 +72,16 @@ router.post(
   isAdmin,
   upload.single("photo"),
   isFileLimit,
+  createValidation,
   userController.create
 );
 
-router.post("/documents", isAuth, isSupport, userController.getDocumentsByUserId);
+router.post(
+  "/documents",
+  isAuth,
+  isSupport,
+  idBodyValidation,
+  userController.getDocumentsByUserId
+);
 
 module.exports = router;

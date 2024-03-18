@@ -1,11 +1,17 @@
-const { body } = require("express-validator");
-const emailValidation = require("./emailValidation");
-const passwordValidation = require("./passwordValidation");
-const acceptedTermConditionValidation = require("./acceptedTermConditionValidation");
+const {
+  validateCheckbox,
+  validateSmallStringBody,
+  emailValidation,
+  validatePassword,
+} = require("../base");
 
 module.exports = [
-  body("name").isLength({ min: 1 }).withMessage("Name is a required field"),
-  acceptedTermConditionValidation,
-  emailValidation,
-  passwordValidation,
+  ...validateSmallStringBody({ field: "name", fieldName: "Name" }),
+  ...validateCheckbox({
+    field: "acceptedTermCondition",
+    fieldName: "Accept term condition",
+    message: "To use the site, you must accept our term & condition",
+  }),
+  ...emailValidation,
+  ...validatePassword({ field: "password", fieldName: "Password" }),
 ];

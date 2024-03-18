@@ -4,7 +4,7 @@ module.exports = {
   generateVerifyToken: require("./generateVerifyToken"),
   generateRandomString: require("./generateRandomString"),
   generateOtp: require("./generateOtp"),
-  upload: require("./upload"),
+  ...require("./upload"),
   byteConverter: require("./byteConverter"),
   ...require("./dateHelpers"),
 };
