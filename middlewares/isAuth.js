@@ -29,6 +29,7 @@ function isAuth(request, response, next) {
   request.userData = {
     userId: resValidate.userId,
   };
+
   return next();
 }
 

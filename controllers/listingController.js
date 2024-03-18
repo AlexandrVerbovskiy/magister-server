@@ -7,6 +7,8 @@ class ListingController extends Controller {
     optionCategories,
     userId = null
   ) => {
+    console.log(optionCategories, userId);
+
     let canSendCreateNotifyRequest = false;
 
     if (optionCategories.length == 1) {
@@ -58,6 +60,7 @@ class ListingController extends Controller {
     options["categories"] = categories;
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
