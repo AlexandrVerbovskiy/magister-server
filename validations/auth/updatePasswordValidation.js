@@ -1,10 +1,6 @@
-const { body } = require("express-validator");
+const { validatePassword } = require("../base");
 
 module.exports = [
-  body("newPassword")
-    .isLength({ min: 8 })
-    .withMessage("Password must contain at least 8 characters"),
-  body("currentPassword")
-    .isLength({ min: 8 })
-    .withMessage("Current Password must contain at least 8 characters"),
+  ...validatePassword({ field: "newPassword", fieldName: "Password" }),
+  ...validatePassword({ field: "currentPassword", fieldName: "Current Password" }),
 ];

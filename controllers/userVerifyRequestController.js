@@ -1,51 +1,45 @@
-const BaseController = require("./baseController");
+const Controller = require("./Controller");
 const STATIC = require("../static");
-const { timeConverter, getYesterdayDate, getTodayDate } = require("../utils");
 
-class UserVerifyRequestController extends BaseController {
+class UserVerifyRequestController extends Controller {
   constructor() {
     super();
   }
 
-  list = (req, res) => {
-    this.baseWrapper(req, res, async () => {
-      req.body.fromTime =
-        req.body.fromTime ?? timeConverter(getYesterdayDate());
-      req.body.toTime = req.body.toTime ?? timeConverter(getTodayDate());
+  baseUserVerifyRequestList = async (req) => {
+    const timeInfos = await this.listTimeOption(req);
 
-      const { options, countItems } = await this.baseListOptions(
-        req,
-        ({ filter, fromTime, toTime }) =>
-          this.userVerifyRequestModel.totalCount(filter, fromTime, toTime)
-      );
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.userVerifyRequestModel.totalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
+    );
 
-      options["fromTime"] = req.body.fromTime;
-      options["toTime"] = req.body.toTime;
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
-      const requests = await this.userVerifyRequestModel.list(options);
+    const requests = await this.userVerifyRequestModel.list(options);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        items: requests,
-        options,
-        countItems,
-      });
-    });
+    return {
+      items: requests,
+      options,
+      countItems,
+    };
   };
 
-  getById = (req, res) => {
+  list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const request = await this.userVerifyRequestModel.getById(id);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, request);
+      const result = await this.baseUserVerifyRequestList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
-  };
 
-  createUserVerifyRequest = (req, res) => {
+  getById = (req, res) =>
+    this.baseGetById(req, res, this.userVerifyRequestModel);
+
+  createUserVerifyRequest = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const has =
@@ -61,35 +55,10 @@ class UserVerifyRequestController extends BaseController {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
-  };
 
-  checkUserCanVerifyRequest = (req, res) => {
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const has =
-        await this.userVerifyRequestModel.checkUserHasUnansweredRequest(userId);
-
-      const lastAnswer =
-        await this.userVerifyRequestModel.getLastUserAnsweredRequest(userId);
-
-      const lastAnswerDescription = lastAnswer
-        ? lastAnswer.failedDescription
-        : null;
-
-      this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        canSend: !has,
-        lastAnswerDescription,
-      });
-    });
-  };
-
-  updateUserVerifyRequest = (req, res) => {
+  updateUserVerifyRequest = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id, verified } = req.body;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
 
       const description = req.body.description ?? "";
       const userId = await this.userVerifyRequestModel.getUserIdById(id);
@@ -110,7 +79,6 @@ class UserVerifyRequestController extends BaseController {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
-  };
 }
 
 module.exports = new UserVerifyRequestController();

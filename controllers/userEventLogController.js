@@ -1,36 +1,40 @@
 const STATIC = require("../static");
-const { timeConverter, getYesterdayDate, getTodayDate } = require("../utils");
-const BaseController = require("./baseController");
+const Controller = require("./Controller");
 
-class UserEventLogController extends BaseController {
+class UserEventLogController extends Controller {
   constructor() {
     super();
   }
 
-  list = (req, res) => {
-    this.baseWrapper(req, res, async () => {
-      req.body.fromTime =
-        req.body.fromTime ?? timeConverter(getYesterdayDate());
-      req.body.toTime = req.body.toTime ?? timeConverter(getTodayDate());
+  baseUserEventLogList = async (req) => {
+    const timeInfos = await this.listTimeOption(req);
 
-      const { options, countItems } = await this.baseListOptions(
-        req,
-        ({ filter, fromTime, toTime }) =>
-          this.userEventLogModel.totalCount(filter, fromTime, toTime)
-      );
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.userEventLogModel.totalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
+    );
 
-      options["fromTime"] = req.body.fromTime;
-      options["toTime"] = req.body.toTime;
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
-      const logs = await this.userEventLogModel.list(options);
+    const logs = await this.userEventLogModel.list(options);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        items: logs,
-        options,
-        countItems,
-      });
-    });
+    return {
+      items: logs,
+      options,
+      countItems,
+    };
   };
+
+  list = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseUserEventLogList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
 }
 
 module.exports = new UserEventLogController();

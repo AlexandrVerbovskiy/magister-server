@@ -4,12 +4,12 @@ const {
   generateVerifyToken,
   validateToken,
 } = require("../utils");
-const BaseController = require("./baseController");
+const Controller = require("./Controller");
 const fetch = require("node-fetch");
 const { OAuth2Client } = require("google-auth-library");
 const CLIENT_URL = process.env.CLIENT_URL;
 
-class UserController extends BaseController {
+class UserController extends Controller {
   constructor() {
     super();
   }
@@ -493,29 +493,30 @@ class UserController extends BaseController {
       );
     });
 
+  baseUserList = async (req) => {
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) => this.userModel.totalCount(filter)
+    );
+
+    const users = await this.userModel.list(options);
+
+    return {
+      items: users,
+      options,
+      countItems,
+    };
+  };
+
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { options, countItems } = await this.baseListOptions(
-        req,
-        ({ filter }) => this.userModel.totalCount(filter)
-      );
-
-      const users = await this.userModel.list(options);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        items: users,
-        options,
-        countItems,
-      });
+      const result = await this.baseUserList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   delete = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
 
       const { userId: currentId } = req.userData;
 
@@ -523,41 +524,17 @@ class UserController extends BaseController {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      this.userModel.delete(id);
+      await this.userModel.delete(id);
 
       this.saveUserAction(req, `Removed user with id '${id}'`);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
-  getById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const user = await this.userModel.getById(id);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
-    });
+  getById = (req, res) => this.baseGetById(req, res, this.userModel);
 
   getFullById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-
-      if (isNaN(id)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const user = await this.userModel.getFullById(id);
-
-      if (!user) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, user);
-    });
+    this.baseGetById(req, res, this.userModel, "getFullById");
 
   baseCheckEmailUnique = async (dataToSave, id = null) => {
     const { email } = dataToSave;
@@ -578,7 +555,7 @@ class UserController extends BaseController {
 
     const info = await this.userModel.getById(id);
 
-    const newPhone = dataToSave["phone"];
+    const newPhone = dataToSave["phone"] ?? null;
 
     if (info.phone != newPhone && dataToSave["phoneVerified"] !== null) {
       dataToSave["phoneVerified"] = false;
@@ -589,8 +566,7 @@ class UserController extends BaseController {
     }
 
     await this.userModel.updateById(id, dataToSave);
-
-    return { ...dataToSave, id };
+    return await this.userModel.getFullById(id);
   };
 
   update = (req, res) =>
@@ -604,9 +580,7 @@ class UserController extends BaseController {
       }
 
       const user = await this.baseUpdate(id, dataToSave, req.file);
-
       this.saveUserAction(req, `Updated user with id '${id}'`);
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
 
@@ -620,15 +594,19 @@ class UserController extends BaseController {
       }
 
       const userId = await this.userModel.createFull(dataToSave);
+      const user = await this.userModel.getFullById(userId);
 
-      this.saveUserAction(req, `Created user. Generated id '${id}'`);
+      this.saveUserAction(req, `Created user. Generated id '${userId}'`);
+
+      const resetPasswordToken = generateVerifyToken({ userId });
+      this.sendAccountCreationMail(user.email, user.name, resetPasswordToken);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        id: userId,
+        user,
       });
     });
 
-  saveProfile = (req, res) => {
+  saveProfile = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const dataToSave = req.body;
       const { userId } = req.userData;
@@ -639,7 +617,6 @@ class UserController extends BaseController {
       const user = await this.baseUpdate(userId, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
-  };
 
   sendVerifyPhone = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -705,23 +682,9 @@ class UserController extends BaseController {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
 
-  myDocuments = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      const documents = await this.userModel.getDocumentsByUserId(userId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        documents,
-      });
-    });
-
   getDocumentsByUserId = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.body;
-
-      if (isNaN(userId)) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
 
       const documents = await this.userModel.getDocumentsByUserId(userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -750,9 +713,6 @@ class UserController extends BaseController {
       await this.userModel.setNewPassword(userId, newPassword);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
     });
-
-  getFileByName = (req, name) =>
-    req.files.find((field) => field.fieldname == name);
 
   updateMyDocuments = (req, res) =>
     this.baseWrapper(req, res, async () => {

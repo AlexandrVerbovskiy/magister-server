@@ -7,6 +7,7 @@ const {
   getOneHourAgo,
   generateRandomString,
 } = require("../utils");
+const Model = require("./Model");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
@@ -14,7 +15,7 @@ const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
 
-class UserModel {
+class UserModel extends Model {
   visibleFields = [
     "id",
     "name",
@@ -68,17 +69,9 @@ class UserModel {
     "confirm_money_laundering_checks_and_compliance_link as confirmMoneyLaunderingChecksAndComplianceLink",
   ];
 
-  userFilter = (filter) => {
-    filter = `%${filter}%`;
-    const searchableFields = ["name", "email", "phone"];
+  strFilterFields = ["name", "email", "phone"];
 
-    const conditions = searchableFields
-      .map((field) => `${field} ILIKE ?`)
-      .join(" OR ");
-
-    const props = searchableFields.map((field) => filter);
-    return [conditions, props];
-  };
+  orderFields = ["id", "email", "name", "phone"];
 
   getByEmail = async (email) => {
     return await db(USERS_TABLE)
@@ -145,10 +138,10 @@ class UserModel {
     const {
       email,
       name,
-      phone,
+      phone = null,
       briefBio,
       contactDetails,
-      twoFactorAuthentication,
+      twoFactorAuthentication = true,
       emailVerified,
       phoneVerified,
       active,
@@ -248,12 +241,7 @@ class UserModel {
     return await bcrypt.compare(newPassword, user.password);
   };
 
-  getById = async (id) => {
-    return await db(USERS_TABLE)
-      .select(this.visibleFields)
-      .where("id", id)
-      .first();
-  };
+  getById = (id) => this.baseGetById(id, USERS_TABLE);
 
   getFullById = async (id) => {
     return await db(USERS_TABLE).select(this.allFields).where("id", id).first();
@@ -339,30 +327,26 @@ class UserModel {
 
   totalCount = async (filter) => {
     const { count } = await db(USERS_TABLE)
-      .whereRaw(...this.userFilter(filter))
+      .whereRaw(...this.baseStrFilter(filter))
       .count("* as count")
       .first();
 
     return count;
   };
 
-  list = async ({ filter, order, orderType, start, count }) => {
-    const canBeOrderField = ["id", "email", "name", "phone"];
-
-    if (!order) order = "id";
-    if (!orderType) orderType = "asc";
-
-    orderType = orderType.toLowerCase() === "desc" ? "desc" : "asc";
-    order = canBeOrderField.includes(order.toLowerCase()) ? order : "id";
+  list = async (props) => {
+    const { filter, start, count } = props;
+    const { order, orderType } = this.getOrderInfo(props);
 
     return await db(USERS_TABLE)
-      .select([...this.visibleFields,
+      .select([
+        ...this.visibleFields,
         "active",
         "verified",
         "email_verified as emailVerified",
-        "phone_verified as phoneVerified"
+        "phone_verified as phoneVerified",
       ])
-      .whereRaw(...this.userFilter(filter))
+      .whereRaw(...this.baseStrFilter(filter))
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
@@ -530,6 +514,15 @@ class UserModel {
     await db(USER_DOCUMENTS_TABLE)
       .where({ user_id: userId })
       .update({ ...this.convertDocumentLinksToSql(documents) });
+  };
+
+  getNameIdList = async (start, count, filter) => {
+    const res = await db(USERS_TABLE)
+      .select(["id as value", "name as title"])
+      .whereILike("name", `%${filter}%`)
+      .limit(count)
+      .offset(start);
+    return res;
   };
 }
 
