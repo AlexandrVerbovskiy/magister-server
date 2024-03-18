@@ -58,6 +58,8 @@ class ListingController extends Controller {
     options["categories"] = categories;
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["lat"] = req.body.lat;
+    options["lng"] = req.body.lng;
 
     const listings = await this.listingModel.list(options);
     const listingsWithImages = await this.listingModel.listingsBindImages(

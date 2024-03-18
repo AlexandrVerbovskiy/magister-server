@@ -25,8 +25,8 @@ exports.up = function (knex) {
     table.text("postcode");
     table.string("city");
 
-    table.string("rental_lat");
-    table.string("rental_lng");
+    table.float("rental_lat");
+    table.float("rental_lng");
     table.float("rental_radius");
 
     table.boolean("approved").defaultTo(false);

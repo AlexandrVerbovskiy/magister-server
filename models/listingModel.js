@@ -88,8 +88,8 @@ class ListingsModel extends Model {
         postcode,
         address,
         approved,
-        rental_lat: rentalLat,
-        rental_lng: rentalLng,
+        rental_lat: Number(rentalLat),
+        rental_lng: Number(rentalLng),
         rental_terms: rentalTerms,
         rental_radius: rentalRadius,
         category_id: categoryId,
@@ -196,25 +196,27 @@ class ListingsModel extends Model {
     ownerId,
     address,
   }) => {
-    await db(LISTINGS_TABLE).where({ id }).update({
-      name,
-      city,
-      description,
-      postcode,
-      approved,
-      rental_lat: rentalLat,
-      rental_lng: rentalLng,
-      rental_terms: rentalTerms,
-      rental_radius: rentalRadius,
-      category_id: categoryId,
-      price_per_day: pricePerDay,
-      min_rental_days: minimumRentalDays,
-      compensation_cost: compensationCost,
-      count_stored_items: countStoredItems,
-      key_words: keyWords,
-      owner_id: ownerId,
-      address,
-    });
+    await db(LISTINGS_TABLE)
+      .where({ id })
+      .update({
+        name,
+        city,
+        description,
+        postcode,
+        approved,
+        rental_lat: Number(rentalLat),
+        rental_lng: Number(rentalLng),
+        rental_terms: rentalTerms,
+        rental_radius: rentalRadius,
+        category_id: categoryId,
+        price_per_day: pricePerDay,
+        min_rental_days: minimumRentalDays,
+        compensation_cost: compensationCost,
+        count_stored_items: countStoredItems,
+        key_words: keyWords,
+        owner_id: ownerId,
+        address,
+      });
 
     const currentImages = await this.getListingImages(id);
     const currentImageLinks = currentImages.map((image) => image.link);
@@ -382,11 +384,11 @@ class ListingsModel extends Model {
     ];
 
     let canUseDefaultCoordsOrder = false;
+    const generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
 
-    if (lat && lng && order) {
-      const generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (jobs.lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - jobs.lng) * COS(jobs.lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
+    if (lat && lng && (!order || order == "default")) {
       selectParams.push(
-        knex.raw(`${generateDistanceRow} AS distanceFromCenter`)
+        db.raw(`${generateDistanceRow} AS distanceFromCenter`, [lat, lng])
       );
 
       canUseDefaultCoordsOrder = true;
@@ -448,8 +450,11 @@ class ListingsModel extends Model {
       orderType = "desc";
     }
 
-    if (order == "default" && canUseDefaultCoordsOrder) {
-      orderField = "distanceFromCenter";
+    if (canUseDefaultCoordsOrder) {
+      orderField = db.raw(`${generateDistanceRow}`, [
+        lat,
+        lng,
+      ]);
       orderType = "asc";
     }
 
