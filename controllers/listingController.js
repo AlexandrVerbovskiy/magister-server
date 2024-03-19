@@ -7,8 +7,6 @@ class ListingController extends Controller {
     optionCategories,
     userId = null
   ) => {
-    console.log(optionCategories, userId);
-
     let canSendCreateNotifyRequest = false;
 
     if (optionCategories.length == 1) {
