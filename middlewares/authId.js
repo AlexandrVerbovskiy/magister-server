@@ -24,6 +24,7 @@ function authId(request, response, next) {
   request.userData = {
     userId: resValidate.userId,
   };
+
   return next();
 }
 

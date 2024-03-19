@@ -20,7 +20,7 @@ const {
   updateValidation,
 } = require("../../validations/listing");
 
-router.post("/list", authId, listValidation, listingController.mainList);
+router.post("/list", isAuth, listValidation, listingController.mainList);
 router.post(
   "/admin-list",
   isAuth,
