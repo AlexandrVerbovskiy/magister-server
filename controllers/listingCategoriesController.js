@@ -65,6 +65,14 @@ class ListingCategoriesController extends Controller {
             categoriesToSave[level][index]["id"] = Number(elem.id);
           }
 
+          if (elem.parentId) {
+            categoriesToSave[level][index]["parentId"] = Number(elem.parentId);
+          }
+
+          if (elem.level) {
+            categoriesToSave[level][index]["level"] = Number(elem.level);
+          }
+
           if (elem.popular) {
             categoriesToSave[level][index]["popular"] = true;
           }
@@ -220,6 +228,8 @@ class ListingCategoriesController extends Controller {
         await this.searchedWordModel.unsetCategoryList(ids);
         await this.listingCategoriesModel.deleteList(ids);
       });
+
+      console.log(toUpdate);
 
       Object.keys(toUpdate).forEach((level) => {
         toUpdate[level].forEach((elem, index) => {

@@ -17,6 +17,11 @@ module.exports = [
       "Each 'newLevel' in 'categoriesToReplace' must be a positive integer"
     ),
   ...validateSmallStringBody({
+    field: "categoriesToSave.*.*.name",
+    fieldName: "'Name' in 'Categories to replace'",
+    required: true,
+  }),
+  ...validateSmallStringBody({
     field: "categoriesToReplace.*.newName",
     fieldName: "'New Name' in 'Categories to replace'",
     required: false,
