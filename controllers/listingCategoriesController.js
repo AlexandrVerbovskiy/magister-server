@@ -229,8 +229,6 @@ class ListingCategoriesController extends Controller {
         await this.listingCategoriesModel.deleteList(ids);
       });
 
-      console.log(toUpdate);
-
       Object.keys(toUpdate).forEach((level) => {
         toUpdate[level].forEach((elem, index) => {
           if (!toUpdate[level][index]["parentId"] && level !== "firstLevel") {
