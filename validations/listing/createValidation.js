@@ -37,7 +37,7 @@ module.exports = [
   ...validateSmallStringBody({ field: "rentalLat", fieldName: "Rental lat" }),
   ...validateSmallStringBody({ field: "rentalLng", fieldName: "Rental lng" }),
   ...validateSmallStringBody({ field: "city", fieldName: "City" }),
-  ...validateIntegerBody({ field: "postcode", fieldName: "Postcode" }),
+  ...validateSmallStringBody({ field: "postcode", fieldName: "Postcode" }),
   ...validateFloat({ field: "rentalRadius", fieldName: "Rental radius" }),
   ...validateFloat({
     field: "compensationCost",
