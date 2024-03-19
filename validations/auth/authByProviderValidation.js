@@ -1,8 +1,12 @@
-const { validateSmallStringBody, emailValidation } = require("../base");
+const {
+  validateSmallStringBody,
+  emailValidation,
+  validateBigStringBody,
+} = require("../base");
 
 module.exports = [
   ...emailValidation,
-  ...validateSmallStringBody({
+  ...validateBigStringBody({
     field: "token",
     fieldName: "Token",
   }),
