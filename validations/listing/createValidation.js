@@ -71,6 +71,12 @@ module.exports = [
               "Each 'link' field in 'listingImages' must not be empty"
             );
           }
+
+          if(image.type=="url" && image.link.length>255){
+            throw new Error(
+              "No image link can be longer than 255 characters"
+            );
+          }
         });
 
         return true;
