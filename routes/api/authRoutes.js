@@ -55,7 +55,6 @@ router.post(
 router.post(
   "/save-my-documents",
   isAuth,
-  isUnverified,
   upload.any(),
   isFileLimit,
   userController.updateMyDocuments

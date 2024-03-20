@@ -7,7 +7,6 @@ const {
 const Controller = require("./Controller");
 const fetch = require("node-fetch");
 const { OAuth2Client } = require("google-auth-library");
-const CLIENT_URL = process.env.CLIENT_URL;
 
 class UserController extends Controller {
   constructor() {
@@ -775,6 +774,13 @@ class UserController extends Controller {
       }
 
       if (Object.keys(dataToSave).length > 0) {
+        const user = await this.userModel.getFullById(userId);
+
+        if (user.verified) {
+          await this.userModel.setVerified(userId, false);
+          this.userVerifyRequestModel.create(userId);
+        }
+
         const currentUserDocuments = await this.userModel.getDocumentsByUserId(
           userId
         );
