@@ -169,8 +169,20 @@ class ListingController extends Controller {
     const filesToSave = [];
 
     req.files.forEach((file) => {
+      const { fieldname } = file;
+      let id = null;
+
+      if (fieldname.includes("[id]")) {
+        const regex = /\[(\d+)\]/;
+        const match = regex.exec(fieldname);
+
+        if (match !== null) {
+          id = parseInt(match[1]);
+        }
+      }
+
       const filePath = this.moveUploadsFileToFolder(file, "listings");
-      filesToSave.push({ type: "storage", link: filePath });
+      filesToSave.push({ type: "storage", link: filePath, id });
     });
 
     return [...filesToSave, ...listingImages];
@@ -180,13 +192,9 @@ class ListingController extends Controller {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
 
-    const listingId = await this.listingModel.create(dataToSave);
-
-    const listingImagesToRes = dataToSave["listingImages"].map((info) => ({
-      type: info.type,
-      link: info.link,
-      listingId,
-    }));
+    const { listingId, listingImages } = await this.listingModel.create(
+      dataToSave
+    );
 
     return this.sendSuccessResponse(
       res,
@@ -196,7 +204,7 @@ class ListingController extends Controller {
         ...dataToSave,
         id: listingId,
         listingId,
-        listingImages: listingImagesToRes,
+        listingImages,
       }
     );
   };
@@ -241,17 +249,10 @@ class ListingController extends Controller {
 
     const listingId = dataToSave["listingId"];
 
-    const { deletedImagesInfos } = await this.listingModel.updateById(
-      dataToSave
-    );
+    const { deletedImagesInfos, listingImages: listingImagesToRes } =
+      await this.listingModel.updateById(dataToSave);
 
     this.removeListingImages(deletedImagesInfos);
-
-    const listingImagesToRes = dataToSave["listingImages"].map((info) => ({
-      type: info.type,
-      link: info.link,
-      listingId,
-    }));
 
     if (canApprove && dataToSave["approved"] === "true") {
       await this.listingApprovalRequestModel.approve(listingId);

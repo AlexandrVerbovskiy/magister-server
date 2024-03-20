@@ -3,6 +3,7 @@ const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
 const listingCategoriesModel = require("./listingCategoriesModel");
+const { orderBy } = require("lodash");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -61,6 +62,14 @@ class ListingsModel extends Model {
     return res[0]["id"];
   };
 
+  updateImage = async ({ type, link, listingId, id }) => {
+    await db(LISTING_IMAGES_TABLE).where("id", id).update({
+      listing_id: listingId,
+      link,
+      type,
+    });
+  };
+
   create = async ({
     address,
     name,
@@ -114,13 +123,15 @@ class ListingsModel extends Model {
         })
     );
 
-    return listingId;
+    const currentListingImages = await this.getListingImages(id);
+    return { listingId, listingImages: currentListingImages };
   };
 
   getListingListImages = async (listingIds) => {
     return await db(LISTING_IMAGES_TABLE)
       .whereIn("listing_id", listingIds)
-      .select(this.listingImageVisibleFields);
+      .select(this.listingImageVisibleFields)
+      .orderBy("id");
   };
 
   getListingImages = (listingId) => this.getListingListImages([listingId]);
@@ -191,7 +202,7 @@ class ListingsModel extends Model {
     rentalTerms,
     minimumRentalDays = null,
     listingImages = [],
-    keyWords,
+    keyWords = "",
     city,
     ownerId,
     address,
@@ -222,23 +233,37 @@ class ListingsModel extends Model {
     const currentImageLinks = currentImages.map((image) => image.link);
 
     const listingImagesToInsert = listingImages.filter(
-      (image) => !currentImageLinks.includes(image.link)
+      (image) => !currentImageLinks.includes(image.link) && !image.id
+    );
+
+    const listingImagesToUpdate = listingImages.filter(
+      (image) => !currentImageLinks.includes(image.link) && image.id
     );
 
     const actualListingImageLinks = listingImages
       .filter((image) => currentImageLinks.includes(image.link))
       .map((image) => image.link);
 
-    const toDeleteImagesQuery = db(LISTING_IMAGES_TABLE).whereNotIn(
-      "link",
-      actualListingImageLinks
-    );
+    const toDeleteImagesQuery = db(LISTING_IMAGES_TABLE)
+      .where("listing_id", id)
+      .whereNotIn("link", actualListingImageLinks);
 
     const deletedImagesInfos = await toDeleteImagesQuery.select(
       this.listingImageVisibleFields
     );
 
-    await toDeleteImagesQuery.delete();
+    const imagesToUpdateIds = listingImagesToUpdate.map((image) => image.id);
+    await toDeleteImagesQuery.whereNotIn("id", imagesToUpdateIds).delete();
+
+    listingImagesToUpdate.forEach(
+      async (image) =>
+        await this.updateImage({
+          type: image.type,
+          link: image.link,
+          id: image.id,
+          listingId: id,
+        })
+    );
 
     listingImagesToInsert.forEach(
       async (image) =>
@@ -249,7 +274,8 @@ class ListingsModel extends Model {
         })
     );
 
-    return { deletedImagesInfos };
+    const currentListingImages = await this.getListingImages(id);
+    return { deletedImagesInfos, listingImages: currentListingImages };
   };
 
   hasAccess = async (listingId, userId) => {
@@ -451,10 +477,7 @@ class ListingsModel extends Model {
     }
 
     if (canUseDefaultCoordsOrder) {
-      orderField = db.raw(`${generateDistanceRow}`, [
-        lat,
-        lng,
-      ]);
+      orderField = db.raw(`${generateDistanceRow}`, [lat, lng]);
       orderType = "asc";
     }
 
