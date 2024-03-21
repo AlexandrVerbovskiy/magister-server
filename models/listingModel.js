@@ -171,6 +171,7 @@ class ListingsModel extends Model {
         `${USERS_TABLE}.facebook_url as userFacebookUrl`,
         `${USERS_TABLE}.twitter_url as userTwitterUrl`,
         `${USERS_TABLE}.place_work as userPlaceWork`,
+        `${USERS_TABLE}.verified as userVerified`,
         `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
         `${LISTING_CATEGORIES_TABLE}.level as categoryLevel`,
       ])
@@ -316,6 +317,7 @@ class ListingsModel extends Model {
     userId = null,
   }) => {
     let query = db(LISTINGS_TABLE)
+      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .join(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
@@ -334,7 +336,8 @@ class ListingsModel extends Model {
         "=",
         `c3.id`
       )
-      .where("approved", true);
+      .where("approved", true)
+      .where(`${USERS_TABLE}.verified`, true);
 
     if (cities.length > 0) {
       query.whereIn("city", cities);
@@ -351,7 +354,9 @@ class ListingsModel extends Model {
     if (userId) {
       query = query.where({ owner_id: userId });
     }
-    const { count } = await query.count("* as count").first();
+    const { count } = await query
+      .count(`${LISTINGS_TABLE}.id as count`)
+      .first();
     return count;
   };
 
@@ -457,7 +462,8 @@ class ListingsModel extends Model {
         "=",
         `c3.id`
       )
-      .where("approved", true);
+      .where("approved", true)
+      .where(`${USERS_TABLE}.verified`, true);
 
     if (cities.length > 0) {
       query.whereIn("city", cities);

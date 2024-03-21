@@ -518,7 +518,7 @@ class UserModel extends Model {
 
   getNameIdList = async (start, count, filter) => {
     const res = await db(USERS_TABLE)
-      .select(["id as value", "name as title"])
+      .select(["id as value", "name as title", "verified as active"])
       .whereILike("name", `%${filter}%`)
       .limit(count)
       .offset(start);
