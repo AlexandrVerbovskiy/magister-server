@@ -123,7 +123,7 @@ class ListingsModel extends Model {
         })
     );
 
-    const currentListingImages = await this.getListingImages(id);
+    const currentListingImages = await this.getListingImages(listingId);
     return { listingId, listingImages: currentListingImages };
   };
 
