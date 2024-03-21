@@ -117,7 +117,8 @@ class ListingApprovalRequestModel extends Model {
       `${LISTING_APPROVAL_REQUESTS_TABLE}.created_at`
     );
 
-    query = this.queryByStatus(query, status);
+    query = query.where(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`, null);
+    //query = this.queryByStatus(query, status);
 
     if (userId) {
       query = query.where({ owner_id: userId });
@@ -150,7 +151,8 @@ class ListingApprovalRequestModel extends Model {
       )
       .whereRaw(...this.baseStrFilter(filter));
 
-    query = this.queryByStatus(query, status);
+    query = query.where(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`, null);
+    //query = this.queryByStatus(query, status);
 
     query = this.baseListTimeFilter(
       props,
