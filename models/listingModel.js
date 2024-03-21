@@ -48,6 +48,7 @@ class ListingsModel extends Model {
     "min_rental_days",
     "count_stored_items",
     "price_per_day",
+    "users.name"
   ];
 
   createImage = async ({ type, link, listingId }) => {
