@@ -25,7 +25,7 @@ class ListingsModel extends Model {
     "postcode",
     "owner_id as ownerId",
     "price_per_day as pricePerDay",
-    "min_rental_days as minimumRentalDays",
+    "min_rental_days as minRentalDays",
     "rental_lat as rentalLat",
     "rental_lng as rentalLng",
     "rental_radius as rentalRadius",
@@ -48,7 +48,7 @@ class ListingsModel extends Model {
     "min_rental_days",
     "count_stored_items",
     "price_per_day",
-    "users.name"
+    "users.name",
   ];
 
   createImage = async ({ type, link, listingId }) => {
@@ -87,7 +87,7 @@ class ListingsModel extends Model {
     ownerId,
     keyWords = "",
     approved = false,
-    minimumRentalDays = null,
+    minRentalDays = null,
     listingImages = [],
     city,
   }) => {
@@ -104,7 +104,7 @@ class ListingsModel extends Model {
         rental_radius: rentalRadius,
         category_id: categoryId,
         price_per_day: pricePerDay,
-        min_rental_days: minimumRentalDays,
+        min_rental_days: minRentalDays,
         compensation_cost: compensationCost,
         count_stored_items: countStoredItems,
         owner_id: ownerId,
@@ -202,7 +202,7 @@ class ListingsModel extends Model {
     rentalLng,
     rentalRadius,
     rentalTerms,
-    minimumRentalDays = null,
+    minRentalDays = null,
     listingImages = [],
     keyWords = "",
     city,
@@ -223,7 +223,7 @@ class ListingsModel extends Model {
         rental_radius: rentalRadius,
         category_id: categoryId,
         price_per_day: pricePerDay,
-        min_rental_days: minimumRentalDays,
+        min_rental_days: minRentalDays,
         compensation_cost: compensationCost,
         count_stored_items: countStoredItems,
         key_words: keyWords,

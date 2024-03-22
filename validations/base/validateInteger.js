@@ -24,11 +24,17 @@ const validateInteger = ({
   return [
     validation
       .custom((value) => {
-        if (!isNaN(value)) {
-          return true;
-        } else {
+        const intValue = parseInt(value);
+
+        if (
+          isNaN(intValue) ||
+          intValue < Number.MIN_SAFE_INTEGER ||
+          intValue > Number.MAX_SAFE_INTEGER
+        ) {
           throw new Error(message);
         }
+
+        return true;
       })
       .toInt()
       .withMessage(message),
