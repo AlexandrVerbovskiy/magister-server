@@ -19,7 +19,7 @@ const {
   authByProviderValidation,
   saveProfileValidation,
   typeValidation,
-  checkTwoFactorCodeValidation
+  checkTwoFactorCodeValidation,
 } = require("../../validations/auth");
 
 const { upload } = require("../../utils");
