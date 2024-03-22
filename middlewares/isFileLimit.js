@@ -3,7 +3,7 @@ const STATIC = require("../static");
 const multer = require("multer");
 const byteConverter = require("../utils/byteConverter");
 
-const isBaseFileLimit = (err, req, res, next) => {
+const isBaseFileLimit = (err, req, res, next, baseLimit) => {
   if (err instanceof multer.MulterError) {
     const size = byteConverter(Number(baseLimit));
 

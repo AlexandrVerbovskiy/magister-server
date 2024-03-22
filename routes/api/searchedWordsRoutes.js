@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const { searchedWordController } = require("../../controllers");
-const { isAuth, isAdmin } = require("../../middlewares");
+const { isAuth, isAdmin, isSmallFileLimit } = require("../../middlewares");
 const {
   listValidation,
   createCategoryValidation,
@@ -20,6 +20,7 @@ router.post(
 router.post(
   "/create-category",
   smallUpload.single("photo"),
+  isSmallFileLimit,
   isAuth,
   isAdmin,
   createCategoryValidation,

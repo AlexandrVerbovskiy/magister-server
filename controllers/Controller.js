@@ -101,7 +101,6 @@ class Controller {
 
       await func();
     } catch (e) {
-      console.log(e);
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey = Object.keys(STATIC.ERRORS).find(
