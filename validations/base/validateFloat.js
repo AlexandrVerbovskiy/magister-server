@@ -14,6 +14,20 @@ module.exports = ({
   let validation = body(field);
   if (!required) validation = validation.optional({ nullable: true });
 
+  validation = validation.custom((value) => {
+    const intValue = parseFloat(value);
+    
+    if (
+      isNaN(intValue) ||
+      intValue < Number.MIN_SAFE_INTEGER ||
+      intValue > Number.MAX_SAFE_INTEGER
+    ) {
+      throw new Error(message);
+    }
+
+    return true;
+  })
+
   validation = validation.isFloat({ min: 0 }).withMessage(message);
   return [validation];
 };

@@ -41,11 +41,11 @@ module.exports = [
   ...validateFloat({ field: "rentalRadius", fieldName: "Rental radius" }),
   ...validateFloat({
     field: "compensationCost",
-    fieldName: "Compensation radius",
+    fieldName: "Compensation Cost",
   }),
   ...validateFloat({ field: "pricePerDay", fieldName: "Price per day" }),
   ...validateIntegerBody({
-    field: "minimumRentalDays",
+    field: "minRentalDays",
     fieldName: "Minimum rental days",
     required: false,
   }),
@@ -72,10 +72,8 @@ module.exports = [
             );
           }
 
-          if(image.type=="url" && image.link.length>255){
-            throw new Error(
-              "No image link can be longer than 255 characters"
-            );
+          if (image.type == "url" && image.link.length > 2000) {
+            throw new Error("No image link can be longer than 2000 characters");
           }
         });
 
