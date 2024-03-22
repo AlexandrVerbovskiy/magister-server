@@ -3,14 +3,14 @@ function byteConverter(bytes) {
   const kilobytes = Math.floor(bytes / 1024);
 
   if (megabytes > 0) {
-    return megabytes + " megabytes";
+    return megabytes + " MB";
   }
 
   if (kilobytes > 0) {
-    return kilobytes + " kilobytes";
+    return kilobytes + " KB";
   }
 
-  return bytes + " bytes";
+  return bytes + " B";
 }
 
 module.exports = byteConverter;

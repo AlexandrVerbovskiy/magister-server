@@ -39,6 +39,7 @@ router.post("/my-info", isAuth, userController.myInfo);
 router.post(
   "/save-profile",
   upload.single("photo"),
+  isFileLimit,
   isAuth,
   isFileLimit,
   saveProfileValidation,
