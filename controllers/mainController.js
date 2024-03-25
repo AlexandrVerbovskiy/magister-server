@@ -135,11 +135,40 @@ class MainController extends Controller {
 
   getMainListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      //const listingListOptions = await listingController.baseListingList(req);
+      const searchCategories = req.body.categories;
+      let needSubscriptionNewCategory = false;
+      let hasListings = false;
+
+      if (searchCategories.length == 1) {
+        const foundCategory = await this.listingCategoriesModel.getByName(
+          searchCategories[0]
+        );
+
+        if (!foundCategory) {
+          if (req.userData.userId) {
+            const hasNotify =
+              await this.listingCategoryCreateNotificationModel.checkUserHasCategoryNotify(
+                req.userData.userId,
+                searchCategories[0]
+              );
+            needSubscriptionNewCategory = !hasNotify;
+          } else {
+            needSubscriptionNewCategory = true;
+          }
+        }
+      }
+
+      if (searchCategories.length != 1 || !needSubscriptionNewCategory) {
+        const { countItems } = await listingController.baseCountListings(req);
+        hasListings = countItems > 0;
+      }
+
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
+        needSubscriptionNewCategory,
+        hasListings,
       });
     });
 
