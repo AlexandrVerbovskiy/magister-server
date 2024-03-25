@@ -43,7 +43,7 @@ class ListingCategoryCreateNotificationModel extends Model {
     return res;
   };
 
-  checkNameHasCategoryNotify = async (userId, categoryName) => {
+  checkUserHasCategoryNotify = async (userId, categoryName) => {
     const res = await db(LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE)
       .where("user_id", userId)
       .where("category_name", categoryName)

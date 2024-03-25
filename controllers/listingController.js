@@ -23,7 +23,7 @@ class ListingController extends Controller {
 
       if (canSendCreateNotifyRequest && userId) {
         const resCheck =
-          await this.listingCategoryCreateNotificationModel.checkNameHasCategoryNotify(
+          await this.listingCategoryCreateNotificationModel.checkUserHasCategoryNotify(
             userId,
             searchedCategoryName
           );
@@ -37,11 +37,10 @@ class ListingController extends Controller {
     return canSendCreateNotifyRequest;
   };
 
-  baseListingList = async (req, userId = null) => {
+  baseCountListings = async (req, userId = null) => {
     const cities = req.body.cities ?? [];
     const categories = req.body.categories ?? [];
     const timeInfos = await this.listTimeOption(req, 0, 2);
-    const { userId: sessionUserId = null } = req.userData;
 
     const { options, countItems } = await this.baseList(req, () =>
       this.listingModel.totalCount({
@@ -52,6 +51,14 @@ class ListingController extends Controller {
         userId,
       })
     );
+
+    return { options, countItems, timeInfos, cities, categories };
+  };
+
+  baseListingList = async (req, userId = null) => {
+    const { options, countItems, timeInfos, cities, categories } =
+      await this.baseCountListings(req, userId);
+    const sessionUserId = req.userData.userId;
 
     options["userId"] = userId;
     options["cities"] = cities;

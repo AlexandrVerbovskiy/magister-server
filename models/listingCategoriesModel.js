@@ -168,6 +168,13 @@ class ListingCategoriesModel extends Model {
   };
 
   getById = (id) => this.baseGetById(id, LISTING_CATEGORIES_TABLE);
+
+  getByName = async (category) => {
+    return await db(LISTING_CATEGORIES_TABLE)
+      .where("name", category)
+      .select(this.visibleFields)
+      .first();
+  };
 }
 
 module.exports = new ListingCategoriesModel();
