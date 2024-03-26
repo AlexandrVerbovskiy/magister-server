@@ -132,7 +132,7 @@ class ListingApprovalRequestModel extends Model {
     const { filter, start, count } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    const { status = "all" } = props;
+    //const { status = "all" } = props;
 
     let query = db(LISTING_APPROVAL_REQUESTS_TABLE)
       .select(this.visibleFields)

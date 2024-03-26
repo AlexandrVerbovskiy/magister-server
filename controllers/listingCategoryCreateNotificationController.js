@@ -14,24 +14,6 @@ class ListingCategoryCreateNotificationModel extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { id });
     });
-
-  onCreateCategory = async (categoryName) => {
-    const notificationInfos =
-      await this.listingCategoryCreateNotificationModel.getForCategoryName(
-        categoryName
-      );
-
-    const toDeleteIds = notificationInfos.map((info) => info.id);
-    const toSentMessageEmails = [
-      ...new Set(notificationInfos.map((info) => info.userEmail)),
-    ];
-
-    toSentMessageEmails.forEach((email) =>
-      this.sendCreatedListingCategory(email, categoryName)
-    );
-
-    await this.listingCategoryCreateNotificationModel.deleteList(toDeleteIds);
-  };
 }
 
 module.exports = new ListingCategoryCreateNotificationModel();

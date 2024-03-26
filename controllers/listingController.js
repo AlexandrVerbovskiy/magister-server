@@ -254,7 +254,7 @@ class ListingController extends Controller {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
 
-    const listingId = dataToSave["listingId"];
+    const listingId = dataToSave["id"];
 
     const { deletedImagesInfos, listingImages: listingImagesToRes } =
       await this.listingModel.updateById(dataToSave);
@@ -280,11 +280,33 @@ class ListingController extends Controller {
 
       const { userId } = req.userData;
       req.body["ownerId"] = userId;
+      req.body["approved"] = false;
+
       const result = await this.baseUpdate(req, res);
+
+      const listingId = req.body.id;
+      const listing = await this.listingModel.getById(listingId);
+
+      if (listing.approved) {
+        const hasNotViewedByAdminRequest =
+          await this.listingApprovalRequestModel.hasNotViewedByAdminRequest(
+            listingId
+          );
+
+        if (hasNotViewedByAdminRequest) {
+          return this.sendErrorResponse(
+            res,
+            STATIC.ERRORS.BAD_REQUEST,
+            "The request was sent earlier. Wait for the administrator's response"
+          );
+        }
+
+        await this.listingApprovalRequestModel.create(listingId);
+      }
 
       this.saveUserAction(
         req,
-        `User create a listing with name '${req.body.name}'`
+        `User update a listing with name '${req.body.name}'`
       );
 
       return result;
@@ -304,8 +326,6 @@ class ListingController extends Controller {
 
   updateByAdmin = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      req.body["listingId"] = req.body["id"];
-
       const result = await this.baseUpdate(req, res, true);
 
       this.saveUserAction(
