@@ -92,4 +92,5 @@ module.exports = {
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
+  DEFAULT_LOCATION: { lat: 53.390044, lng: -2.59695 },
 };
