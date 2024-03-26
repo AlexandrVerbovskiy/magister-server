@@ -96,6 +96,7 @@ class ListingController extends Controller {
       canSendCreateNotifyRequest,
       categories: dbCategories,
       test: coords,
+      ip: req.ip,
     };
   };
 
