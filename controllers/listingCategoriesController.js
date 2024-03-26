@@ -44,6 +44,26 @@ class ListingCategoriesController extends Controller {
     return { level, index };
   };
 
+  onCreateCategory = async (categoryName, categoryId) => {
+    const notificationInfos =
+      await this.listingCategoryCreateNotificationModel.getForCategoryName(
+        categoryName
+      );
+
+    await this.searchedWordModel.setCategoryByName(categoryName, categoryId);
+
+    const toDeleteIds = notificationInfos.map((info) => info.id);
+    const toSentMessageEmails = [
+      ...new Set(notificationInfos.map((info) => info.userEmail)),
+    ];
+
+    toSentMessageEmails.forEach((email) =>
+      this.sendCreatedListingCategory(email, categoryName)
+    );
+
+    await this.listingCategoryCreateNotificationModel.deleteList(toDeleteIds);
+  };
+
   saveList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const levels = ["firstLevel", "secondLevel", "thirdLevel"];
@@ -270,9 +290,7 @@ class ListingCategoriesController extends Controller {
         const newCategories = [];
 
         [...toCreate[level], ...toUpdate[level]].forEach((category) => {
-          listingCategoryCreateNotificationController.onCreateCategory(
-            category.name
-          );
+          this.onCreateCategory(category.name, category.id);
           newCategories.push({ name: category.name, id: category.id });
         });
 

@@ -7,4 +7,5 @@ module.exports = {
   ...require("./upload"),
   byteConverter: require("./byteConverter"),
   ...require("./dateHelpers"),
+  coordsByIp: require("./coordsByIp"),
 };
