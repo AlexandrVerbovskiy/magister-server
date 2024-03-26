@@ -1,4 +1,5 @@
 const STATIC = require("../static");
+const { coordsByIp } = require("../utils");
 const Controller = require("./Controller");
 
 class ListingController extends Controller {
@@ -56,6 +57,8 @@ class ListingController extends Controller {
   };
 
   baseListingList = async (req, userId = null) => {
+    const coords = await coordsByIp(req.ip);
+
     const { options, countItems, timeInfos, cities, categories } =
       await this.baseCountListings(req, userId);
     const sessionUserId = req.userData.userId;
@@ -92,6 +95,7 @@ class ListingController extends Controller {
       countItems,
       canSendCreateNotifyRequest,
       categories: dbCategories,
+      test: coords,
     };
   };
 
