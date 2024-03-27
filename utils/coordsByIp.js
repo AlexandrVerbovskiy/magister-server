@@ -2,6 +2,8 @@ const STATIC = require("../static");
 const fields = "lat,lon";
 
 module.exports = async function coordsByIp(ip = null) {
+  ip = "193.194.127.206, 10.10.10.100";
+
   try {
     if (!ip) {
       return STATIC.DEFAULT_LOCATION;
@@ -16,8 +18,12 @@ module.exports = async function coordsByIp(ip = null) {
       const response2 = await fetch(
         `http://www.geoplugin.net/json.gp?ip=${ip}`
       );
-      const resData2 = await response2.json();
-      console.log("resData2: ", resData2);
+      const { geoplugin_latitude = 0, geoplugin_longitude = 0 } =
+        await response2.json();
+
+      if (geoplugin_latitude || geoplugin_longitude) {
+        data = { lat: geoplugin_latitude, lng: geoplugin_longitude };
+      }
     }
 
     if (!data || Object.keys(data).length < 1) {
@@ -35,7 +41,7 @@ module.exports = async function coordsByIp(ip = null) {
 
     return data;
   } catch (error) {
-    console.error("Помилка під час отримання даних про IP:", error);
+    console.error("Error getting IP data:", error);
     return STATIC.DEFAULT_LOCATION;
   }
 };
