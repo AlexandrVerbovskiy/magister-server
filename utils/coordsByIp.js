@@ -1,26 +1,39 @@
 const STATIC = require("../static");
 const fields = "lat,lon";
 
-module.exports = async function coordsByIp(ip) {
+module.exports = async function coordsByIp(ip = null) {
   try {
+    if (!ip) {
+      return STATIC.DEFAULT_LOCATION;
+    }
+
     const response = await fetch(
       `http://ip-api.com/json/${ip}?fields=${fields}`
     );
-    ipdat = await response.json();
+    let data = await response.json();
 
-    if (!ipdat) {
+    if (!data || Object.keys(data).length < 1) {
       const response2 = await fetch(
         `http://www.geoplugin.net/json.gp?ip=${ip}`
       );
-      ipdat = await response2.json();
+      const resData2 = await response2.json();
+      console.log("resData2: ", resData2);
     }
 
-    if (!ipdat) {
+    if (!data || Object.keys(data).length < 1) {
       const response3 = await fetch(`https://freeipapi.com/api/json/${ip}`);
-      ipdat = await response3.json();
+      const { latitude = 0, longitude = 0 } = await response3.json();
+
+      if (latitude || longitude) {
+        data = { lat: latitude, lng: longitude };
+      }
     }
 
-    return ipdat;
+    if (!data || Object.keys(data).length < 1) {
+      return STATIC.DEFAULT_LOCATION;
+    }
+
+    return data;
   } catch (error) {
     console.error("Помилка під час отримання даних про IP:", error);
     return STATIC.DEFAULT_LOCATION;
