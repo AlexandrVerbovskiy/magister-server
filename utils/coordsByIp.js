@@ -2,8 +2,6 @@ const STATIC = require("../static");
 const fields = "lat,lon";
 
 module.exports = async function coordsByIp(ip = null) {
-  ip = "193.194.127.206, 10.10.10.100";
-
   try {
     if (!ip) {
       return STATIC.DEFAULT_LOCATION;

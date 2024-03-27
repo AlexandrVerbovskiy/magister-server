@@ -101,6 +101,8 @@ class Controller {
 
       await func();
     } catch (e) {
+      console.log(e);
+
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey = Object.keys(STATIC.ERRORS).find(
@@ -302,9 +304,17 @@ class Controller {
 
     const serverFromTime = adaptClientTimeToServer(
       fromTime,
-      clientServerHoursDiff
+      clientServerHoursDiff,
+      { h: 0, m: 0, s: 0, ms: 0 }
     );
-    const serverToTime = adaptClientTimeToServer(toTime, clientServerHoursDiff);
+
+    const serverToTime = adaptClientTimeToServer(
+      toTime,
+      clientServerHoursDiff,
+      { h: 23, m: 59, s: 59, ms: 999 }
+    );
+
+    console.log(serverFromTime, serverToTime);
 
     return { fromTime, serverFromTime, toTime, serverToTime };
   };
