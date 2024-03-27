@@ -57,8 +57,6 @@ class ListingController extends Controller {
   };
 
   baseListingList = async (req, userId = null) => {
-    const coords = await coordsByIp(req.ip);
-
     const { options, countItems, timeInfos, cities, categories } =
       await this.baseCountListings(req, userId);
     const sessionUserId = req.userData.userId;
@@ -68,6 +66,10 @@ class ListingController extends Controller {
     options["categories"] = categories;
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+
+    const coords = await coordsByIp(req.body.clientIp ?? null);
+    req.body.lat = coords.lat;
+    req.body.lng = coords.lng;
 
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
@@ -94,9 +96,7 @@ class ListingController extends Controller {
       options,
       countItems,
       canSendCreateNotifyRequest,
-      categories: dbCategories,
-      test: coords,
-      ip: req.ip,
+      test: req.body.clientIp,
     };
   };
 
@@ -126,6 +126,7 @@ class ListingController extends Controller {
 
   mainList = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      req.body.clientIp = req.ip;
       const result = await this.baseListingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
