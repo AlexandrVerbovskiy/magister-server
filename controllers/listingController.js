@@ -58,6 +58,7 @@ class ListingController extends Controller {
   baseListingList = async (req, userId = null) => {
     const { options, countItems, timeInfos, cities, categories } =
       await this.baseCountListings(req, userId);
+
     const sessionUserId = req.userData.userId;
 
     options["userId"] = userId;
