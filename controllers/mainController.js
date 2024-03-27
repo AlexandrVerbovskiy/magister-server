@@ -167,6 +167,11 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
+
+      const coords = await coordsByIp(req.body.clientIp ?? null);
+      req.body.lat = coords.lat;
+      req.body.lng = coords.lng;
+
       const result = await listingController.baseListingList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

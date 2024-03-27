@@ -1,5 +1,4 @@
 const STATIC = require("../static");
-const { coordsByIp } = require("../utils");
 const Controller = require("./Controller");
 
 class ListingController extends Controller {
@@ -67,10 +66,6 @@ class ListingController extends Controller {
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
-    const coords = await coordsByIp(req.body.clientIp ?? null);
-    req.body.lat = coords.lat;
-    req.body.lng = coords.lng;
-
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
@@ -96,7 +91,6 @@ class ListingController extends Controller {
       options,
       countItems,
       canSendCreateNotifyRequest,
-      test: req.body.clientIp,
     };
   };
 
@@ -126,7 +120,6 @@ class ListingController extends Controller {
 
   mainList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      req.body.clientIp = req.ip;
       const result = await this.baseListingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
