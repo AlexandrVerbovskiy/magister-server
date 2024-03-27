@@ -9,6 +9,7 @@ const userEventLogController = require("./userEventLogController");
 const userVerifyRequestController = require("./userVerifyRequestController");
 const searchedWordController = require("./searchedWordController");
 const listingApprovalRequestController = require("./listingApprovalRequestController");
+const coordsByIp = require("../utils/coordsByIp");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -34,7 +35,9 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
         categories,
+        coords,
       });
     });
 
@@ -164,11 +167,13 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
+      const result = await listingController.baseListingList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         needSubscriptionNewCategory,
         hasListings,
+        ...result,
       });
     });
 
