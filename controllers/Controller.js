@@ -284,7 +284,7 @@ class Controller {
   listTimeOption = async (
     req,
     startFromCurrentDaysAdd = 1,
-    endToCurrentDaysReject = 0
+    endToCurrentDaysReject = 1
   ) => {
     const { clientTime } = req.body;
     let { fromTime, toTime } = req.body;
