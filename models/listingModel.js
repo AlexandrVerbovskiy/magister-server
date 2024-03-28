@@ -411,7 +411,8 @@ class ListingsModel extends Model {
           `${LISTINGS_TABLE}.id`
         ).andOn(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "=", subquery);
       })
-      .whereRaw(...this.baseStrFilter(filter));
+        .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+        .whereRaw(...this.baseStrFilter(filter));
 
     const statusWhere = (isData) =>
       `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
