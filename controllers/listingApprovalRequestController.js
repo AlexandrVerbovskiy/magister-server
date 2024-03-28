@@ -24,6 +24,8 @@ class ListingApprovalRequestController extends Controller {
     options["status"] = status;
     const requests = await this.listingApprovalRequestModel.list(options);
 
+    console.log(options);
+
     return {
       items: requests,
       options,
