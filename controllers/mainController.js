@@ -142,6 +142,10 @@ class MainController extends Controller {
       let needSubscriptionNewCategory = false;
       let hasListings = false;
 
+      if (req.body.searchCategory) {
+        searchCategories.push(req.body.searchCategory);
+      }
+
       if (searchCategories.length == 1) {
         const foundCategory = await this.listingCategoriesModel.getByName(
           searchCategories[0]

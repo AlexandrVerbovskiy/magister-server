@@ -314,8 +314,6 @@ class Controller {
       { h: 23, m: 59, s: 59, ms: 999 }
     );
 
-    console.log(serverFromTime, serverToTime);
-
     return { fromTime, serverFromTime, toTime, serverToTime };
   };
 
