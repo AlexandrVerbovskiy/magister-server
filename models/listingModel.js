@@ -3,59 +3,34 @@ const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
 const listingCategoriesModel = require("./listingCategoriesModel");
-const { listingListDateConverter } = require("../utils");
+const { orderBy } = require("lodash");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const LISTING_IMAGES_TABLE = STATIC.TABLES.LISTING_IMAGES;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const LISTING_APPROVAL_REQUESTS_TABLE = STATIC.TABLES.LISTING_APPROVAL_REQUESTS;
-const ORDERS_TABLE = STATIC.TABLES.ORDERS;
-const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 
 class ListingsModel extends Model {
-  baseGroupedFields = [
-    `${LISTINGS_TABLE}.id`,
-    `${LISTINGS_TABLE}.name`,
-    `${LISTINGS_TABLE}.approved`,
-    `${LISTINGS_TABLE}.active`,
-    `${LISTINGS_TABLE}.address`,
-    `${LISTINGS_TABLE}.city`,
-    `${LISTINGS_TABLE}.category_id`,
-    `${LISTINGS_TABLE}.compensation_cost`,
-    `${LISTINGS_TABLE}.count_stored_items`,
-    `${LISTINGS_TABLE}.description`,
-    `${LISTINGS_TABLE}.postcode`,
-    `${LISTINGS_TABLE}.owner_id`,
-    `${LISTINGS_TABLE}.price_per_day`,
-    `${LISTINGS_TABLE}.min_rental_days`,
-    `${LISTINGS_TABLE}.rental_lat`,
-    `${LISTINGS_TABLE}.rental_lng`,
-    `${LISTINGS_TABLE}.rental_radius`,
-    `${LISTINGS_TABLE}.rental_terms`,
-    `${LISTINGS_TABLE}.key_words`,
-  ];
-
   visibleFields = [
     `${LISTINGS_TABLE}.id`,
     `${LISTINGS_TABLE}.name`,
     `${LISTINGS_TABLE}.approved`,
-    `${LISTINGS_TABLE}.active`,
-    `${LISTINGS_TABLE}.address`,
-    `${LISTINGS_TABLE}.city`,
-    `${LISTINGS_TABLE}.category_id as categoryId`,
-    `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
-    `${LISTINGS_TABLE}.count_stored_items as countStoredItems`,
-    `${LISTINGS_TABLE}.description`,
-    `${LISTINGS_TABLE}.postcode`,
-    `${LISTINGS_TABLE}.owner_id as ownerId`,
-    `${LISTINGS_TABLE}.price_per_day as pricePerDay`,
-    `${LISTINGS_TABLE}.min_rental_days as minRentalDays`,
-    `${LISTINGS_TABLE}.rental_lat as rentalLat`,
-    `${LISTINGS_TABLE}.rental_lng as rentalLng`,
-    `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
-    `${LISTINGS_TABLE}.rental_terms as rentalTerms`,
-    `${LISTINGS_TABLE}.key_words as keyWords`,
+    "address",
+    "city",
+    "category_id as categoryId",
+    "compensation_cost as compensationCost",
+    "count_stored_items as countStoredItems",
+    "description",
+    "postcode",
+    "owner_id as ownerId",
+    "price_per_day as pricePerDay",
+    "min_rental_days as minRentalDays",
+    "rental_lat as rentalLat",
+    "rental_lng as rentalLng",
+    "rental_radius as rentalRadius",
+    "rental_terms as rentalTerms",
+    "key_words as keyWords",
   ];
 
   listingImageVisibleFields = ["id", "listing_id as listingId", "type", "link"];
@@ -65,8 +40,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.city`,
     "key_words",
   ];
-
-  strFullFilterFields = [...this.strFilterFields, `${USERS_TABLE}.name`];
 
   orderFields = [
     "id",
@@ -117,7 +90,6 @@ class ListingsModel extends Model {
     minRentalDays = null,
     listingImages = [],
     city,
-    active = true,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -142,7 +114,6 @@ class ListingsModel extends Model {
         owner_id: ownerId,
         key_words: keyWords,
         city,
-        active,
       })
       .returning("id");
 
@@ -241,7 +212,6 @@ class ListingsModel extends Model {
     city,
     ownerId,
     address,
-    active,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -267,7 +237,6 @@ class ListingsModel extends Model {
         key_words: keyWords,
         owner_id: ownerId,
         address,
-        active,
       });
 
     const currentImages = await this.getListingImages(id);
@@ -349,26 +318,18 @@ class ListingsModel extends Model {
     return { deletedImagesInfos };
   };
 
-  changeActiveByUser = async (listingId, userId) => {
-    const res = await db(LISTINGS_TABLE)
-      .where({ id: listingId, owner_id: userId })
-      .update({ active: db.raw("NOT active") })
-      .returning("active");
+  totalCount = async ({
+    serverFromTime,
+    serverToTime,
+    cities = [],
+    categories = [],
+    userId = null,
+    searchCity = null,
+    searchCategory = null,
+  }) => {
+    const fieldLowerEqualArray = this.fieldLowerEqualArray;
 
-    return res[0].active;
-  };
-
-  changeActive = async (listingId) => {
-    const res = await db(LISTINGS_TABLE)
-      .where({ id: listingId })
-      .update({ active: db.raw("NOT active") })
-      .returning("active");
-
-    return res[0].active;
-  };
-
-  baseListJoin = (query) =>
-    query
+    let query = db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .join(
         LISTING_CATEGORIES_TABLE,
@@ -387,22 +348,7 @@ class ListingsModel extends Model {
         `c2.parent_id`,
         "=",
         `c3.id`
-      );
-
-  totalCount = async ({
-    serverFromTime,
-    serverToTime,
-    cities = [],
-    categories = [],
-    userId = null,
-    searchCity = null,
-    searchCategory = null,
-  }) => {
-    const fieldLowerEqualArray = this.fieldLowerEqualArray;
-
-    let query = db(LISTINGS_TABLE);
-    query = this.baseListJoin(query);
-    query = query
+      )
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true);
@@ -465,13 +411,8 @@ class ListingsModel extends Model {
           `${LISTINGS_TABLE}.id`
         ).andOn(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "=", subquery);
       })
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .whereRaw(
-        ...this.baseStrFilter(
-          filter,
-          userId ? this.strFilterFields : this.strFullFilterFields
-        )
-      );
+        .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+        .whereRaw(...this.baseStrFilter(filter));
 
     const statusWhere = (isData) =>
       `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
@@ -525,14 +466,6 @@ class ListingsModel extends Model {
       `${USERS_TABLE}.id as userId`,
     ];
 
-    const groupedParams = [
-      ...this.baseGroupedFields,
-      `${LISTING_CATEGORIES_TABLE}.name`,
-      `${USERS_TABLE}.name`,
-      `${USERS_TABLE}.photo`,
-      `${USERS_TABLE}.id`,
-    ];
-
     let canUseDefaultCoordsOrder = false;
     const generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
 
@@ -544,59 +477,30 @@ class ListingsModel extends Model {
       canUseDefaultCoordsOrder = true;
     }
 
-    let query = db(LISTINGS_TABLE).select(selectParams);
-    query = this.baseListJoin(query);
-    query = query
+    let query = db(LISTINGS_TABLE)
+      .select(selectParams)
+      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+      .join(
+        LISTING_CATEGORIES_TABLE,
+        `${LISTING_CATEGORIES_TABLE}.id`,
+        "=",
+        `${LISTINGS_TABLE}.category_id`
+      )
+      .leftJoin(
+        `${LISTING_CATEGORIES_TABLE} as c2`,
+        `${LISTING_CATEGORIES_TABLE}.parent_id`,
+        "=",
+        `c2.id`
+      )
+      .leftJoin(
+        `${LISTING_CATEGORIES_TABLE} as c3`,
+        `c2.parent_id`,
+        "=",
+        `c3.id`
+      )
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true);
-
-    if (serverFromTime || serverToTime) {
-      query = query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
-        this.select("listing_id")
-          .from(ORDERS_TABLE)
-          .joinRaw(
-            `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-               ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
-          ).whereRaw(`${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND
-            (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}') AND
-            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'`);
-
-        const whereQueryParts = [];
-        const props = [];
-
-        if (serverFromTime) {
-          const formattedFromTime = listingListDateConverter(serverFromTime);
-
-          whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
-              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
-
-          props.push(
-            formattedFromTime,
-            formattedFromTime,
-            formattedFromTime,
-            formattedFromTime
-          );
-        }
-
-        if (serverToTime) {
-          const formattedToTime = listingListDateConverter(serverToTime);
-
-          whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
-              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
-
-          props.push(
-            formattedToTime,
-            formattedToTime,
-            formattedToTime,
-            formattedToTime
-          );
-        }
-
-        const where = "(" + whereQueryParts.join(" OR ") + ")";
-        this.whereRaw(where, props);
-      });
-    }
 
     const queryCities = [...cities];
     const queryCategories = [...categories];
@@ -625,8 +529,6 @@ class ListingsModel extends Model {
           .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
       });
     }
-
-    query.where(`${LISTINGS_TABLE}.active`, true);
 
     if (props.userId) {
       query = query.where({ owner_id: props.userId });
@@ -658,7 +560,6 @@ class ListingsModel extends Model {
     return await query
       .orderBy(orderField, orderType)
       .limit(count)
-      .groupBy(groupedParams)
       .offset(start);
   };
 
@@ -693,12 +594,7 @@ class ListingsModel extends Model {
           )
         );
       })
-      .whereRaw(
-        ...this.baseStrFilter(
-          filter,
-          props.userId ? this.strFilterFields : this.strFullFilterFields
-        )
-      );
+      .whereRaw(...this.baseStrFilter(filter));
 
     const statusWhere = (isData) =>
       `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
@@ -745,13 +641,13 @@ class ListingsModel extends Model {
 
   getTopListings = () => this.list({ start: 0, count: 4, order: "latest" });
 
-  listingsBindImages = async (listings, key = "id") => {
-    const ids = listings.map((listing) => listing[key]);
+  listingsBindImages = async (listings) => {
+    const ids = listings.map((listing) => listing.id);
     const listingImages = await this.getListingListImages(ids);
 
     const listingsWithImages = listings.map((listing) => {
       listing["images"] = listingImages.filter(
-        (image) => image.listingId === listing[key]
+        (image) => image.listingId === listing.id
       );
       return listing;
     });
