@@ -316,6 +316,8 @@ class ListingsModel extends Model {
     cities = [],
     categories = [],
     userId = null,
+    searchCity = null,
+    searchCategory = null,
   }) => {
     let query = db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
@@ -340,15 +342,26 @@ class ListingsModel extends Model {
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true);
 
-    if (cities.length > 0) {
-      query.whereIn("city", cities);
+    const queryCities = [...cities];
+    const queryCategories = [...categories];
+
+    if (searchCity) {
+      queryCities.push(searchCity);
     }
 
-    if (categories.length > 0) {
+    if (searchCategory) {
+      queryCategories.push(searchCategory);
+    }
+
+    if (queryCities.length > 0) {
+      query.whereIn("city", queryCities);
+    }
+
+    if (queryCategories.length > 0) {
       query.where(function () {
-        this.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, categories)
-          .orWhereIn(`c2.name`, categories)
-          .orWhereIn(`c3.name`, categories);
+        this.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, queryCategories)
+          .orWhereIn(`c2.name`, queryCategories)
+          .orWhereIn(`c3.name`, queryCategories);
       });
     }
 
@@ -421,6 +434,8 @@ class ListingsModel extends Model {
       lat = null,
       lng = null,
       order = "default",
+      searchCity = null,
+      searchCategory = null,
     } = props;
 
     const selectParams = [
@@ -466,15 +481,26 @@ class ListingsModel extends Model {
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true);
 
-    if (cities.length > 0) {
-      query.whereIn("city", cities);
+    const queryCities = [...cities];
+    const queryCategories = [...categories];
+
+    if (searchCity) {
+      queryCities.push(searchCity);
     }
 
-    if (categories.length > 0) {
+    if (searchCategory) {
+      queryCategories.push(searchCategory);
+    }
+
+    if (queryCities.length > 0) {
+      query.whereIn("city", queryCities);
+    }
+
+    if (queryCategories.length > 0) {
       query.where(function () {
-        this.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, categories)
-          .orWhereIn(`c2.name`, categories)
-          .orWhereIn(`c3.name`, categories);
+        this.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, queryCategories)
+          .orWhereIn(`c2.name`, queryCategories)
+          .orWhereIn(`c3.name`, queryCategories);
       });
     }
 

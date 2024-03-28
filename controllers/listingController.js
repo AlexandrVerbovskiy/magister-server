@@ -41,6 +41,8 @@ class ListingController extends Controller {
     const cities = req.body.cities ?? [];
     const categories = req.body.categories ?? [];
     const timeInfos = await this.listTimeOption(req, 0, 2);
+    const searchCity = req.body.searchCity ?? null;
+    const searchCategory = req.body.searchCategory ?? null;
 
     const { options, countItems } = await this.baseList(req, () =>
       this.listingModel.totalCount({
@@ -49,10 +51,21 @@ class ListingController extends Controller {
         cities,
         categories,
         userId,
+        searchCity,
+        searchCategory,
       })
     );
 
-    return { options, countItems, timeInfos, cities, categories };
+    options["searchCity"] = searchCity;
+    options["searchCategory"] = searchCategory;
+
+    return {
+      options,
+      countItems,
+      timeInfos,
+      cities,
+      categories,
+    };
   };
 
   baseListingList = async (req, userId = null) => {
@@ -64,6 +77,8 @@ class ListingController extends Controller {
     options["userId"] = userId;
     options["cities"] = cities;
     options["categories"] = categories;
+    options["searchCity"] = req.body.searchCity ?? null;
+    options["searchCategory"] = req.body.searchCategory ?? null;
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
@@ -76,15 +91,20 @@ class ListingController extends Controller {
     );
 
     const dbCategories = await this.listingCategoriesModel.listGroupedByLevel();
+
+    const categoriesToCheckHasNotify = options["searchCategory"]
+      ? [options["searchCategory"], ...options["categories"]]
+      : [...options["categories"]];
+
     const canSendCreateNotifyRequest =
       await this.checkUserCanGetNotificationOnCreateCategory(
         dbCategories,
-        options["categories"],
+        categoriesToCheckHasNotify,
         sessionUserId
       );
 
-    if (options["categories"].length == 1 && countItems == 0) {
-      this.searchedWordModel.updateSearchCount(options["categories"][0]);
+    if (categoriesToCheckHasNotify.length == 1 && countItems == 0) {
+      this.searchedWordModel.updateSearchCount(categoriesToCheckHasNotify[0]);
     }
 
     return {
