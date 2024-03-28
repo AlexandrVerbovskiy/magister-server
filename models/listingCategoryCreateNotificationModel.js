@@ -28,7 +28,7 @@ class ListingCategoryCreateNotificationModel extends Model {
 
   getForCategoryName = async (name) => {
     const res = await db(LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE)
-      .where("category_name", name)
+      .whereRaw("LOWER(category_name) = ?", [name.toLowerCase()])
       .join(
         USERS_TABLE,
         `${USERS_TABLE}.id`,
@@ -46,7 +46,7 @@ class ListingCategoryCreateNotificationModel extends Model {
   checkUserHasCategoryNotify = async (userId, categoryName) => {
     const res = await db(LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE)
       .where("user_id", userId)
-      .where("category_name", categoryName)
+      .whereRaw("LOWER(category_name) = ?", [categoryName.toLowerCase()])
       .select([`${LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE}.id`]);
 
     return res[0]?.id;

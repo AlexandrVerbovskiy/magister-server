@@ -8,4 +8,5 @@ module.exports = {
   byteConverter: require("./byteConverter"),
   ...require("./dateHelpers"),
   coordsByIp: require("./coordsByIp"),
+  cloneObject: require("./cloneObject"),
 };

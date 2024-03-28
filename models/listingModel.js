@@ -91,6 +91,10 @@ class ListingsModel extends Model {
     listingImages = [],
     city,
   }) => {
+    if (!minRentalDays) {
+      minRentalDays = null;
+    }
+
     const res = await db(LISTINGS_TABLE)
       .insert({
         name,
@@ -209,6 +213,10 @@ class ListingsModel extends Model {
     ownerId,
     address,
   }) => {
+    if (!minRentalDays) {
+      minRentalDays = null;
+    }
+
     await db(LISTINGS_TABLE)
       .where({ id })
       .update({
@@ -319,6 +327,8 @@ class ListingsModel extends Model {
     searchCity = null,
     searchCategory = null,
   }) => {
+    const fieldLowerEqualArray = this.fieldLowerEqualArray;
+
     let query = db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .join(
@@ -340,7 +350,8 @@ class ListingsModel extends Model {
         `c3.id`
       )
       .where("approved", true)
-      .where(`${USERS_TABLE}.verified`, true);
+      .where(`${USERS_TABLE}.verified`, true)
+      .where(`${USERS_TABLE}.active`, true);
 
     const queryCities = [...cities];
     const queryCategories = [...categories];
@@ -354,20 +365,26 @@ class ListingsModel extends Model {
     }
 
     if (queryCities.length > 0) {
-      query.whereIn("city", queryCities);
+      query.whereRaw(...fieldLowerEqualArray(`city`, queryCities));
     }
 
     if (queryCategories.length > 0) {
       query.where(function () {
-        this.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, queryCategories)
-          .orWhereIn(`c2.name`, queryCategories)
-          .orWhereIn(`c3.name`, queryCategories);
+        this.whereRaw(
+          ...fieldLowerEqualArray(
+            `${LISTING_CATEGORIES_TABLE}.name`,
+            queryCategories
+          )
+        )
+          .orWhereRaw(...fieldLowerEqualArray(`c2.name`, queryCategories))
+          .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
       });
     }
 
     if (userId) {
       query = query.where({ owner_id: userId });
     }
+
     const { count } = await query
       .count(`${LISTINGS_TABLE}.id as count`)
       .first();
@@ -438,6 +455,8 @@ class ListingsModel extends Model {
       searchCategory = null,
     } = props;
 
+    const fieldLowerEqualArray = this.fieldLowerEqualArray;
+
     const selectParams = [
       ...this.visibleFields,
       `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
@@ -479,7 +498,8 @@ class ListingsModel extends Model {
         `c3.id`
       )
       .where("approved", true)
-      .where(`${USERS_TABLE}.verified`, true);
+      .where(`${USERS_TABLE}.verified`, true)
+      .where(`${USERS_TABLE}.active`, true);
 
     const queryCities = [...cities];
     const queryCategories = [...categories];
@@ -493,14 +513,19 @@ class ListingsModel extends Model {
     }
 
     if (queryCities.length > 0) {
-      query.whereIn("city", queryCities);
+      query.whereRaw(...fieldLowerEqualArray(`city`, queryCities));
     }
 
     if (queryCategories.length > 0) {
       query.where(function () {
-        this.whereIn(`${LISTING_CATEGORIES_TABLE}.name`, queryCategories)
-          .orWhereIn(`c2.name`, queryCategories)
-          .orWhereIn(`c3.name`, queryCategories);
+        this.whereRaw(
+          ...fieldLowerEqualArray(
+            `${LISTING_CATEGORIES_TABLE}.name`,
+            queryCategories
+          )
+        )
+          .orWhereRaw(...fieldLowerEqualArray(`c2.name`, queryCategories))
+          .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
       });
     }
 

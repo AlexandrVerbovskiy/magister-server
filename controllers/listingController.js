@@ -1,4 +1,5 @@
 const STATIC = require("../static");
+const { cloneObject } = require("../utils");
 const Controller = require("./Controller");
 
 class ListingController extends Controller {
@@ -48,8 +49,8 @@ class ListingController extends Controller {
       this.listingModel.totalCount({
         serverFromTime: timeInfos["serverFromTime"],
         serverToTime: timeInfos["serverToTime"],
-        cities,
-        categories,
+        cities: [...cities],
+        categories: [...categories],
         userId,
         searchCity,
         searchCategory,
@@ -77,6 +78,7 @@ class ListingController extends Controller {
     options["userId"] = userId;
     options["cities"] = cities;
     options["categories"] = categories;
+
     options["searchCity"] = req.body.searchCity ?? null;
     options["searchCategory"] = req.body.searchCategory ?? null;
 
@@ -302,8 +304,6 @@ class ListingController extends Controller {
       req.body["ownerId"] = userId;
       req.body["approved"] = false;
 
-      const result = await this.baseUpdate(req, res);
-
       const listingId = req.body.id;
       const listing = await this.listingModel.getById(listingId);
 
@@ -323,6 +323,8 @@ class ListingController extends Controller {
 
         await this.listingApprovalRequestModel.create(listingId);
       }
+
+      const result = await this.baseUpdate(req, res);
 
       this.saveUserAction(
         req,

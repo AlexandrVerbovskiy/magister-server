@@ -25,6 +25,9 @@ const validateInteger = ({
     validation
       .custom((value) => {
         const intValue = parseInt(value);
+        if (!value && !required) {
+          return true;
+        }
 
         if (
           isNaN(intValue) ||
