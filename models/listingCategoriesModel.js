@@ -171,7 +171,7 @@ class ListingCategoriesModel extends Model {
 
   getByName = async (category) => {
     return await db(LISTING_CATEGORIES_TABLE)
-      .where("name", category)
+      .whereRaw("LOWER(name) = ?", [category.toLowerCase()])
       .select(this.visibleFields)
       .first();
   };

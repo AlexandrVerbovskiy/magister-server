@@ -520,6 +520,8 @@ class UserModel extends Model {
     const res = await db(USERS_TABLE)
       .select(["id as value", "name as title", "verified as active"])
       .whereILike("name", `%${filter}%`)
+      .where("verified", true)
+      .where("active", true)
       .limit(count)
       .offset(start);
     return res;
