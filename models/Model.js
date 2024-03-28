@@ -24,15 +24,20 @@ class Model {
     return { orderType, order };
   };
 
+  fieldLowerEqualArray = (field, values) => [
+    `LOWER(${field}) IN (${values.map(() => "?").join(", ")})`,
+    values.map((category) => category.toLowerCase()),
+  ];
+
   baseStrFilter = (filter) => {
     filter = `%${filter}%`;
     const searchableFields = this.strFilterFields;
 
     const conditions = searchableFields
-      .map((field) => `${field} ILIKE ?`)
+      .map((field) => `LOWER(${field}) ILIKE ?`)
       .join(" OR ");
 
-    const props = searchableFields.map((field) => filter);
+    const props = searchableFields.map((field) => filter.toLowerCase());
     return [`(${conditions})`, props];
   };
 

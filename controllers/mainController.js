@@ -10,6 +10,7 @@ const userVerifyRequestController = require("./userVerifyRequestController");
 const searchedWordController = require("./searchedWordController");
 const listingApprovalRequestController = require("./listingApprovalRequestController");
 const coordsByIp = require("../utils/coordsByIp");
+const { cloneObject } = require("../utils");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -138,7 +139,7 @@ class MainController extends Controller {
 
   getMainListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const searchCategories = req.body.categories;
+      const searchCategories = cloneObject(req.body.categories) ?? [];
       let needSubscriptionNewCategory = false;
       let hasListings = false;
 
