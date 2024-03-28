@@ -1,6 +1,6 @@
 const STATIC = require("../static");
 const Controller = require("./Controller");
-const listingCategoryCreateNotificationController = require("./listingCategoryCreateNotificationController");
+const listingCategoriesController = require("./listingCategoriesController");
 
 class SearchedWordController extends Controller {
   constructor() {
@@ -91,7 +91,7 @@ class SearchedWordController extends Controller {
 
       await this.searchedWordModel.setCategoryId(searchedWordId, createdId);
 
-      listingCategoryCreateNotificationController.onCreateCategory(name);
+      listingCategoriesController.onCreateCategory(name);
 
       this.saveUserAction(
         req,
