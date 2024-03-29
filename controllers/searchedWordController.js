@@ -89,9 +89,7 @@ class SearchedWordController extends Controller {
         image,
       });
 
-      await this.searchedWordModel.setCategoryId(searchedWordId, createdId);
-
-      listingCategoriesController.onCreateCategory(name);
+      await listingCategoriesController.onCreateCategory(name, createdId);
 
       this.saveUserAction(
         req,

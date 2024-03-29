@@ -225,6 +225,8 @@ class ListingController extends Controller {
       dataToSave
     );
 
+    dataToSave["userVerified"] = true;
+
     return this.sendSuccessResponse(
       res,
       STATIC.SUCCESS.OK,
