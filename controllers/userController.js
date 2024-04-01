@@ -376,6 +376,10 @@ class UserController extends Controller {
       const { id } = req.body;
       const verified = await this.userModel.changeVerified(id);
 
+      if (verified) {
+        await this.userVerifyRequestModel.updateUserVerifyById(id);
+      }
+
       const message = verified
         ? "User verified successfully"
         : "User unverified successfully";
@@ -576,6 +580,10 @@ class UserController extends Controller {
 
       if (id == currentId || role === "admin") {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      if (dataToSave["verified"] === "true") {
+        await this.userVerifyRequestModel.updateUserVerifyById(id);
       }
 
       const user = await this.baseUpdate(id, dataToSave, req.file);
