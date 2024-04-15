@@ -14,6 +14,7 @@ class ListingCategoriesModel extends Model {
     "image",
     "parent_id as parentId",
     "popular",
+    "order_index as orderIndex",
   ];
 
   visibleFields = [
@@ -23,6 +24,7 @@ class ListingCategoriesModel extends Model {
     `${LISTING_CATEGORIES_TABLE}.image`,
     "parent_id as parentId",
     "popular",
+    "order_index as orderIndex",
   ];
 
   groupCategoriesByLevel = (categories) => {
@@ -64,6 +66,7 @@ class ListingCategoriesModel extends Model {
   create = async ({
     name,
     level,
+    orderIndex,
     image = null,
     parentId = null,
     popular = false,
@@ -75,6 +78,7 @@ class ListingCategoriesModel extends Model {
         parent_id: parentId,
         popular,
         image,
+        order_index: orderIndex,
       })
       .returning("id");
 
@@ -86,6 +90,7 @@ class ListingCategoriesModel extends Model {
     name,
     image = null,
     level,
+    orderIndex,
     parentId = null,
     popular = false,
   }) => {
@@ -95,6 +100,7 @@ class ListingCategoriesModel extends Model {
       image,
       parent_id: parentId,
       popular,
+      order_index: orderIndex,
     });
   };
 
