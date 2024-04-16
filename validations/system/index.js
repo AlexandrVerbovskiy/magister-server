@@ -1,3 +1,3 @@
 module.exports = {
-  setUserLogActiveValidation: require("./setUserLogActiveValidation"),
+  setOptionsValidation: require("./setOptionsValidation"),
 };

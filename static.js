@@ -89,8 +89,22 @@ module.exports = {
     LISTING_APPROVAL_REQUESTS: "listing_approval_requests",
     LISTING_CATEGORY_CREATE_NOTIFICATIONS:
       "listing_category_create_notifications",
+    ORDERS: "orders",
+    ORDER_UPDATE_REQUESTS: "order_update_requests",
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
   DEFAULT_LOCATION: { lat: 53.390044, lng: -2.59695 },
+  ORDER_STATUSES: {
+    PENDING_OWNER: "pending_owner",
+    PENDING_TENANT: "pending_tenant",
+    PENDING_CLIENT_PAYMENT: "pending_client_payment",
+    PENDING_ITEM_TO_CLIENT: "pending_item_to_client",
+    PENDING_ITEM_TO_OWNER: "pending_item_to_owner",
+    FINISHED: "finished",
+  },
+  ORDER_UPDATE_REQUEST_RECIPIENTS: {
+    TO_OWNER: "to_owner",
+    TO_TENANT: "to_tenant",
+  },
 };
