@@ -1,13 +1,13 @@
 const { Router } = require("express");
 const router = Router();
 const { systemController } = require("../../controllers");
-const {setUserLogActiveValidation} = require("../../validations/system");
+const { setOptionsValidation } = require("../../validations/system");
 
-router.get("/get-user-log-active", systemController.getUserLogActive);
+router.get("/get-system-options", systemController.getSystemOptions);
 router.post(
-  "/set-user-log-active",
-  setUserLogActiveValidation,
-  systemController.setUserLogActive
+  "/set-system-options",
+  setOptionsValidation,
+  systemController.setSystemOptions
 );
 
 module.exports = router;

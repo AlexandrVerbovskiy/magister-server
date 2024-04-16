@@ -11,7 +11,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const { isAuth, isAdmin } = require("./middlewares");
-const { apiRoutes } = require("./routes");
+const { apiRoutes, webhookRoutes } = require("./routes");
 const STATIC = require("./static");
 const isNotAuth = require("./middlewares/isNotAuth");
 
@@ -105,6 +105,8 @@ app.use(
   "/api/listing-category-create-notification",
   apiRoutes.listingCategoryCreateNotificationRoutes
 );
+
+app.use("/webhook/stripe", webhookRoutes.stripeWebhookRoutes)
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
