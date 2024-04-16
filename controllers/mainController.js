@@ -191,6 +191,8 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const listing = await this.listingModel.getFullById(id);
+      const tenantBaseCommissionPercent =
+        await this.systemOptionModel.getTenantBaseCommissionPercent();
 
       if (!listing) {
         return this.sendErrorResponse(
@@ -204,6 +206,7 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
         categories,
+        tenantBaseCommissionPercent,
       });
     });
 
