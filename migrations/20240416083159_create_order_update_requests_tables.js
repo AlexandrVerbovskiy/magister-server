@@ -10,17 +10,16 @@ exports.up = function (knex) {
     function (table) {
       table.increments("id").primary();
 
+      table.integer("sender_id").unsigned();
       table.integer("order_id").unsigned();
-      table.integer("listing_id").unsigned();
       table.date("new_start_date");
       table.date("new_end_date");
-
-      table.enum(
-        "status",
-        Object.values(STATIC.ORDER_UPDATE_REQUEST_RECIPIENTS)
-      );
+      table.float("new_price_per_day");
       table.boolean("active").defaultTo(true);
-
+      table.integer("fee");
+      table.integer("new_duration");
+      table.float("fact_total_price");
+      
       table.timestamps(true, true);
     }
   );

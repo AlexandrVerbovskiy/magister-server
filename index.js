@@ -95,6 +95,8 @@ app.use(
 
 app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes);
 app.use("/api/listings", apiRoutes.listingRoutes);
+app.use("/api/orders", apiRoutes.orderRoutes);
+app.use("/api/order-update-requests", apiRoutes.orderUpdateRequestRoutes);
 app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes);
 app.use("/api/searched-words", apiRoutes.searchedWordsRoutes);
 app.use(

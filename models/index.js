@@ -9,4 +9,6 @@ module.exports = {
   listingModel: require("./listingModel"),
   listingApprovalRequestModel: require("./listingApprovalRequestModel"),
   listingCategoryCreateNotificationModel: require("./listingCategoryCreateNotificationModel"),
+  orderModel: require("./orderModel"),
+  orderUpdateRequestModel: require("./orderUpdateRequestModel"),
 };

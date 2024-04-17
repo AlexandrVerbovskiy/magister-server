@@ -76,6 +76,13 @@ const adaptClientTimeToServer = (
   dopTime = null
 ) => adaptTimeByHoursDiff(clientDateStr, clientServerHoursDiff, dopTime);
 
+const getDaysDifference = (startDate, endDate) => {
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  const difference = Math.abs(end - start);
+  return Math.ceil(difference / (1000 * 3600 * 24)) + 1;
+};
+
 module.exports = {
   timeConverter,
   getOneHourAgo,
@@ -85,4 +92,5 @@ module.exports = {
   adaptServerTimeToClient,
   getDateByCurrentAdd,
   getDateByCurrentReject,
+  getDaysDifference,
 };

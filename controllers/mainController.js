@@ -210,6 +210,29 @@ class MainController extends Controller {
       });
     });
 
+  getOrderFullByIdOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const order = await this.orderModel.getFullById(id);
+      const tenantBaseCommissionPercent =
+        await this.systemOptionModel.getTenantBaseCommissionPercent();
+
+      if (!order) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Order wasn't found"
+        );
+      }
+
+      const categories = await this.getNavigationCategories();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        order,
+        categories,
+        tenantBaseCommissionPercent,
+      });
+    });
+
   getAdminListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
