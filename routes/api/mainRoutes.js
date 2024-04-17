@@ -112,6 +112,12 @@ router.get(
   mainController.getListingFullByIdOptions
 );
 
+router.get(
+  "/order-full-by-id-options/:id",
+  listingFullByIdOptionsValidation,
+  mainController.getOrderFullByIdOptions
+);
+
 router.post(
   "/user-listing-list-options",
   isAuth,
@@ -162,10 +168,6 @@ router.get(
   mainController.getUserProfileEditPageOptions
 );
 
-router.get(
-  "/settings-options",
-  isAuth,
-  mainController.getSettingsPageOptions
-);
+router.get("/settings-options", isAuth, mainController.getSettingsPageOptions);
 
 module.exports = router;

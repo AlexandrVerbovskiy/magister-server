@@ -29,9 +29,12 @@ class Model {
     values.map((category) => category.toLowerCase()),
   ];
 
-  baseStrFilter = (filter) => {
+  baseStrFilter = (filter, searchableFields = null) => {
     filter = `%${filter}%`;
-    const searchableFields = this.strFilterFields;
+
+    if (!searchableFields) {
+      searchableFields = this.strFilterFields;
+    }
 
     const conditions = searchableFields
       .map((field) => `LOWER(${field}) ILIKE ?`)

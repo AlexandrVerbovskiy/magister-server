@@ -25,6 +25,8 @@ const {
   listingModel,
   listingApprovalRequestModel,
   listingCategoryCreateNotificationModel,
+  orderModel,
+  orderUpdateRequestModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -44,6 +46,8 @@ class Controller {
     this.listingCategoriesModel = listingCategoriesModel;
     this.searchedWordModel = searchedWordModel;
     this.listingModel = listingModel;
+    this.orderModel = orderModel;
+    this.orderUpdateRequestModel = orderUpdateRequestModel;
     this.listingApprovalRequestModel = listingApprovalRequestModel;
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;

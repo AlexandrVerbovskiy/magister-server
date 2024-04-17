@@ -14,6 +14,14 @@ exports.up = function (knex) {
     table.date("start_date");
     table.date("end_date");
     table.string("accept_listing_qr_code");
+    table.integer("fee");
+    table.integer("duration");
+    table.float("fact_total_price");
+
+    table
+      .enum("prev_status", Object.values(STATIC.ORDER_STATUSES))
+      .nullable()
+      .defaultTo(null);
 
     table.enum("status", Object.values(STATIC.ORDER_STATUSES));
     table.boolean("closed").defaultTo(false);

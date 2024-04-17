@@ -10,4 +10,6 @@ module.exports = {
   listingApprovalRequestController: require("./listingApprovalRequestController"),
   mainController: require("./mainController"),
   listingCategoryCreateNotificationController: require("./listingCategoryCreateNotificationController"),
+  orderController: require("./orderController"),
+  orderUpdateRequestController: require("./orderUpdateRequestController"),
 };
