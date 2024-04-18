@@ -70,6 +70,35 @@ class OrderUpdateRequestModel extends Model {
       .first();
     return request;
   };
+
+  getPreviousRequestInfo = async (orderId) => {
+    const request = await db(ORDER_UPDATE_REQUESTS_TABLE)
+      .select([
+        `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as startDate`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as endDate`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as pricePerDay`,
+      ])
+      .where("order_id", orderId)
+      .where("active", false)
+      .orderBy("id", desc)
+      .first();
+    return request;
+  };
+
+  getActualRequestInfo = async (orderId) => {
+    const request = await db(ORDER_UPDATE_REQUESTS_TABLE)
+      .select([
+        `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
+      ])
+      .where("order_id", orderId)
+      .where("active", true)
+      .first();
+    return request;
+  };
 }
 
 module.exports = new OrderUpdateRequestModel();
