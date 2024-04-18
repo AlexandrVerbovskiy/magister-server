@@ -108,6 +108,7 @@ router.post(
 
 router.get(
   "/listing-full-by-id-options/:id",
+  authId,
   listingFullByIdOptionsValidation,
   mainController.getListingFullByIdOptions
 );

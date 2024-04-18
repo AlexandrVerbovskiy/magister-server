@@ -11,8 +11,8 @@ exports.up = function (knex) {
     table.integer("tenant_id").unsigned();
     table.integer("listing_id").unsigned();
     table.float("price_per_day");
-    table.date("start_date");
-    table.date("end_date");
+    table.string("start_date");
+    table.string("end_date");
     table.string("accept_listing_qr_code");
     table.integer("fee");
     table.integer("duration");

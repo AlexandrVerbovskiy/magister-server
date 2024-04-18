@@ -1,5 +1,4 @@
 const STATIC = require("../static");
-const { cloneObject } = require("../utils");
 const Controller = require("./Controller");
 
 class ListingController extends Controller {

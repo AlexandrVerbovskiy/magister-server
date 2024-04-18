@@ -83,6 +83,30 @@ const getDaysDifference = (startDate, endDate) => {
   return Math.ceil(difference / (1000 * 3600 * 24)) + 1;
 };
 
+const separateDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const generateDatesBetween = (start, end) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  let currentDate = startDate;
+
+  const datesObj = {};
+
+  while (currentDate <= endDate) {
+    const formattedDate = separateDate(currentDate);
+    datesObj[formattedDate] = true;
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return Object.keys(datesObj);
+};
+
 module.exports = {
   timeConverter,
   getOneHourAgo,
@@ -93,4 +117,6 @@ module.exports = {
   getDateByCurrentAdd,
   getDateByCurrentReject,
   getDaysDifference,
+  separateDate,
+  generateDatesBetween,
 };
