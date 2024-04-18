@@ -20,9 +20,57 @@ class SystemOptionModel extends Model {
     return value === "true";
   };
 
-  setUserLogActive = async (value) => {
-    const stringValue = value ? "true" : "false";
-    await this.updateByKey("user_log_active", stringValue);
+  getOwnerBaseCommissionPercent = async () => {
+    const value = await this.getByKey("owner_base_commission_percent");
+    return value ? Number(value) : 0;
+  };
+
+  getOwnerBoostCommissionPercent = async () => {
+    const value = await this.getByKey("owner_boost_commission_percent");
+    return value ? Number(value) : 0;
+  };
+
+  getTenantBaseCommissionPercent = async () => {
+    const value = await this.getByKey("tenant_base_commission_percent");
+    return value ? Number(value) : 0;
+  };
+
+  getOptions = async () => {
+    const resObj = {};
+    const res = await db(SYSTEM_TABLE).select("key", "value");
+    res.forEach((row) => (resObj[row["key"]] = row["value"]));
+
+    const userLogActive = resObj["user_log_active"]
+      ? resObj["user_log_active"] === "true"
+      : true;
+
+    const ownerBaseCommissionPercent =
+      resObj["owner_base_commission_percent"] ?? "";
+    const ownerBoostCommissionPercent =
+      resObj["owner_boost_commission_percent"] ?? "";
+    const tenantBaseCommissionPercent =
+      resObj["tenant_base_commission_percent"] ?? "";
+
+    return {
+      userLogActive,
+      ownerBaseCommissionPercent,
+      ownerBoostCommissionPercent,
+      tenantBaseCommissionPercent,
+    };
+  };
+
+  setOptions = async ({
+    userLogActive,
+    ownerBaseCommissionPercent,
+    ownerBoostCommissionPercent,
+    tenantBaseCommissionPercent,
+  }) => {
+    const userLogActiveStringValue = userLogActive ? "true" : "false";
+
+    await this.updateByKey("user_log_active", userLogActiveStringValue);
+    await this.updateByKey("owner_base_commission_percent", ownerBaseCommissionPercent);
+    await this.updateByKey("owner_boost_commission_percent", ownerBoostCommissionPercent);
+    await this.updateByKey("tenant_base_commission_percent", tenantBaseCommissionPercent);
   };
 }
 

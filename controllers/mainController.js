@@ -190,7 +190,11 @@ class MainController extends Controller {
   getListingFullByIdOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+      const userId = req.userData?.userId;
+
       const listing = await this.listingModel.getFullById(id);
+      const tenantBaseCommissionPercent =
+        await this.systemOptionModel.getTenantBaseCommissionPercent();
 
       if (!listing) {
         return this.sendErrorResponse(
@@ -200,10 +204,54 @@ class MainController extends Controller {
         );
       }
 
+      if (userId) {
+        listing["blockedDates"] =
+          await this.orderModel.getBlockedListingDatesForUser(
+            listing.id,
+            userId
+          );
+      } else {
+        listing["blockedDates"] = [];
+      }
+
       const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
         categories,
+        tenantBaseCommissionPercent,
+      });
+    });
+
+  getOrderFullByIdOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const order = await this.orderModel.getFullById(id);
+      const tenantBaseCommissionPercent =
+        await this.systemOptionModel.getTenantBaseCommissionPercent();
+
+      if (!order) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Order wasn't found"
+        );
+      }
+
+      order["blockedDates"] = await this.orderModel.getBlockedListingDates(
+        order.listingId
+      );
+
+      order["actualUpdateRequest"] =
+        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+
+      order["previousUpdateRequest"] =
+        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+
+      const categories = await this.getNavigationCategories();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        order,
+        categories,
+        tenantBaseCommissionPercent,
       });
     });
 

@@ -6,19 +6,45 @@ class SystemController extends Controller {
     super();
   }
 
-  getUserLogActive = (req, res) =>
+  getSystemOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const active = await this.systemOptionModel.getUserLogActive();
+      const {
+        userLogActive,
+        ownerBaseCommissionPercent,
+        ownerBoostCommissionPercent,
+        tenantBaseCommissionPercent,
+      } = await this.systemOptionModel.getOptions();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        active,
+        userLogActive,
+        ownerBaseCommissionPercent,
+        ownerBoostCommissionPercent,
+        tenantBaseCommissionPercent,
       });
     });
 
-  setUserLogActive = (req, res) =>
+  setSystemOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { active } = req.body;
-      await this.systemOptionModel.setUserLogActive(active);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { active });
+      const {
+        userLogActive,
+        ownerBaseCommissionPercent,
+        ownerBoostCommissionPercent,
+        tenantBaseCommissionPercent,
+      } = req.body;
+
+      await this.systemOptionModel.setOptions({
+        userLogActive,
+        ownerBaseCommissionPercent,
+        ownerBoostCommissionPercent,
+        tenantBaseCommissionPercent,
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        userLogActive,
+        ownerBaseCommissionPercent,
+        ownerBoostCommissionPercent,
+        tenantBaseCommissionPercent,
+      });
     });
 }
 

@@ -8,6 +8,8 @@ module.exports = {
   listingCategoryRoutes: require("./listingCategoryRoutes"),
   searchedWordsRoutes: require("./searchedWordsRoutes"),
   listingRoutes: require("./listingRoutes"),
+  orderRoutes: require("./orderRoutes"),
+  orderUpdateRequestRoutes: require("./orderUpdateRequestRoutes"),
   listingApprovalRequestRoutes: require("./listingApprovalRequestRoutes"),
   listingCategoryCreateNotificationRoutes: require("./listingCategoryCreateNotificationRoutes"),
   mainRoutes: require("./mainRoutes"),
