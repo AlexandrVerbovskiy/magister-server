@@ -1,4 +1,5 @@
 const STATIC = require("../static");
+const { generateDatesBetween } = require("../utils");
 const Controller = require("./Controller");
 
 class OrderController extends Controller {
@@ -25,6 +26,25 @@ class OrderController extends Controller {
       const tenantId = req.userData.userId;
 
       const fee = await this.systemOptionModel.getTenantBaseCommissionPercent();
+
+      const blockedDates = await this.orderModel.getBlockedListingDatesForUser(
+        listingId,
+        tenantId
+      );
+
+      const selectedDates = generateDatesBetween(startDate, endDate);
+
+      const hasBlockedDate = selectedDates.find((selectedDate) =>
+        blockedDates.includes(selectedDate)
+      );
+
+      if (hasBlockedDate) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "The selected date is not available for booking"
+        );
+      }
 
       const createdOrderId = await this.orderModel.create({
         pricePerDay,

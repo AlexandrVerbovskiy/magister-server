@@ -2,7 +2,11 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
-const { getDaysDifference } = require("../utils");
+const {
+  getDaysDifference,
+  separateDate,
+  generateDatesBetween,
+} = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoriesModel = require("./listingCategoriesModel");
 
@@ -266,6 +270,7 @@ class OrderModel extends Model {
         fee,
         duration,
         fact_total_price: factTotalPrice,
+        status: STATIC.ORDER_STATUSES.PENDING_OWNER,
       })
       .returning("id");
 
@@ -307,6 +312,48 @@ class OrderModel extends Model {
     }
 
     return order;
+  };
+
+  generateBlockedDatesByOrders = (orders) => {
+    const blockedDatesObj = {};
+
+    orders.forEach((order) => {
+      const startDate = new Date(order["startDate"]);
+      const endDate = new Date(order["endDate"]);
+      const datesBetween = generateDatesBetween(startDate, endDate);
+      datesBetween.forEach((date) => (blockedDatesObj[date] = true));
+    });
+
+    return Object.keys(blockedDatesObj);
+  };
+
+  getBlockedListingDatesForUser = async (listingId, userId) => {
+    const currentDate = separateDate(new Date());
+
+    const orders = await db(ORDERS_TABLE)
+      .where("listing_id", listingId)
+      .whereRaw("end_date >= ?", [currentDate])
+      .where(function () {
+        this.whereNot("status", "pending_owner")
+          .andWhereNot("status", "pending_tenant")
+          .orWhere("tenant_id", userId);
+      })
+      .select(["end_date as endDate", "start_date as startDate"]);
+
+    return this.generateBlockedDatesByOrders(orders);
+  };
+
+  getBlockedListingDates = async (listingId) => {
+    const currentDate = separateDate(new Date());
+
+    const orders = await db(ORDERS_TABLE)
+      .where("listing_id", listingId)
+      .whereRaw("end_date >= ?", [currentDate])
+      .whereNot("status", "pending_owner")
+      .whereNot("status", "pending_tenant")
+      .select(["end_date as endDate", "start_date as startDate"]);
+
+    return this.generateBlockedDatesByOrders(orders);
   };
 }
 

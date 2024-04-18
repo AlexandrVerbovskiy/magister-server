@@ -190,6 +190,8 @@ class MainController extends Controller {
   getListingFullByIdOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+      const userId = req.userData?.userId;
+
       const listing = await this.listingModel.getFullById(id);
       const tenantBaseCommissionPercent =
         await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -200,6 +202,16 @@ class MainController extends Controller {
           STATIC.ERRORS.NOT_FOUND,
           "Listing wasn't found"
         );
+      }
+
+      if (userId) {
+        listing["blockedDates"] =
+          await this.orderModel.getBlockedListingDatesForUser(
+            listing.id,
+            userId
+          );
+      } else {
+        listing["blockedDates"] = [];
       }
 
       const categories = await this.getNavigationCategories();
@@ -224,6 +236,10 @@ class MainController extends Controller {
           "Order wasn't found"
         );
       }
+
+      order["blockedDates"] = await this.orderModel.getBlockedListingDates(
+        order.listingId
+      );
 
       const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
