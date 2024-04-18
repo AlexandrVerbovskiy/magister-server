@@ -241,6 +241,12 @@ class MainController extends Controller {
         order.listingId
       );
 
+      order["actualUpdateRequest"] =
+        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+
+      order["previousUpdateRequest"] =
+        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+
       const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
