@@ -640,13 +640,13 @@ class ListingsModel extends Model {
 
   getTopListings = () => this.list({ start: 0, count: 4, order: "latest" });
 
-  listingsBindImages = async (listings) => {
-    const ids = listings.map((listing) => listing.id);
+  listingsBindImages = async (listings, key = "id") => {
+    const ids = listings.map((listing) => listing[key]);
     const listingImages = await this.getListingListImages(ids);
 
     const listingsWithImages = listings.map((listing) => {
       listing["images"] = listingImages.filter(
-        (image) => image.listingId === listing.id
+        (image) => image.listingId === listing[key]
       );
       return listing;
     });

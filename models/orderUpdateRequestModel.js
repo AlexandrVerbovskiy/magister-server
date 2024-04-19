@@ -42,8 +42,9 @@ class OrderUpdateRequestModel extends Model {
     return res[0]["id"];
   };
 
-  closeLast = async () => {
+  closeLast = async (orderId) => {
     await db(ORDER_UPDATE_REQUESTS_TABLE)
+      .where("order_id", orderId)
       .where("active", true)
       .update({ active: false });
   };
@@ -63,9 +64,10 @@ class OrderUpdateRequestModel extends Model {
     return request;
   };
 
-  getFullForLastActive = async () => {
+  getFullForLastActive = async (orderId) => {
     const request = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .select(this.visibleFields)
+      .where("order_id", orderId)
       .where("active", true)
       .first();
     return request;

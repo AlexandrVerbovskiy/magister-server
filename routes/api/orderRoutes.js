@@ -10,7 +10,9 @@ const {
 } = require("../../middlewares");
 const {
   idParamValidation,
+  idBodyValidation,
   createValidation,
+  listValidation
 } = require("../../validations/order");
 
 router.post(
@@ -27,6 +29,38 @@ router.get(
   isVerified,
   idParamValidation,
   orderController.getFullById
+);
+
+router.post(
+  "/accept-booking",
+  isAuth,
+  isVerified,
+  idBodyValidation,
+  orderController.acceptBooking
+);
+
+router.post(
+  "/reject-booking",
+  isAuth,
+  isVerified,
+  idBodyValidation,
+  orderController.rejectBooking
+);
+
+router.post(
+  "/booking-list",
+  isAuth,
+  isVerified,
+  listValidation,
+  orderController.bookingList
+);
+
+router.post(
+  "/order-list",
+  isAuth,
+  isVerified,
+  listValidation,
+  orderController.orderList
 );
 
 module.exports = router;

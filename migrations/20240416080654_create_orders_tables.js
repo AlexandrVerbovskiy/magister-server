@@ -18,14 +18,8 @@ exports.up = function (knex) {
     table.integer("duration");
     table.float("fact_total_price");
 
-    table
-      .enum("prev_status", Object.values(STATIC.ORDER_STATUSES))
-      .nullable()
-      .defaultTo(null);
-
     table.enum("status", Object.values(STATIC.ORDER_STATUSES));
-    table.boolean("closed").defaultTo(false);
-
+    table.enum("cancel_status", Object.values(STATIC.ORDER_CANCELATION_STATUSES));
     table.timestamps(true, true);
   });
 };

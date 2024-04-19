@@ -13,14 +13,23 @@ class OrderUpdateRequestController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const lastInfo =
-        await this.orderUpdateRequestModel.getFullForLastActive();
+      if (
+        (order.status != STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.status != STATIC.ORDER_STATUSES.PENDING_TENANT) ||
+        order.cancelStatus
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const lastInfo = await this.orderUpdateRequestModel.getFullForLastActive(
+        orderId
+      );
 
       if (lastInfo) {
         if (lastInfo.senderId == senderId) {
           return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
         } else {
-          await this.orderUpdateRequestModel.closeLast();
+          await this.orderUpdateRequestModel.closeLast(orderId);
         }
       }
 
