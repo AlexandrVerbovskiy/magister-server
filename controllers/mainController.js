@@ -9,6 +9,8 @@ const userEventLogController = require("./userEventLogController");
 const userVerifyRequestController = require("./userVerifyRequestController");
 const searchedWordController = require("./searchedWordController");
 const listingApprovalRequestController = require("./listingApprovalRequestController");
+const orderController = require("./orderController");
+
 const coordsByIp = require("../utils/coordsByIp");
 const { cloneObject } = require("../utils");
 
@@ -397,6 +399,40 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+      });
+    });
+
+  getBookingListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const isForTenant = req.body.type !== "owner";
+
+      const request = isForTenant
+        ? orderController.baseTenantBookingList
+        : orderController.baseListingOwnerBookingList;
+
+      const result = await request(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
+  getOrderListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const isForTenant = req.body.type !== "owner";
+
+      const request = isForTenant
+        ? orderController.baseTenantOrderList
+        : orderController.baseListingOwnerOrderList;
+
+      const result = await request(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
         categories,
       });
     });

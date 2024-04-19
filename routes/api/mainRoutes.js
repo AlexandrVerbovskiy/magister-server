@@ -171,4 +171,18 @@ router.get(
 
 router.get("/settings-options", isAuth, mainController.getSettingsPageOptions);
 
+router.post(
+  "/booking-list-options",
+  isAuth,
+  isVerified,
+  mainController.getBookingListOptions
+);
+
+router.post(
+  "/order-list-options",
+  isAuth,
+  isVerified,
+  mainController.getOrderListOptions
+);
+
 module.exports = router;

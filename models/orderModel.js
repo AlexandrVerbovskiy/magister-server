@@ -6,6 +6,7 @@ const {
   getDaysDifference,
   separateDate,
   generateDatesBetween,
+  formatDateToSQLFormat,
 } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoriesModel = require("./listingCategoriesModel");
@@ -19,6 +20,7 @@ class OrderModel extends Model {
   lightVisibleFields = [
     `${ORDERS_TABLE}.id`,
     `${ORDERS_TABLE}.status`,
+    `${ORDERS_TABLE}.cancel_status as cancelStatus`,
     `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
     `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.end_date as offerEndDate`,
@@ -38,6 +40,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
     `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
+    `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
   ];
 
   fullVisibleFields = [
@@ -99,13 +102,19 @@ class OrderModel extends Model {
     `duration`,
   ];
 
-  fullBaseGetQuery = async (filter, serverFromTime, serverToTime) => {
+  fullBaseGetQuery = (filter, serverFromTime, serverToTime) => {
     let query = db(ORDERS_TABLE)
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
         "=",
         `${ORDERS_TABLE}.listing_id`
+      )
+      .join(
+        LISTING_CATEGORIES_TABLE,
+        `${LISTING_CATEGORIES_TABLE}.id`,
+        "=",
+        `${LISTINGS_TABLE}.category_id`
       )
       .join(
         `${USERS_TABLE} as owners`,
@@ -140,19 +149,14 @@ class OrderModel extends Model {
     return query;
   };
 
-  tenantBaseGetQuery = async (
-    filter,
-    serverFromTime,
-    serverToTime,
-    tenantId
-  ) => {
+  tenantBaseGetQuery = (filter, serverFromTime, serverToTime, tenantId) => {
     let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
-    return query.where("tenants.id", tenantId);
+    return query.whereRaw("tenants.id = ?", tenantId);
   };
 
   ownerBaseGetQuery = (filter, serverFromTime, serverToTime, ownerId) => {
     let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
-    return query.where("owners.id", ownerId);
+    return query.whereRaw("owners.id = ?", ownerId);
   };
 
   fullTotalCount = async (filter, serverFromTime, serverToTime) => {
@@ -179,7 +183,13 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  tenantTotalCount = async (filter, serverFromTime, serverToTime, userId) => {
+  baseTenantTotalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    tenantId,
+    dopWhereCall
+  ) => {
     let query = db(ORDERS_TABLE).whereRaw(
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
@@ -188,33 +198,22 @@ class OrderModel extends Model {
       filter,
       serverFromTime,
       serverToTime,
-      userId
+      tenantId
     );
+
+    query = dopWhereCall(query);
 
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  tenantList = async (props) => {
-    const { filter, start, count, serverFromTime, serverToTime, userId } =
-      props;
-    const { order, orderType } = this.getOrderInfo(props);
-
-    let query = this.tenantBaseGetQuery(
-      filter,
-      serverFromTime,
-      serverToTime,
-      userId
-    );
-
-    return await query
-      .select(this.lightVisibleFields)
-      .orderBy(order, orderType)
-      .limit(count)
-      .offset(start);
-  };
-
-  ownerTotalCount = async (filter, serverFromTime, serverToTime, userId) => {
+  baseOwnerTotalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    ownerId,
+    dopWhereCall
+  ) => {
     let query = db(ORDERS_TABLE).whereRaw(
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
@@ -223,15 +222,39 @@ class OrderModel extends Model {
       filter,
       serverFromTime,
       serverToTime,
-      userId
+      ownerId
     );
+
+    query = dopWhereCall(query);
 
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  ownerList = async (props) => {
-    const { filter, start, count, serverFromTime, serverToTime, userId } =
+  baseTenantList = async (props, dopWhereCall) => {
+    const { filter, start, count, serverFromTime, serverToTime, tenantId } =
+      props;
+
+    const { order, orderType } = this.getOrderInfo(props);
+
+    let query = this.tenantBaseGetQuery(
+      filter,
+      serverFromTime,
+      serverToTime,
+      tenantId
+    );
+
+    query = dopWhereCall(query);
+
+    return await query
+      .select(this.lightVisibleFields)
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
+  };
+
+  baseOwnerList = async (props, dopWhereCall) => {
+    const { filter, start, count, serverFromTime, serverToTime, ownerId } =
       props;
     const { order, orderType } = this.getOrderInfo(props);
 
@@ -239,14 +262,159 @@ class OrderModel extends Model {
       filter,
       serverFromTime,
       serverToTime,
-      userId
+      ownerId
     );
+
+    query = dopWhereCall(query);
 
     return await query
       .select(this.lightVisibleFields)
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
+  };
+
+  tenantBookingsTotalCount = (
+    filter,
+    serverFromTime,
+    serverToTime,
+    tenantId
+  ) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseTenantTotalCount(
+      filter,
+      serverFromTime,
+      serverToTime,
+      tenantId,
+      dopWhereCall
+    );
+  };
+
+  tenantOrdersTotalCount = (filter, serverFromTime, serverToTime, userId) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseTenantTotalCount(
+      filter,
+      serverFromTime,
+      serverToTime,
+      userId,
+      dopWhereCall
+    );
+  };
+
+  tenantBookingsList = (props) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+        ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
+        ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
+        ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
+      )`
+      );
+
+    return this.baseTenantList(props, dopWhereCall);
+  };
+
+  tenantOrdersList = async (props) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+        ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
+        ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
+        ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
+      )`
+      );
+
+    return this.baseTenantList(props, dopWhereCall);
+  };
+
+  ownerBookingsTotalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    userId
+  ) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseOwnerTotalCount(
+      filter,
+      serverFromTime,
+      serverToTime,
+      userId,
+      dopWhereCall
+    );
+  };
+
+  ownerOrdersTotalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    userId
+  ) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseOwnerTotalCount(
+      filter,
+      serverFromTime,
+      serverToTime,
+      userId,
+      dopWhereCall
+    );
+  };
+
+  ownerBookingsList = async (props) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseOwnerList(props, dopWhereCall);
+  };
+
+  ownerOrderList = async (props) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseOwnerList(props, dopWhereCall);
   };
 
   create = async ({
@@ -277,13 +445,19 @@ class OrderModel extends Model {
     return res[0]["id"];
   };
 
-  getFullById = async (id) => {
+  getById = async (id) => {
     const order = await db(ORDERS_TABLE)
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
         "=",
         `${ORDERS_TABLE}.listing_id`
+      )
+      .join(
+        LISTING_CATEGORIES_TABLE,
+        `${LISTING_CATEGORIES_TABLE}.id`,
+        "=",
+        `${LISTINGS_TABLE}.category_id`
       )
       .join(
         `${USERS_TABLE} as owners`,
@@ -300,6 +474,12 @@ class OrderModel extends Model {
       .select(this.fullVisibleFields)
       .where(`${ORDERS_TABLE}.id`, id)
       .first();
+
+    return order;
+  };
+
+  getFullById = async (id) => {
+    const order = await this.getById(id);
 
     if (order) {
       order["listingImages"] = await listingModel.getListingImages(
@@ -366,6 +546,76 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE)
       .where("id", id)
       .update("status", STATIC.ORDER_STATUSES.PENDING_OWNER);
+  };
+
+  updateOrder = async ({
+    orderId,
+    newStartDate,
+    newEndDate,
+    newPricePerDay,
+    status = null,
+  }) => {
+    const updateProps = {
+      start_date: newStartDate,
+      end_date: newEndDate,
+      price_per_day: newPricePerDay,
+    };
+
+    if (status) {
+      updateProps["status"] = status;
+    }
+
+    await db(ORDERS_TABLE).where("id", orderId).update(updateProps);
+  };
+
+  acceptUpdateRequest = ({
+    orderId,
+    newStartDate,
+    newEndDate,
+    newPricePerDay,
+  }) =>
+    updateOrder({
+      orderId,
+      newStartDate,
+      newEndDate,
+      newPricePerDay,
+      status: STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+    });
+
+  acceptOrder = async (orderId) => {
+    await db(ORDERS_TABLE)
+      .where("id", orderId)
+      .update({ status: STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT });
+  };
+
+  rejectOrder = async (orderId) => {
+    await db(ORDERS_TABLE)
+      .where("id", orderId)
+      .update({ status: STATIC.ORDER_STATUSES.REJECTED });
+  };
+
+  startCancelByOwner = async (orderId) => {
+    await db(ORDERS_TABLE).where("id", orderId).update({
+      cancel_status: STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE,
+    });
+  };
+
+  startCancelByTenant = async (orderId) => {
+    await db(ORDERS_TABLE).where("id", orderId).update({
+      cancel_status: STATIC.ORDER_CANCELATION_STATUSES.WAITING_OWNER_APPROVE,
+    });
+  };
+
+  needAdminCancel = async (orderId) => {
+    await db(ORDERS_TABLE).where("id", orderId).update({
+      cancel_status: STATIC.ORDER_CANCELATION_STATUSES.WAITING_ADMIN_APPROVE,
+    });
+  };
+
+  successCanceled = async (orderId) => {
+    await db(ORDERS_TABLE)
+      .where("id", orderId)
+      .update({ cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELED });
   };
 }
 

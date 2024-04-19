@@ -102,6 +102,13 @@ module.exports = {
     PENDING_ITEM_TO_CLIENT: "pending_item_to_client",
     PENDING_ITEM_TO_OWNER: "pending_item_to_owner",
     FINISHED: "finished",
+    REJECTED: "rejected",
+  },
+  ORDER_CANCELATION_STATUSES: {
+    WAITING_OWNER_APPROVE: "waiting_owner_approve",
+    WAITING_TENANT_APPROVE: "waiting_tenant_approve",
+    WAITING_ADMIN_APPROVE: "waiting_admin_approve",
+    CANCELED: "canceled",
   },
   ORDER_UPDATE_REQUEST_RECIPIENTS: {
     TO_OWNER: "to_owner",
