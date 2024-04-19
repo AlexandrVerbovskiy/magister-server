@@ -24,6 +24,14 @@ class OrderUpdateRequestController extends Controller {
         }
       }
 
+      if (order.tenantId == senderId) {
+        await this.orderModel.setPendingOwnerStatus(orderId);
+      }
+
+      if (order.ownerId == senderId) {
+        await this.orderModel.setPendingTenantStatus(orderId);
+      }
+
       const fee = await this.systemOptionModel.getTenantBaseCommissionPercent();
 
       const createdRequestId = await this.orderUpdateRequestModel.create({
