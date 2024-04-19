@@ -355,6 +355,18 @@ class OrderModel extends Model {
 
     return this.generateBlockedDatesByOrders(orders);
   };
+
+  setPendingTenantStatus = async (id) => {
+    await db(ORDERS_TABLE)
+      .where("id", id)
+      .update("status", STATIC.ORDER_STATUSES.PENDING_TENANT);
+  };
+
+  setPendingOwnerStatus = async (id) => {
+    await db(ORDERS_TABLE)
+      .where("id", id)
+      .update("status", STATIC.ORDER_STATUSES.PENDING_OWNER);
+  };
 }
 
 module.exports = new OrderModel();
