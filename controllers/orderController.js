@@ -147,6 +147,36 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
+  baseAdminBookingList = async (req) => {
+    const timeInfos = await this.listTimeOption(req, 30, 30);
+
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.orderModel.allBookingsTotalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
+    );
+
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+
+    const orders = await this.orderModel.allBookingsList(options);
+
+    return {
+      items: orders,
+      options,
+      countItems,
+    };
+  };
+
+  adminBookingList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseAdminBookingList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
   baseTenantOrderList = async (req) => {
     const tenantId = req.userData.userId;
 
@@ -195,6 +225,36 @@ class OrderController extends Controller {
 
       const result = await request(req);
 
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  baseAdminOrderList = async (req) => {
+    const timeInfos = await this.listTimeOption(req, 30, 30);
+
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.orderModel.allOrderList(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
+    );
+
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+
+    const orders = await this.orderModel.allOrderList(options);
+
+    return {
+      items: orders,
+      options,
+      countItems,
+    };
+  };
+
+  adminOrderList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseAdminBookingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

@@ -149,6 +149,16 @@ class OrderModel extends Model {
     return query;
   };
 
+  fullBaseGetQueryWithRequestInfo = (filter, serverFromTime, serverToTime) => {
+    let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+
+    return query.joinRaw(
+      `LEFT JOIN ${STATIC.TABLES.ORDER_UPDATE_REQUESTS} ON
+       ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.order_id = ${STATIC.TABLES.ORDERS}.id
+        AND ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.active = true`
+    );
+  };
+
   tenantBaseGetQuery = (filter, serverFromTime, serverToTime, tenantId) => {
     let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
     return query.whereRaw("tenants.id = ?", tenantId);
@@ -231,6 +241,46 @@ class OrderModel extends Model {
     return count;
   };
 
+  baseWithRequestInfoTotalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    dopWhereCall
+  ) => {
+    let query = db(ORDERS_TABLE).whereRaw(
+      ...this.baseStrFilter(filter, this.strFilterFields)
+    );
+
+    query = this.fullBaseGetQueryWithRequestInfo(
+      filter,
+      serverFromTime,
+      serverToTime
+    );
+
+    query = dopWhereCall(query);
+
+    const { count } = await query.count("* as count").first();
+    return count;
+  };
+
+  baseAllTotalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    dopWhereCall
+  ) => {
+    let query = db(ORDERS_TABLE).whereRaw(
+      ...this.baseStrFilter(filter, this.strFilterFields)
+    );
+
+    query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+
+    query = dopWhereCall(query);
+
+    const { count } = await query.count("* as count").first();
+    return count;
+  };
+
   baseTenantList = async (props, dopWhereCall) => {
     const { filter, start, count, serverFromTime, serverToTime, tenantId } =
       props;
@@ -272,6 +322,50 @@ class OrderModel extends Model {
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
+  };
+
+  baseAllList = async (props, dopWhereCall) => {
+    const { filter, start, count, serverFromTime, serverToTime } = props;
+    const { order, orderType } = this.getOrderInfo(props);
+
+    let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+
+    query = dopWhereCall(query);
+
+    return await query
+      .select(this.lightVisibleFields)
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
+  };
+
+  baseWithRequestInfoList = async (props, dopWhereCall) => {
+    const { filter, start, count, serverFromTime, serverToTime } = props;
+    const { order, orderType } = this.getOrderInfo(props);
+
+    let query = this.fullBaseGetQueryWithRequestInfo(
+      filter,
+      serverFromTime,
+      serverToTime
+    );
+
+    query = dopWhereCall(query);
+
+    query = query.select([
+      ...this.lightVisibleFields,
+      `${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.fact_total_price as requestFactTotalPrice`,
+    ]);
+
+    if (order == "fact_total_price") {
+      query = query.orderByRaw(
+        `CASE WHEN ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.fact_total_price IS NULL 
+        THEN ${STATIC.TABLES.ORDERS}.fact_total_price ELSE ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.fact_total_price END`
+      );
+    } else {
+      query = query.orderBy(order, orderType);
+    }
+
+    return await query.limit(count).offset(start);
   };
 
   tenantBookingsTotalCount = (
@@ -415,6 +509,68 @@ class OrderModel extends Model {
       );
 
     return this.baseOwnerList(props, dopWhereCall);
+  };
+
+  allBookingsTotalCount = async (filter, serverFromTime, serverToTime) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseWithRequestInfoTotalCount(
+      filter,
+      serverFromTime,
+      serverToTime,
+      dopWhereCall
+    );
+  };
+
+  allOrdersTotalCount = async (filter, serverFromTime, serverToTime) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseAllTotalCount(
+      filter,
+      serverFromTime,
+      serverToTime,
+      dopWhereCall
+    );
+  };
+
+  allBookingsList = async (props) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
+          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseWithRequestInfoList(props, dopWhereCall);
+  };
+
+  allOrderList = async (props) => {
+    const dopWhereCall = (query) =>
+      query.whereRaw(
+        `(
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
+          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
+        )`
+      );
+
+    return this.baseAllList(props, dopWhereCall);
   };
 
   create = async ({

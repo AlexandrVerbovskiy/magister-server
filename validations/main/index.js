@@ -9,6 +9,7 @@ module.exports = {
   userListingListOptionsValidation: require("./userListingListOptionsValidation"),
   adminListingListOptionsValidation: require("./adminListingListOptionsValidation"),
   listingListOptionsValidation: require("./listingListOptionsValidation"),
+  ownerListingListOptionsValidation: require("./ownerListingListOptionsValidation"),
   userNameIdListValidation: require("./userNameIdListValidation"),
   adminListingApprovalRequestListOptionsValidation: require("./adminListingApprovalRequestListOptionsValidation"),
   adminListingApprovalRequestOptionsValidation: require("./adminListingApprovalRequestOptionsValidation"),

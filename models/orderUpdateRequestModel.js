@@ -13,6 +13,7 @@ class OrderUpdateRequestModel extends Model {
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as newFactTotalPrice`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.active`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.created_at as createdAt`,
   ];
