@@ -114,4 +114,9 @@ module.exports = {
     TO_OWNER: "to_owner",
     TO_TENANT: "to_tenant",
   },
+  TIME_OPTIONS_TYPE_DEFAULT: {
+    BASE: "base",
+    TODAY: "today",
+    NULL: "null",
+  },
 };

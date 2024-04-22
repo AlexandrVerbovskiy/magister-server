@@ -285,38 +285,59 @@ class Controller {
     };
   };
 
-  listTimeOption = async (
+  listTimeOption = async ({
     req,
     startFromCurrentDaysAdd = 1,
-    endToCurrentDaysReject = 1
-  ) => {
+    endToCurrentDaysReject = 1,
+    type = STATIC.TIME_OPTIONS_TYPE_DEFAULT.BASE,
+  }) => {
     const { clientTime } = req.body;
-    let { fromTime, toTime } = req.body;
+    let { fromTime = null, toTime = null } = req.body;
     const clientServerHoursDiff = clientServerHoursDifference(clientTime);
 
-    if (!fromTime) {
-      fromTime = timeConverter(
-        getDateByCurrentReject(clientTime, startFromCurrentDaysAdd)
+    let serverFromTime = null;
+    let serverToTime = null;
+
+    if (type == STATIC.TIME_OPTIONS_TYPE_DEFAULT.TODAY) {
+      startFromCurrentDaysAdd = 0;
+
+      if (!fromTime) {
+        fromTime = timeConverter(
+          getDateByCurrentReject(clientTime, startFromCurrentDaysAdd)
+        );
+      }
+    }
+
+    if (type == STATIC.TIME_OPTIONS_TYPE_DEFAULT.BASE) {
+      if (!fromTime) {
+        fromTime = timeConverter(
+          getDateByCurrentReject(clientTime, startFromCurrentDaysAdd)
+        );
+      }
+
+      if (!toTime) {
+        toTime = timeConverter(
+          getDateByCurrentAdd(clientTime, endToCurrentDaysReject)
+        );
+      }
+    }
+
+    if (fromTime) {
+      serverFromTime = adaptClientTimeToServer(
+        fromTime,
+        clientServerHoursDiff,
+        { h: 0, m: 0, s: 0, ms: 0 }
       );
     }
 
-    if (!toTime) {
-      toTime = timeConverter(
-        getDateByCurrentAdd(clientTime, endToCurrentDaysReject)
-      );
+    if (toTime) {
+      serverToTime = adaptClientTimeToServer(toTime, clientServerHoursDiff, {
+        h: 23,
+        m: 59,
+        s: 59,
+        ms: 999,
+      });
     }
-
-    const serverFromTime = adaptClientTimeToServer(
-      fromTime,
-      clientServerHoursDiff,
-      { h: 0, m: 0, s: 0, ms: 0 }
-    );
-
-    const serverToTime = adaptClientTimeToServer(
-      toTime,
-      clientServerHoursDiff,
-      { h: 23, m: 59, s: 59, ms: 999 }
-    );
 
     return { fromTime, serverFromTime, toTime, serverToTime };
   };

@@ -40,7 +40,10 @@ class ListingController extends Controller {
   baseCountListings = async (req, userId = null) => {
     const cities = req.body.cities ?? [];
     const categories = req.body.categories ?? [];
-    const timeInfos = await this.listTimeOption(req, 0, 2);
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.TODAY,
+    });
     const searchCity = req.body.searchCity ?? null;
     const searchCategory = req.body.searchCategory ?? null;
 
