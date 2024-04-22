@@ -7,7 +7,10 @@ class UserVerifyRequestController extends Controller {
   }
 
   baseUserVerifyRequestList = async (req) => {
-    const timeInfos = await this.listTimeOption(req);
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
 
     const { options, countItems } = await this.baseList(
       req,

@@ -58,6 +58,9 @@ class MainController extends Controller {
       const userId = req.userData.userId;
       const listing = await this.listingModel.getById(id);
 
+      const countUnfinishedListingOrders =
+        await this.orderModel.getUnfinishedListing(id);
+
       const lastRequestInfo =
         await this.listingApprovalRequestModel.lastListingApprovalRequestInfo(
           id
@@ -77,6 +80,7 @@ class MainController extends Controller {
         categories,
         listing,
         lastRequestInfo,
+        canChange: !countUnfinishedListingOrders,
       });
     });
 
@@ -297,11 +301,17 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
+      const countUnfinishedTenantOrders =
+        await this.orderModel.getUnfinishedTenant(userId);
+      const countUnfinishedOwnerOrders =
+        await this.orderModel.getUnfinishedOwner(userId);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
         canSend: !hasUnansweredRequest,
         lastAnswerDescription,
         categories,
+        canChange: !countUnfinishedTenantOrders && !countUnfinishedOwnerOrders,
       });
     });
 

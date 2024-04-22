@@ -102,6 +102,14 @@ class OrderModel extends Model {
     `duration`,
   ];
 
+  processStatuses = [
+    STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+    STATIC.ORDER_STATUSES.PENDING_TENANT,
+    STATIC.ORDER_STATUSES.PENDING_OWNER,
+    STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+    STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+  ];
+
   fullBaseGetQuery = (filter, serverFromTime, serverToTime) => {
     let query = db(ORDERS_TABLE)
       .join(
@@ -772,6 +780,41 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE)
       .where("id", orderId)
       .update({ cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELED });
+  };
+
+  getUnfinishedTenant = async (tenantId) => {
+    const { count } = await db(ORDERS_TABLE)
+      .whereIn("status", this.processStatuses)
+      .where("tenant_id", tenantId)
+      .count("* as count")
+      .first();
+
+    return count;
+  };
+
+  getUnfinishedOwner = async (ownerId) => {
+    const { count } = await db(ORDERS_TABLE)
+      .whereIn("status", this.processStatuses)
+      .leftJoin(
+        STATIC.TABLES.LISTINGS,
+        STATIC.TABLES.LISTINGS + ".id",
+        STATIC.TABLES.ORDERS + ".listing_id"
+      )
+      .where(STATIC.TABLES.LISTINGS + ".owner_id", ownerId)
+      .count("* as count")
+      .first();
+
+    return count;
+  };
+
+  getUnfinishedListing = async (listingId) => {
+    const { count } = await db(ORDERS_TABLE)
+      .whereIn("status", this.processStatuses)
+      .where("listing_id", listingId)
+      .count("* as count")
+      .first();
+
+    return count;
   };
 }
 

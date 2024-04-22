@@ -66,7 +66,10 @@ class OrderController extends Controller {
     });
 
   baseRequestsList = async (req, totalCountCall, listCall) => {
-    const timeInfos = await this.listTimeOption(req, 30, 30);
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
 
     const type = req.body.type == "owner" ? "owner" : "tenant";
 
@@ -148,7 +151,10 @@ class OrderController extends Controller {
     });
 
   baseAdminBookingList = async (req) => {
-    const timeInfos = await this.listTimeOption(req, 30, 30);
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
 
     const { options, countItems } = await this.baseList(
       req,
@@ -229,7 +235,10 @@ class OrderController extends Controller {
     });
 
   baseAdminOrderList = async (req) => {
-    const timeInfos = await this.listTimeOption(req, 30, 30);
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
 
     const { options, countItems } = await this.baseList(
       req,

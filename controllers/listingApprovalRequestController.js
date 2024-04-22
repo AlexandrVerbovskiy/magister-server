@@ -3,7 +3,10 @@ const Controller = require("./Controller");
 
 class ListingApprovalRequestController extends Controller {
   baseRequestsList = async (req, userId = null) => {
-    const timeInfos = await this.listTimeOption(req);
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
 
     const status = req.body.status;
 
