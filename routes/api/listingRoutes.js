@@ -18,9 +18,13 @@ const {
   updateByAdminValidation,
   createValidation,
   updateValidation,
+  ownerListValidation,
 } = require("../../validations/listing");
 
 router.post("/list", authId, listValidation, listingController.mainList);
+
+router.post("/owner-list", authId, ownerListValidation, listingController.ownerList);
+
 router.post(
   "/admin-list",
   isAuth,

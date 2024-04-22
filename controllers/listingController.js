@@ -146,6 +146,13 @@ class ListingController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
+  ownerList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const ownerId = req.body.ownerId;
+      const result = await this.baseListingList(req, ownerId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
   adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await this.baseListingWithStatusesList(req);

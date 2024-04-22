@@ -13,6 +13,7 @@ const {
   userListingListOptionsValidation,
   adminListingListOptionsValidation,
   listingListOptionsValidation,
+  ownerListingListOptionsValidation,
   userNameIdListValidation,
   adminListingApprovalRequestListOptionsValidation,
   adminListingApprovalRequestOptionsValidation,
@@ -20,6 +21,7 @@ const {
   listingFullByIdOptionsValidation,
 } = require("../../validations/main");
 const isSupport = require("../../middlewares/isSupport");
+const { idParamValidation } = require("../../validations/user");
 
 router.get("/index-options", mainController.getIndexPageOptions);
 
@@ -106,6 +108,13 @@ router.post(
   mainController.getMainListingListPageOptions
 );
 
+router.post(
+  "/owner-listing-list-options",
+  authId,
+  ownerListingListOptionsValidation,
+  mainController.getOwnerListingListPageOptions
+);
+
 router.get(
   "/listing-full-by-id-options/:id",
   authId,
@@ -164,6 +173,22 @@ router.get(
 );
 
 router.get(
+  "/admin-full-order-info-options/:id",
+  isAuth,
+  isAdmin,
+  idParamValidation,
+  mainController.getFullOrderByIdPageOption
+);
+
+router.get(
+  "/admin-full-booking-info-options/:id",
+  isAuth,
+  isAdmin,
+  idParamValidation,
+  mainController.getFullOrderByIdWithRequestsToUpdatePageOption
+);
+
+router.get(
   "/user-profile-edit-options",
   isAuth,
   mainController.getUserProfileEditPageOptions
@@ -179,10 +204,24 @@ router.post(
 );
 
 router.post(
+  "/admin-booking-list-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminBookingListOptions
+);
+
+router.post(
   "/order-list-options",
   isAuth,
   isVerified,
   mainController.getOrderListOptions
+);
+
+router.post(
+  "/admin-order-list-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminOrderListOptions
 );
 
 module.exports = router;

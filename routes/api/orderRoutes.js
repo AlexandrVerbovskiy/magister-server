@@ -12,7 +12,7 @@ const {
   idParamValidation,
   idBodyValidation,
   createValidation,
-  listValidation
+  listValidation,
 } = require("../../validations/order");
 
 router.post(
@@ -56,11 +56,27 @@ router.post(
 );
 
 router.post(
+  "/admin-booking-list",
+  isAuth,
+  isAdmin,
+  listValidation,
+  orderController.adminBookingList
+);
+
+router.post(
   "/order-list",
   isAuth,
   isVerified,
   listValidation,
   orderController.orderList
+);
+
+router.post(
+  "/admin-order-list",
+  isAuth,
+  isAdmin,
+  listValidation,
+  orderController.adminOrderList
 );
 
 module.exports = router;

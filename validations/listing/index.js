@@ -7,4 +7,5 @@ module.exports = {
   createValidation: require("./createValidation"),
   updateByAdminValidation: require("./updateByAdminValidation"),
   updateValidation: require("./updateValidation"),
+  ownerListValidation: require("./ownerListValidation"),
 };

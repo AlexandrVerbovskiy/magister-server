@@ -139,54 +139,67 @@ class MainController extends Controller {
       });
     });
 
-  getMainListingListPageOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const searchCategories = cloneObject(req.body.categories) ?? [];
-      let needSubscriptionNewCategory = false;
-      let hasListings = false;
+  baseGetListingListPageOptions = async (req, res, ownerId = null) => {
+    const searchCategories = cloneObject(req.body.categories) ?? [];
+    let needSubscriptionNewCategory = false;
+    let hasListings = false;
 
-      if (req.body.searchCategory) {
-        searchCategories.push(req.body.searchCategory);
-      }
+    if (req.body.searchCategory) {
+      searchCategories.push(req.body.searchCategory);
+    }
 
-      if (searchCategories.length == 1) {
-        const foundCategory = await this.listingCategoriesModel.getByName(
-          searchCategories[0]
-        );
+    if (searchCategories.length == 1) {
+      const foundCategory = await this.listingCategoriesModel.getByName(
+        searchCategories[0]
+      );
 
-        if (!foundCategory) {
-          if (req.userData.userId) {
-            const hasNotify =
-              await this.listingCategoryCreateNotificationModel.checkUserHasCategoryNotify(
-                req.userData.userId,
-                searchCategories[0]
-              );
-            needSubscriptionNewCategory = !hasNotify;
-          } else {
-            needSubscriptionNewCategory = true;
-          }
+      if (!foundCategory) {
+        if (req.userData.userId) {
+          const hasNotify =
+            await this.listingCategoryCreateNotificationModel.checkUserHasCategoryNotify(
+              req.userData.userId,
+              searchCategories[0]
+            );
+          needSubscriptionNewCategory = !hasNotify;
+        } else {
+          needSubscriptionNewCategory = true;
         }
       }
+    }
 
-      if (searchCategories.length != 1 || !needSubscriptionNewCategory) {
-        const { countItems } = await listingController.baseCountListings(req);
-        hasListings = countItems > 0;
-      }
+    if (searchCategories.length != 1 || !needSubscriptionNewCategory) {
+      const { countItems } = await listingController.baseCountListings(
+        req,
+        ownerId
+      );
+      hasListings = countItems > 0;
+    }
 
-      const categories = await this.getNavigationCategories();
+    const categories = await this.getNavigationCategories();
 
-      const coords = await coordsByIp(req.body.clientIp ?? null);
-      req.body.lat = coords.lat;
-      req.body.lng = coords.lng;
+    const coords = await coordsByIp(req.body.clientIp ?? null);
+    req.body.lat = coords.lat;
+    req.body.lng = coords.lng;
 
-      const result = await listingController.baseListingList(req);
+    const result = await listingController.baseListingList(req, ownerId);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        categories,
-        needSubscriptionNewCategory,
-        hasListings,
-        ...result,
-      });
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      categories,
+      needSubscriptionNewCategory,
+      hasListings,
+      ...result,
+    });
+  };
+
+  getMainListingListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return await this.baseGetListingListPageOptions(req, res);
+    });
+
+  getOwnerListingListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const ownerId = req.body.ownerId;
+      return await this.baseGetListingListPageOptions(req, res, ownerId);
     });
 
   getListingFullByIdOptions = (req, res) =>
@@ -420,6 +433,17 @@ class MainController extends Controller {
       });
     });
 
+  getAdminBookingListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await orderController.baseAdminBookingList(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
   getOrderListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const isForTenant = req.body.type !== "owner";
@@ -435,6 +459,51 @@ class MainController extends Controller {
         ...result,
         categories,
       });
+    });
+
+  getAdminOrderListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await orderController.baseAdminOrderList(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
+  getFullOrderByIdPageOption = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const order = await this.orderModel.getFullById(id);
+
+      if (!order) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Order wasn't found"
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
+    });
+
+  getFullOrderByIdWithRequestsToUpdatePageOption = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const order = await this.orderModel.getFullById(id);
+      order["requestsToUpdate"] =
+        await this.orderUpdateRequestModel.getAllForOrder(id);
+
+      if (!order) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Order wasn't found"
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 }
 
