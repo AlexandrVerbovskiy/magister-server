@@ -15,6 +15,7 @@ const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
+const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -110,6 +111,12 @@ class OrderModel extends Model {
     STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
   ];
 
+  bookingStatuses = [
+    STATIC.ORDER_STATUSES.PENDING_OWNER,
+    STATIC.ORDER_STATUSES.PENDING_TENANT,
+    STATIC.ORDER_STATUSES.REJECTED,
+  ];
+
   fullBaseGetQuery = (filter, serverFromTime, serverToTime) => {
     let query = db(ORDERS_TABLE)
       .join(
@@ -161,9 +168,9 @@ class OrderModel extends Model {
     let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
 
     return query.joinRaw(
-      `LEFT JOIN ${STATIC.TABLES.ORDER_UPDATE_REQUESTS} ON
-       ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.order_id = ${STATIC.TABLES.ORDERS}.id
-        AND ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.active = true`
+      `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+       ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
+        AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
   };
 
@@ -361,13 +368,13 @@ class OrderModel extends Model {
 
     query = query.select([
       ...this.lightVisibleFields,
-      `${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.fact_total_price as requestFactTotalPrice`,
+      `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as requestFactTotalPrice`,
     ]);
 
     if (order == "fact_total_price") {
       query = query.orderByRaw(
-        `CASE WHEN ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.fact_total_price IS NULL 
-        THEN ${STATIC.TABLES.ORDERS}.fact_total_price ELSE ${STATIC.TABLES.ORDER_UPDATE_REQUESTS}.fact_total_price END`
+        `CASE WHEN ${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price IS NULL 
+        THEN ${ORDERS_TABLE}.fact_total_price ELSE ${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price END`
       );
     } else {
       query = query.orderBy(order, orderType);
@@ -376,73 +383,48 @@ class OrderModel extends Model {
     return await query.limit(count).offset(start);
   };
 
-  tenantBookingsTotalCount = (
+  dopWhereBooking = (query) =>
+    query.whereIn(`${ORDERS_TABLE}.status`, this.bookingStatuses);
+
+  dopWhereOrder = (query) =>
+    query.whereNotIn(`${ORDERS_TABLE}.status`, this.bookingStatuses);
+
+  tenantBookingsTotalCount = async (
     filter,
     serverFromTime,
     serverToTime,
     tenantId
   ) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseTenantTotalCount(
+    return await this.baseTenantTotalCount(
       filter,
       serverFromTime,
       serverToTime,
       tenantId,
-      dopWhereCall
+      this.dopWhereBooking
     );
   };
 
-  tenantOrdersTotalCount = (filter, serverFromTime, serverToTime, userId) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseTenantTotalCount(
+  tenantOrdersTotalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    userId
+  ) => {
+    return await this.baseTenantTotalCount(
       filter,
       serverFromTime,
       serverToTime,
       userId,
-      dopWhereCall
+      this.dopWhereOrder
     );
   };
 
-  tenantBookingsList = (props) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-        ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
-        ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
-        ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
-      )`
-      );
-
-    return this.baseTenantList(props, dopWhereCall);
+  tenantBookingsList = async (props) => {
+    return await this.baseTenantList(props, this.dopWhereBooking);
   };
 
   tenantOrdersList = async (props) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-        ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
-        ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
-        ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
-      )`
-      );
-
-    return this.baseTenantList(props, dopWhereCall);
+    return await this.baseTenantList(props, this.dopWhereOrder);
   };
 
   ownerBookingsTotalCount = async (
@@ -451,21 +433,12 @@ class OrderModel extends Model {
     serverToTime,
     userId
   ) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseOwnerTotalCount(
+    return await this.baseOwnerTotalCount(
       filter,
       serverFromTime,
       serverToTime,
       userId,
-      dopWhereCall
+      this.dopWhereBooking
     );
   };
 
@@ -475,110 +448,47 @@ class OrderModel extends Model {
     serverToTime,
     userId
   ) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseOwnerTotalCount(
+    return await this.baseOwnerTotalCount(
       filter,
       serverFromTime,
       serverToTime,
       userId,
-      dopWhereCall
+      this.dopWhereOrder
     );
   };
 
   ownerBookingsList = async (props) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseOwnerList(props, dopWhereCall);
+    return await this.baseOwnerList(props, this.dopWhereBooking);
   };
 
   ownerOrderList = async (props) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseOwnerList(props, dopWhereCall);
+    return await this.baseOwnerList(props, this.dopWhereOrder);
   };
 
   allBookingsTotalCount = async (filter, serverFromTime, serverToTime) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseWithRequestInfoTotalCount(
+    return await this.baseWithRequestInfoTotalCount(
       filter,
       serverFromTime,
       serverToTime,
-      dopWhereCall
+      this.dopWhereBooking
     );
   };
 
   allOrdersTotalCount = async (filter, serverFromTime, serverToTime) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseAllTotalCount(
+    return await this.baseAllTotalCount(
       filter,
       serverFromTime,
       serverToTime,
-      dopWhereCall
+      this.dopWhereOrder
     );
   };
 
   allBookingsList = async (props) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_OWNER}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_TENANT}' OR 
-          ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseWithRequestInfoList(props, dopWhereCall);
+    return await this.baseWithRequestInfoList(props, this.dopWhereBooking);
   };
 
   allOrderList = async (props) => {
-    const dopWhereCall = (query) =>
-      query.whereRaw(
-        `(
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND 
-          ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
-        )`
-      );
-
-    return this.baseAllList(props, dopWhereCall);
+    return await this.baseAllList(props, this.dopWhereOrder);
   };
 
   create = async ({
@@ -678,9 +588,14 @@ class OrderModel extends Model {
       .where("listing_id", listingId)
       .whereRaw("end_date >= ?", [currentDate])
       .where(function () {
-        this.whereNot("status", "pending_owner")
-          .andWhereNot("status", "pending_tenant")
-          .orWhere("tenant_id", userId);
+        this.where(function () {
+          this.whereNot("status", STATIC.ORDER_STATUSES.PENDING_OWNER).orWhere(
+            "tenant_id",
+            userId
+          );
+        })
+          .whereNot("cancel_status", STATIC.ORDER_CANCELATION_STATUSES.CANCELED)
+          .whereNot("status", STATIC.ORDER_STATUSES.REJECTED);
       })
       .select(["end_date as endDate", "start_date as startDate"]);
 
@@ -693,8 +608,9 @@ class OrderModel extends Model {
     const orders = await db(ORDERS_TABLE)
       .where("listing_id", listingId)
       .whereRaw("end_date >= ?", [currentDate])
-      .whereNot("status", "pending_owner")
-      .whereNot("status", "pending_tenant")
+      .whereNot("status", STATIC.ORDER_STATUSES.PENDING_OWNER)
+      .whereNot("cancel_status", STATIC.ORDER_CANCELATION_STATUSES.CANCELED)
+      .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
       .select(["end_date as endDate", "start_date as startDate"]);
 
     return this.generateBlockedDatesByOrders(orders);
@@ -712,13 +628,10 @@ class OrderModel extends Model {
       .update("status", STATIC.ORDER_STATUSES.PENDING_OWNER);
   };
 
-  updateOrder = async ({
+  updateOrder = async (
     orderId,
-    newStartDate,
-    newEndDate,
-    newPricePerDay,
-    status = null,
-  }) => {
+    { newStartDate, newEndDate, newPricePerDay, status = null }
+  ) => {
     const updateProps = {
       start_date: newStartDate,
       end_date: newEndDate,
@@ -732,30 +645,19 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE).where("id", orderId).update(updateProps);
   };
 
-  acceptUpdateRequest = ({
-    orderId,
-    newStartDate,
-    newEndDate,
-    newPricePerDay,
-  }) =>
-    updateOrder({
-      orderId,
-      newStartDate,
-      newEndDate,
-      newPricePerDay,
-      status: STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
-    });
-
-  acceptOrder = async (orderId) => {
-    await db(ORDERS_TABLE)
-      .where("id", orderId)
-      .update({ status: STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT });
+  acceptUpdateRequest = (orderId, newData = {}) => {
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+    return updateOrder(orderId, newData);
   };
 
-  rejectOrder = async (orderId) => {
-    await db(ORDERS_TABLE)
-      .where("id", orderId)
-      .update({ status: STATIC.ORDER_STATUSES.REJECTED });
+  acceptOrder = async (orderId, newData = {}) => {
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+    await db(ORDERS_TABLE).where("id", orderId).update(newData);
+  };
+
+  rejectOrder = async (orderId, newData = {}) => {
+    newData["status"] = STATIC.ORDER_STATUSES.REJECTED;
+    await db(ORDERS_TABLE).where("id", orderId).update(newData);
   };
 
   startCancelByOwner = async (orderId) => {
@@ -776,13 +678,12 @@ class OrderModel extends Model {
     });
   };
 
-  successCanceled = async (orderId) => {
-    await db(ORDERS_TABLE)
-      .where("id", orderId)
-      .update({ cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELED });
+  successCanceled = async (orderId, newData = {}) => {
+    newData["cancel_status"] = STATIC.ORDER_CANCELATION_STATUSES.CANCELED;
+    await db(ORDERS_TABLE).where("id", orderId).update(cancel_status);
   };
 
-  getUnfinishedTenant = async (tenantId) => {
+  getUnfinishedTenantCount = async (tenantId) => {
     const { count } = await db(ORDERS_TABLE)
       .whereIn("status", this.processStatuses)
       .where("tenant_id", tenantId)
@@ -792,29 +693,40 @@ class OrderModel extends Model {
     return count;
   };
 
-  getUnfinishedOwner = async (ownerId) => {
+  getUnfinishedOwnerCount = async (ownerId) => {
     const { count } = await db(ORDERS_TABLE)
       .whereIn("status", this.processStatuses)
       .leftJoin(
-        STATIC.TABLES.LISTINGS,
-        STATIC.TABLES.LISTINGS + ".id",
-        STATIC.TABLES.ORDERS + ".listing_id"
+        LISTINGS_TABLE,
+        LISTINGS_TABLE + ".id",
+        ORDERS_TABLE + ".listing_id"
       )
-      .where(STATIC.TABLES.LISTINGS + ".owner_id", ownerId)
+      .where(LISTINGS_TABLE + ".owner_id", ownerId)
       .count("* as count")
       .first();
 
     return count;
   };
 
-  getUnfinishedListing = async (listingId) => {
+  getUnfinishedUserCount = async (userId) => {
+    const countUnfinishedTenantOrders = await this.getUnfinishedTenantCount(
+      userId
+    );
+    const countUnfinishedOwnerOrders = await this.getUnfinishedOwnerCount(
+      userId
+    );
+
+    return +countUnfinishedTenantOrders + +countUnfinishedOwnerOrders;
+  };
+
+  getUnfinishedListingCount = async (listingId) => {
     const { count } = await db(ORDERS_TABLE)
       .whereIn("status", this.processStatuses)
       .where("listing_id", listingId)
       .count("* as count")
       .first();
 
-    return count;
+    return +count;
   };
 }
 

@@ -12,7 +12,9 @@
     "migrate": "node migrate.js",
     "seeds-start": "node seeds-run.js",
     "migrate-rollback-last": "npx knex migrate:rollback",
-    "migrate-rollback-all": "npx knex migrate:rollback --all"
+    "migrate-rollback-all": "npx knex migrate:rollback --all",
+    "create-migration": "npx knex migrate:make",
+    "create-seed":"npx knex seed:make"
   },
   "author": "",
   "license": "ISC",

@@ -2,6 +2,7 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
+const { getDaysDifference } = require("../utils");
 
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 
@@ -29,16 +30,18 @@ class OrderUpdateRequestModel extends Model {
     const newDuration = getDaysDifference(newStartDate, newEndDate);
     const factTotalPrice = (newDuration * newPricePerDay * (100 + fee)) / 100;
 
-    const res = await db(ORDER_UPDATE_REQUESTS_TABLE).insert({
-      order_id: orderId,
-      new_start_date: newStartDate,
-      new_end_date: newEndDate,
-      new_price_per_day: newPricePerDay,
-      new_duration: newDuration,
-      sender_id: senderId,
-      fee,
-      fact_total_price: factTotalPrice,
-    });
+    const res = await db(ORDER_UPDATE_REQUESTS_TABLE)
+      .insert({
+        order_id: orderId,
+        new_start_date: newStartDate,
+        new_end_date: newEndDate,
+        new_price_per_day: newPricePerDay,
+        duration: newDuration,
+        sender_id: senderId,
+        fee,
+        fact_total_price: factTotalPrice,
+      })
+      .returning("id");
 
     return res[0]["id"];
   };
@@ -84,7 +87,7 @@ class OrderUpdateRequestModel extends Model {
       ])
       .where("order_id", orderId)
       .where("active", false)
-      .orderBy("id", desc)
+      .orderBy("id", "desc")
       .first();
     return request;
   };

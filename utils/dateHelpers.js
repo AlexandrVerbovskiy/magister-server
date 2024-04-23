@@ -107,6 +107,11 @@ const generateDatesBetween = (start, end) => {
   return Object.keys(datesObj);
 };
 
+const listingListDateConverter = (date) => {
+  const [m, d, y] = date.split(" ")[0].split("/");
+  return `${y}-${m}-${d}`;
+};
+
 module.exports = {
   timeConverter,
   getOneHourAgo,
@@ -119,4 +124,5 @@ module.exports = {
   getDaysDifference,
   separateDate,
   generateDatesBetween,
+  listingListDateConverter
 };
