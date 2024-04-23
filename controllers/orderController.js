@@ -282,10 +282,10 @@ class OrderController extends Controller {
 
   acceptBooking = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { orderId } = req.body;
+      const { id } = req.body;
       const userId = req.userData.userId;
 
-      const order = await this.orderModel.getById(orderId);
+      const order = await this.orderModel.getById(id);
 
       if (!order) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
@@ -304,21 +304,21 @@ class OrderController extends Controller {
       }
 
       const lastUpdateRequestInfo =
-        await this.orderUpdateRequestModel.getFullForLastActive(orderId);
+        await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-      if (lastUpdateRequestInfo.senderId == userId) {
+      if (lastUpdateRequestInfo && lastUpdateRequestInfo.senderId == userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       if (lastUpdateRequestInfo) {
-        await this.orderModel.acceptUpdateRequest({
-          orderId,
+        await this.orderModel.acceptUpdateRequest(id, {
           newStartDate: lastUpdateRequestInfo.newStartDate,
           newEndDate: lastUpdateRequestInfo.newEndDate,
           newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
         });
+        await this.orderUpdateRequestModel.closeLast(id);
       } else {
-        await this.orderModel.acceptOrder(orderId);
+        await this.orderModel.acceptOrder(id);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
@@ -326,16 +326,23 @@ class OrderController extends Controller {
 
   rejectBooking = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { orderId } = req.body;
+      const { id } = req.body;
       const userId = req.userData.userId;
 
-      const order = await this.orderModel.getById(orderId);
+      const order = await this.orderModel.getById(id);
 
       if (!order) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
       if (order.tenantId != userId && order.ownerId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const lastUpdateRequestInfo =
+        await this.orderUpdateRequestModel.getFullForLastActive(id);
+
+      if (lastUpdateRequestInfo && lastUpdateRequestInfo.senderId == userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -347,11 +354,23 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      if (order.tenantId == userId) {
-        await this.orderModel.successCanceled(orderId);
-      } else {
-        await this.orderModel.rejectOrder(orderId);
+      let newData = {};
+
+      if (lastUpdateRequestInfo) {
+        newData = {
+          newStartDate: lastUpdateRequestInfo.newStartDate,
+          newEndDate: lastUpdateRequestInfo.newEndDate,
+          newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+        };
       }
+
+      if (order.tenantId == userId) {
+        await this.orderModel.successCanceled(id, newData);
+      } else {
+        await this.orderModel.rejectOrder(id, newData);
+      }
+
+      await this.orderUpdateRequestModel.closeLast(id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });

@@ -59,7 +59,7 @@ class MainController extends Controller {
       const listing = await this.listingModel.getById(id);
 
       const countUnfinishedListingOrders =
-        await this.orderModel.getUnfinishedListing(id);
+        await this.orderModel.getUnfinishedListingCount(id);
 
       const lastRequestInfo =
         await this.listingApprovalRequestModel.lastListingApprovalRequestInfo(
@@ -264,7 +264,7 @@ class MainController extends Controller {
         await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
 
       order["previousUpdateRequest"] =
-        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+        await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
 
       const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -301,17 +301,15 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
-      const countUnfinishedTenantOrders =
-        await this.orderModel.getUnfinishedTenant(userId);
-      const countUnfinishedOwnerOrders =
-        await this.orderModel.getUnfinishedOwner(userId);
+      const countUnfinishedUserOrders =
+        await this.orderModel.getUnfinishedUserCount(userId);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
         canSend: !hasUnansweredRequest,
         lastAnswerDescription,
         categories,
-        canChange: !countUnfinishedTenantOrders && !countUnfinishedOwnerOrders,
+        canChange: !countUnfinishedUserOrders,
       });
     });
 

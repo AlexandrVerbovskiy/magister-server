@@ -19,11 +19,17 @@ const {
   createValidation,
   updateValidation,
   ownerListValidation,
+  idBodyValidation
 } = require("../../validations/listing");
 
 router.post("/list", authId, listValidation, listingController.mainList);
 
-router.post("/owner-list", authId, ownerListValidation, listingController.ownerList);
+router.post(
+  "/owner-list",
+  authId,
+  ownerListValidation,
+  listingController.ownerList
+);
 
 router.post(
   "/admin-list",
@@ -71,8 +77,6 @@ router.post(
   listingController.update
 );
 
-router.post("/delete", isAuth, deleteValidation, listingController.delete);
-
 router.post(
   "/create-by-admin",
   isAuth,
@@ -93,12 +97,29 @@ router.post(
   listingController.updateByAdmin
 );
 
+router.post("/delete", isAuth, deleteValidation, listingController.delete);
+
 router.post(
   "/delete-by-admin",
   isAuth,
   isAdmin,
   deleteValidation,
   listingController.deleteByAdmin
+);
+
+router.post(
+  "/change-active",
+  isAuth,
+  idBodyValidation,
+  listingController.changeActive
+);
+
+router.post(
+  "/change-active-by-admin",
+  isAuth,
+  isAdmin,
+  idBodyValidation,
+  listingController.changeActiveByAdmin
 );
 
 module.exports = router;

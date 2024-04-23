@@ -288,6 +288,7 @@ class ListingController extends Controller {
     dataToSave["listingImages"] = this.localGetFiles(req);
 
     const listingId = dataToSave["id"];
+    dataToSave["active"] = dataToSave["active"] == "true";
 
     const { deletedImagesInfos, listingImages: listingImagesToRes } =
       await this.listingModel.updateById(dataToSave);
@@ -316,6 +317,17 @@ class ListingController extends Controller {
       req.body["approved"] = false;
 
       const listingId = req.body.id;
+      const countUnfinishedListingOrders =
+        await this.orderModel.getUnfinishedListingCount(listingId);
+
+      if (countUnfinishedListingOrders) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "The listing has a unfinished booking or order. Please finish all listing orders and bookings before updating"
+        );
+      }
+
       const listing = await this.listingModel.getById(listingId);
 
       if (listing.approved) {
@@ -383,6 +395,18 @@ class ListingController extends Controller {
 
   baseDelete = async (req, res) => {
     const { id } = req.body;
+
+    const countUnfinishedListingOrders =
+      await this.orderModel.getUnfinishedListingCount(id);
+
+    if (countUnfinishedListingOrders) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "The listing has a unfinished booking or order. Please finish all listing orders and bookings before deleting"
+      );
+    }
+
     await this.listingApprovalRequestModel.deleteByListing(id);
     const { deletedImagesInfos } = await this.listingModel.deleteById(id);
     this.removeListingImages(deletedImagesInfos);
@@ -406,6 +430,47 @@ class ListingController extends Controller {
       );
 
       return result;
+    });
+
+  baseChangeActive = async (req, res, changeActiveCall) => {
+    const { id } = req.body;
+
+    const countUnfinishedListingOrders =
+      await this.orderModel.getUnfinishedListingCount(id);
+
+    if (countUnfinishedListingOrders) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "The listing has a unfinished booking or order. Please finish all listing orders and bookings before updating"
+      );
+    }
+
+    const active = await changeActiveCall(id);
+
+    const message = active
+      ? "Listing activated successfully"
+      : "Listing deactivated successfully";
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
+      id,
+      active,
+    });
+  };
+
+  changeActive = (req, res) =>
+    this.baseWrapper(req, res, () => {
+      const userId = req.userData.userId;
+      return this.baseChangeActive(req, res, (listingId) =>
+        this.listingModel.changeActiveByUser(listingId, userId)
+      );
+    });
+
+  changeActiveByAdmin = (req, res) =>
+    this.baseWrapper(req, res, () => {
+      return this.baseChangeActive(req, res, (listingId) =>
+        this.listingModel.changeActive(listingId)
+      );
     });
 
   deleteByAdmin = async (req, res) =>
