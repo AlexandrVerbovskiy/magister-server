@@ -827,6 +827,11 @@ class OrderModel extends Model {
 
     return +count;
   };
+
+  delete = async (orderId) => {
+    await db(ORDER_UPDATE_REQUESTS_TABLE).where("order_id", orderId).delete();
+    await db(ORDERS_TABLE).where("id", orderId).delete();
+  };
 }
 
 module.exports = new OrderModel();

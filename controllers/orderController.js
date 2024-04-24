@@ -374,6 +374,14 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
+
+  delete = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.body;
+      await this.orderModel.delete(id);
+      this.saveUserAction(req, `Removed order with id '${id}'`);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
 }
 
 module.exports = new OrderController();
