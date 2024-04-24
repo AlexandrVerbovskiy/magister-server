@@ -13,4 +13,5 @@ module.exports = {
   listingApprovalRequestRoutes: require("./listingApprovalRequestRoutes"),
   listingCategoryCreateNotificationRoutes: require("./listingCategoryCreateNotificationRoutes"),
   mainRoutes: require("./mainRoutes"),
+  paymentRoutes: require("./paymentRoutes"),
 };
