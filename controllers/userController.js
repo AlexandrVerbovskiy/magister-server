@@ -586,6 +586,17 @@ class UserController extends Controller {
         await this.userVerifyRequestModel.updateUserVerifyById(id);
       }
 
+      const countUnfinishedUserOrders =
+        await this.orderModel.getUnfinishedUserCount(currentId);
+
+      if (countUnfinishedUserOrders) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You have an unfinished booking or order. Please finish all your orders and bookings before updating"
+        );
+      }
+
       const user = await this.baseUpdate(id, dataToSave, req.file);
       this.saveUserAction(req, `Updated user with id '${id}'`);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });

@@ -66,7 +66,12 @@ class OrderController extends Controller {
     });
 
   baseRequestsList = async (req, totalCountCall, listCall) => {
-    const timeInfos = await this.listTimeOption(req);
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
+
+    const type = req.body.type == "owner" ? "owner" : "tenant";
 
     const { options, countItems } = await this.baseList(
       req,
@@ -80,54 +85,185 @@ class OrderController extends Controller {
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
-    const requests = listCall(options);
+    const requests = await listCall(options);
+
+    const requestsWithImages = await this.listingModel.listingsBindImages(
+      requests,
+      "listingId"
+    );
 
     return {
-      items: requests,
+      items: requestsWithImages,
+      options: { ...options, type },
+      countItems,
+    };
+  };
+
+  baseTenantBookingList = async (req) => {
+    const tenantId = req.userData.userId;
+
+    const totalCountCall = (filter, serverFromTime, serverToTime) =>
+      this.orderModel.tenantBookingsTotalCount(
+        filter,
+        serverFromTime,
+        serverToTime,
+        tenantId
+      );
+
+    const listCall = (options) => {
+      options["tenantId"] = tenantId;
+      return this.orderModel.tenantBookingsList(options);
+    };
+
+    return await this.baseRequestsList(req, totalCountCall, listCall);
+  };
+
+  baseListingOwnerBookingList = async (req) => {
+    const ownerId = req.userData.userId;
+
+    const totalCountCall = (filter, serverFromTime, serverToTime) =>
+      this.orderModel.ownerBookingsTotalCount(
+        filter,
+        serverFromTime,
+        serverToTime,
+        ownerId
+      );
+
+    const listCall = (options) => {
+      options["ownerId"] = ownerId;
+      return this.orderModel.ownerBookingsList(options);
+    };
+
+    return await this.baseRequestsList(req, totalCountCall, listCall);
+  };
+
+  bookingList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const isForTenant = req.body.type !== "owner";
+
+      const request = isForTenant
+        ? this.baseTenantBookingList
+        : this.baseListingOwnerBookingList;
+
+      const result = await request(req);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  baseAdminBookingList = async (req) => {
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
+
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.orderModel.allBookingsTotalCount(
+          filter,
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
+    );
+
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+
+    const orders = await this.orderModel.allBookingsList(options);
+
+    return {
+      items: orders,
       options,
       countItems,
     };
   };
 
-  tenantList = (req, res) =>
+  adminBookingList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const tenantId = req.userData.userId;
-
-      const totalCountCall = (filter, serverFromTime, serverToTime) =>
-        this.orderModel.tenantTotalCount(
-          filter,
-          serverFromTime,
-          serverToTime,
-          tenantId
-        );
-
-      const listCall = (options) => {
-        options["tenantId"] = tenantId;
-        return this.orderModel.tenantList(options);
-      };
-
-      const result = await this.baseRequestsList(req, totalCountCall, listCall);
+      const result = await this.baseAdminBookingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  ownerList = (req, res) =>
+  baseTenantOrderList = async (req) => {
+    const tenantId = req.userData.userId;
+
+    const totalCountCall = (filter, serverFromTime, serverToTime) =>
+      this.orderModel.tenantOrdersTotalCount(
+        filter,
+        serverFromTime,
+        serverToTime,
+        tenantId
+      );
+
+    const listCall = (options) => {
+      options["tenantId"] = tenantId;
+      return this.orderModel.tenantOrdersList(options);
+    };
+
+    return await this.baseRequestsList(req, totalCountCall, listCall);
+  };
+
+  baseListingOwnerOrderList = async (req) => {
+    const ownerId = req.userData.userId;
+
+    const totalCountCall = (filter, serverFromTime, serverToTime) =>
+      this.orderModel.ownerOrdersTotalCount(
+        filter,
+        serverFromTime,
+        serverToTime,
+        ownerId
+      );
+
+    const listCall = (options) => {
+      options["ownerId"] = ownerId;
+      return this.orderModel.ownerOrderList(options);
+    };
+
+    return await this.baseRequestsList(req, totalCountCall, listCall);
+  };
+
+  orderList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const ownerId = req.userData.userId;
+      const isForTenant = req.body.type !== "owner";
 
-      const totalCountCall = (filter, serverFromTime, serverToTime) =>
-        this.orderModel.ownerTotalCount(
+      const request = isForTenant
+        ? this.baseTenantOrderList
+        : this.baseListingOwnerOrderList;
+
+      const result = await request(req);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  baseAdminOrderList = async (req) => {
+    const timeInfos = await this.listTimeOption({
+      req,
+      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
+    });
+
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.orderModel.allOrderList(
           filter,
-          serverFromTime,
-          serverToTime,
-          ownerId
-        );
+          timeInfos["serverFromTime"],
+          timeInfos["serverToTime"]
+        )
+    );
 
-      const listCall = (options) => {
-        options["ownerId"] = ownerId;
-        return this.orderModel.ownerList(options);
-      };
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
-      const result = await this.baseRequestsList(req, totalCountCall, listCall);
+    const orders = await this.orderModel.allOrderList(options);
+
+    return {
+      items: orders,
+      options,
+      countItems,
+    };
+  };
+
+  adminOrderList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseAdminBookingList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -142,6 +278,101 @@ class OrderController extends Controller {
 
       const result = await this.baseRequestsList(req, totalCountCall, listCall);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  acceptBooking = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.body;
+      const userId = req.userData.userId;
+
+      const order = await this.orderModel.getById(id);
+
+      if (!order) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      if (order.tenantId != userId && order.ownerId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      if (
+        (order.status != STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.status != STATIC.ORDER_STATUSES.PENDING_TENANT) ||
+        order.cancelStatus
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const lastUpdateRequestInfo =
+        await this.orderUpdateRequestModel.getFullForLastActive(id);
+
+      if (lastUpdateRequestInfo && lastUpdateRequestInfo.senderId == userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      if (lastUpdateRequestInfo) {
+        await this.orderModel.acceptUpdateRequest(id, {
+          newStartDate: lastUpdateRequestInfo.newStartDate,
+          newEndDate: lastUpdateRequestInfo.newEndDate,
+          newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+        });
+        await this.orderUpdateRequestModel.closeLast(id);
+      } else {
+        await this.orderModel.acceptOrder(id);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  rejectBooking = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.body;
+      const userId = req.userData.userId;
+
+      const order = await this.orderModel.getById(id);
+
+      if (!order) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      if (order.tenantId != userId && order.ownerId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const lastUpdateRequestInfo =
+        await this.orderUpdateRequestModel.getFullForLastActive(id);
+
+      if (lastUpdateRequestInfo && lastUpdateRequestInfo.senderId == userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      if (
+        (order.status != STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.status != STATIC.ORDER_STATUSES.PENDING_TENANT) ||
+        order.cancelStatus
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      let newData = {};
+
+      if (lastUpdateRequestInfo) {
+        newData = {
+          newStartDate: lastUpdateRequestInfo.newStartDate,
+          newEndDate: lastUpdateRequestInfo.newEndDate,
+          newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+        };
+      }
+
+      if (order.tenantId == userId) {
+        await this.orderModel.successCanceled(id, newData);
+      } else {
+        await this.orderModel.rejectOrder(id, newData);
+      }
+
+      await this.orderUpdateRequestModel.closeLast(id);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
 

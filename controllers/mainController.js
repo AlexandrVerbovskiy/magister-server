@@ -9,6 +9,8 @@ const userEventLogController = require("./userEventLogController");
 const userVerifyRequestController = require("./userVerifyRequestController");
 const searchedWordController = require("./searchedWordController");
 const listingApprovalRequestController = require("./listingApprovalRequestController");
+const orderController = require("./orderController");
+
 const coordsByIp = require("../utils/coordsByIp");
 const { cloneObject } = require("../utils");
 
@@ -56,6 +58,9 @@ class MainController extends Controller {
       const userId = req.userData.userId;
       const listing = await this.listingModel.getById(id);
 
+      const countUnfinishedListingOrders =
+        await this.orderModel.getUnfinishedListingCount(id);
+
       const lastRequestInfo =
         await this.listingApprovalRequestModel.lastListingApprovalRequestInfo(
           id
@@ -75,6 +80,7 @@ class MainController extends Controller {
         categories,
         listing,
         lastRequestInfo,
+        canChange: !countUnfinishedListingOrders,
       });
     });
 
@@ -137,54 +143,67 @@ class MainController extends Controller {
       });
     });
 
-  getMainListingListPageOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const searchCategories = cloneObject(req.body.categories) ?? [];
-      let needSubscriptionNewCategory = false;
-      let hasListings = false;
+  baseGetListingListPageOptions = async (req, res, ownerId = null) => {
+    const searchCategories = cloneObject(req.body.categories) ?? [];
+    let needSubscriptionNewCategory = false;
+    let hasListings = false;
 
-      if (req.body.searchCategory) {
-        searchCategories.push(req.body.searchCategory);
-      }
+    if (req.body.searchCategory) {
+      searchCategories.push(req.body.searchCategory);
+    }
 
-      if (searchCategories.length == 1) {
-        const foundCategory = await this.listingCategoriesModel.getByName(
-          searchCategories[0]
-        );
+    if (searchCategories.length == 1) {
+      const foundCategory = await this.listingCategoriesModel.getByName(
+        searchCategories[0]
+      );
 
-        if (!foundCategory) {
-          if (req.userData.userId) {
-            const hasNotify =
-              await this.listingCategoryCreateNotificationModel.checkUserHasCategoryNotify(
-                req.userData.userId,
-                searchCategories[0]
-              );
-            needSubscriptionNewCategory = !hasNotify;
-          } else {
-            needSubscriptionNewCategory = true;
-          }
+      if (!foundCategory) {
+        if (req.userData.userId) {
+          const hasNotify =
+            await this.listingCategoryCreateNotificationModel.checkUserHasCategoryNotify(
+              req.userData.userId,
+              searchCategories[0]
+            );
+          needSubscriptionNewCategory = !hasNotify;
+        } else {
+          needSubscriptionNewCategory = true;
         }
       }
+    }
 
-      if (searchCategories.length != 1 || !needSubscriptionNewCategory) {
-        const { countItems } = await listingController.baseCountListings(req);
-        hasListings = countItems > 0;
-      }
+    if (searchCategories.length != 1 || !needSubscriptionNewCategory) {
+      const { countItems } = await listingController.baseCountListings(
+        req,
+        ownerId
+      );
+      hasListings = countItems > 0;
+    }
 
-      const categories = await this.getNavigationCategories();
+    const categories = await this.getNavigationCategories();
 
-      const coords = await coordsByIp(req.body.clientIp ?? null);
-      req.body.lat = coords.lat;
-      req.body.lng = coords.lng;
+    const coords = await coordsByIp(req.body.clientIp ?? null);
+    req.body.lat = coords.lat;
+    req.body.lng = coords.lng;
 
-      const result = await listingController.baseListingList(req);
+    const result = await listingController.baseListingList(req, ownerId);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        categories,
-        needSubscriptionNewCategory,
-        hasListings,
-        ...result,
-      });
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      categories,
+      needSubscriptionNewCategory,
+      hasListings,
+      ...result,
+    });
+  };
+
+  getMainListingListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return await this.baseGetListingListPageOptions(req, res);
+    });
+
+  getOwnerListingListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const ownerId = req.body.ownerId;
+      return await this.baseGetListingListPageOptions(req, res, ownerId);
     });
 
   getListingFullByIdOptions = (req, res) =>
@@ -225,6 +244,7 @@ class MainController extends Controller {
   getOrderFullByIdOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+      const userId = req.userData.userId;
       const order = await this.orderModel.getFullById(id);
       const tenantBaseCommissionPercent =
         await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -237,21 +257,35 @@ class MainController extends Controller {
         );
       }
 
-      order["blockedDates"] = await this.orderModel.getBlockedListingDates(
+      const blockedDates = await this.orderModel.getBlockedListingDates(
         order.listingId
       );
+
+      let conflictOrders = null;
+
+      if (userId == order.ownerId) {
+        conflictOrders = await this.orderModel.getConflictOrders(
+          order.id,
+          order.listingId,
+          order.offerStartDate,
+          order.offerEndDate
+        );
+      }
 
       order["actualUpdateRequest"] =
         await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
 
       order["previousUpdateRequest"] =
-        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+        await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
 
       const categories = await this.getNavigationCategories();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
         categories,
         tenantBaseCommissionPercent,
+        blockedDates,
+        conflictOrders,
       });
     });
 
@@ -282,11 +316,15 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
+      const countUnfinishedUserOrders =
+        await this.orderModel.getUnfinishedUserCount(userId);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents,
         canSend: !hasUnansweredRequest,
         lastAnswerDescription,
         categories,
+        canChange: !countUnfinishedUserOrders,
       });
     });
 
@@ -399,6 +437,96 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
       });
+    });
+
+  getBookingListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const isForTenant = req.body.type !== "owner";
+
+      const request = isForTenant
+        ? orderController.baseTenantBookingList
+        : orderController.baseListingOwnerBookingList;
+
+      const result = await request(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
+  getAdminBookingListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await orderController.baseAdminBookingList(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
+  getOrderListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const isForTenant = req.body.type !== "owner";
+
+      const request = isForTenant
+        ? orderController.baseTenantOrderList
+        : orderController.baseListingOwnerOrderList;
+
+      const result = await request(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
+  getAdminOrderListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await orderController.baseAdminOrderList(req);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
+  getFullOrderByIdPageOption = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const order = await this.orderModel.getFullById(id);
+
+      if (!order) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Order wasn't found"
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
+    });
+
+  getFullOrderByIdWithRequestsToUpdatePageOption = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const order = await this.orderModel.getFullById(id);
+      order["requestsToUpdate"] =
+        await this.orderUpdateRequestModel.getAllForOrder(id);
+
+      if (!order) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Order wasn't found"
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 }
 
