@@ -14,7 +14,7 @@
     "migrate-rollback-last": "npx knex migrate:rollback",
     "migrate-rollback-all": "npx knex migrate:rollback --all",
     "create-migration": "npx knex migrate:make",
-    "create-seed":"npx knex seed:make"
+    "create-seed": "npx knex seed:make"
   },
   "author": "",
   "license": "ISC",
@@ -48,7 +48,7 @@
     "path": "^0.12.7",
     "pg": "^8.11.3",
     "socket.io": "^4.7.4",
-    "stripe": "^15.1.0",
+    "stripe": "^15.3.0",
     "twilio": "^4.21.0"
   }
 }

@@ -108,6 +108,8 @@ app.use(
   apiRoutes.listingCategoryCreateNotificationRoutes
 );
 
+app.use("/api/payments", isAuth, isAdmin, apiRoutes.paymentRoutes);
+
 app.use("/webhook/stripe", webhookRoutes.stripeWebhookRoutes)
 
 app.use((req, res, next) => {
