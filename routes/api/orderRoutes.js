@@ -79,4 +79,12 @@ router.post(
   orderController.adminOrderList
 );
 
+router.post(
+  "/delete",
+  isAuth,
+  isAdmin,
+  idBodyValidation,
+  orderController.delete
+);
+
 module.exports = router;
