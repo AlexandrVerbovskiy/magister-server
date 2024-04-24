@@ -244,6 +244,7 @@ class MainController extends Controller {
   getOrderFullByIdOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+      const userId = req.userData.userId;
       const order = await this.orderModel.getFullById(id);
       const tenantBaseCommissionPercent =
         await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -256,9 +257,20 @@ class MainController extends Controller {
         );
       }
 
-      order["blockedDates"] = await this.orderModel.getBlockedListingDates(
+      const blockedDates = await this.orderModel.getBlockedListingDates(
         order.listingId
       );
+
+      let conflictOrders = null;
+
+      if (userId == order.ownerId) {
+        conflictOrders = await this.orderModel.getConflictOrders(
+          order.id,
+          order.listingId,
+          order.offerStartDate,
+          order.offerEndDate
+        );
+      }
 
       order["actualUpdateRequest"] =
         await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
@@ -267,10 +279,13 @@ class MainController extends Controller {
         await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
 
       const categories = await this.getNavigationCategories();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
         categories,
         tenantBaseCommissionPercent,
+        blockedDates,
+        conflictOrders,
       });
     });
 

@@ -124,6 +124,7 @@ router.get(
 
 router.get(
   "/order-full-by-id-options/:id",
+  isAuth,
   listingFullByIdOptionsValidation,
   mainController.getOrderFullByIdOptions
 );
