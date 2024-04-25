@@ -1,4 +1,5 @@
 const STATIC = require("../static");
+const { createStripePayment } = require("../utils");
 const Controller = require("./Controller");
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -16,16 +17,11 @@ class PaymentController extends Controller {
   createPaymentIntent = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id, amount } = req.body;
-      console.log(id, amount);
 
       try {
-        const payment = await stripe.paymentIntents.create({
+        const payment = await createStripePayment({
           payment_method: id,
           amount,
-          currency: "USD",
-          description: `Order from test`,
-          confirm: true,
-          return_url: process.env.CLIENT_URL + "/",
         });
 
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

@@ -7,6 +7,7 @@ const {
   isFileLimit,
   isVerified,
   authId,
+  isSupport
 } = require("../../middlewares");
 const {
   idParamValidation,
@@ -74,7 +75,7 @@ router.post(
 router.post(
   "/admin-order-list",
   isAuth,
-  isAdmin,
+  isSupport,
   listValidation,
   orderController.adminOrderList
 );
@@ -82,7 +83,7 @@ router.post(
 router.post(
   "/delete",
   isAuth,
-  isAdmin,
+  isSupport,
   idBodyValidation,
   orderController.delete
 );
