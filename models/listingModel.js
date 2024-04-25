@@ -661,8 +661,6 @@ class ListingsModel extends Model {
       orderType = "asc";
     }
 
-    console.log("query: ", query.toQuery());
-
     return await query
       .orderBy(orderField, orderType)
       .limit(count)
