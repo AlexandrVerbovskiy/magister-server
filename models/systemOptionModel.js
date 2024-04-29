@@ -35,6 +35,38 @@ class SystemOptionModel extends Model {
     return value ? Number(value) : 0;
   };
 
+  getCommissionInfo = async () => {
+    const commissions = await db(SYSTEM_TABLE).whereIn("key", [
+      "owner_base_commission_percent",
+      "owner_boost_commission_percent",
+      "tenant_base_commission_percent",
+    ]);
+
+    const ownerBaseCommissionPercentInfo = commissions.find(
+      (commission) => commission.key == "owner_base_commission_percent"
+    );
+    const ownerBoostCommissionPercentInfo = commissions.find(
+      (commission) => commission.key == "owner_boost_commission_percent"
+    );
+    const tenantBaseCommissionPercentInfo = commissions.find(
+      (commission) => commission.key == "tenant_base_commission_percent"
+    );
+
+    const result = {
+      ownerBaseCommissionPercent: ownerBaseCommissionPercentInfo
+        ? Number(ownerBaseCommissionPercentInfo.value)
+        : 0,
+      ownerBoostCommissionPercent: ownerBoostCommissionPercentInfo
+        ? Number(ownerBoostCommissionPercentInfo.value)
+        : 0,
+      tenantBaseCommissionPercent: tenantBaseCommissionPercentInfo
+        ? Number(tenantBaseCommissionPercentInfo.value)
+        : 0,
+    };
+
+    return result;
+  };
+
   getOptions = async () => {
     const resObj = {};
     const res = await db(SYSTEM_TABLE).select("key", "value");
@@ -68,9 +100,18 @@ class SystemOptionModel extends Model {
     const userLogActiveStringValue = userLogActive ? "true" : "false";
 
     await this.updateByKey("user_log_active", userLogActiveStringValue);
-    await this.updateByKey("owner_base_commission_percent", ownerBaseCommissionPercent);
-    await this.updateByKey("owner_boost_commission_percent", ownerBoostCommissionPercent);
-    await this.updateByKey("tenant_base_commission_percent", tenantBaseCommissionPercent);
+    await this.updateByKey(
+      "owner_base_commission_percent",
+      ownerBaseCommissionPercent
+    );
+    await this.updateByKey(
+      "owner_boost_commission_percent",
+      ownerBoostCommissionPercent
+    );
+    await this.updateByKey(
+      "tenant_base_commission_percent",
+      tenantBaseCommissionPercent
+    );
   };
 }
 

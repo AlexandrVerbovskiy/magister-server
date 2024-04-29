@@ -1,13 +1,7 @@
 const STATIC = require("../static");
-const { createStripePayment } = require("../utils");
+const { createStripePayment, getStripeBalance, createPrice, createFullStripePaymentLink } = require("../utils");
 const Controller = require("./Controller");
-const Stripe = require("stripe");
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-/*const customer = await stripe.customers.create({
-  name: 'Jenny Rosen',
-  email: 'jennyrosen@example.com',
-});*/
+const qrcode = require("qrcode");
 
 class PaymentController extends Controller {
   constructor() {
@@ -36,6 +30,31 @@ class PaymentController extends Controller {
           e.message
         );
       }
+    });
+
+  generateQrCode = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      try {
+        const result = await qrcode.toDataURL("https://cabinet.ztu.edu.ua/");
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          qrcode: result,
+        });
+      } catch (e) {
+        console.log(e);
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          e.message
+        );
+      }
+    });
+
+  test = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const test = await createFullStripePaymentLink();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        status: test,
+      });
     });
 }
 

@@ -69,6 +69,45 @@ const createStripePayment = async ({ id, amount }) => {
   });
 };
 
+const createPrice = async () => {
+  return await stripe.prices.create({
+    currency: "usd",
+    unit_amount: 1000,
+    product_data: {
+      name: "Gold Plan 12",
+    },
+  });
+};
+
+const createStripePaymentLink = async (priceId, quantity) => {
+  return await stripe.paymentLinks.create({
+    line_items: [
+      {
+        price: priceId,
+        quantity: quantity,
+      },
+    ],
+  });
+};
+
+const createFullStripePaymentLink = async () => {
+  const price = await createPrice();
+  return await createStripePaymentLink(price.id, 1);
+};
+
+const getStripeBalance = async () => {
+  const balanceInfo = await stripe.balance.retrieve();
+  let result = 0;
+
+  if (balanceInfo && balanceInfo.pending) {
+    balanceInfo.pending.forEach(
+      (balancePart) => (result += balancePart.amount)
+    );
+  }
+
+  return result;
+};
+
 module.exports = {
   createStripePayment,
   getAllStripeCustomers,
@@ -78,4 +117,8 @@ module.exports = {
   addStripeCardToCustomer,
   createStripeToken,
   retrieveStripeCustomer,
+  getStripeBalance,
+  createPrice,
+  createStripePaymentLink,
+  createFullStripePaymentLink,
 };

@@ -109,18 +109,22 @@ class Controller {
 
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
-      const currentErrorKey = Object.keys(STATIC.ERRORS).find(
-        (error) => STATIC.ERRORS[error].KEY === errorType
-      );
+      const currentErrorKey =
+        Object.keys(STATIC.ERRORS).find(
+          (error) => STATIC.ERRORS[error].KEY === errorType
+        ) ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
-      if (errorType === STATIC.ERRORS.UNPREDICTABLE.KEY) {
+      if (currentErrorKey === STATIC.ERRORS.UNPREDICTABLE.KEY) {
         try {
           this.logModel.saveByBodyError(e.stack, e.message);
         } catch (localError) {}
       }
 
-      const currentError = STATIC.ERRORS[currentErrorKey];
-      this.sendErrorResponse(res, currentError, e.message);
+      const currentError = Object.keys(STATIC.ERRORS).find(
+        (error) => STATIC.ERRORS[error].KEY === currentErrorKey
+      );
+
+      this.sendErrorResponse(res, STATIC.ERRORS[currentError], e.message);
     }
   };
 

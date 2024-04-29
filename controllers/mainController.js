@@ -246,8 +246,8 @@ class MainController extends Controller {
       const { id } = req.params;
       const userId = req.userData.userId;
       const order = await this.orderModel.getFullById(id);
-      const tenantBaseCommissionPercent =
-        await this.systemOptionModel.getTenantBaseCommissionPercent();
+
+      const commissionInfo = await this.systemOptionModel.getCommissionInfo();
 
       if (!order) {
         return this.sendErrorResponse(
@@ -283,7 +283,7 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
         categories,
-        tenantBaseCommissionPercent,
+        ...commissionInfo,
         blockedDates,
         conflictOrders,
       });
