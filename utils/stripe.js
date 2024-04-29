@@ -1,12 +1,8 @@
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const createStripeCustomer = async () => {
-  const param = {};
-  param.email = "mike@gmail.com";
-  param.name = "Mike";
-  param.description = "from node";
-
+const createStripeCustomer = async (email, name) => {
+  const param = { email, name };
   return await stripe.customers.create(param);
 };
 
@@ -14,21 +10,22 @@ const retrieveStripeCustomer = async () => {
   return await stripe.customers.retrieve("cus_Gi1jjdxYhsaMN2");
 };
 
-const createStripeToken = async () => {
-  const param = {};
-  param.card = {
-    number: "4242424242424242",
-    exp_month: 2,
-    exp_year: 2024,
-    cvc: "212",
+const createStripeCardToken = async ({ number, expMonth, expYear, cvc }) => {
+  const param = {
+    type: "card",
+    card: {
+      number: number,
+      exp_month: expMonth,
+      exp_year: expYear,
+      cvc,
+    },
   };
-
-  return await stripe.tokens.create(param);
+  return await stripe.paymentMethods.create(param);
 };
 
-const addStripeCardToCustomer = async () => {
-  return await stripe.customers.createSource("cus_Gi1jjdxYhsaMN2", {
-    source: "tok_1GAcj5CEXnEqdvqzXq4VFPGJ",
+const addStripeCardToCustomer = async (customerId, cardId) => {
+  return await stripe.paymentMethods.attach(cardId, {
+    customer: customerId,
   });
 };
 
@@ -108,6 +105,25 @@ const getStripeBalance = async () => {
   return result;
 };
 
+const checkAccount = async (accountId) => {
+  return await stripe.accounts.retrieve(accountId);
+};
+
+const createStripeTransfer = async (amount, cardId) => {
+  try {
+    const transfer = await stripe.payouts.create({
+      amount,
+      currency: "usd",
+      destination: cardId,
+      method: "instant",
+    });
+    return transfer;
+  } catch (error) {
+    console.error("Error creating transfer:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   createStripePayment,
   getAllStripeCustomers,
@@ -115,10 +131,12 @@ module.exports = {
   chargeStripeCustomerThroughTokenID,
   chargeStripeCustomerThroughCustomerID,
   addStripeCardToCustomer,
-  createStripeToken,
+  createStripeCardToken,
   retrieveStripeCustomer,
   getStripeBalance,
   createPrice,
   createStripePaymentLink,
   createFullStripePaymentLink,
+  createStripeTransfer,
+  checkAccount,
 };

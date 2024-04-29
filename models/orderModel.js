@@ -757,8 +757,9 @@ class OrderModel extends Model {
   };
 
   successCanceled = async (orderId, newData = {}) => {
-    newData["cancel_status"] = STATIC.ORDER_CANCELATION_STATUSES.CANCELED;
-    await db(ORDERS_TABLE).where("id", orderId).update(cancel_status);
+    await db(ORDERS_TABLE)
+      .where("id", orderId)
+      .update({ cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELED });
   };
 
   getUnfinishedTenantCount = async (tenantId) => {
