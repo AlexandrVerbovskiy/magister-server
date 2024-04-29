@@ -691,27 +691,6 @@ class OrderModel extends Model {
       .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
       .select(["end_date as endDate", "start_date as startDate"]);
 
-    console.log(
-      "query: ",
-      db(ORDERS_TABLE)
-        .joinRaw(
-          `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-       ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
-        )
-        .where("listing_id", listingId)
-        .whereRaw(
-          `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?) OR (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND end_date >= ? ))`,
-          [currentDate, currentDate]
-        )
-        .whereNot("status", STATIC.ORDER_STATUSES.PENDING_OWNER)
-        .whereRaw(
-          `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}')`
-        )
-        .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
-        .select(["end_date as endDate", "start_date as startDate"])
-        .toQuery()
-    );
-
     return this.generateBlockedDatesByOrders(orders);
   };
 
