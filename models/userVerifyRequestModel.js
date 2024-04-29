@@ -105,7 +105,7 @@ class UserVerifyRequestModel extends Model {
   };
 
   updateUserVerifyById = async (id, description) => {
-    await db(USER_VERIFY_REQUESTS_TABLE).where({ user_id: id }).update({
+    await db(USER_VERIFY_REQUESTS_TABLE).where({ id }).update({
       has_response: true,
       failed_description: description,
     });

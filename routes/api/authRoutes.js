@@ -131,6 +131,12 @@ router.post(
 );
 
 router.post(
+  "/connect-new-credit-card",
+  isAuth,
+  userController.connectNewCreditCard
+);
+
+router.post(
   "/no-need-regular-view-info-form",
   isAuth,
   userController.noNeedRegularViewInfoForm
@@ -142,5 +148,7 @@ router.post(
   authByProviderValidation,
   userController.authByProvider
 );
+
+router.get("/test", userController.test);
 
 module.exports = router;

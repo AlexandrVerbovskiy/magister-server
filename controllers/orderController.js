@@ -306,7 +306,12 @@ class OrderController extends Controller {
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-      if (lastUpdateRequestInfo && lastUpdateRequestInfo.senderId == userId) {
+      if (
+        (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
+          order.tenantId != userId) ||
+        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.ownerId != userId)
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -341,8 +346,12 @@ class OrderController extends Controller {
 
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
+      console.log("lastUpdateRequestInfo: ", lastUpdateRequestInfo);
 
-      if (lastUpdateRequestInfo && lastUpdateRequestInfo.senderId == userId) {
+      if (
+        (order.status == "pending_tenant" && order.tenantId != userId) ||
+        (order.status == "pending_owner" && order.ownerId != userId)
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 

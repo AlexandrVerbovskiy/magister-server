@@ -3,6 +3,12 @@ const {
   generateAccessToken,
   generateVerifyToken,
   validateToken,
+  createStripeCustomer,
+  createStripeToken,
+  createStripeCardToken,
+  addStripeCardToCustomer,
+  createStripeTransfer,
+  checkAccount,
 } = require("../utils");
 const Controller = require("./Controller");
 const fetch = require("node-fetch");
@@ -826,8 +832,46 @@ class UserController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       await this.userModel.noNeedRegularViewInfoForm(userId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  connectNewCreditCard = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const { cardId } = req.body;
+
+      const currentUser = await this.userModel.getFullById(userId);
+      /*const createCustomerResult = await createStripeCustomer(
+        currentUser.email,
+        currentUser.name
+      );
+
+      const createdUserId = createCustomerResult.id;*/
+      const createdUserId = "cus_Q0u7os3JZEyosA";
+      const paymentId = "pm_1PAtbuESRerYS2eajO7VbQ8n";
+
+      const { card } = await addStripeCardToCustomer(createdUserId, cardId);
+      const { last4, exp_month: expMonth, exp_year: expYear } = card;
+
+      console.log(createdUserId, cardId, last4, expMonth, expYear);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  test = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      try {
+        const amount = 1000;
+        const paymentMethodId = "acct_1PAv2YAeGKihOJEp";
+        console.log("checkAccount: ", await checkAccount(paymentMethodId));
+        /* const result = await createStripeTransfer(amount, paymentMethodId);
+
+        console.log("result:", result);*/
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      } catch (error) {
+        console.error("Error processing payment:", error);
+        return this.sendErrorResponse(res, STATIC.ERRORS.UNPREDICTABLE);
+      }
     });
 }
 
