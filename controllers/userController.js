@@ -9,6 +9,9 @@ const {
   addStripeCardToCustomer,
   createStripeTransfer,
   checkAccount,
+  createStripeAccount,
+  createTestTransaction,
+  activateStripeAccount,
 } = require("../utils");
 const Controller = require("./Controller");
 const fetch = require("node-fetch");
@@ -861,12 +864,8 @@ class UserController extends Controller {
   test = (req, res) =>
     this.baseWrapper(req, res, async () => {
       try {
-        const amount = 1000;
-        const paymentMethodId = "acct_1PAv2YAeGKihOJEp";
-        console.log("checkAccount: ", await checkAccount(paymentMethodId));
-        /* const result = await createStripeTransfer(amount, paymentMethodId);
-
-        console.log("result:", result);*/
+        const result = await createStripeAccount(null);
+        console.log("result: ", result);
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
       } catch (error) {
         console.error("Error processing payment:", error);
