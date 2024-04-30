@@ -56,6 +56,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.rental_radius as listingRentalRadius`,
     `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
+    `${ORDERS_TABLE}.tenant_accept_listing_qrcode as tenantAcceptListingQrcode`,
     `tenants.phone as tenantPhone`,
     `owners.phone as ownerPhone`,
     `tenants.place_work as tenantPlaceWork`,
@@ -514,6 +515,7 @@ class OrderModel extends Model {
         duration,
         fact_total_price: factTotalPrice,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
+        tenant_accept_listing_qrcode: "",
       })
       .returning("id");
 
@@ -548,18 +550,21 @@ class OrderModel extends Model {
       );
   };
 
-  getById = async (id) => {
+  getByWhere = async (key, value) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
-    query = query
-      .select(this.fullVisibleFields)
-      .where(`${ORDERS_TABLE}.id`, id);
+    query = query.select(this.fullVisibleFields).where(key, value);
 
     return await query.first();
   };
 
-  getFullById = async (id) => {
-    const order = await this.getById(id);
+  getById = (id) => this.getByWhere(`${ORDERS_TABLE}.id`, id);
+
+  getByTenantListingAcceptToken = (token) =>
+    this.getByWhere(`${ORDERS_TABLE}.tenant_accept_listing_token`, token);
+
+  getFullByBaseRequest = async (request) => {
+    const order = await request();
 
     if (order) {
       order["listingImages"] = await listingModel.getListingImages(
@@ -573,6 +578,11 @@ class OrderModel extends Model {
 
     return order;
   };
+
+  getFullById = (id) => this.getFullByBaseRequest(() => this.getById(id));
+
+  getFullByTenantListingToken = (token) =>
+    this.getFullByBaseRequest(() => this.getByTenantListingAcceptToken(token));
 
   generateBlockedDatesByOrders = (orders) => {
     const blockedDatesObj = {};
@@ -811,6 +821,20 @@ class OrderModel extends Model {
   delete = async (orderId) => {
     await db(ORDER_UPDATE_REQUESTS_TABLE).where("order_id", orderId).delete();
     await db(ORDERS_TABLE).where("id", orderId).delete();
+  };
+
+  orderTenantPayed = async (orderId, token, qrCode) => {
+    await db(ORDERS_TABLE).where({ id: orderId }).update({
+      tenant_accept_listing_token: token,
+      tenant_accept_listing_qrcode: qrCode,
+      status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+    });
+  };
+
+  orderTenantGotListing = async (orderId) => {
+    await db(ORDERS_TABLE).where({ id: orderId }).update({
+      status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+    });
   };
 }
 

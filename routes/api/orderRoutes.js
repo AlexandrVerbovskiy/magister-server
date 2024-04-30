@@ -7,7 +7,7 @@ const {
   isFileLimit,
   isVerified,
   authId,
-  isSupport
+  isSupport,
 } = require("../../middlewares");
 const {
   idParamValidation,
@@ -86,6 +86,14 @@ router.post(
   isSupport,
   idBodyValidation,
   orderController.delete
+);
+
+router.get("/approve-listing-accept/:id", orderController.approveClientPayed);
+
+router.post(
+  "/approve-client-got-listing",
+  isAuth,
+  orderController.approveClientGotListing
 );
 
 module.exports = router;

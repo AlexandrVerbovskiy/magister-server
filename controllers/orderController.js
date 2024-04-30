@@ -1,6 +1,7 @@
 const STATIC = require("../static");
-const { generateDatesBetween } = require("../utils");
+const { generateDatesBetween, generateRandomString } = require("../utils");
 const Controller = require("./Controller");
+const qrcode = require("qrcode");
 
 class OrderController extends Controller {
   constructor() {
@@ -389,6 +390,41 @@ class OrderController extends Controller {
       const { id } = req.body;
       await this.orderModel.delete(id);
       this.saveUserAction(req, `Removed order with id '${id}'`);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  approveClientPayed = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const id = req.params.id;
+      const token = generateRandomString();
+      const generatedImage = await qrcode.toDataURL(
+        process.env.CLIENT_URL +
+          "/dashboard/bookings/approve-tenant-listing/" +
+          token
+      );
+
+      await this.orderModel.orderTenantPayed(id, token, generatedImage);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  approveClientGotListing = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { token } = req.body;
+      const { userId } = req.userData;
+
+      if (!token) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const orderInfo = this.orderModel.getFullByTenantListingToken(token);
+
+      if (!orderInfo || orderInfo.tenantId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      await this.orderModel.orderTenantGotListing(orderInfo.id);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
