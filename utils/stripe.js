@@ -110,18 +110,48 @@ const checkAccount = async (accountId) => {
 };
 
 const createStripeTransfer = async (amount, cardId) => {
-  try {
-    const transfer = await stripe.payouts.create({
-      amount,
-      currency: "usd",
-      destination: cardId,
-      method: "instant",
-    });
-    return transfer;
-  } catch (error) {
-    console.error("Error creating transfer:", error);
-    throw error;
-  }
+  const transfer = await stripe.payouts.create({
+    amount,
+    currency: "usd",
+    destination: cardId,
+  });
+  return transfer;
+};
+
+const activateStripeAccount = async (accountId) => {
+  let time = new Date().getTime() / 1000;
+  time = Math.round(time);
+
+  await stripe.accounts.update(accountId, {
+    tos_acceptance: {
+      date: time,
+      ip: "8.8.8.8",
+    },
+  });
+};
+
+const createStripeAccount = async (email) => {
+  const account = await stripe.accounts.create({
+    type: "express",
+    country: "US",
+    /*email,*/
+  });
+  return account;
+};
+
+const createTestTransaction = async () => {
+  return await stripe.paymentIntents.create({
+    amount: 2000,
+    currency: "usd",
+    confirm: true,
+    payment_method: "pm_card_visa",
+    return_url: process.env.CLIENT_URL + "/",
+    payment_method_types: ["card"],
+    transfer_data: {
+      amount: 1000,
+      destination: "acct_1P94ddESRerYS2ea",
+    },
+  });
 };
 
 module.exports = {
@@ -139,4 +169,7 @@ module.exports = {
   createFullStripePaymentLink,
   createStripeTransfer,
   checkAccount,
+  createStripeAccount,
+  createTestTransaction,
+  activateStripeAccount,
 };
