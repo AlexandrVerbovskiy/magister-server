@@ -270,6 +270,8 @@ class MainController extends Controller {
           order.offerStartDate,
           order.offerEndDate
         );
+      } else {
+        order["tenantAcceptListingQrcode"] = null;
       }
 
       order["actualUpdateRequest"] =
@@ -286,6 +288,60 @@ class MainController extends Controller {
         ...commissionInfo,
         blockedDates,
         conflictOrders,
+      });
+    });
+
+  getOrderTenantQrCodeInfo = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
+      const { token } = req.params;
+      const order = await this.orderModel.getFullByTenantListingToken(token);
+
+      if (!order || order.tenantId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const commissionInfo = await this.systemOptionModel.getCommissionInfo();
+
+      if (!order) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Order wasn't found"
+        );
+      }
+
+      const blockedDates = await this.orderModel.getBlockedListingDates(
+        order.listingId
+      );
+
+      let conflictOrders = null;
+
+      if (userId == order.ownerId) {
+        conflictOrders = await this.orderModel.getConflictOrders(
+          order.id,
+          order.listingId,
+          order.offerStartDate,
+          order.offerEndDate
+        );
+      }
+
+      order["actualUpdateRequest"] =
+        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+
+      order["previousUpdateRequest"] =
+        await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
+
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        order,
+        categories,
+        ...commissionInfo,
+        blockedDates,
+        conflictOrders,
+        canAcceptTenantListing: true,
+        acceptListingTenantToken: token,
       });
     });
 
