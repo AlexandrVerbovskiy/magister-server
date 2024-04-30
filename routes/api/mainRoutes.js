@@ -129,6 +129,12 @@ router.get(
   mainController.getOrderFullByIdOptions
 );
 
+router.get(
+  "/scanning-rental-code/:code",
+  isAuth,
+  mainController.getOrderTenantQrCodeInfo
+);
+
 router.post(
   "/user-listing-list-options",
   isAuth,
@@ -176,7 +182,7 @@ router.get(
 router.get(
   "/admin-full-order-info-options/:id",
   isAuth,
-  isAdmin,
+  isSupport,
   idParamValidation,
   mainController.getFullOrderByIdPageOption
 );
@@ -184,7 +190,7 @@ router.get(
 router.get(
   "/admin-full-booking-info-options/:id",
   isAuth,
-  isAdmin,
+  isSupport,
   idParamValidation,
   mainController.getFullOrderByIdWithRequestsToUpdatePageOption
 );
@@ -207,7 +213,7 @@ router.post(
 router.post(
   "/admin-booking-list-options",
   isAuth,
-  isAdmin,
+  isSupport,
   mainController.getAdminBookingListOptions
 );
 
@@ -221,7 +227,7 @@ router.post(
 router.post(
   "/admin-order-list-options",
   isAuth,
-  isAdmin,
+  isSupport,
   mainController.getAdminOrderListOptions
 );
 

@@ -12,6 +12,7 @@ const {
   createStripeAccount,
   createTestTransaction,
   activateStripeAccount,
+  generateAccountLink,
 } = require("../utils");
 const Controller = require("./Controller");
 const fetch = require("node-fetch");
@@ -864,7 +865,7 @@ class UserController extends Controller {
   test = (req, res) =>
     this.baseWrapper(req, res, async () => {
       try {
-        const result = await createStripeAccount(null);
+        const result = await generateAccountLink("acct_1PBFjLQqyzajcqtE");
         console.log("result: ", result);
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
       } catch (error) {

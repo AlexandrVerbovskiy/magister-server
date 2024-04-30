@@ -1,7 +1,6 @@
 const STATIC = require("../static");
 const { createStripePayment, getStripeBalance, createPrice, createFullStripePaymentLink } = require("../utils");
 const Controller = require("./Controller");
-const qrcode = require("qrcode");
 
 class PaymentController extends Controller {
   constructor() {
@@ -24,23 +23,6 @@ class PaymentController extends Controller {
       } catch (e) {
         console.log("Error: ", e);
 
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.BAD_REQUEST,
-          e.message
-        );
-      }
-    });
-
-  generateQrCode = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      try {
-        const result = await qrcode.toDataURL("https://cabinet.ztu.edu.ua/");
-        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          qrcode: result,
-        });
-      } catch (e) {
-        console.log(e);
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,

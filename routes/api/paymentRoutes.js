@@ -18,8 +18,6 @@ router.post(
   paymentController.createPaymentIntent
 );
 
-router.post("/generate-qrcode", paymentController.generateQrCode);
-
 router.post("/test", paymentController.test);
 
 module.exports = router;
