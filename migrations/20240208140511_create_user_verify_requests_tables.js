@@ -9,14 +9,17 @@ exports.up = function (knex) {
     STATIC.TABLES.USER_VERIFY_REQUESTS,
     function (table) {
       table.increments("id").primary();
+
+      table.boolean("has_response").defaultTo(false);
+      table.boolean("viewed_failed_description").defaultTo(false);
+      table.text("failed_description");
+
+      table.timestamps(true, true);
+
       table
         .integer("user_id")
         .unsigned()
         .references(STATIC.TABLES.USERS + ".id");
-      table.boolean("has_response").defaultTo(false);
-      table.boolean("viewed_failed_description").defaultTo(false);
-      table.text("failed_description");
-      table.timestamps(true, true);
     }
   );
 };
@@ -26,5 +29,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-    return knex.schema.dropTableIfExists(STATIC.TABLES.USER_VERIFY_REQUESTS);
+  return knex.schema.dropTableIfExists(STATIC.TABLES.USER_VERIFY_REQUESTS);
 };

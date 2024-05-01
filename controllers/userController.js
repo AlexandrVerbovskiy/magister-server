@@ -3,16 +3,6 @@ const {
   generateAccessToken,
   generateVerifyToken,
   validateToken,
-  createStripeCustomer,
-  createStripeToken,
-  createStripeCardToken,
-  addStripeCardToCustomer,
-  createStripeTransfer,
-  checkAccount,
-  createStripeAccount,
-  createTestTransaction,
-  activateStripeAccount,
-  generateAccountLink,
 } = require("../utils");
 const Controller = require("./Controller");
 const fetch = require("node-fetch");
@@ -596,17 +586,6 @@ class UserController extends Controller {
         await this.userVerifyRequestModel.updateUserVerifyById(id);
       }
 
-      const countUnfinishedUserOrders =
-        await this.orderModel.getUnfinishedUserCount(currentId);
-
-      if (countUnfinishedUserOrders) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You have an unfinished booking or order. Please finish all your orders and bookings before updating"
-        );
-      }
-
       const user = await this.baseUpdate(id, dataToSave, req.file);
       this.saveUserAction(req, `Updated user with id '${id}'`);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
@@ -641,6 +620,17 @@ class UserController extends Controller {
 
       dataToSave["needRegularViewInfoForm"] = false;
       delete dataToSave["email"];
+
+      const countUnfinishedUserOrders =
+        await this.orderModel.getUnfinishedUserCount(userId);
+
+      if (countUnfinishedUserOrders) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You have an unfinished booking or order. Please finish all your orders and bookings before updating"
+        );
+      }
 
       const user = await this.baseUpdate(userId, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
@@ -839,39 +829,12 @@ class UserController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
-  connectNewCreditCard = (req, res) =>
+  autofillFieldsSave = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const { cardId } = req.body;
-
-      const currentUser = await this.userModel.getFullById(userId);
-      /*const createCustomerResult = await createStripeCustomer(
-        currentUser.email,
-        currentUser.name
-      );
-
-      const createdUserId = createCustomerResult.id;*/
-      const createdUserId = "cus_Q0u7os3JZEyosA";
-      const paymentId = "pm_1PAtbuESRerYS2eajO7VbQ8n";
-
-      const { card } = await addStripeCardToCustomer(createdUserId, cardId);
-      const { last4, exp_month: expMonth, exp_year: expYear } = card;
-
-      console.log(createdUserId, cardId, last4, expMonth, expYear);
-
+      const { paypalId } = req.body;
+      await this.userModel.autofillFieldsSave({ paypalId }, userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
-
-  test = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      try {
-        const result = await generateAccountLink("acct_1PBFjLQqyzajcqtE");
-        console.log("result: ", result);
-        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-      } catch (error) {
-        console.error("Error processing payment:", error);
-        return this.sendErrorResponse(res, STATIC.ERRORS.UNPREDICTABLE);
-      }
     });
 }
 

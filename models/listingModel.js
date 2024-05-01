@@ -365,18 +365,8 @@ class ListingsModel extends Model {
     return res[0].active;
   };
 
-  totalCount = async ({
-    serverFromTime,
-    serverToTime,
-    cities = [],
-    categories = [],
-    userId = null,
-    searchCity = null,
-    searchCategory = null,
-  }) => {
-    const fieldLowerEqualArray = this.fieldLowerEqualArray;
-
-    let query = db(LISTINGS_TABLE)
+  baseListJoin = (query) =>
+    query
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .join(
         LISTING_CATEGORIES_TABLE,
@@ -395,7 +385,22 @@ class ListingsModel extends Model {
         `c2.parent_id`,
         "=",
         `c3.id`
-      )
+      );
+
+  totalCount = async ({
+    serverFromTime,
+    serverToTime,
+    cities = [],
+    categories = [],
+    userId = null,
+    searchCity = null,
+    searchCategory = null,
+  }) => {
+    const fieldLowerEqualArray = this.fieldLowerEqualArray;
+
+    let query = db(LISTINGS_TABLE);
+    query = this.baseListJoin(query);
+    query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true);
@@ -531,27 +536,9 @@ class ListingsModel extends Model {
       canUseDefaultCoordsOrder = true;
     }
 
-    let query = db(LISTINGS_TABLE)
-      .select(selectParams)
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
-        LISTING_CATEGORIES_TABLE,
-        `${LISTING_CATEGORIES_TABLE}.id`,
-        "=",
-        `${LISTINGS_TABLE}.category_id`
-      )
-      .leftJoin(
-        `${LISTING_CATEGORIES_TABLE} as c2`,
-        `${LISTING_CATEGORIES_TABLE}.parent_id`,
-        "=",
-        `c2.id`
-      )
-      .leftJoin(
-        `${LISTING_CATEGORIES_TABLE} as c3`,
-        `c2.parent_id`,
-        "=",
-        `c3.id`
-      )
+    let query = db(LISTINGS_TABLE).select(selectParams);
+    query = this.baseListJoin(query);
+    query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true);

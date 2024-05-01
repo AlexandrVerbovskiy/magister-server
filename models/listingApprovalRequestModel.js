@@ -88,14 +88,8 @@ class ListingApprovalRequestModel extends Model {
     return query;
   };
 
-  totalCount = async (
-    filter,
-    serverFromTime,
-    serverToTime,
-    userId = null,
-    status = "all"
-  ) => {
-    let query = db(LISTING_APPROVAL_REQUESTS_TABLE)
+  baseListJoin = (query) =>
+    query
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
@@ -108,8 +102,17 @@ class ListingApprovalRequestModel extends Model {
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
         `${LISTINGS_TABLE}.category_id`
-      )
-      .whereRaw(...this.baseStrFilter(filter));
+      );
+
+  totalCount = async (
+    filter,
+    serverFromTime,
+    serverToTime,
+    userId = null,
+    status = "all"
+  ) => {
+    let query = db(LISTING_APPROVAL_REQUESTS_TABLE);
+    query = this.baseListJoin(query).whereRaw(...this.baseStrFilter(filter));
 
     query = this.baseListTimeFilter(
       { serverFromTime, serverToTime },
@@ -134,22 +137,8 @@ class ListingApprovalRequestModel extends Model {
 
     //const { status = "all" } = props;
 
-    let query = db(LISTING_APPROVAL_REQUESTS_TABLE)
-      .select(this.visibleFields)
-      .join(
-        LISTINGS_TABLE,
-        `${LISTINGS_TABLE}.id`,
-        "=",
-        `${LISTING_APPROVAL_REQUESTS_TABLE}.listing_id`
-      )
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
-        LISTING_CATEGORIES_TABLE,
-        `${LISTING_CATEGORIES_TABLE}.id`,
-        "=",
-        `${LISTINGS_TABLE}.category_id`
-      )
-      .whereRaw(...this.baseStrFilter(filter));
+    let query = db(LISTING_APPROVAL_REQUESTS_TABLE).select(this.visibleFields);
+    query = this.baseListJoin(query).whereRaw(...this.baseStrFilter(filter));
 
     query = query.where(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`, null);
     //query = this.queryByStatus(query, status);

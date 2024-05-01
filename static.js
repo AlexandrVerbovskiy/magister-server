@@ -37,6 +37,11 @@ module.exports = {
       STATUS: 403,
       DEFAULT_MESSAGE: "Access denied",
     },
+    PAYMENT_FAILED: {
+      KEY: "payment_failed",
+      STATUS: 402,
+      DEFAULT_MESSAGE: "Payment failed",
+    },
     NOT_FOUND: {
       KEY: "not_found",
       STATUS: 404,
@@ -91,6 +96,8 @@ module.exports = {
       "listing_category_create_notifications",
     ORDERS: "orders",
     ORDER_UPDATE_REQUESTS: "order_update_requests",
+    SENDER_PAYMENTS: "sender_payments",
+    RECIPIENT_PAYMENTS: "recipient_payments",
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
@@ -118,5 +125,14 @@ module.exports = {
     BASE: "base",
     TODAY: "today",
     NULL: "null",
+  },
+  RECIPIENT_STATUSES: {
+    COMPLETED: "completed",
+    FAILED: "failed",
+    WAITING: "waiting",
+  },
+  RECIPIENT_TYPES: {
+    RETURNED: "returned",
+    RENT_PAYMENT: "rent_payment",
   },
 };

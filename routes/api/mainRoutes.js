@@ -130,7 +130,7 @@ router.get(
 );
 
 router.get(
-  "/scanning-rental-code/:code",
+  "/tenant-scanning-listing-rental-code/:token",
   isAuth,
   mainController.getOrderTenantQrCodeInfo
 );

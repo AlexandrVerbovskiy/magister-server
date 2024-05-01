@@ -393,13 +393,13 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
-  approveClientPayed = (req, res) =>
+  tenantPayed = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const id = req.params.id;
       const token = generateRandomString();
       const generatedImage = await qrcode.toDataURL(
         process.env.CLIENT_URL +
-          "/dashboard/bookings/approve-tenant-listing/" +
+          "/dashboard/orders/approve-tenant-listing/" +
           token
       );
 

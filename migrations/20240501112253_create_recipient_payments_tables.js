@@ -6,17 +6,29 @@ const STATIC = require("../static");
  */
 exports.up = function (knex) {
   return knex.schema.createTable(
-    STATIC.TABLES.TWO_FACTOR_AUTH_CODES,
+    STATIC.TABLES.RECIPIENT_PAYMENTS,
     function (table) {
       table.increments("id").primary();
-      table.string("code");
-      table.enum("type_verification", ["email", "phone"]).defaultTo("email");
+
+      table.float("money");
+      table.string("planned_time");
+      table.string("received_type");
+      table.string("status");
+      table.string("paypal_id");
+      table.text("failed_details");
+      table.timestamp("last_tried_at").nullable().defaultTo(null);
+
       table.timestamps(true, true);
 
       table
         .integer("user_id")
         .unsigned()
         .references(STATIC.TABLES.USERS + ".id");
+
+      table
+        .integer("order_id")
+        .unsigned()
+        .references(STATIC.TABLES.ORDERS + ".id");
     }
   );
 };
@@ -26,5 +38,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTable(STATIC.TABLES.TWO_FACTOR_AUTH_CODES);
+  return knex.schema.dropTableIfExists(STATIC.TABLES.RECIPIENT_PAYMENTS);
 };

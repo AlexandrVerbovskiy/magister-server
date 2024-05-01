@@ -2,6 +2,7 @@ const {
   validateSmallStringBody,
   validateBigStringBody,
   userRoleValidation,
+  validateIntegerBody,
 } = require("../base");
 
 module.exports = [
@@ -50,4 +51,5 @@ module.exports = [
     fieldName: "Twitter Url",
     required: false,
   }),
+  ...validateIntegerBody({ field: "paypalId", fieldName: "Paypal Id" }),
 ];

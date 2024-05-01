@@ -9,9 +9,13 @@ exports.up = function (knex) {
     STATIC.TABLES.RESET_PASSWORD_TOKENS,
     function (table) {
       table.increments("id").primary();
-      table.integer("user_id").unsigned();
       table.string("token");
       table.timestamps(true, true);
+
+      table
+        .integer("user_id")
+        .unsigned()
+        .references(STATIC.TABLES.USERS + ".id");
     }
   );
 };

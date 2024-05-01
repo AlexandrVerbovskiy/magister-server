@@ -11,15 +11,17 @@ exports.up = function (knex) {
       table.increments("id").primary();
 
       table.string("name");
-      table
-        .integer("listing_categories_id")
-        .unsigned()
-        .nullable()
-        .defaultTo(null);
       table.boolean("admin_viewed").defaultTo(false);
       table.integer("search_count").defaultTo(1);
 
       table.timestamps(true, true);
+
+      table
+      .integer("listing_categories_id")
+      .unsigned()
+      .nullable()
+      .defaultTo(null)
+      .references(STATIC.TABLES.LISTING_CATEGORIES + ".id");
     }
   );
 };

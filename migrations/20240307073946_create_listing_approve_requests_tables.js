@@ -9,10 +9,14 @@ exports.up = function (knex) {
     STATIC.TABLES.LISTING_APPROVAL_REQUESTS,
     function (table) {
       table.increments("id").primary();
-      table.integer("listing_id").unsigned();
       table.text("reject_description").nullable().defaultTo(null);
       table.boolean("approved").nullable().defaultTo(null);
       table.timestamps(true, true);
+
+      table
+        .integer("listing_id")
+        .unsigned()
+        .references(STATIC.TABLES.LISTINGS + ".id");
     }
   );
 };

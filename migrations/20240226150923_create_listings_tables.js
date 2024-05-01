@@ -9,8 +9,6 @@ exports.up = function (knex) {
     table.increments("id").primary();
 
     table.string("name");
-    table.integer("category_id").unsigned();
-    table.integer("owner_id").unsigned();
     table.text("key_words");
 
     table.float("compensation_cost");
@@ -32,6 +30,16 @@ exports.up = function (knex) {
     table.boolean("approved").defaultTo(false);
 
     table.timestamps(true, true);
+
+    table
+      .integer("category_id")
+      .unsigned()
+      .references(STATIC.TABLES.LISTING_CATEGORIES + ".id");
+
+    table
+      .integer("owner_id")
+      .unsigned()
+      .references(STATIC.TABLES.USERS + ".id");
   });
 };
 
