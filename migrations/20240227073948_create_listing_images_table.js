@@ -9,9 +9,14 @@ exports.up = function (knex) {
     STATIC.TABLES.LISTING_IMAGES,
     function (table) {
       table.increments("id").primary();
-      table.integer("listing_id").unsigned();
+      
       table.string("type");
       table.string("link");
+
+      table
+      .integer("listing_id")
+      .unsigned()
+      .references(STATIC.TABLES.LISTINGS + ".id");
     }
   );
 };

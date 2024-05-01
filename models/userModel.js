@@ -56,6 +56,7 @@ class UserModel extends Model {
     "instagram_url as instagramUrl",
     "linkedin_url as linkedinUrl",
     "twitter_url as twitterUrl",
+    "paypal_id as paypalId",
   ];
 
   documentFields = [
@@ -156,6 +157,7 @@ class UserModel extends Model {
       verified,
       acceptedTermCondition,
       needRegularViewInfoForm,
+      paypalId,
     } = userData;
 
     const updateData = {
@@ -209,6 +211,10 @@ class UserModel extends Model {
 
     if (verified !== null) {
       updateData.verified = verified;
+    }
+
+    if (paypalId !== null) {
+      updateData.paypal_id = paypalId;
     }
 
     return updateData;
@@ -525,6 +531,10 @@ class UserModel extends Model {
       .limit(count)
       .offset(start);
     return res;
+  };
+
+  autofillFieldsSave = async ({ paypalId }, userId) => {
+    await db(USERS_TABLE).where("id", userId).update({ paypal_id: paypalId });
   };
 }
 

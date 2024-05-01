@@ -9,9 +9,14 @@ exports.up = function (knex) {
     STATIC.TABLES.LISTING_CATEGORY_CREATE_NOTIFICATIONS,
     function (table) {
       table.increments("id").primary();
-      table.integer("user_id").unsigned();
       table.text("category_name");
       table.timestamps(true, true);
+
+      table
+        .integer("user_id")
+        .unsigned()
+        .references(STATIC.TABLES.USERS + ".id");
+
     }
   );
 };

@@ -20,6 +20,7 @@ const {
   saveProfileValidation,
   typeValidation,
   checkTwoFactorCodeValidation,
+  autofillValidation,
 } = require("../../validations/auth");
 
 const { upload } = require("../../utils");
@@ -131,12 +132,6 @@ router.post(
 );
 
 router.post(
-  "/connect-new-credit-card",
-  isAuth,
-  userController.connectNewCreditCard
-);
-
-router.post(
   "/no-need-regular-view-info-form",
   isAuth,
   userController.noNeedRegularViewInfoForm
@@ -149,6 +144,11 @@ router.post(
   userController.authByProvider
 );
 
-router.get("/test", userController.test);
+router.post(
+  "/autofill-save",
+  isAuth,
+  autofillValidation,
+  userController.autofillFieldsSave
+);
 
 module.exports = router;

@@ -12,5 +12,5 @@ module.exports = {
   listingCategoryCreateNotificationController: require("./listingCategoryCreateNotificationController"),
   orderController: require("./orderController"),
   orderUpdateRequestController: require("./orderUpdateRequestController"),
-  paymentController: require("./paymentController"),
+  senderPaymentController: require("./senderPaymentController"),
 };

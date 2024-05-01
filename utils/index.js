@@ -9,5 +9,5 @@ module.exports = {
   ...require("./dateHelpers"),
   coordsByIp: require("./coordsByIp"),
   cloneObject: require("./cloneObject"),
-  ...require("./stripe"),
+  ...require("./paypalApi"),
 };
