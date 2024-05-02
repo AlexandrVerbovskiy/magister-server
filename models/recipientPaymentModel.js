@@ -10,34 +10,33 @@ const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 
 class RecipientPayment extends Model {
   visibleFields = [
-    "id",
+    `${RECIPIENT_PAYMENTS_TABLE}.id`,
     "money",
     "planned_time as plannedTime",
     "received_type as receivedType",
     `${RECIPIENT_PAYMENTS_TABLE}.status as status`,
     `${RECIPIENT_PAYMENTS_TABLE}.user_id as userId`,
-    "paypal_id as paypalId",
-    "order_id as orderId",
-    "last_tried_at as last_tried_at",
+    `${RECIPIENT_PAYMENTS_TABLE}.paypal_id as paypalId`,
+    `${RECIPIENT_PAYMENTS_TABLE}.order_id as orderId`,
+    "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
     `${USERS_TABLE}.name`,
     `${USERS_TABLE}.email`,
     `${LISTINGS_TABLE}.id as listingId`,
-    `${LISTINGS_TABLE}.title`,
+    `${LISTINGS_TABLE}.name as listingName`,
+    `owners.name as ownerName`,
+    `owners.id as ownerId`,
+    `tenants.name as tenantName`,
+    `tenants.id as tenantId`,
   ];
 
-  strFilterFields = [
-    "money",
-    "paypal_id",
-    `${USERS_TABLE}.name`,
-    `${LISTINGS_TABLE}.title`,
-  ];
+  strFilterFields = [`${LISTINGS_TABLE}.name`];
 
   orderFields = [
     `${RECIPIENT_PAYMENTS_TABLE}.id`,
     "money",
     "planned_time",
-    "paypal_id",
+    `${RECIPIENT_PAYMENTS_TABLE}.paypal_id`,
     "last_tried_at",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at`,
     `${USERS_TABLE}.name`,
@@ -77,12 +76,29 @@ class RecipientPayment extends Model {
         "=",
         `${RECIPIENT_PAYMENTS_TABLE}.order_id`
       )
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.user_id`)
+      .join(
+        USERS_TABLE,
+        `${USERS_TABLE}.id`,
+        "=",
+        `${RECIPIENT_PAYMENTS_TABLE}.user_id`
+      )
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
         "=",
         `${ORDERS_TABLE}.listing_id`
+      )
+      .join(
+        `${USERS_TABLE} as owners`,
+        `owners.id`,
+        "=",
+        `${LISTINGS_TABLE}.owner_id`
+      )
+      .join(
+        `${USERS_TABLE} as tenants`,
+        `tenants.id`,
+        "=",
+        `${ORDERS_TABLE}.tenant_id`
       );
 
   baseListStatusSelect = (query, status) => {

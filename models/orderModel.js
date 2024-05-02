@@ -823,7 +823,7 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE).where("id", orderId).delete();
   };
 
-  orderTenantPayed = async (orderId, token, qrCode) => {
+  orderTenantPayed = async (orderId, { token, qrCode }) => {
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       tenant_accept_listing_token: token,
       tenant_accept_listing_qrcode: qrCode,

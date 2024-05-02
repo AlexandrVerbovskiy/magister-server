@@ -21,4 +21,6 @@ router.post(
   senderPaymentController.paypalOrderPayed
 );
 
+router.post("/list", isAuth, senderPaymentController.list);
+
 module.exports = router;

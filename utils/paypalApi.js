@@ -35,9 +35,10 @@ async function getToken() {
   return data.access_token;
 }
 
-const createPaypalOrder = async (amount) => {
+const createPaypalOrder = async (amount, orderId, listingName) => {
   const accessToken = await getToken();
   const url = `${base}/v2/checkout/orders`;
+
   const payload = {
     intent: "CAPTURE",
     purchase_units: [
@@ -54,19 +55,16 @@ const createPaypalOrder = async (amount) => {
         },
         items: [
           {
-            name: "#143",
-            currency: "USD",
-            price: amount,
+            name: listingName,
             quantity: 1,
-            sku: "test_423",
+            sku: orderId,
             unit_amount: {
               currency_code: "USD",
               value: amount,
             },
-            description: "order id is #123",
+            description: "Tool rental",
           },
         ],
-        description: "order id is #123",
       },
     ],
   };
@@ -80,7 +78,13 @@ const createPaypalOrder = async (amount) => {
     body: JSON.stringify(payload),
   });
 
-  return await response.json();
+  const jsonResponse = await response.json();
+
+  if (!jsonResponse.status || jsonResponse.status.toLowerCase() !== "created") {
+    throw new Error(jsonResponse.message);
+  }
+
+  return jsonResponse;
 };
 
 const capturePaypalOrder = async (orderId) => {
@@ -97,28 +101,49 @@ const capturePaypalOrder = async (orderId) => {
 
   const jsonResponse = await response.json();
 
-  if (jsonResponse.status.toLowerCase() === "completed") {
-    let money = 0;
-    const purchaseUnits = jsonResponse.purchase_units;
-
-    purchaseUnits.forEach((unit) => {
-      unit.payments.captures.forEach((capture) => {
-        const gotMoney = Number(capture.amount.value);
-        money += gotMoney;
-      });
-    });
-
-    return {
-      body: { money: money.toFixed(2) },
-      error: false,
-    };
-  } else {
-    return {
-      body: jsonResponse,
-      error: true,
-    };
+  if (
+    !jsonResponse.status ||
+    jsonResponse.status.toLowerCase() !== "completed"
+  ) {
+    throw new Error(jsonResponse.message);
   }
+
+  return true;
 };
+
+async function refundPaypalOrderCapture(id) {
+  /*const accessToken = await getToken();
+  const url = `${base}/v2/payments/captures/${id}/refund`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const jsonResponse = await response.json();
+
+  if (!jsonResponse.status || jsonResponse.status.toLowerCase() !== "pending") {
+    throw new Error(jsonResponse.message);
+  }*/
+
+  const accessToken = await getToken();
+  const url = `${base}/v2/payments/captures/${id}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const jsonResponse = await response.json();
+
+  return jsonResponse;
+}
 
 async function sendMoneyToPaypal(type, getter, amount, currency) {
   const token = await getToken();
@@ -200,4 +225,5 @@ module.exports = {
   sendMoneyToPaypalByPhone,
   sendMoneyToPaypalByPaypalID,
   getPaypalOrderInfo,
+  refundPaypalOrderCapture,
 };

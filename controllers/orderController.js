@@ -345,6 +345,19 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
+      if (
+        (order.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER &&
+          order.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT &&
+          order.status !== STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) ||
+        order.cancelStatus
+      ) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Unable to perform an operation for the current order status"
+        );
+      }
+
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
       console.log("lastUpdateRequestInfo: ", lastUpdateRequestInfo);
@@ -393,21 +406,6 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
-  tenantPayed = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const id = req.params.id;
-      const token = generateRandomString();
-      const generatedImage = await qrcode.toDataURL(
-        process.env.CLIENT_URL +
-          "/dashboard/orders/approve-tenant-listing/" +
-          token
-      );
-
-      await this.orderModel.orderTenantPayed(id, token, generatedImage);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
-
   approveClientGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token } = req.body;
@@ -418,6 +416,17 @@ class OrderController extends Controller {
       }
 
       const orderInfo = this.orderModel.getFullByTenantListingToken(token);
+
+      if (
+        orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT ||
+        order.cancelStatus
+      ) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Unable to perform an operation for the current order status"
+        );
+      }
 
       if (!orderInfo || orderInfo.tenantId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);

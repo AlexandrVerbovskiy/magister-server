@@ -11,4 +11,6 @@ module.exports = {
   listingCategoryCreateNotificationModel: require("./listingCategoryCreateNotificationModel"),
   orderModel: require("./orderModel"),
   orderUpdateRequestModel: require("./orderUpdateRequestModel"),
+  senderPaymentModel: require("./senderPaymentModel"),
+  recipientPaymentModel: require("./recipientPaymentModel"),
 };

@@ -4,5 +4,4 @@ module.exports = {
   idBodyValidation: require("./idBodyValidation"),
   listValidation: require("./listValidation"),
   approveClientGotListingValidation: require("./approveClientGotListingValidation"),
-  tenantPayedValidation: require("./tenantPayedValidation"),
 };
