@@ -13,4 +13,5 @@ module.exports = {
   orderController: require("./orderController"),
   orderUpdateRequestController: require("./orderUpdateRequestController"),
   senderPaymentController: require("./senderPaymentController"),
+  recipientPaymentController: require("./recipientPaymentController"),
 };

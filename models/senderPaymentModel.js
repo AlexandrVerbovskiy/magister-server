@@ -10,33 +10,52 @@ const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 
 class SenderPayment extends Model {
   visibleFields = [
-    "id",
-    "money",
+    `${SENDER_PAYMENTS_TABLE}.id`,
+    `${SENDER_PAYMENTS_TABLE}.money`,
     `${SENDER_PAYMENTS_TABLE}.user_id as userId`,
-    "order_id as orderId",
+    `${SENDER_PAYMENTS_TABLE}.order_id as orderId`,
     `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
-    `${USERS_TABLE}.name`,
-    `${USERS_TABLE}.email`,
+    `${USERS_TABLE}.name as userName`,
+    `${USERS_TABLE}.email as userEmail`,
     `${LISTINGS_TABLE}.id as listingId`,
-    `${LISTINGS_TABLE}.title`,
+    `${LISTINGS_TABLE}.name as listingName`,
+    `${SENDER_PAYMENTS_TABLE}.paypal_sender_id as paypalSenderId`,
+    `${SENDER_PAYMENTS_TABLE}.paypal_order_id as paypalOrderId`,
+    `${SENDER_PAYMENTS_TABLE}.paypal_capture_id as paypalCaptureId`,
+    `${ORDERS_TABLE}.status as orderStatus`,
+    `owners.name as ownerName`,
+    `owners.id as ownerId`,
   ];
 
-  strFilterFields = ["money", `${USERS_TABLE}.name`, `${LISTINGS_TABLE}.title`];
+  strFilterFields = [`${LISTINGS_TABLE}.name`, `owners.name`];
 
   orderFields = [
     `${SENDER_PAYMENTS_TABLE}.id`,
-    "money",
+    `${SENDER_PAYMENTS_TABLE}.money`,
     `${SENDER_PAYMENTS_TABLE}.created_at`,
     `${USERS_TABLE}.name`,
-    `${LISTINGS_TABLE}.title`,
+    `${LISTINGS_TABLE}.name`,
+    `${SENDER_PAYMENTS_TABLE}.paypal_sender_id`,
+    `${SENDER_PAYMENTS_TABLE}.paypal_order_id`,
+    `owners.name`,
   ];
 
-  create = async ({ money, userId, orderId }) => {
+  create = async ({
+    money,
+    userId,
+    orderId,
+    paypalSenderId,
+    paypalOrderId,
+    paypalCaptureId,
+  }) => {
     const res = await db(SENDER_PAYMENTS_TABLE)
       .insert({
         money,
         user_id: userId,
         order_id: orderId,
+        paypal_sender_id: paypalSenderId,
+        paypal_order_id: paypalOrderId,
+        paypal_capture_id: paypalCaptureId,
       })
       .returning("id");
 
@@ -51,12 +70,23 @@ class SenderPayment extends Model {
         "=",
         `${SENDER_PAYMENTS_TABLE}.order_id`
       )
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.user_id`)
+      .join(
+        USERS_TABLE,
+        `${USERS_TABLE}.id`,
+        "=",
+        `${SENDER_PAYMENTS_TABLE}.user_id`
+      )
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
         "=",
         `${ORDERS_TABLE}.listing_id`
+      )
+      .join(
+        `${USERS_TABLE} as owners`,
+        `owners.id`,
+        "=",
+        `${LISTINGS_TABLE}.owner_id`
       );
 
   totalCount = async (filter, serverFromTime, serverToTime, userId = null) => {

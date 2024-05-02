@@ -27,6 +27,8 @@ const {
   listingCategoryCreateNotificationModel,
   orderModel,
   orderUpdateRequestModel,
+  senderPaymentModel,
+  recipientPaymentModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -51,6 +53,9 @@ class Controller {
     this.listingApprovalRequestModel = listingApprovalRequestModel;
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
+
+    this.senderPaymentModel = senderPaymentModel;
+    this.recipientPaymentModel = recipientPaymentModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -105,26 +110,20 @@ class Controller {
 
       await func();
     } catch (e) {
-      console.log(e);
-
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey =
         Object.keys(STATIC.ERRORS).find(
           (error) => STATIC.ERRORS[error].KEY === errorType
-        ) ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
+        ) ?? "UNPREDICTABLE";
 
-      if (currentErrorKey === STATIC.ERRORS.UNPREDICTABLE.KEY) {
+      if (currentErrorKey === "UNPREDICTABLE") {
         try {
           this.logModel.saveByBodyError(e.stack, e.message);
         } catch (localError) {}
       }
 
-      const currentError = Object.keys(STATIC.ERRORS).find(
-        (error) => STATIC.ERRORS[error].KEY === currentErrorKey
-      );
-
-      this.sendErrorResponse(res, STATIC.ERRORS[currentError], e.message);
+      this.sendErrorResponse(res, STATIC.ERRORS[currentErrorKey], e.message);
     }
   };
 

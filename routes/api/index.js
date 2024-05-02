@@ -14,4 +14,5 @@ module.exports = {
   listingCategoryCreateNotificationRoutes: require("./listingCategoryCreateNotificationRoutes"),
   mainRoutes: require("./mainRoutes"),
   senderPaymentRoutes: require("./senderPaymentRoutes"),
+  recipientPaymentRoutes: require("./recipientPaymentRoutes"),
 };

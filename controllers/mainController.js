@@ -10,6 +10,8 @@ const userVerifyRequestController = require("./userVerifyRequestController");
 const searchedWordController = require("./searchedWordController");
 const listingApprovalRequestController = require("./listingApprovalRequestController");
 const orderController = require("./orderController");
+const senderPaymentController = require("./senderPaymentController");
+const recipientPaymentController = require("./recipientPaymentController");
 
 const coordsByIp = require("../utils/coordsByIp");
 const { cloneObject } = require("../utils");
@@ -583,6 +585,40 @@ class MainController extends Controller {
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
+    });
+
+  getSenderPaymentListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      const result = await senderPaymentController.baseSenderPaymentList(
+        req,
+        userId
+      );
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
+    });
+
+  getRecipientPaymentListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      const categories = await this.getNavigationCategories();
+      const result = await recipientPaymentController.baseRecipientPaymentList(
+        req,
+        userId
+      );
+
+      console.log("test");
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        categories,
+      });
     });
 }
 

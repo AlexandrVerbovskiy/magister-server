@@ -15,7 +15,6 @@ const {
   createValidation,
   listValidation,
   approveClientGotListingValidation,
-  tenantPayedValidation,
 } = require("../../validations/order");
 
 router.post(
@@ -90,12 +89,6 @@ router.post(
   orderController.delete
 );
 
-router.post(
-  "/tenant-payed",
-  isAuth,
-  tenantPayedValidation,
-  orderController.tenantPayed
-);
 
 router.post(
   "/approve-client-got-listing",
