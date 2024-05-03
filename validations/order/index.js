@@ -3,4 +3,5 @@ module.exports = {
   idParamValidation: require("./idParamValidation"),
   idBodyValidation: require("./idBodyValidation"),
   listValidation: require("./listValidation"),
+  approveClientGotListingValidation: require("./approveClientGotListingValidation"),
 };

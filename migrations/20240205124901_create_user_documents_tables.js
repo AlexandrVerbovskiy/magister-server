@@ -9,10 +9,7 @@ exports.up = function (knex) {
     STATIC.TABLES.USER_DOCUMENTS,
     function (table) {
       table.increments("id").primary();
-      table
-        .integer("user_id")
-        .unsigned()
-        .references(STATIC.TABLES.USERS + ".id");
+
       table.string("proof_of_address_link").nullable().defaultTo(null);
       table.string("reputable_bank_id_link").nullable().defaultTo(null);
       table.string("utility_link").nullable().defaultTo(null);
@@ -23,7 +20,13 @@ exports.up = function (knex) {
         .string("confirm_money_laundering_checks_and_compliance_link")
         .nullable()
         .defaultTo(null);
+
       table.timestamps(true, true);
+
+      table
+        .integer("user_id")
+        .unsigned()
+        .references(STATIC.TABLES.USERS + ".id");
     }
   );
 };

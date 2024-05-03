@@ -14,6 +14,7 @@ const {
   idBodyValidation,
   createValidation,
   listValidation,
+  approveClientGotListingValidation,
 } = require("../../validations/order");
 
 router.post(
@@ -88,11 +89,11 @@ router.post(
   orderController.delete
 );
 
-router.get("/approve-listing-accept/:id", orderController.approveClientPayed);
 
 router.post(
   "/approve-client-got-listing",
   isAuth,
+  approveClientGotListingValidation,
   orderController.approveClientGotListing
 );
 

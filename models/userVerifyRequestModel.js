@@ -58,14 +58,18 @@ class UserVerifyRequestModel extends Model {
       .first();
   };
 
+  baseListJoin = (query) =>
+    query.join(
+      USERS_TABLE,
+      `${USERS_TABLE}.id`,
+      "=",
+      `${USER_VERIFY_REQUESTS_TABLE}.user_id`
+    );
+
   totalCount = async (filter, serverFromTime, serverToTime) => {
-    let query = db(USER_VERIFY_REQUESTS_TABLE)
-      .join(
-        USERS_TABLE,
-        `${USERS_TABLE}.id`,
-        "=",
-        `${USER_VERIFY_REQUESTS_TABLE}.user_id`
-      )
+    let query = db(USER_VERIFY_REQUESTS_TABLE);
+    query = this.baseListJoin(query);
+    query = query
       .where("has_response", false)
       .whereRaw(...this.baseStrFilter(filter));
     query = this.baseListTimeFilter(
@@ -81,13 +85,9 @@ class UserVerifyRequestModel extends Model {
     const { filter, start, count } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = db(USER_VERIFY_REQUESTS_TABLE)
-      .join(
-        USERS_TABLE,
-        `${USERS_TABLE}.id`,
-        "=",
-        `${USER_VERIFY_REQUESTS_TABLE}.user_id`
-      )
+    let query = db(USER_VERIFY_REQUESTS_TABLE);
+    query = this.baseListJoin(query);
+    query = query
       .where("has_response", false)
       .whereRaw(...this.baseStrFilter(filter));
 

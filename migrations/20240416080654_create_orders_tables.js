@@ -8,8 +8,6 @@ exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.ORDERS, function (table) {
     table.increments("id").primary();
 
-    table.integer("tenant_id").unsigned();
-    table.integer("listing_id").unsigned();
     table.float("price_per_day");
     table.string("start_date");
     table.string("end_date");
@@ -19,8 +17,22 @@ exports.up = function (knex) {
     table.float("fact_total_price");
 
     table.enum("status", Object.values(STATIC.ORDER_STATUSES));
-    table.enum("cancel_status", Object.values(STATIC.ORDER_CANCELATION_STATUSES));
+    table.enum(
+      "cancel_status",
+      Object.values(STATIC.ORDER_CANCELATION_STATUSES)
+    );
+
     table.timestamps(true, true);
+
+    table
+      .integer("tenant_id")
+      .unsigned()
+      .references(STATIC.TABLES.USERS + ".id");
+
+    table
+      .integer("listing_id")
+      .unsigned()
+      .references(STATIC.TABLES.LISTINGS + ".id");
   });
 };
 

@@ -130,7 +130,7 @@ router.get(
 );
 
 router.get(
-  "/scanning-rental-code/:code",
+  "/tenant-scanning-listing-rental-code/:token",
   isAuth,
   mainController.getOrderTenantQrCodeInfo
 );
@@ -229,6 +229,34 @@ router.post(
   isAuth,
   isSupport,
   mainController.getAdminOrderListOptions
+);
+
+router.post(
+  "/sender-payment-list-options",
+  isAuth,
+  isVerified,
+  mainController.getSenderPaymentListOptions
+);
+
+router.post(
+  "/recipient-payment-list-options",
+  isAuth,
+  isVerified,
+  mainController.getRecipientPaymentListOptions
+);
+
+router.post(
+  "/admin-sender-payment-list-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminSenderPaymentListOptions
+);
+
+router.post(
+  "/admin-recipient-payment-list-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminRecipientPaymentListOptions
 );
 
 module.exports = router;

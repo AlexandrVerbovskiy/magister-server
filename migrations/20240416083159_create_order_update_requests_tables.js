@@ -10,8 +10,6 @@ exports.up = function (knex) {
     function (table) {
       table.increments("id").primary();
 
-      table.integer("sender_id").unsigned();
-      table.integer("order_id").unsigned();
       table.string("new_start_date");
       table.string("new_end_date");
       table.float("new_price_per_day");
@@ -19,8 +17,18 @@ exports.up = function (knex) {
       table.integer("fee");
       table.integer("new_duration");
       table.float("fact_total_price");
-      
+
       table.timestamps(true, true);
+
+      table
+        .integer("sender_id")
+        .unsigned()
+        .references(STATIC.TABLES.USERS + ".id");
+
+      table
+        .integer("order_id")
+        .unsigned()
+        .references(STATIC.TABLES.ORDERS + ".id");
     }
   );
 };

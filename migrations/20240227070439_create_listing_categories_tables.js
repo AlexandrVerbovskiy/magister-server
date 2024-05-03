@@ -13,10 +13,16 @@ exports.up = function (knex) {
       table.string("name");
       table.integer("level");
       table.string("image").nullable().defaultTo(null);
-      table.integer("parent_id").unsigned().nullable().defaultTo(null);
       table.boolean("popular").defaultTo(false);
 
       table.timestamps(true, true);
+
+      table
+      .integer("parent_id")
+      .unsigned()
+      .nullable()
+      .defaultTo(null)
+      .references(STATIC.TABLES.LISTING_CATEGORIES + ".id");
     }
   );
 };

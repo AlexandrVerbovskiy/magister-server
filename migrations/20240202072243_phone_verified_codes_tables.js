@@ -9,9 +9,13 @@ exports.up = function (knex) {
     STATIC.TABLES.PHONE_VERIFIED_CODES,
     function (table) {
       table.increments("id").primary();
-      table.integer("user_id").unsigned();
       table.string("code");
       table.timestamps(true, true);
+
+      table
+        .integer("user_id")
+        .unsigned()
+        .references(STATIC.TABLES.USERS + ".id");
     }
   );
 };
