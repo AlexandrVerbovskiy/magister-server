@@ -434,6 +434,15 @@ class OrderController extends Controller {
 
       await this.orderModel.orderTenantGotListing(orderInfo.id);
 
+      await this.recipientPaymentModel.paymentPlanGeneration({
+        startDate: orderInfo.offerStartDate,
+        endDate: orderInfo.offerEndDate,
+        pricePerDay: orderInfo.offerPricePerDay,
+        userId: orderInfo.ownerId,
+        orderId: ownerId.id,
+        paypalId: "123",
+      });
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
