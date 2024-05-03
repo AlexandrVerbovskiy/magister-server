@@ -110,6 +110,7 @@ class Controller {
 
       await func();
     } catch (e) {
+      console.log("Server error: ", e);
       const errorType = e.type ?? STATIC.ERRORS.UNPREDICTABLE.KEY;
 
       const currentErrorKey =

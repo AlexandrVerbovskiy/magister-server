@@ -15,13 +15,13 @@ class RecipientPayment extends Model {
     "planned_time as plannedTime",
     "received_type as receivedType",
     `${RECIPIENT_PAYMENTS_TABLE}.status as status`,
-    `${RECIPIENT_PAYMENTS_TABLE}.user_id as userId`,
+    `${RECIPIENT_PAYMENTS_TABLE}.user_id as recipientId`,
     `${RECIPIENT_PAYMENTS_TABLE}.paypal_id as paypalId`,
     `${RECIPIENT_PAYMENTS_TABLE}.order_id as orderId`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
-    `${USERS_TABLE}.name`,
-    `${USERS_TABLE}.email`,
+    `${USERS_TABLE}.name as recipientName`,
+    `${USERS_TABLE}.email as recipientEmail`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `owners.name as ownerName`,
@@ -31,6 +31,13 @@ class RecipientPayment extends Model {
   ];
 
   strFilterFields = [`${LISTINGS_TABLE}.name`];
+
+  strFullFilterFields = [
+    ...this.strFilterFields,
+    `${USERS_TABLE}.name`,
+    `owners.name`,
+    `tenants.name`,
+  ];
 
   orderFields = [
     `${RECIPIENT_PAYMENTS_TABLE}.id`,
@@ -107,22 +114,22 @@ class RecipientPayment extends Model {
         STATIC.RECIPIENT_STATUSES.COMPLETED,
         STATIC.RECIPIENT_STATUSES.FAILED,
         STATIC.RECIPIENT_STATUSES.WAITING,
-      ].includes(type)
+        STATIC.RECIPIENT_STATUSES.CANCELLED,
+      ].includes(status)
     ) {
-      query.where("status", status);
+      query.where(`${RECIPIENT_PAYMENTS_TABLE}.status`, status);
     }
 
     return query;
   };
 
-  baseListStatusType = (query, type) => {
+  baseListTypeSelect = (query, type) => {
     if (
-      [
-        STATIC.RECIPIENT_TYPES.RETURNED,
-        STATIC.RECIPIENT_TYPES.RENT_PAYMENT,
-      ].includes(type)
+      [STATIC.RECIPIENT_TYPES.REFUND, STATIC.RECIPIENT_TYPES.RENTAL].includes(
+        type
+      )
     ) {
-      query.where("received_type", type);
+      query.where(`${RECIPIENT_PAYMENTS_TABLE}.received_type`, type);
     }
 
     return query;
@@ -135,12 +142,17 @@ class RecipientPayment extends Model {
     { status = null, type = null, userId = null }
   ) => {
     let query = db(RECIPIENT_PAYMENTS_TABLE);
-    query = this.baseListJoin(query).whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListJoin(query).whereRaw(
+      ...this.baseStrFilter(
+        filter,
+        userId ? this.strFilterFields : this.strFullFilterFields
+      )
+    );
 
     query = this.baseListTimeFilter(
       { serverFromTime, serverToTime },
       query,
-      `${RECIPIENT_PAYMENTS_TABLE}.created_at`
+      `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
     );
 
     if (userId) {
@@ -151,6 +163,10 @@ class RecipientPayment extends Model {
       query = this.baseListStatusSelect(query, status);
     }
 
+    if (type) {
+      query = this.baseListTypeSelect(query, type);
+    }
+
     const { count } = await query.count("* as count").first();
     return count;
   };
@@ -159,15 +175,18 @@ class RecipientPayment extends Model {
     const { filter, start, count } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    const status = props.status ?? null;
-
     let query = db(RECIPIENT_PAYMENTS_TABLE).select(this.visibleFields);
-    query = this.baseListJoin(query).whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListJoin(query).whereRaw(
+      ...this.baseStrFilter(
+        filter,
+        props.userId ? this.strFilterFields : this.strFullFilterFields
+      )
+    );
 
     query = this.baseListTimeFilter(
       props,
       query,
-      `${RECIPIENT_PAYMENTS_TABLE}.created_at`
+      `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
     );
 
     if (props.userId) {
@@ -176,6 +195,10 @@ class RecipientPayment extends Model {
 
     if (props.status) {
       query = this.baseListStatusSelect(query, props.status);
+    }
+
+    if (props.type) {
+      query = this.baseListTypeSelect(query, props.type);
     }
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
