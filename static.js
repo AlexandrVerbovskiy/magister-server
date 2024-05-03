@@ -136,4 +136,5 @@ module.exports = {
     REFUND: "refund",
     RENTAL: "rental",
   },
+  MONTH_DURATION: 30,
 };

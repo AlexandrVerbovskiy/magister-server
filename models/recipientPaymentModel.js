@@ -2,6 +2,11 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
+const {
+  getDaysDifference,
+  listingListDateConverter,
+  separateDate,
+} = require("../utils");
 
 const RECIPIENT_PAYMENTS_TABLE = STATIC.TABLES.RECIPIENT_PAYMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
@@ -202,6 +207,67 @@ class RecipientPayment extends Model {
     }
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
+  };
+
+  paymentPlanGeneration = async ({
+    startDate,
+    endDate,
+    pricePerDay,
+    userId,
+    orderId,
+    paypalId,
+  }) => {
+    const dateDuration = getDaysDifference(startDate, endDate);
+
+    const paymentDays = {};
+
+    if (dateDuration > STATIC.MONTH_DURATION) {
+      let currentDate = new Date(startDate);
+      const end = new Date(endDate);
+      const monthEnds = [];
+      let iteration = 0;
+
+      while (currentDate <= end) {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const lastDay = new Date(year, month + 1, 0);
+        const dateDuration =
+          iteration === 0
+            ? getDaysDifference(startDate, lastDay)
+            : lastDay.getDate();
+
+        const paymentDate = separateDate(lastDay);
+
+        paymentDays[paymentDate] = dateDuration * pricePerDay;
+
+        const nextMonth = currentDate.getMonth() + 1;
+        currentDate.setMonth(nextMonth, 0);
+        monthEnds.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+        iteration++;
+      }
+    } else {
+      paymentDays[endDate] = dateDuration * pricePerDay;
+    }
+
+    const dataToInsert = [];
+
+    Object.keys(paymentDays).forEach((date) => {
+      dataToInsert.push({
+        money: paymentDays[date],
+        planned_time: date,
+        received_type: STATIC.RECIPIENT_TYPES.RENTAL,
+        status: STATIC.RECIPIENT_STATUSES.WAITING,
+        paypal_id: paypalId,
+        failed_details: "",
+        user_id: userId,
+        order_id: orderId,
+      });
+    });
+
+    await db.batchInsert(RECIPIENT_PAYMENTS_TABLE, dataToInsert);
+
+    return paymentDays;
   };
 }
 
