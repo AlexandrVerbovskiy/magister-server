@@ -12,11 +12,11 @@ class SenderPayment extends Model {
   visibleFields = [
     `${SENDER_PAYMENTS_TABLE}.id`,
     `${SENDER_PAYMENTS_TABLE}.money`,
-    `${SENDER_PAYMENTS_TABLE}.user_id as userId`,
+    `${SENDER_PAYMENTS_TABLE}.user_id as payerId`,
     `${SENDER_PAYMENTS_TABLE}.order_id as orderId`,
     `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
-    `${USERS_TABLE}.name as userName`,
-    `${USERS_TABLE}.email as userEmail`,
+    `${USERS_TABLE}.name as payerName`,
+    `${USERS_TABLE}.email as payerEmail`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${SENDER_PAYMENTS_TABLE}.paypal_sender_id as paypalSenderId`,
@@ -28,6 +28,8 @@ class SenderPayment extends Model {
   ];
 
   strFilterFields = [`${LISTINGS_TABLE}.name`, `owners.name`];
+
+  strFullFilterFields = [...this.strFilterFields, `${USERS_TABLE}.name`];
 
   orderFields = [
     `${SENDER_PAYMENTS_TABLE}.id`,
@@ -91,7 +93,12 @@ class SenderPayment extends Model {
 
   totalCount = async (filter, serverFromTime, serverToTime, userId = null) => {
     let query = db(SENDER_PAYMENTS_TABLE);
-    query = this.baseListJoin(query).whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListJoin(query).whereRaw(
+      ...this.baseStrFilter(
+        filter,
+        userId ? this.strFilterFields : this.strFullFilterFields
+      )
+    );
 
     query = this.baseListTimeFilter(
       { serverFromTime, serverToTime },
@@ -112,7 +119,12 @@ class SenderPayment extends Model {
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(SENDER_PAYMENTS_TABLE).select(this.visibleFields);
-    query = this.baseListJoin(query).whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListJoin(query).whereRaw(
+      ...this.baseStrFilter(
+        filter,
+        props.userId ? this.strFilterFields : this.strFullFilterFields
+      )
+    );
 
     query = this.baseListTimeFilter(
       props,

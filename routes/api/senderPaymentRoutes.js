@@ -6,6 +6,7 @@ const {
   paypalCreateOrderValidation,
   paypalOrderPayedValidation,
 } = require("../../validations/senderPayment");
+const isAdmin = require("../../middlewares/isAdmin");
 
 router.post(
   "/paypal-create-order",
@@ -21,6 +22,8 @@ router.post(
   senderPaymentController.paypalOrderPayed
 );
 
-router.post("/list", isAuth, senderPaymentController.list);
+router.post("/list", isAuth, senderPaymentController.userList);
+
+router.post("/admin-list", isAuth, isAdmin, senderPaymentController.adminList);
 
 module.exports = router;

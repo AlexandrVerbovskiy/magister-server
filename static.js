@@ -130,9 +130,10 @@ module.exports = {
     COMPLETED: "completed",
     FAILED: "failed",
     WAITING: "waiting",
+    CANCELLED: "cancelled",
   },
   RECIPIENT_TYPES: {
-    RETURNED: "returned",
-    RENT_PAYMENT: "rent_payment",
+    REFUND: "refund",
+    RENTAL: "rental",
   },
 };

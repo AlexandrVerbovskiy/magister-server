@@ -603,6 +603,14 @@ class MainController extends Controller {
       });
     });
 
+  getAdminSenderPaymentListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await senderPaymentController.baseSenderPaymentList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
   getRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
@@ -613,11 +621,19 @@ class MainController extends Controller {
         userId
       );
 
-      console.log("test");
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
         categories,
+      });
+    });
+
+  getAdminRecipientPaymentListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await recipientPaymentController.baseRecipientPaymentList(
+        req
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
       });
     });
 }

@@ -108,10 +108,16 @@ class SenderPaymentController extends Controller {
     };
   };
 
-  list = (req, res) =>
+  userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const result = await this.baseSenderPaymentList(req, userId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  adminList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseSenderPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 }

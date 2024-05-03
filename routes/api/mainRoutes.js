@@ -245,4 +245,18 @@ router.post(
   mainController.getRecipientPaymentListOptions
 );
 
+router.post(
+  "/admin-sender-payment-list-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminSenderPaymentListOptions
+);
+
+router.post(
+  "/admin-recipient-payment-list-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminRecipientPaymentListOptions
+);
+
 module.exports = router;

@@ -66,6 +66,8 @@ class ListingsModel extends Model {
     "key_words",
   ];
 
+  strFullFilterFields = [...this.strFilterFields, `${USERS_TABLE}.name`];
+
   orderFields = [
     "id",
     "name",
@@ -463,7 +465,13 @@ class ListingsModel extends Model {
           `${LISTINGS_TABLE}.id`
         ).andOn(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "=", subquery);
       })
-      .whereRaw(...this.baseStrFilter(filter));
+      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+      .whereRaw(
+        ...this.baseStrFilter(
+          filter,
+          userId ? this.strFilterFields : this.strFullFilterFields
+        )
+      );
 
     const statusWhere = (isData) =>
       `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
@@ -685,7 +693,12 @@ class ListingsModel extends Model {
           )
         );
       })
-      .whereRaw(...this.baseStrFilter(filter));
+      .whereRaw(
+        ...this.baseStrFilter(
+          filter,
+          props.userId ? this.strFilterFields : this.strFullFilterFields
+        )
+      );
 
     const statusWhere = (isData) =>
       `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;

@@ -19,13 +19,15 @@ class RecipientPaymentController extends Controller {
           filter,
           timeInfos["serverFromTime"],
           timeInfos["serverToTime"],
-          userId
+          { userId, type: req.body.type, status: req.body.status }
         )
     );
 
     Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
     options["userId"] = userId;
+    options["type"] = req.body.type;
+    options["status"] = req.body.status;
 
     const requests = await this.recipientPaymentModel.list(options);
 
@@ -36,10 +38,16 @@ class RecipientPaymentController extends Controller {
     };
   };
 
-  list = (req, res) =>
+  userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const result = await this.baseRecipientPaymentList(req, userId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  adminList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseRecipientPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 }
