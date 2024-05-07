@@ -15,6 +15,7 @@ const {
   createValidation,
   listValidation,
   approveClientGotListingValidation,
+  paypalOrderPayedValidation,
 } = require("../../validations/order");
 
 router.post(
@@ -89,6 +90,12 @@ router.post(
   orderController.delete
 );
 
+router.post(
+  "/paypal-order-payed",
+  isAuth,
+  paypalOrderPayedValidation,
+  orderController.paypalOrderPayed
+);
 
 router.post(
   "/approve-client-got-listing",
@@ -96,5 +103,17 @@ router.post(
   approveClientGotListingValidation,
   orderController.approveClientGotListing
 );
+
+router.post("/cancel-by-tenant", isAuth, orderController.cancelByTenant);
+
+router.post("/cancel-by-owner", isAuth, orderController.cancelByOwner);
+
+router.post("/accept-cancel-by-tenant", isAuth, orderController.acceptCancelByTenant);
+
+router.post("/accept-cancel-by-owner", isAuth, orderController.acceptCancelByOwner);
+
+router.post("/full-cancel-payed", isAuth, orderController.fullCancelPayed);
+
+router.post("/full-cancel", isAuth, orderController.fullCancel);
 
 module.exports = router;

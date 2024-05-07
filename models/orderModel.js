@@ -630,32 +630,31 @@ class OrderModel extends Model {
   getConflictOrders = async (orderId, listingId, startDate, endDate) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
-
-    return await query
+    query = query
       .joinRaw(
         `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-       ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
+     ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
       )
       .where("listing_id", listingId)
       .whereNot(`${ORDERS_TABLE}.id`, orderId)
       .whereRaw(
         `(
-          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL 
-            AND (
-              (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? OR ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)
-              OR
-              (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? OR ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)
-            )
+        (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL 
+          AND (
+            (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= ?)
+            OR
+            (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= ?)
           )
-          OR
-          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL 
-            AND (
-              (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?)
-              OR
-              (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?)
-            )
+        )
+        OR
+        (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL 
+          AND (
+            (${ORDERS_TABLE}.start_date >= ? AND ${ORDERS_TABLE}.end_date <= ?)
+            OR
+            (${ORDERS_TABLE}.start_date >= ? AND ${ORDERS_TABLE}.end_date <= ?)
           )
-        )`,
+        )
+      )`,
         [
           startDate,
           startDate,
@@ -671,14 +670,15 @@ class OrderModel extends Model {
       .whereRaw(
         `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}')`
       )
-      .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
-      .select([
-        ...this.fullVisibleFields,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as newFactTotalPrice`,
-      ]);
+      .whereNot("status", STATIC.ORDER_STATUSES.REJECTED);
+
+    return await query.select([
+      ...this.fullVisibleFields,
+      `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
+      `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
+      `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
+      `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as newFactTotalPrice`,
+    ]);
   };
 
   getBlockedListingDates = async (listingId) => {

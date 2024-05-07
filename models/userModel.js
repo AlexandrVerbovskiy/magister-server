@@ -31,6 +31,7 @@ class UserModel extends Model {
     "instagram_url as instagramUrl",
     "linkedin_url as linkedinUrl",
     "twitter_url as twitterUrl",
+    "paypal_id as paypalId",
   ];
 
   allFields = [
@@ -56,7 +57,6 @@ class UserModel extends Model {
     "instagram_url as instagramUrl",
     "linkedin_url as linkedinUrl",
     "twitter_url as twitterUrl",
-    "paypal_id as paypalId",
   ];
 
   documentFields = [
