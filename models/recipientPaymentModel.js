@@ -80,6 +80,17 @@ class RecipientPayment extends Model {
     return res[0]["id"];
   };
 
+  createRefundPayment = ({ money, userId, orderId, paypalId }) =>
+    this.create({
+      money,
+      userId,
+      orderId,
+      plannedTime: separateDate(new Date()),
+      receivedType: STATIC.RECIPIENT_TYPES.REFUND,
+      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+      paypalId,
+    });
+
   baseListJoin = (query) =>
     query
       .join(
@@ -215,7 +226,6 @@ class RecipientPayment extends Model {
     pricePerDay,
     userId,
     orderId,
-    paypalId,
   }) => {
     const dateDuration = getDaysDifference(startDate, endDate);
 
@@ -258,7 +268,6 @@ class RecipientPayment extends Model {
         planned_time: date,
         received_type: STATIC.RECIPIENT_TYPES.RENTAL,
         status: STATIC.RECIPIENT_STATUSES.WAITING,
-        paypal_id: paypalId,
         failed_details: "",
         user_id: userId,
         order_id: orderId,
@@ -268,6 +277,54 @@ class RecipientPayment extends Model {
     await db.batchInsert(RECIPIENT_PAYMENTS_TABLE, dataToInsert);
 
     return paymentDays;
+  };
+
+  getToPaymentsPay = async (
+    limit = STATIC.INFINITY_SELECT_ITERATION_LIMIT,
+    start = 0
+  ) => {
+    const currentDate = separateDate(new Date());
+
+    const res = await db(RECIPIENT_PAYMENTS_TABLE)
+      .join(
+        USERS_TABLE,
+        `${USERS_TABLE}.id`,
+        "=",
+        `${RECIPIENT_PAYMENTS_TABLE}.user_id`
+      )
+      .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
+      .where("planned_time", "<=", currentDate)
+      .limit(limit)
+      .offset(start)
+      .select([
+        `${RECIPIENT_PAYMENTS_TABLE}.id`,
+        `${RECIPIENT_PAYMENTS_TABLE}.money`,
+        `${USERS_TABLE}.paypal_id as paypalId`,
+      ]);
+
+    return res;
+  };
+
+  markAsFailed = async (id, description) => {
+    await db(RECIPIENT_PAYMENTS_TABLE).where("id", id).update({
+      failed_details: description,
+      status: STATIC.RECIPIENT_STATUSES.FAILED,
+    });
+  };
+
+  markAsCompletedByIds = async (ids) => {
+    await db(RECIPIENT_PAYMENTS_TABLE).whereIn("id", ids).update({
+      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+    });
+  };
+
+  markAsCancelledByOrderId = async (orderId) => {
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where("order_id", orderId)
+      .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.CANCELLED,
+      });
   };
 }
 
