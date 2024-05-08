@@ -8,6 +8,7 @@ const {
   isVerified,
   authId,
   isSupport,
+  isVerifiedAndHasPaypalId,
 } = require("../../middlewares");
 const {
   idParamValidation,
@@ -21,7 +22,7 @@ const {
 router.post(
   "/create",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   createValidation,
   orderController.create
 );
@@ -29,7 +30,7 @@ router.post(
 router.get(
   "/get-full-by-id/:id",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   idParamValidation,
   orderController.getFullById
 );
@@ -37,7 +38,7 @@ router.get(
 router.post(
   "/accept-booking",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   idBodyValidation,
   orderController.acceptBooking
 );
@@ -46,6 +47,7 @@ router.post(
   "/reject-booking",
   isAuth,
   isVerified,
+  isVerifiedAndHasPaypalId,
   idBodyValidation,
   orderController.rejectBooking
 );
@@ -53,7 +55,7 @@ router.post(
 router.post(
   "/booking-list",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   listValidation,
   orderController.bookingList
 );
@@ -69,7 +71,7 @@ router.post(
 router.post(
   "/order-list",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   listValidation,
   orderController.orderList
 );
@@ -93,6 +95,7 @@ router.post(
 router.post(
   "/paypal-order-payed",
   isAuth,
+  isVerifiedAndHasPaypalId,
   paypalOrderPayedValidation,
   orderController.paypalOrderPayed
 );
@@ -100,20 +103,58 @@ router.post(
 router.post(
   "/approve-client-got-listing",
   isAuth,
+  isVerifiedAndHasPaypalId,
   approveClientGotListingValidation,
   orderController.approveClientGotListing
 );
 
-router.post("/cancel-by-tenant", isAuth, orderController.cancelByTenant);
+router.post(
+  "/cancel-by-tenant",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  orderController.cancelByTenant
+);
 
-router.post("/cancel-by-owner", isAuth, orderController.cancelByOwner);
+router.post(
+  "/cancel-by-owner",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  orderController.cancelByOwner
+);
 
-router.post("/accept-cancel-by-tenant", isAuth, orderController.acceptCancelByTenant);
+router.post(
+  "/finished-by-owner",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  orderController.finishedByOwner
+);
 
-router.post("/accept-cancel-by-owner", isAuth, orderController.acceptCancelByOwner);
+router.post(
+  "/accept-cancel-by-tenant",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  orderController.acceptCancelByTenant
+);
 
-router.post("/full-cancel-payed", isAuth, orderController.fullCancelPayed);
+router.post(
+  "/accept-cancel-by-owner",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  orderController.acceptCancelByOwner
+);
 
-router.post("/full-cancel", isAuth, orderController.fullCancel);
+router.post(
+  "/full-cancel-payed",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  orderController.fullCancelPayed
+);
+
+router.post(
+  "/full-cancel",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  orderController.fullCancel
+);
 
 module.exports = router;

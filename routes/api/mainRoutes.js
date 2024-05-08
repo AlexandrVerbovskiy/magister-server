@@ -1,7 +1,13 @@
 const { Router } = require("express");
 const router = Router();
 const { mainController } = require("../../controllers");
-const { isAuth, isVerified, isAdmin, authId } = require("../../middlewares");
+const {
+  isAuth,
+  isVerified,
+  isAdmin,
+  authId,
+  isVerifiedAndHasPaypalId,
+} = require("../../middlewares");
 const {
   updateListingOptionsValidation,
   adminUpdateListingOptionsValidation,
@@ -29,6 +35,7 @@ router.get(
   "/create-listing-options",
   isAuth,
   isVerified,
+  isVerifiedAndHasPaypalId,
   mainController.getCreateListingPageOptions
 );
 
