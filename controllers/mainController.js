@@ -243,32 +243,6 @@ class MainController extends Controller {
       });
     });
 
-  canFastCancelPayedOrder = (order) => {
-    if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT) {
-      return false;
-    }
-
-    const today = new Date();
-    const offerStartDate = order.offerStartDate;
-
-    let quickCancelLastPossible = new Date(offerStartDate);
-    quickCancelLastPossible.setDate(quickCancelLastPossible.getDate() - 1);
-
-    return today <= quickCancelLastPossible;
-  };
-
-  canFinalizationOrder = (order) => {
-    if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
-      return false;
-    }
-
-    const today = new Date();
-    const offerEndDate = order.offerEndDate;
-
-    let quickCancelLastPossible = new Date(offerEndDate);
-    return today > quickCancelLastPossible;
-  };
-
   getOrderFullByIdOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
@@ -310,9 +284,9 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
-      const canFastCancelPayed = this.canFastCancelPayedOrder(order);
-      
-      const canFinalization = this.canFinalizationOrder(order);
+      const canFastCancelPayed = this.orderModel.canFastCancelPayedOrder(order);
+
+      const canFinalization = this.orderModel.canFinalizationOrder(order);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
@@ -321,7 +295,7 @@ class MainController extends Controller {
         blockedDates,
         conflictOrders,
         canFastCancelPayed,
-        canFinalization
+        canFinalization,
       });
     });
 
