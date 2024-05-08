@@ -130,6 +130,32 @@ class OrderModel extends Model {
     STATIC.ORDER_STATUSES.REJECTED,
   ];
 
+  canFastCancelPayedOrder = (order) => {
+    if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT) {
+      return false;
+    }
+
+    const today = new Date();
+    const offerStartDate = order.offerStartDate;
+
+    let quickCancelLastPossible = new Date(offerStartDate);
+    quickCancelLastPossible.setDate(quickCancelLastPossible.getDate() - 1);
+
+    return today <= quickCancelLastPossible;
+  };
+
+  canFinalizationOrder = (order) => {
+    if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
+      return false;
+    }
+
+    const today = new Date();
+    const offerEndDate = order.offerEndDate;
+
+    let quickCancelLastPossible = new Date(offerEndDate);
+    return today > quickCancelLastPossible;
+  };
+
   fullBaseGetQuery = (filter, serverFromTime, serverToTime) => {
     let query = db(ORDERS_TABLE)
       .join(
@@ -777,7 +803,7 @@ class OrderModel extends Model {
 
   acceptUpdateRequest = (orderId, newData = {}) => {
     newData["status"] = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
-    return updateOrder(orderId, newData);
+    return this.updateOrder(orderId, newData);
   };
 
   acceptOrder = async (orderId, newData = {}) => {

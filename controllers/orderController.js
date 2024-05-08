@@ -4,6 +4,7 @@ const {
   generateRandomString,
   getPaypalOrderInfo,
   capturePaypalOrder,
+  sendMoneyToPaypalByPaypalID,
 } = require("../utils");
 const Controller = require("./Controller");
 const qrcode = require("qrcode");
@@ -367,16 +368,10 @@ class OrderController extends Controller {
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
       if (
-        (order.status == "pending_tenant" && order.tenantId != userId) ||
-        (order.status == "pending_owner" && order.ownerId != userId)
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
-      if (
-        (order.status != STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.status != STATIC.ORDER_STATUSES.PENDING_TENANT) ||
-        order.cancelStatus
+        (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
+          order.tenantId != userId) ||
+        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.ownerId != userId)
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
@@ -459,11 +454,11 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      const orderInfo = this.orderModel.getFullByTenantListingToken(token);
+      const orderInfo = await this.orderModel.getFullByTenantListingToken(token);
 
       if (
         orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT ||
-        order.cancelStatus
+        orderInfo.cancelStatus
       ) {
         return this.sendErrorResponse(
           res,
@@ -483,7 +478,7 @@ class OrderController extends Controller {
         endDate: orderInfo.offerEndDate,
         pricePerDay: orderInfo.offerPricePerDay,
         userId: orderInfo.ownerId,
-        orderId: ownerId.id,
+        orderId: orderInfo.id,
         paypalId: "123",
       });
 
@@ -566,6 +561,20 @@ class OrderController extends Controller {
     if (!isAcceptCancelByTenant && !isAcceptCancelByOwner) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
+
+    const tenantInfo = await this.userModel.getById(orderInfo.tenantId);
+
+    await sendMoneyToPaypalByPaypalID(
+      tenantInfo.paypalId,
+      orderInfo.factTotalPrice
+    );
+
+    await this.recipientPaymentModel.createRefundPayment({
+      money: orderInfo.factTotalPrice,
+      userId: orderInfo.tenantId,
+      orderId: id,
+      paypalId: tenantInfo.paypalId,
+    });
 
     await this.orderModel.successCanceled(id);
 
@@ -651,7 +660,8 @@ class OrderController extends Controller {
         );
       }
 
-      const canFastCancelPayed = this.canFastCancelPayed(orderInfo);
+      const canFastCancelPayed =
+        this.orderModel.canFastCancelPayedOrder(orderInfo);
 
       if (!canFastCancelPayed) {
         return this.sendErrorResponse(
@@ -695,7 +705,6 @@ class OrderController extends Controller {
         userId,
         userType: "tenant",
         availableStatusesToCancel: [
-          STATIC.ORDER_STATUSES.PENDING_OWNER,
           STATIC.ORDER_STATUSES.PENDING_OWNER,
           STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
         ],
