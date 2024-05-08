@@ -32,10 +32,12 @@ class OrderModel extends Model {
     `tenants.name as tenantName`,
     `tenants.email as tenantEmail`,
     `tenants.photo as tenantPhoto`,
+    `tenants.phone as tenantPhone`,
     `owners.id as ownerId`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
     `owners.photo as ownerPhoto`,
+    `owners.phone as ownerPhone`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${LISTINGS_TABLE}.city as listingCity`,
@@ -43,6 +45,15 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
+  ];
+
+  lightRequestVisibleFields = [
+    ...this.lightVisibleFields,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as requestFactTotalPrice`,
   ];
 
   fullVisibleFields = [
@@ -176,13 +187,31 @@ class OrderModel extends Model {
     );
   };
 
-  tenantBaseGetQuery = (filter, serverFromTime, serverToTime, tenantId) => {
-    let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+  tenantBaseGetQuery = (
+    filter,
+    serverFromTime,
+    serverToTime,
+    tenantId,
+    needRequestInfo = false
+  ) => {
+    const baseGetReq = needRequestInfo
+      ? this.fullBaseGetQueryWithRequestInfo
+      : this.fullBaseGetQuery;
+    let query = baseGetReq(filter, serverFromTime, serverToTime);
     return query.whereRaw("tenants.id = ?", tenantId);
   };
 
-  ownerBaseGetQuery = (filter, serverFromTime, serverToTime, ownerId) => {
-    let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+  ownerBaseGetQuery = (
+    filter,
+    serverFromTime,
+    serverToTime,
+    ownerId,
+    needRequestInfo = false
+  ) => {
+    const baseGetReq = needRequestInfo
+      ? this.fullBaseGetQueryWithRequestInfo
+      : this.fullBaseGetQuery;
+    let query = baseGetReq(filter, serverFromTime, serverToTime);
     return query.whereRaw("owners.id = ?", ownerId);
   };
 
@@ -268,11 +297,7 @@ class OrderModel extends Model {
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
-    query = this.fullBaseGetQueryWithRequestInfo(
-      filter,
-      serverFromTime,
-      serverToTime
-    );
+    query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
 
     query = dopWhereCall(query);
 
@@ -298,7 +323,7 @@ class OrderModel extends Model {
     return count;
   };
 
-  baseTenantList = async (props, dopWhereCall) => {
+  baseTenantList = async (props, type) => {
     const { filter, start, count, serverFromTime, serverToTime, tenantId } =
       props;
 
@@ -308,19 +333,29 @@ class OrderModel extends Model {
       filter,
       serverFromTime,
       serverToTime,
-      tenantId
+      tenantId,
+      type == "booking"
     );
 
-    query = dopWhereCall(query);
+    if (type == "booking") {
+      query = this.dopWhereBooking(query);
+    } else {
+      query = this.dopWhereOrder(query);
+    }
+
+    const visibleFields =
+      type == "booking"
+        ? this.lightRequestVisibleFields
+        : this.lightVisibleFields;
 
     return await query
-      .select(this.lightVisibleFields)
+      .select(visibleFields)
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
   };
 
-  baseOwnerList = async (props, dopWhereCall) => {
+  baseOwnerList = async (props, type) => {
     const { filter, start, count, serverFromTime, serverToTime, ownerId } =
       props;
     const { order, orderType } = this.getOrderInfo(props);
@@ -329,13 +364,23 @@ class OrderModel extends Model {
       filter,
       serverFromTime,
       serverToTime,
-      ownerId
+      ownerId,
+      type == "booking"
     );
 
-    query = dopWhereCall(query);
+    if (type == "booking") {
+      query = this.dopWhereBooking(query);
+    } else {
+      query = this.dopWhereOrder(query);
+    }
+
+    const visibleFields =
+      type == "booking"
+        ? this.lightRequestVisibleFields
+        : this.lightVisibleFields;
 
     return await query
-      .select(this.lightVisibleFields)
+      .select(visibleFields)
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
@@ -368,10 +413,7 @@ class OrderModel extends Model {
 
     query = dopWhereCall(query);
 
-    query = query.select([
-      ...this.lightVisibleFields,
-      `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as requestFactTotalPrice`,
-    ]);
+    query = query.select(this.lightRequestVisibleFields);
 
     if (order == "fact_total_price") {
       query = query.orderByRaw(
@@ -422,11 +464,11 @@ class OrderModel extends Model {
   };
 
   tenantBookingsList = async (props) => {
-    return await this.baseTenantList(props, this.dopWhereBooking);
+    return await this.baseTenantList(props, "booking");
   };
 
   tenantOrdersList = async (props) => {
-    return await this.baseTenantList(props, this.dopWhereOrder);
+    return await this.baseTenantList(props, "order");
   };
 
   ownerBookingsTotalCount = async (
@@ -460,11 +502,11 @@ class OrderModel extends Model {
   };
 
   ownerBookingsList = async (props) => {
-    return await this.baseOwnerList(props, this.dopWhereBooking);
+    return await this.baseOwnerList(props, "booking");
   };
 
   ownerOrderList = async (props) => {
-    return await this.baseOwnerList(props, this.dopWhereOrder);
+    return await this.baseOwnerList(props, "order");
   };
 
   allBookingsTotalCount = async (filter, serverFromTime, serverToTime) => {
@@ -834,6 +876,12 @@ class OrderModel extends Model {
   orderTenantGotListing = async (orderId) => {
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+    });
+  };
+
+  orderFinished = async (orderId) => {
+    await db(ORDERS_TABLE).where({ id: orderId }).update({
+      status: STATIC.ORDER_STATUSES.FINISHED,
     });
   };
 }

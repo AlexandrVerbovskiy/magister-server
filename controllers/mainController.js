@@ -243,7 +243,7 @@ class MainController extends Controller {
       });
     });
 
-  canFastCancelPayed = (order) => {
+  canFastCancelPayedOrder = (order) => {
     if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT) {
       return false;
     }
@@ -255,6 +255,18 @@ class MainController extends Controller {
     quickCancelLastPossible.setDate(quickCancelLastPossible.getDate() - 1);
 
     return today <= quickCancelLastPossible;
+  };
+
+  canFinalizationOrder = (order) => {
+    if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
+      return false;
+    }
+
+    const today = new Date();
+    const offerEndDate = order.offerEndDate;
+
+    let quickCancelLastPossible = new Date(offerEndDate);
+    return today > quickCancelLastPossible;
   };
 
   getOrderFullByIdOptions = (req, res) =>
@@ -298,7 +310,9 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
-      const canFastCancelPayed = this.canFastCancelPayed(order);
+      const canFastCancelPayed = this.canFastCancelPayedOrder(order);
+      
+      const canFinalization = this.canFinalizationOrder(order);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
@@ -307,6 +321,7 @@ class MainController extends Controller {
         blockedDates,
         conflictOrders,
         canFastCancelPayed,
+        canFinalization
       });
     });
 
@@ -523,6 +538,7 @@ class MainController extends Controller {
         : orderController.baseListingOwnerBookingList;
 
       const result = await request(req);
+
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

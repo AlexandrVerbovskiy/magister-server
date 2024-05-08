@@ -621,17 +621,6 @@ class UserController extends Controller {
       dataToSave["needRegularViewInfoForm"] = false;
       delete dataToSave["email"];
 
-      const countUnfinishedUserOrders =
-        await this.orderModel.getUnfinishedUserCount(userId);
-
-      if (countUnfinishedUserOrders) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You have an unfinished booking or order. Please finish all your orders and bookings before updating"
-        );
-      }
-
       const user = await this.baseUpdate(userId, dataToSave, req.file);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
@@ -745,6 +734,17 @@ class UserController extends Controller {
         req,
         "confirmMoneyLaunderingChecksAndCompliance"
       );
+
+      const countUnfinishedUserOrders =
+        await this.orderModel.getUnfinishedUserCount(userId);
+
+      if (countUnfinishedUserOrders) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You have an unfinished booking or order. Please finish all your orders and bookings before updating"
+        );
+      }
 
       const dataToSave = {};
       const folder = "documents/" + userId;

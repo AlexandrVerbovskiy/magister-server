@@ -35,28 +35,15 @@ class UserModel extends Model {
   ];
 
   allFields = [
-    "id",
-    "name",
-    "email",
+    ...this.visibleFields,
     "email_verified as emailVerified",
-    "role",
-    "contact_details as contactDetails",
-    "brief_bio as briefBio",
-    "photo",
-    "phone",
     "phone_verified as phoneVerified",
     "active",
     "verified",
-    "suspicious",
     "password",
-    "place_work as placeWork",
     "has_password_access as hasPasswordAccess",
     "need_regular_view_info_form as needRegularViewInfoForm",
     "two_factor_authentication as twoFactorAuthentication",
-    "facebook_url as facebookUrl",
-    "instagram_url as instagramUrl",
-    "linkedin_url as linkedinUrl",
-    "twitter_url as twitterUrl",
   ];
 
   documentFields = [
@@ -266,6 +253,26 @@ class UserModel extends Model {
       .select("email")
       .where({ id, verified: true })
       .first();
+  };
+
+  checkHasPaypal = async (id) => {
+    const userInfo = await db(USERS_TABLE)
+      .select("paypal_id as paypalId")
+      .where({ id })
+      .first();
+
+    const paypalId = userInfo?.paypalId;
+    return paypalId && paypalId.length > 0;
+  };
+
+  checkVerifiedAndHasPaypal = async (id) => {
+    const userInfo = await db(USERS_TABLE)
+      .select("paypal_id as paypalId")
+      .where({ id, verified: true })
+      .first();
+
+    const paypalId = userInfo?.paypalId;
+    return paypalId && paypalId.length > 0;
   };
 
   checkIsSupport = async (id) => {
