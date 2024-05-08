@@ -1,5 +1,11 @@
 const STATIC = require("../static");
-const { generateDatesBetween, generateRandomString } = require("../utils");
+const {
+  generateDatesBetween,
+  generateRandomString,
+  getPaypalOrderInfo,
+  capturePaypalOrder,
+  sendMoneyToPaypalByPaypalID,
+} = require("../utils");
 const Controller = require("./Controller");
 const qrcode = require("qrcode");
 
@@ -346,8 +352,8 @@ class OrderController extends Controller {
       }
 
       if (
-        (order.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER &&
-          order.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT &&
+        (order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT &&
           order.status !== STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) ||
         order.cancelStatus
       ) {
@@ -360,19 +366,12 @@ class OrderController extends Controller {
 
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
-      console.log("lastUpdateRequestInfo: ", lastUpdateRequestInfo);
 
       if (
-        (order.status == "pending_tenant" && order.tenantId != userId) ||
-        (order.status == "pending_owner" && order.ownerId != userId)
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
-      if (
-        (order.status != STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.status != STATIC.ORDER_STATUSES.PENDING_TENANT) ||
-        order.cancelStatus
+        (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
+          order.tenantId != userId) ||
+        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.ownerId != userId)
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
@@ -406,6 +405,46 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
+  paypalOrderPayed = async (req, res) =>
+    this.baseWrapper(res, res, async () => {
+      const { userId } = req.userData;
+      const { orderId: paypalOrderId } = req.body;
+
+      await capturePaypalOrder(paypalOrderId);
+
+      const paypalOrderInfo = await getPaypalOrderInfo(paypalOrderId);
+
+      const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
+      const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
+      const paypalCaptureId =
+        paypalOrderInfo.purchase_units[0].payments.captures[0].id;
+
+      const amount = paypalOrderInfo.purchase_units[0].amount.value;
+
+      const token = generateRandomString();
+      const generatedImage = await qrcode.toDataURL(
+        process.env.CLIENT_URL +
+          "/dashboard/orders/approve-tenant-listing/" +
+          token
+      );
+
+      await this.orderModel.orderTenantPayed(orderId, {
+        token,
+        qrCode: generatedImage,
+      });
+
+      await this.senderPaymentModel.create({
+        money: amount,
+        userId: userId,
+        orderId: orderId,
+        paypalSenderId: paypalSenderId,
+        paypalOrderId: paypalOrderId,
+        paypalCaptureId: paypalCaptureId,
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
   approveClientGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token } = req.body;
@@ -415,11 +454,11 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      const orderInfo = this.orderModel.getFullByTenantListingToken(token);
+      const orderInfo = await this.orderModel.getFullByTenantListingToken(token);
 
       if (
         orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT ||
-        order.cancelStatus
+        orderInfo.cancelStatus
       ) {
         return this.sendErrorResponse(
           res,
@@ -439,9 +478,269 @@ class OrderController extends Controller {
         endDate: orderInfo.offerEndDate,
         pricePerDay: orderInfo.offerPricePerDay,
         userId: orderInfo.ownerId,
-        orderId: ownerId.id,
+        orderId: orderInfo.id,
         paypalId: "123",
       });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  baseCancelOrder = async ({
+    req,
+    res,
+    userId,
+    userType,
+    cancelFunc,
+    availableStatusesToCancel = [],
+  }) => {
+    const { id } = req.body;
+
+    const orderInfo = await this.orderModel.getFullById(id);
+
+    if (!orderInfo) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+    }
+
+    const isOwner = userType === "owner";
+    const isTenant = userType === "tenant";
+
+    const isCancelByTenant = isTenant && orderInfo.tenantId === userId;
+    const isCancelByOwner = isOwner && orderInfo.ownerId === userId;
+
+    if (!isCancelByTenant && !isCancelByOwner) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    if (orderInfo.cancelStatus != null) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "You cannot cancel an order if it has already been canceled or is in the process of being canceled"
+      );
+    }
+
+    if (!availableStatusesToCancel.includes(orderInfo.status)) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "You cannot cancel an order with its current status"
+      );
+    }
+
+    const funcResult = await cancelFunc(id, orderInfo);
+    return funcResult ?? this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+  };
+
+  acceptCancelOrder = async (req, res, userId, userType) => {
+    const { id } = req.body;
+
+    const orderInfo = await this.orderModel.getFullById(id);
+
+    if (!orderInfo) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+    }
+
+    if (
+      userType === "tenant" &&
+      orderInfo.cancelStatus !=
+        STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE
+    ) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "You cannot cancel an order if it has already been canceled or is in the process of being canceled"
+      );
+    }
+
+    const isOwner = userType === "owner";
+    const isTenant = userType === "tenant";
+
+    const isAcceptCancelByTenant = isTenant && orderInfo.tenantId === userId;
+    const isAcceptCancelByOwner = isOwner && orderInfo.ownerId === userId;
+
+    if (!isAcceptCancelByTenant && !isAcceptCancelByOwner) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const tenantInfo = await this.userModel.getById(orderInfo.tenantId);
+
+    await sendMoneyToPaypalByPaypalID(
+      tenantInfo.paypalId,
+      orderInfo.factTotalPrice
+    );
+
+    await this.recipientPaymentModel.createRefundPayment({
+      money: orderInfo.factTotalPrice,
+      userId: orderInfo.tenantId,
+      orderId: id,
+      paypalId: tenantInfo.paypalId,
+    });
+
+    await this.orderModel.successCanceled(id);
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+  };
+
+  cancelByTenant = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      return this.baseCancelOrder({
+        req,
+        res,
+        userId,
+        userType: "tenant",
+        availableStatusesToCancel: [
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+        ],
+        cancelFunc: this.orderModel.startCancelByTenant,
+      });
+    });
+
+  cancelByOwner = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      return this.baseCancelOrder({
+        req,
+        res,
+        userId,
+        userType: "owner",
+        availableStatusesToCancel: [
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+        ],
+        cancelFunc: this.orderModel.startCancelByOwner,
+      });
+    });
+
+  acceptCancelByTenant = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      return this.acceptCancelOrder(req, res, userId, "tenant");
+    });
+
+  acceptCancelByOwner = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      return this.acceptCancelOrder(req, res, userId, "owner");
+    });
+
+  fullCancelPayed = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+      const { id } = req.body;
+
+      const orderInfo = await this.orderModel.getById(id);
+
+      if (!orderInfo) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const { tenantId, status, cancelStatus, factTotalPrice } = orderInfo;
+
+      if (tenantId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      if (cancelStatus != null) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You cannot cancel an order if it has already been canceled or is in the process of being canceled"
+        );
+      }
+
+      if (status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You cannot cancel an order with the current order status"
+        );
+      }
+
+      const canFastCancelPayed =
+        this.orderModel.canFastCancelPayedOrder(orderInfo);
+
+      if (!canFastCancelPayed) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You can no longer cancel the reservation because the available time has passed"
+        );
+      }
+
+      const userInfo = await this.userModel.getById(userId);
+
+      if (!userInfo.paypalId) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.UNPREDICTABLE,
+          "You cannot get a refund until you have a PayPal ID in your profile"
+        );
+      }
+
+      await sendMoneyToPaypalByPaypalID(userInfo.paypalId, factTotalPrice);
+
+      await this.orderModel.successCanceled(id);
+
+      await this.recipientPaymentModel.createRefundPayment({
+        money: factTotalPrice,
+        userId: userId,
+        orderId: id,
+        paypalId: userInfo.paypalId,
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  fullCancel = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      return this.baseCancelOrder({
+        req,
+        res,
+        userId,
+        userType: "tenant",
+        availableStatusesToCancel: [
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
+          STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+        ],
+        cancelFunc: this.orderModel.successCanceled,
+      });
+    });
+
+  finishedByOwner = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      const { id } = req.body;
+
+      const orderInfo = await this.orderModel.getFullById(id);
+
+      if (!orderInfo || orderInfo.ownerId !== userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      if (orderInfo.cancelStatus != null) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You cannot finished an order if it has already been canceled or is in the process of being canceled"
+        );
+      }
+
+      if (orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "You cannot finished an order with its current status"
+        );
+      }
+
+      await this.orderModel.orderFinished(id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });

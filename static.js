@@ -137,4 +137,5 @@ module.exports = {
     RENTAL: "rental",
   },
   MONTH_DURATION: 30,
+  INFINITY_SELECT_ITERATION_LIMIT: 1000
 };

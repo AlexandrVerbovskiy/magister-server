@@ -1,12 +1,8 @@
 const STATIC = require("../static");
 const {
   createPaypalOrder,
-  refundPaypalOrderCapture,
-  getPaypalOrderInfo,
-  capturePaypalOrder,
-  generateRandomString,
+
 } = require("../utils");
-const qrcode = require("qrcode");
 
 const Controller = require("./Controller");
 
@@ -36,46 +32,6 @@ class SenderPaymentController extends Controller {
       );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
-  paypalOrderPayed = async (req, res) =>
-    this.baseWrapper(res, res, async () => {
-      const { userId } = req.userData;
-      const { orderId: paypalOrderId } = req.body;
-
-      await capturePaypalOrder(paypalOrderId);
-
-      const paypalOrderInfo = await getPaypalOrderInfo(paypalOrderId);
-
-      const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
-      const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
-      const paypalCaptureId =
-        paypalOrderInfo.purchase_units[0].payments.captures[0].id;
-
-      const amount = paypalOrderInfo.purchase_units[0].amount.value;
-
-      const token = generateRandomString();
-      const generatedImage = await qrcode.toDataURL(
-        process.env.CLIENT_URL +
-          "/dashboard/orders/approve-tenant-listing/" +
-          token
-      );
-
-      await this.orderModel.orderTenantPayed(orderId, {
-        token,
-        qrCode: generatedImage,
-      });
-
-      await this.senderPaymentModel.create({
-        money: amount,
-        userId: userId,
-        orderId: orderId,
-        paypalSenderId: paypalSenderId,
-        paypalOrderId: paypalOrderId,
-        paypalCaptureId: paypalCaptureId,
-      });
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
   baseSenderPaymentList = async (req, userId = null) => {

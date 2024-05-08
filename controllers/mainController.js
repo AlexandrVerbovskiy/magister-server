@@ -14,7 +14,7 @@ const senderPaymentController = require("./senderPaymentController");
 const recipientPaymentController = require("./recipientPaymentController");
 
 const coordsByIp = require("../utils/coordsByIp");
-const { cloneObject } = require("../utils");
+const { cloneObject, separateDate } = require("../utils");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -284,12 +284,18 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
+      const canFastCancelPayed = this.orderModel.canFastCancelPayedOrder(order);
+
+      const canFinalization = this.orderModel.canFinalizationOrder(order);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
         categories,
         ...commissionInfo,
         blockedDates,
         conflictOrders,
+        canFastCancelPayed,
+        canFinalization,
       });
     });
 
@@ -506,6 +512,7 @@ class MainController extends Controller {
         : orderController.baseListingOwnerBookingList;
 
       const result = await request(req);
+
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

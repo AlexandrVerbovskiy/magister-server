@@ -3,10 +3,7 @@ const router = Router();
 const { orderUpdateRequestController } = require("../../controllers");
 const {
   isAuth,
-  isAdmin,
-  isFileLimit,
   isVerified,
-  authId,
 } = require("../../middlewares");
 const {createValidation} = require("../../validations/orderUpdateRequest");
 
