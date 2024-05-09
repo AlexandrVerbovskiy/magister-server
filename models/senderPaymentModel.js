@@ -138,6 +138,40 @@ class SenderPayment extends Model {
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };
+
+  getFullById = async (id) => {
+    let query = db(SENDER_PAYMENTS_TABLE);
+    query = this.baseListJoin(query);
+
+    const result = await query
+      .where(`${SENDER_PAYMENTS_TABLE}.id`, id)
+      .select([
+        ...this.visibleFields,
+        `${ORDERS_TABLE}.id as orderId`,
+        `${ORDERS_TABLE}.status as orderStatus`,
+        `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
+        `${ORDERS_TABLE}.price_per_day as orderOfferPricePerDay`,
+        `${ORDERS_TABLE}.start_date as orderOfferStartDate`,
+        `${ORDERS_TABLE}.end_date as orderOfferEndDate`,
+        `${ORDERS_TABLE}.duration as orderDuration`,
+        `${ORDERS_TABLE}.fee as orderFee`,
+        `${ORDERS_TABLE}.fact_total_price as orderFactTotalPrice`,
+        `owners.id as ownerId`,
+        `owners.name as ownerName`,
+        `owners.email as ownerEmail`,
+        `owners.photo as ownerPhoto`,
+        `owners.phone as ownerPhone`,
+        `${LISTINGS_TABLE}.id as listingId`,
+        `${LISTINGS_TABLE}.name as listingName`,
+        `${LISTINGS_TABLE}.city as listingCity`,
+        `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
+        `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
+        `${LISTINGS_TABLE}.category_id as listingCategoryId`,
+        `${LISTINGS_TABLE}.address as listingAddress`,
+      ]);
+
+    return result[0];
+  };
 }
 
 module.exports = new SenderPayment();

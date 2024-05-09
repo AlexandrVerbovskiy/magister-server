@@ -17,10 +17,11 @@ class OrderController extends Controller {
   getFullById = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
+      const userId = req.userData.userId;
 
       const order = await this.orderModel.getFullById(id);
 
-      if (!order) {
+      if (!order || (userId != order.tenantId && userId != order.ownerId)) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
@@ -424,7 +425,8 @@ class OrderController extends Controller {
       const token = generateRandomString();
       const generatedImage = await qrcode.toDataURL(
         process.env.CLIENT_URL +
-          "/dashboard/orders/approve-tenant-listing/" +
+          STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL +
+          "/" +
           token
       );
 
@@ -450,11 +452,9 @@ class OrderController extends Controller {
       const { token } = req.body;
       const { userId } = req.userData;
 
-      if (!token) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const orderInfo = await this.orderModel.getFullByTenantListingToken(token);
+      const orderInfo = await this.orderModel.getFullByTenantListingToken(
+        token
+      );
 
       if (
         orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT ||
@@ -471,7 +471,18 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      await this.orderModel.orderTenantGotListing(orderInfo.id);
+      const ownerToken = generateRandomString();
+      const generatedImage = await qrcode.toDataURL(
+        process.env.CLIENT_URL +
+          STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL +
+          "/" +
+          ownerToken
+      );
+
+      await this.orderModel.orderTenantGotListing(orderInfo.id, {
+        token: ownerToken,
+        qrCode: generatedImage,
+      });
 
       await this.recipientPaymentModel.paymentPlanGeneration({
         startDate: orderInfo.offerStartDate,
@@ -482,7 +493,9 @@ class OrderController extends Controller {
         paypalId: "123",
       });
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        qrCode: generatedImage,
+      });
     });
 
   baseCancelOrder = async ({
@@ -716,9 +729,9 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      const { id } = req.body;
+      const { token } = req.body;
 
-      const orderInfo = await this.orderModel.getFullById(id);
+      const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
       if (!orderInfo || orderInfo.ownerId !== userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
@@ -740,7 +753,7 @@ class OrderController extends Controller {
         );
       }
 
-      await this.orderModel.orderFinished(id);
+      await this.orderModel.orderFinished(token);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
