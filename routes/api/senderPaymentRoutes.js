@@ -18,4 +18,10 @@ router.post("/list", isAuth, senderPaymentController.userList);
 
 router.post("/admin-list", isAuth, isAdmin, senderPaymentController.adminList);
 
+router.get(
+  "/invoice-pdf/:id",
+  isAuth,
+  senderPaymentController.generateInvoicePdf
+);
+
 module.exports = router;
