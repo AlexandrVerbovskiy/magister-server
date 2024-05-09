@@ -68,6 +68,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${ORDERS_TABLE}.tenant_accept_listing_qrcode as tenantAcceptListingQrcode`,
+    `${ORDERS_TABLE}.owner_accept_listing_qrcode as ownerAcceptListingQrcode`,
     `tenants.phone as tenantPhone`,
     `owners.phone as ownerPhone`,
     `tenants.place_work as tenantPlaceWork`,
@@ -584,6 +585,7 @@ class OrderModel extends Model {
         fact_total_price: factTotalPrice,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
         tenant_accept_listing_qrcode: "",
+        owner_accept_listing_qrcode: "",
       })
       .returning("id");
 
@@ -628,9 +630,6 @@ class OrderModel extends Model {
 
   getById = (id) => this.getByWhere(`${ORDERS_TABLE}.id`, id);
 
-  getByTenantListingAcceptToken = (token) =>
-    this.getByWhere(`${ORDERS_TABLE}.tenant_accept_listing_token`, token);
-
   getFullByBaseRequest = async (request) => {
     const order = await request();
 
@@ -650,7 +649,14 @@ class OrderModel extends Model {
   getFullById = (id) => this.getFullByBaseRequest(() => this.getById(id));
 
   getFullByTenantListingToken = (token) =>
-    this.getFullByBaseRequest(() => this.getByTenantListingAcceptToken(token));
+    this.getFullByBaseRequest(() =>
+      this.getByWhere(`${ORDERS_TABLE}.tenant_accept_listing_token`, token)
+    );
+
+  getFullByOwnerListingToken = (token) =>
+    this.getFullByBaseRequest(() =>
+      this.getByWhere(`${ORDERS_TABLE}.owner_accept_listing_token`, token)
+    );
 
   generateBlockedDatesByOrders = (orders) => {
     const blockedDatesObj = {};
@@ -899,14 +905,16 @@ class OrderModel extends Model {
     });
   };
 
-  orderTenantGotListing = async (orderId) => {
+  orderTenantGotListing = async (orderId, { token, qrCode }) => {
     await db(ORDERS_TABLE).where({ id: orderId }).update({
+      owner_accept_listing_token: token,
+      owner_accept_listing_qrcode: qrCode,
       status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
     });
   };
 
-  orderFinished = async (orderId) => {
-    await db(ORDERS_TABLE).where({ id: orderId }).update({
+  orderFinished = async (token) => {
+    await db(ORDERS_TABLE).where({ owner_accept_listing_token: token }).update({
       status: STATIC.ORDER_STATUSES.FINISHED,
     });
   };
