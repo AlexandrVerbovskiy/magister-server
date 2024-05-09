@@ -13,6 +13,8 @@ const {
   adaptClientTimeToServer,
   clientServerHoursDifference,
 } = require("../utils");
+const htmlToPdf = require("html-pdf");
+const handlebars = require("handlebars");
 
 const {
   userModel,
@@ -376,6 +378,31 @@ class Controller {
 
   getFileByName = (req, name) =>
     req.files.find((field) => field.fieldname == name);
+
+  generateHtmlByHandlebars(templatePath, params = {}) {
+    const source = fs.readFileSync(
+      path.resolve(`./${templatePath}.handlebars`),
+      "utf8"
+    );
+    const template = handlebars.compile(source);
+    return template(params);
+  }
+
+  async generatePdf(templatePath, params = {}) {
+    const htmlContent = this.generateHtmlByHandlebars(templatePath, params);
+
+    const pdf = await new Promise((resolve, reject) => {
+      htmlToPdf.create(htmlContent).toBuffer((err, buffer) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(buffer);
+        }
+      });
+    });
+
+    return pdf;
+  }
 }
 
 module.exports = Controller;

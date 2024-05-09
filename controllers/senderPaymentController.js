@@ -1,7 +1,9 @@
 const STATIC = require("../static");
 const {
   createPaypalOrder,
-
+  getDaysDifference,
+  timeConverter,
+  shortTimeConverter,
 } = require("../utils");
 
 const Controller = require("./Controller");
@@ -76,6 +78,54 @@ class SenderPaymentController extends Controller {
       const result = await this.baseSenderPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
+
+  generateInvoicePdf = async (req, res) => {
+    const { id } = req.params;
+    const userId = req.userData.userId;
+    const payment = await this.senderPaymentModel.getFullById(id);
+
+    if (!payment || payment.payerId != userId) {
+      return res.send(404);
+    }
+
+    const offerStartDate = payment.orderOfferStartDate;
+    const offerEndDate = payment.orderOfferEndDate;
+
+    const offerSubTotalPrice =
+      payment.orderFactTotalPrice *
+      getDaysDifference(offerStartDate, offerEndDate);
+
+    const durationString =
+      offerStartDate == offerEndDate
+        ? shortTimeConverter(offerStartDate)
+        : `${shortTimeConverter(offerStartDate)} - ${shortTimeConverter(
+            offerEndDate
+          )}`;
+
+    const params = {
+      billTo: payment.listingAddress ?? payment.listingCity,
+      shipTo: payment.listingAddress ?? payment.listingCity,
+      invoiceId: payment.id,
+      invoiceDate: shortTimeConverter(payment.createdAt),
+      purchaseOrder: payment.orderId,
+      dueDate: shortTimeConverter(payment.createdAt),
+      offer: {
+        factTotalPrice: payment.orderFactTotalPrice.toFixed(2),
+        fee: payment.orderFee,
+        listingName: payment.listingName,
+        pricePerDay: payment.orderOfferPricePerDay.toFixed(2),
+        subTotalPrice: offerSubTotalPrice.toFixed(2),
+        factTotalFee: ((offerSubTotalPrice * payment.orderFee) / 100).toFixed(
+          2
+        ),
+        durationString,
+      },
+    };
+
+    const buffer = await this.generatePdf("/pdfs/invoice", params);
+    res.contentType("application/pdf");
+    res.send(buffer);
+  };
 }
 
 module.exports = new SenderPaymentController();
