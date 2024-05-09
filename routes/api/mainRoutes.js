@@ -142,6 +142,12 @@ router.get(
   mainController.getOrderTenantQrCodeInfo
 );
 
+router.get(
+  "/owner-scanning-listing-rental-code/:token",
+  isAuth,
+  mainController.getOrderOwnerQrCodeInfo
+);
+
 router.post(
   "/user-listing-list-options",
   isAuth,
@@ -264,6 +270,13 @@ router.post(
   isAuth,
   isAdmin,
   mainController.getAdminRecipientPaymentListOptions
+);
+
+router.get(
+  "/get-order-invoice-options/:id",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  mainController.getOrderInvoiceOptions
 );
 
 module.exports = router;

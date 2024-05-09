@@ -243,11 +243,10 @@ class MainController extends Controller {
       });
     });
 
-  getOrderFullByIdOptions = (req, res) =>
+  baseGetFullOrderInfo = (req, res, getOrderByRequest, getDopOptions = null) =>
     this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
       const userId = req.userData.userId;
-      const order = await this.orderModel.getFullById(id);
+      const order = await getOrderByRequest();
 
       const commissionInfo = await this.systemOptionModel.getCommissionInfo();
 
@@ -272,6 +271,7 @@ class MainController extends Controller {
           order.offerStartDate,
           order.offerEndDate
         );
+        order["ownerAcceptListingQrcode"] = null;
       } else {
         order["tenantAcceptListingQrcode"] = null;
       }
@@ -284,74 +284,73 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
-      const canFastCancelPayed = this.orderModel.canFastCancelPayedOrder(order);
-
-      const canFinalization = this.orderModel.canFinalizationOrder(order);
+      const dopOptions = getDopOptions ? getDopOptions(order) : {};
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
         categories,
-        ...commissionInfo,
         blockedDates,
         conflictOrders,
-        canFastCancelPayed,
-        canFinalization,
+        ...commissionInfo,
+        ...dopOptions,
       });
     });
 
-  getOrderTenantQrCodeInfo = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const userId = req.userData.userId;
-      const { token } = req.params;
-      const order = await this.orderModel.getFullByTenantListingToken(token);
+  getOrderFullByIdOptions = (req, res) => {
+    const { id } = req.params;
 
-      if (!order || order.tenantId != userId) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
+    const getOrderByRequest = () => this.orderModel.getFullById(id);
 
-      const commissionInfo = await this.systemOptionModel.getCommissionInfo();
-
-      if (!order) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.NOT_FOUND,
-          "Order wasn't found"
-        );
-      }
-
-      const blockedDates = await this.orderModel.getBlockedListingDates(
-        order.listingId
-      );
-
-      let conflictOrders = null;
-
-      if (userId == order.ownerId) {
-        conflictOrders = await this.orderModel.getConflictOrders(
-          order.id,
-          order.listingId,
-          order.offerStartDate,
-          order.offerEndDate
-        );
-      }
-
-      order["actualUpdateRequest"] =
-        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
-
-      order["previousUpdateRequest"] =
-        await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
-
-      const categories = await this.getNavigationCategories();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        order,
-        categories,
-        ...commissionInfo,
-        blockedDates,
-        conflictOrders,
-        canAcceptTenantListing: true,
-        acceptListingTenantToken: token,
-      });
+    const getDopOptions = (order) => ({
+      canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
     });
+
+    return this.baseGetFullOrderInfo(
+      req,
+      res,
+      getOrderByRequest,
+      getDopOptions
+    );
+  };
+
+  getOrderTenantQrCodeInfo = (req, res) => {
+    const { token } = req.params;
+
+    const getOrderByRequest = () =>
+      this.orderModel.getFullByTenantListingToken(token);
+
+    const getDopOptions = () => ({
+      canAcceptTenantListing: true,
+      acceptListingTenantToken: token,
+    });
+
+    return this.baseGetFullOrderInfo(
+      req,
+      res,
+      getOrderByRequest,
+      getDopOptions
+    );
+  };
+
+  getOrderOwnerQrCodeInfo = (req, res) => {
+    const { token } = req.params;
+
+    const getOrderByRequest = () =>
+      this.orderModel.getFullByOwnerListingToken(token);
+
+    const getDopOptions = (order) => ({
+      canAcceptOwnerListing: true,
+      acceptListingOwnerToken: token,
+      canFinalization: this.orderModel.canFinalizationOrder(order),
+    });
+
+    return this.baseGetFullOrderInfo(
+      req,
+      res,
+      getOrderByRequest,
+      getDopOptions
+    );
+  };
 
   getAdminListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -641,6 +640,24 @@ class MainController extends Controller {
       );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
+      });
+    });
+
+  getOrderInvoiceOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const userId = req.userData.userId;
+      const payment = await this.senderPaymentModel.getFullById(id);
+
+      const categories = await this.getNavigationCategories();
+
+      if (!payment || userId != payment.payerId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        payment,
       });
     });
 }

@@ -12,13 +12,14 @@ const RECIPIENT_PAYMENTS_TABLE = STATIC.TABLES.RECIPIENT_PAYMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 
 class RecipientPayment extends Model {
   visibleFields = [
     `${RECIPIENT_PAYMENTS_TABLE}.id`,
     "money",
     "planned_time as plannedTime",
-    "received_type as receivedType",
+    `${RECIPIENT_PAYMENTS_TABLE}.received_type as receivedType`,
     `${RECIPIENT_PAYMENTS_TABLE}.status as status`,
     `${RECIPIENT_PAYMENTS_TABLE}.user_id as recipientId`,
     `${RECIPIENT_PAYMENTS_TABLE}.paypal_id as paypalId`,
