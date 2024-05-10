@@ -814,12 +814,12 @@ class OrderModel extends Model {
 
   acceptOrder = async (orderId, newData = {}) => {
     newData["status"] = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
-    await db(ORDERS_TABLE).where("id", orderId).update(newData);
+    return this.updateOrder(orderId, newData);
   };
 
   rejectOrder = async (orderId, newData = {}) => {
     newData["status"] = STATIC.ORDER_STATUSES.REJECTED;
-    await db(ORDERS_TABLE).where("id", orderId).update(newData);
+    return this.updateOrder(orderId, newData);
   };
 
   startCancelByOwner = async (orderId) => {
