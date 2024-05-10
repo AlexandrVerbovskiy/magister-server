@@ -118,7 +118,6 @@ router.post(
 router.post(
   "/owner-listing-list-options",
   authId,
-  isVerifiedAndHasPaypalId,
   ownerListingListOptionsValidation,
   mainController.getOwnerListingListPageOptions
 );
@@ -152,7 +151,7 @@ router.get(
 router.post(
   "/user-listing-list-options",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   userListingListOptionsValidation,
   mainController.getUserListingListPageOptions
 );
