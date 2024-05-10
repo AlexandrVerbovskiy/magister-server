@@ -6,7 +6,7 @@ const Model = require("./Model");
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const LISTING_TABLE = STATIC.TABLES.LISTINGS;
 
-class ListingCategoriesModel extends Model {
+class ListingCategoryModel extends Model {
   modelFields = [
     "id",
     "name",
@@ -183,4 +183,4 @@ class ListingCategoriesModel extends Model {
   };
 }
 
-module.exports = new ListingCategoriesModel();
+module.exports = new ListingCategoryModel();

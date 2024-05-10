@@ -40,7 +40,7 @@ class SearchedWordController extends Controller {
 
       const searchedWord = await this.searchedWordModel.getById(id);
       const groupedCategories =
-        await this.listingCategoriesModel.listGroupedByLevel();
+        await this.listingCategoryModel.listGroupedByLevel();
 
       if (!searchedWord) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
@@ -49,7 +49,7 @@ class SearchedWordController extends Controller {
       let createdCategory = null;
 
       if (searchedWord["listingCategoriesId"]) {
-        createdCategory = await this.listingCategoriesModel.getById(
+        createdCategory = await this.listingCategoryModel.getById(
           searchedWord["listingCategoriesId"]
         );
       }
@@ -64,7 +64,7 @@ class SearchedWordController extends Controller {
   tipsList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const searchValue = req.query.search ?? "";
-      const list = await this.listingCategoriesModel.listByName(searchValue);
+      const list = await this.listingCategoryModel.listByName(searchValue);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         list,
@@ -81,7 +81,7 @@ class SearchedWordController extends Controller {
         image = this.moveUploadsFileToFolder(req.file, "listingCategories");
       }
 
-      const createdId = await this.listingCategoriesModel.create({
+      const createdId = await this.listingCategoryModel.create({
         name,
         level,
         parentId,

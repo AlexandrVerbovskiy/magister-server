@@ -89,6 +89,8 @@ module.exports = {
     SYSTEM: "system",
     LISTINGS: "listings",
     LISTING_CATEGORIES: "listing_categories",
+    LISTING_DEFECTS: "listing_defects",
+    LISTING_DEFECT_RELATIONS: "listing_defect_relations",
     SEARCHED_WORDS: "searched_words",
     LISTING_IMAGES: "listing_images",
     LISTING_APPROVAL_REQUESTS: "listing_approval_requests",

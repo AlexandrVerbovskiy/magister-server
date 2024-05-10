@@ -94,7 +94,7 @@ class ListingController extends Controller {
       listings
     );
 
-    const dbCategories = await this.listingCategoriesModel.listGroupedByLevel();
+    const dbCategories = await this.listingCategoryModel.listGroupedByLevel();
 
     const categoriesToCheckHasNotify = options["searchCategory"]
       ? [options["searchCategory"], ...options["categories"]]

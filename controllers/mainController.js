@@ -18,11 +18,13 @@ const { cloneObject, separateDate } = require("../utils");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
-    this.listingCategoriesModel.listGroupedByLevel();
+    this.listingCategoryModel.listGroupedByLevel();
+
+  getListingDefects = () => this.listingDefectModel.getAll();
 
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const categories = await this.listingCategoriesModel.getFullInfoList();
+      const categories = await this.listingCategoryModel.getFullInfoList();
 
       const topListings = await this.listingModel.getTopListings();
 
@@ -49,8 +51,11 @@ class MainController extends Controller {
   getCreateListingPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
+      const defects = await this.getListingDefects();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
+        defects,
       });
     });
 
@@ -77,12 +82,14 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
+      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         listing,
         lastRequestInfo,
         canChange: !countUnfinishedListingOrders,
+        defects,
       });
     });
 
@@ -155,7 +162,7 @@ class MainController extends Controller {
     }
 
     if (searchCategories.length == 1) {
-      const foundCategory = await this.listingCategoriesModel.getByName(
+      const foundCategory = await this.listingCategoryModel.getByName(
         searchCategories[0]
       );
 
@@ -406,9 +413,11 @@ class MainController extends Controller {
   getAdminListingCreatePageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
+      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
+        defects,
       });
     });
 
@@ -422,10 +431,12 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
+      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         listing,
+        defects,
       });
     });
 
@@ -658,6 +669,15 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         payment,
+      });
+    });
+
+  getAdminListingDefectsEditOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const defects = await this.getListingDefects();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        defects,
       });
     });
 }

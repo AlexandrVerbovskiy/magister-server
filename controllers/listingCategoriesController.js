@@ -7,7 +7,7 @@ class ListingCategoriesController extends Controller {
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const groupedList =
-        await this.listingCategoriesModel.listGroupedByLevel();
+        await this.listingCategoryModel.listGroupedByLevel();
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
@@ -112,7 +112,7 @@ class ListingCategoriesController extends Controller {
       });
 
       const groupedList =
-        await this.listingCategoriesModel.listGroupedByLevel();
+        await this.listingCategoryModel.listGroupedByLevel();
 
       const toDelete = { firstLevel: [], secondLevel: [], thirdLevel: [] };
       const toCreate = { firstLevel: [], secondLevel: [], thirdLevel: [] };
@@ -150,7 +150,7 @@ class ListingCategoriesController extends Controller {
         for (let categoryIndex in categoriesToCreate) {
           const category = categoriesToCreate[categoryIndex];
 
-          const unique = this.listingCategoriesModel.checkNameUnique(
+          const unique = this.listingCategoryModel.checkNameUnique(
             category.name,
             numberLevel
           );
@@ -222,7 +222,7 @@ class ListingCategoriesController extends Controller {
             elem["parentId"] = created["id"];
           }
 
-          const id = await this.listingCategoriesModel.create(elem);
+          const id = await this.listingCategoryModel.create(elem);
           toCreate[level][index]["id"] = id;
         }
       }
@@ -246,7 +246,7 @@ class ListingCategoriesController extends Controller {
       levels.forEach(async (level) => {
         const ids = toDelete[level].map((category) => category.id);
         await this.searchedWordModel.unsetCategoryList(ids);
-        await this.listingCategoriesModel.deleteList(ids);
+        await this.listingCategoryModel.deleteList(ids);
       });
 
       Object.keys(toUpdate).forEach((level) => {
@@ -259,7 +259,7 @@ class ListingCategoriesController extends Controller {
             elem["parentId"] = created["id"];
           }
 
-          this.listingCategoriesModel.update(elem);
+          this.listingCategoryModel.update(elem);
         });
       });
 
