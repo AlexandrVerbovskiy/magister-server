@@ -257,7 +257,7 @@ class MainController extends Controller {
 
       const commissionInfo = await this.systemOptionModel.getCommissionInfo();
 
-      if (!order) {
+      if (!order || (userId != order.tenantId && userId != order.ownerId)) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.NOT_FOUND,
