@@ -320,13 +320,22 @@ class RecipientPayment extends Model {
   };
 
   markRentalAsCancelledByOrderId = async (orderId) => {
-    await db(RECIPIENT_PAYMENTS_TABLE)
+    const query = db(RECIPIENT_PAYMENTS_TABLE)
       .where("order_id", orderId)
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
-      .where("received_type", STATIC.RECIPIENT_TYPES.RENTAL)
-      .update({
-        status: STATIC.RECIPIENT_STATUSES.CANCELLED,
-      });
+      .where("received_type", STATIC.RECIPIENT_TYPES.RENTAL);
+
+    const lasActivePayment = await query.first();
+
+    const cancelledPayments = await query.where("id", ">", lasActivePayment.id);
+
+    await query.where("id", ">", lasActivePayment.id).update({
+      status: STATIC.RECIPIENT_STATUSES.CANCELLED,
+    });
+
+    let sum = 0;
+    cancelledPayments.forEach((payment) => (sum += payment.money));
+    return sum;
   };
 }
 
