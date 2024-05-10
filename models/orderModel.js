@@ -637,6 +637,9 @@ class OrderModel extends Model {
       order["listingImages"] = await listingModel.getListingImages(
         order["listingId"]
       );
+
+      order["defects"] = await listingModel.getDefects(order["listingId"]);
+
       order["categoryInfo"] =
         await listingCategoryModel.getRecursiveCategoryList(
           order["listingCategoryId"]

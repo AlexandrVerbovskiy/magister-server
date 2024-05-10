@@ -9,17 +9,17 @@ class ListingDefectModel extends Model {
   visibleFields = ["id", "name", "order_index as orderIndex"];
 
   getAll = async () => {
-    await db(LISTING_DEFECTS_TABLE).select(this.visibleFields);
+    return await db(LISTING_DEFECTS_TABLE).select(this.visibleFields);
   };
 
-  create = async ({name, orderIndex}) => {
+  create = async ({ name, orderIndex }) => {
     await db(LISTING_DEFECTS_TABLE).insert({
       name,
       order_index: orderIndex,
     });
   };
 
-  update = async ({name, orderIndex}, id) => {
+  update = async ({ name, orderIndex }, id) => {
     await db(LISTING_DEFECTS_TABLE).where({ id }).update({
       name,
       order_index: orderIndex,

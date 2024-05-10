@@ -230,9 +230,12 @@ class ListingController extends Controller {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
 
-    const { listingId, listingImages } = await this.listingModel.create(
-      dataToSave
-    );
+    dataToSave["defects"] = dataToSave["defects"]
+      ? JSON.parse(dataToSave["defects"])
+      : [];
+
+    const { defects, listingId, listingImages } =
+      await this.listingModel.create(dataToSave);
 
     dataToSave["userVerified"] = true;
 
@@ -245,6 +248,7 @@ class ListingController extends Controller {
         id: listingId,
         listingId,
         listingImages,
+        defects,
       }
     );
   };
@@ -286,12 +290,18 @@ class ListingController extends Controller {
   baseUpdate = async (req, res, canApprove = false) => {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
+    dataToSave["defects"] = dataToSave["defects"]
+      ? JSON.parse(dataToSave["defects"])
+      : [];
 
     const listingId = dataToSave["id"];
     dataToSave["active"] = dataToSave["active"] == "true";
 
-    const { deletedImagesInfos, listingImages: listingImagesToRes } =
-      await this.listingModel.updateById(dataToSave);
+    const {
+      defects,
+      deletedImagesInfos,
+      listingImages: listingImagesToRes,
+    } = await this.listingModel.updateById(dataToSave);
 
     this.removeListingImages(deletedImagesInfos);
 
@@ -303,7 +313,7 @@ class ListingController extends Controller {
       res,
       STATIC.SUCCESS.OK,
       "Updated successfully",
-      { ...dataToSave, listingId, listingImagesToRes }
+      { ...dataToSave, listingId, listingImagesToRes, defects }
     );
   };
 

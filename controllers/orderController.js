@@ -582,14 +582,17 @@ class OrderController extends Controller {
       orderInfo.factTotalPrice
     );
 
-    await this.recipientPaymentModel.createRefundPayment({
-      money: orderInfo.factTotalPrice,
-      userId: orderInfo.tenantId,
-      orderId: id,
-      paypalId: tenantInfo.paypalId,
-    });
+    const unfinishedPAymentsSum =
+      await this.recipientPaymentModel.markRentalAsCancelledByOrderId(id);
 
-    await this.recipientPaymentModel.markRentalAsCancelledByOrderId(id)
+    if (unfinishedPAymentsSum > 0) {
+      await this.recipientPaymentModel.createRefundPayment({
+        money: unfinishedPAymentsSum,
+        userId: orderInfo.tenantId,
+        orderId: id,
+        paypalId: tenantInfo.paypalId,
+      });
+    }
 
     await this.orderModel.successCanceled(id);
 

@@ -12,6 +12,8 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const LISTING_APPROVAL_REQUESTS_TABLE = STATIC.TABLES.LISTING_APPROVAL_REQUESTS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
+const LISTING_DEFECT_RELATIONS_TABLE = STATIC.TABLES.LISTING_DEFECT_RELATIONS;
+const LISTING_DEFECTS_TABLE = STATIC.TABLES.LISTING_DEFECTS;
 
 class ListingsModel extends Model {
   baseGroupedFields = [
@@ -116,9 +118,10 @@ class ListingsModel extends Model {
     approved = false,
     minRentalDays = null,
     listingImages = [],
+    defects = [],
     city,
     active = true,
-    dopDefect = ""
+    dopDefect = "",
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -144,7 +147,7 @@ class ListingsModel extends Model {
         key_words: keyWords,
         city,
         active,
-        dop_defect: dopDefect
+        dop_defect: dopDefect,
       })
       .returning("id");
 
@@ -160,7 +163,14 @@ class ListingsModel extends Model {
     );
 
     const currentListingImages = await this.getListingImages(listingId);
-    return { listingId, listingImages: currentListingImages };
+
+    const createdDefects = await this.saveDefects(defects, listingId);
+
+    return {
+      listingId,
+      listingImages: currentListingImages,
+      defects: createdDefects,
+    };
   };
 
   getListingListImages = async (listingIds) => {
@@ -181,8 +191,9 @@ class ListingsModel extends Model {
     if (!listing) return null;
 
     const listingImages = await this.getListingImages(id);
+    const defects = await this.getDefects(id);
 
-    return { ...listing, listingImages };
+    return { ...listing, listingImages, defects };
   };
 
   getFullById = async (id) => {
@@ -219,8 +230,9 @@ class ListingsModel extends Model {
     const categoryInfo = await listingCategoryModel.getRecursiveCategoryList(
       listing["categoryId"]
     );
+    const defects = await this.getDefects(id);
 
-    return { ...listing, listingImages, categoryInfo };
+    return { ...listing, listingImages, categoryInfo, defects };
   };
 
   updateById = async ({
@@ -244,7 +256,8 @@ class ListingsModel extends Model {
     ownerId,
     address,
     active,
-    dopDefect=""
+    dopDefect = "",
+    defects = [],
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -271,7 +284,7 @@ class ListingsModel extends Model {
         owner_id: ownerId,
         address,
         active,
-        dop_defect: dopDefect
+        dop_defect: dopDefect,
       });
 
     const currentImages = await this.getListingImages(id);
@@ -319,8 +332,13 @@ class ListingsModel extends Model {
         })
     );
 
+    const createdDefects = await this.saveDefects(defects, id);
     const currentListingImages = await this.getListingImages(id);
-    return { deletedImagesInfos, listingImages: currentListingImages };
+    return {
+      deletedImagesInfos,
+      listingImages: currentListingImages,
+      defects: createdDefects,
+    };
   };
 
   hasAccess = async (listingId, userId) => {
@@ -761,6 +779,49 @@ class ListingsModel extends Model {
     });
 
     return listingsWithImages;
+  };
+
+  getDefects = async (listingId) => {
+    return await db(LISTING_DEFECT_RELATIONS_TABLE)
+      .join(
+        LISTING_DEFECTS_TABLE,
+        `${LISTING_DEFECTS_TABLE}.id`,
+        "=",
+        `${LISTING_DEFECT_RELATIONS_TABLE}.listing_defect_id`
+      )
+      .where("listing_id", listingId)
+      .select([
+        `${LISTING_DEFECT_RELATIONS_TABLE}.id`,
+        `${LISTING_DEFECTS_TABLE}.id as defectId`,
+        `${LISTING_DEFECTS_TABLE}.name as defectName`,
+        `${LISTING_DEFECTS_TABLE}.order_index as orderIndex`,
+      ]);
+  };
+
+  saveDefects = async (defectIds, listingId) => {
+    await db(LISTING_DEFECT_RELATIONS_TABLE)
+      .where("listing_id", listingId)
+      .whereNotIn("listing_defect_id", defectIds)
+      .delete();
+
+    const prevDefectInfos = await db(LISTING_DEFECT_RELATIONS_TABLE)
+      .where("listing_id", listingId)
+      .whereIn("listing_defect_id", defectIds)
+      .select([`listing_defect_id as defectId`]);
+
+    const dbIds = prevDefectInfos.map((info) => info.defectId);
+
+    const idsToSave = defectIds.filter((id) => !dbIds.includes(id));
+    const relationsToSave = idsToSave.map((defectId) => ({
+      listing_defect_id: defectId,
+      listing_id: listingId,
+    }));
+
+    if (relationsToSave.length > 0) {
+      await db(LISTING_DEFECT_RELATIONS_TABLE).insert(relationsToSave);
+    }
+
+    return await this.getDefects(listingId);
   };
 }
 
