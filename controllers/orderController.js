@@ -589,6 +589,8 @@ class OrderController extends Controller {
       paypalId: tenantInfo.paypalId,
     });
 
+    await this.recipientPaymentModel.markRentalAsCancelledByOrderId(id)
+
     await this.orderModel.successCanceled(id);
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);

@@ -319,10 +319,11 @@ class RecipientPayment extends Model {
     });
   };
 
-  markAsCancelledByOrderId = async (orderId) => {
+  markRentalAsCancelledByOrderId = async (orderId) => {
     await db(RECIPIENT_PAYMENTS_TABLE)
       .where("order_id", orderId)
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
+      .where("received_type", STATIC.RECIPIENT_TYPES.RENTAL)
       .update({
         status: STATIC.RECIPIENT_STATUSES.CANCELLED,
       });
