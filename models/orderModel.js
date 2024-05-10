@@ -795,12 +795,13 @@ class OrderModel extends Model {
 
   updateOrder = async (
     orderId,
-    { newStartDate, newEndDate, newPricePerDay, status = null }
+    { newStartDate, newEndDate, newPricePerDay, newDuration, status = null }
   ) => {
     const updateProps = {
       start_date: newStartDate,
       end_date: newEndDate,
       price_per_day: newPricePerDay,
+      duration: newDuration,
     };
 
     if (status) {
