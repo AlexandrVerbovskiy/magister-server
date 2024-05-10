@@ -28,6 +28,7 @@ router.post("/list", authId, listValidation, listingController.mainList);
 router.post(
   "/owner-list",
   authId,
+  isVerifiedAndHasPaypalId,
   ownerListValidation,
   listingController.ownerList
 );

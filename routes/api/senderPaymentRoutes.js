@@ -1,11 +1,10 @@
 const { Router } = require("express");
 const router = Router();
 const { senderPaymentController } = require("../../controllers");
-const { isAuth } = require("../../middlewares");
+const { isAuth, isAdmin, isVerifiedAndHasPaypalId } = require("../../middlewares");
 const {
   paypalCreateOrderValidation,
 } = require("../../validations/senderPayment");
-const isAdmin = require("../../middlewares/isAdmin");
 
 router.post(
   "/paypal-create-order",
@@ -14,7 +13,12 @@ router.post(
   senderPaymentController.paypalCreateOrder
 );
 
-router.post("/list", isAuth, senderPaymentController.userList);
+router.post(
+  "/list",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  senderPaymentController.userList
+);
 
 router.post("/admin-list", isAuth, isAdmin, senderPaymentController.adminList);
 
