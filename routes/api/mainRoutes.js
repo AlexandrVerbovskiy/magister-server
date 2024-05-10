@@ -118,6 +118,7 @@ router.post(
 router.post(
   "/owner-listing-list-options",
   authId,
+  isVerifiedAndHasPaypalId,
   ownerListingListOptionsValidation,
   mainController.getOwnerListingListPageOptions
 );
@@ -233,7 +234,7 @@ router.post(
 router.post(
   "/order-list-options",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   mainController.getOrderListOptions
 );
 
@@ -247,14 +248,14 @@ router.post(
 router.post(
   "/sender-payment-list-options",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   mainController.getSenderPaymentListOptions
 );
 
 router.post(
   "/recipient-payment-list-options",
   isAuth,
-  isVerified,
+  isVerifiedAndHasPaypalId,
   mainController.getRecipientPaymentListOptions
 );
 
