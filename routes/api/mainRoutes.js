@@ -273,6 +273,13 @@ router.post(
 );
 
 router.get(
+  "/admin-listing-defects-edit-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminListingDefectsEditOptions
+);
+
+router.get(
   "/get-order-invoice-options/:id",
   isAuth,
   isVerifiedAndHasPaypalId,

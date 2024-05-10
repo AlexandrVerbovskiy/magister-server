@@ -2,7 +2,7 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
-const listingCategoriesModel = require("./listingCategoriesModel");
+const listingCategoryModel = require("./listingCategoryModel");
 const { listingListDateConverter } = require("../utils");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
@@ -118,6 +118,7 @@ class ListingsModel extends Model {
     listingImages = [],
     city,
     active = true,
+    dopDefect = ""
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -143,6 +144,7 @@ class ListingsModel extends Model {
         key_words: keyWords,
         city,
         active,
+        dop_defect: dopDefect
       })
       .returning("id");
 
@@ -214,7 +216,7 @@ class ListingsModel extends Model {
     if (!listing) return null;
 
     const listingImages = await this.getListingImages(id);
-    const categoryInfo = await listingCategoriesModel.getRecursiveCategoryList(
+    const categoryInfo = await listingCategoryModel.getRecursiveCategoryList(
       listing["categoryId"]
     );
 
@@ -242,6 +244,7 @@ class ListingsModel extends Model {
     ownerId,
     address,
     active,
+    dopDefect=""
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -268,6 +271,7 @@ class ListingsModel extends Model {
         owner_id: ownerId,
         address,
         active,
+        dop_defect: dopDefect
       });
 
     const currentImages = await this.getListingImages(id);

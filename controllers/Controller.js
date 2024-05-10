@@ -22,7 +22,7 @@ const {
   userVerifyRequestModel,
   systemOptionModel,
   userEventLogModel,
-  listingCategoriesModel,
+  listingCategoryModel,
   searchedWordModel,
   listingModel,
   listingApprovalRequestModel,
@@ -31,6 +31,7 @@ const {
   orderUpdateRequestModel,
   senderPaymentModel,
   recipientPaymentModel,
+  listingDefectModel
 } = require("../models");
 
 const STATIC = require("../static");
@@ -47,9 +48,10 @@ class Controller {
     this.userVerifyRequestModel = userVerifyRequestModel;
     this.systemOptionModel = systemOptionModel;
     this.userEventLogModel = userEventLogModel;
-    this.listingCategoriesModel = listingCategoriesModel;
+    this.listingCategoryModel = listingCategoryModel;
     this.searchedWordModel = searchedWordModel;
     this.listingModel = listingModel;
+    this.listingDefectModel = listingDefectModel;
     this.orderModel = orderModel;
     this.orderUpdateRequestModel = orderUpdateRequestModel;
     this.listingApprovalRequestModel = listingApprovalRequestModel;
