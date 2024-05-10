@@ -9,7 +9,7 @@ const {
   formatDateToSQLFormat,
 } = require("../utils");
 const listingModel = require("./listingModel");
-const listingCategoriesModel = require("./listingCategoriesModel");
+const listingCategoryModel = require("./listingCategoryModel");
 
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -638,7 +638,7 @@ class OrderModel extends Model {
         order["listingId"]
       );
       order["categoryInfo"] =
-        await listingCategoriesModel.getRecursiveCategoryList(
+        await listingCategoryModel.getRecursiveCategoryList(
           order["listingCategoryId"]
         );
     }
