@@ -5,6 +5,7 @@ const {
   getPaypalOrderInfo,
   capturePaypalOrder,
   sendMoneyToPaypalByPaypalID,
+  getDaysDifference,
 } = require("../utils");
 const Controller = require("./Controller");
 const qrcode = require("qrcode");
@@ -328,6 +329,10 @@ class OrderController extends Controller {
           newStartDate: lastUpdateRequestInfo.newStartDate,
           newEndDate: lastUpdateRequestInfo.newEndDate,
           newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+          newDuration: getDaysDifference(
+            lastUpdateRequestInfo.newStartDate,
+            lastUpdateRequestInfo.newEndDate
+          ),
         });
         await this.orderUpdateRequestModel.closeLast(id);
       } else {
@@ -384,6 +389,10 @@ class OrderController extends Controller {
           newStartDate: lastUpdateRequestInfo.newStartDate,
           newEndDate: lastUpdateRequestInfo.newEndDate,
           newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+          newDuration: getDaysDifference(
+            lastUpdateRequestInfo.newStartDate,
+            lastUpdateRequestInfo.newEndDate
+          ),
         };
       }
 
