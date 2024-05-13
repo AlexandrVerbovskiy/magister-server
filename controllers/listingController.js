@@ -90,6 +90,7 @@ class ListingController extends Controller {
     options["lng"] = req.body.lng;
 
     const listings = await this.listingModel.list(options);
+
     const listingsWithImages = await this.listingModel.listingsBindImages(
       listings
     );

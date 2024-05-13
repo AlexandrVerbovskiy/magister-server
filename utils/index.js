@@ -10,4 +10,5 @@ module.exports = {
   coordsByIp: require("./coordsByIp"),
   cloneObject: require("./cloneObject"),
   ...require("./paypalApi"),
+  ...require("./paymentCalculations"),
 };

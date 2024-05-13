@@ -4,6 +4,7 @@ const {
   getDaysDifference,
   timeConverter,
   shortTimeConverter,
+  tenantPaymentCalculate,
 } = require("../utils");
 
 const Controller = require("./Controller");
@@ -90,10 +91,21 @@ class SenderPaymentController extends Controller {
 
     const offerStartDate = payment.orderOfferStartDate;
     const offerEndDate = payment.orderOfferEndDate;
+    const offerPricePerDay = payment.orderOfferPricePerDay;
+
+    const offerTotalPrice = tenantPaymentCalculate(
+      offerStartDate,
+      offerEndDate,
+      payment.tenantFee,
+      offerPricePerDay
+    );
 
     const offerSubTotalPrice =
-      payment.orderFactTotalPrice *
-      getDaysDifference(offerStartDate, offerEndDate);
+      getDaysDifference(offerStartDate, offerEndDate) * offerPricePerDay;
+
+    const factTotalFee =
+      (getDaysDifference(offerStartDate, offerEndDate) * payment.tenantFee) /
+      100;
 
     const durationString =
       offerStartDate == offerEndDate
@@ -110,14 +122,12 @@ class SenderPaymentController extends Controller {
       purchaseOrder: payment.orderId,
       dueDate: shortTimeConverter(payment.createdAt),
       offer: {
-        factTotalPrice: payment.orderFactTotalPrice.toFixed(2),
-        fee: payment.orderFee,
+        factTotalPrice: offerTotalPrice.toFixed(2),
+        fee: payment.tenantFee,
         listingName: payment.listingName,
-        pricePerDay: payment.orderOfferPricePerDay.toFixed(2),
+        pricePerDay: offerPricePerDay.toFixed(2),
         subTotalPrice: offerSubTotalPrice.toFixed(2),
-        factTotalFee: ((offerSubTotalPrice * payment.orderFee) / 100).toFixed(
-          2
-        ),
+        factTotalFee: factTotalFee.toFixed(2),
         durationString,
       },
     };

@@ -25,9 +25,11 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
     `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.end_date as offerEndDate`,
-    `${ORDERS_TABLE}.duration`,
-    `${ORDERS_TABLE}.fee`,
-    `${ORDERS_TABLE}.fact_total_price as factTotalPrice`,
+    `${ORDERS_TABLE}.tenant_fee as tenantFee`,
+    `${ORDERS_TABLE}.owner_fee as ownerFee`,
+    `${ORDERS_TABLE}.prev_price_per_day as prevPricePerDay`,
+    `${ORDERS_TABLE}.prev_start_date as prevStartDate`,
+    `${ORDERS_TABLE}.prev_end_date as prevEndDate`,
     `tenants.id as tenantId`,
     `tenants.name as tenantName`,
     `tenants.email as tenantEmail`,
@@ -53,7 +55,6 @@ class OrderModel extends Model {
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as requestFactTotalPrice`,
   ];
 
   fullVisibleFields = [
@@ -106,14 +107,11 @@ class OrderModel extends Model {
   orderFields = [
     `${ORDERS_TABLE}.id`,
     `${ORDERS_TABLE}.price_per_day`,
-    `${ORDERS_TABLE}.fact_total_price`,
     `tenants.name`,
     `tenants.email`,
     `owners.name`,
     `owners.email`,
     `${LISTINGS_TABLE}.name`,
-
-    `duration`,
   ];
 
   processStatuses = [
@@ -439,17 +437,8 @@ class OrderModel extends Model {
     );
 
     query = dopWhereCall(query);
-
     query = query.select(this.lightRequestVisibleFields);
-
-    if (order == "fact_total_price") {
-      query = query.orderByRaw(
-        `CASE WHEN ${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price IS NULL 
-        THEN ${ORDERS_TABLE}.fact_total_price ELSE ${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price END`
-      );
-    } else {
-      query = query.orderBy(order, orderType);
-    }
+    query = query.orderBy(order, orderType);
 
     return await query.limit(count).offset(start);
   };
@@ -568,11 +557,9 @@ class OrderModel extends Model {
     endDate,
     listingId,
     tenantId,
-    fee,
+    ownerFee,
+    tenantFee,
   }) => {
-    const duration = getDaysDifference(startDate, endDate);
-    const factTotalPrice = (duration * pricePerDay * (100 + fee)) / 100;
-
     const res = await db(ORDERS_TABLE)
       .insert({
         price_per_day: pricePerDay,
@@ -580,9 +567,8 @@ class OrderModel extends Model {
         end_date: endDate,
         listing_id: listingId,
         tenant_id: tenantId,
-        fee,
-        duration,
-        fact_total_price: factTotalPrice,
+        owner_fee: ownerFee,
+        tenant_fee: tenantFee,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
         tenant_accept_listing_qrcode: "",
         owner_accept_listing_qrcode: "",
@@ -754,7 +740,6 @@ class OrderModel extends Model {
       `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
       `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
       `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
-      `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as newFactTotalPrice`,
     ]);
   };
 
@@ -795,13 +780,23 @@ class OrderModel extends Model {
 
   updateOrder = async (
     orderId,
-    { newStartDate, newEndDate, newPricePerDay, newDuration, status = null }
+    {
+      newStartDate,
+      newEndDate,
+      newPricePerDay,
+      prevPricePerDay,
+      prevStartDate,
+      prevEndDate,
+      status = null,
+    }
   ) => {
     const updateProps = {
       start_date: newStartDate,
       end_date: newEndDate,
       price_per_day: newPricePerDay,
-      duration: newDuration,
+      prev_price_per_day: prevPricePerDay,
+      prev_start_date: prevStartDate,
+      prev_end_date: prevEndDate,
     };
 
     if (status) {
