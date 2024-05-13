@@ -11,11 +11,9 @@ class OrderUpdateRequestModel extends Model {
     `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.order_id as orderId`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_duration as newDuration`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.fact_total_price as newFactTotalPrice`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.active`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.created_at as createdAt`,
   ];
@@ -28,19 +26,14 @@ class OrderUpdateRequestModel extends Model {
     senderId,
     fee,
   }) => {
-    const newDuration = getDaysDifference(newStartDate, newEndDate);
-    const factTotalPrice = (newDuration * newPricePerDay * (100 + fee)) / 100;
-
     const res = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .insert({
         order_id: orderId,
         new_start_date: newStartDate,
         new_end_date: newEndDate,
         new_price_per_day: newPricePerDay,
-        new_duration: newDuration,
         sender_id: senderId,
         fee,
-        fact_total_price: factTotalPrice,
       })
       .returning("id");
 

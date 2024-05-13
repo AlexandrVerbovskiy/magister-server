@@ -221,8 +221,6 @@ class MainController extends Controller {
       const userId = req.userData?.userId;
 
       const listing = await this.listingModel.getFullById(id);
-      const tenantBaseCommissionPercent =
-        await this.systemOptionModel.getTenantBaseCommissionPercent();
 
       if (!listing) {
         return this.sendErrorResponse(
@@ -242,6 +240,9 @@ class MainController extends Controller {
         listing["blockedDates"] = [];
       }
 
+      const tenantBaseCommissionPercent =
+        await this.systemOptionModel.getTenantBaseCommissionPercent();
+
       const categories = await this.getNavigationCategories();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
@@ -254,8 +255,6 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
       const order = await getOrderByRequest();
-
-      const commissionInfo = await this.systemOptionModel.getCommissionInfo();
 
       if (!order || (userId != order.tenantId && userId != order.ownerId)) {
         return this.sendErrorResponse(
@@ -298,7 +297,6 @@ class MainController extends Controller {
         categories,
         blockedDates,
         conflictOrders,
-        ...commissionInfo,
         ...dopOptions,
       });
     });
