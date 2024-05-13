@@ -411,6 +411,54 @@ class ListingsModel extends Model {
         `c3.id`
       );
 
+  listTimeWhere = (serverFromTime, serverToTime, query) => {
+    return query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
+      this.select("listing_id")
+        .from(ORDERS_TABLE)
+        .joinRaw(
+          `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+               ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
+        ).whereRaw(`${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND
+            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND
+            (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}') AND
+            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'`);
+
+      const whereQueryParts = [];
+      const props = [];
+
+      if (serverFromTime) {
+        const formattedFromTime = listingListDateConverter(serverFromTime);
+
+        whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
+              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
+
+        props.push(
+          formattedFromTime,
+          formattedFromTime,
+          formattedFromTime,
+          formattedFromTime
+        );
+      }
+
+      if (serverToTime) {
+        const formattedToTime = listingListDateConverter(serverToTime);
+
+        whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
+              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
+
+        props.push(
+          formattedToTime,
+          formattedToTime,
+          formattedToTime,
+          formattedToTime
+        );
+      }
+
+      const where = "(" + whereQueryParts.join(" OR ") + ")";
+      this.whereRaw(where, props);
+    });
+  };
+
   totalCount = async ({
     serverFromTime,
     serverToTime,
@@ -427,7 +475,12 @@ class ListingsModel extends Model {
     query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true)
-      .where(`${USERS_TABLE}.active`, true);
+      .where(`${USERS_TABLE}.active`, true)
+      .where(`${LISTINGS_TABLE}.active`, true);
+
+    if (serverFromTime && serverToTime) {
+      query = this.listTimeWhere(serverFromTime, serverToTime, query);
+    }
 
     const queryCities = [...cities];
     const queryCategories = [...categories];
@@ -571,53 +624,11 @@ class ListingsModel extends Model {
     query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.verified`, true)
-      .where(`${USERS_TABLE}.active`, true);
+      .where(`${USERS_TABLE}.active`, true)
+      .where(`${LISTINGS_TABLE}.active`, true);
 
-    if (serverFromTime || serverToTime) {
-      query = query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
-        this.select("listing_id")
-          .from(ORDERS_TABLE)
-          .joinRaw(
-            `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-               ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
-          ).whereRaw(`${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND
-            (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}') AND
-            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'`);
-
-        const whereQueryParts = [];
-        const props = [];
-
-        if (serverFromTime) {
-          const formattedFromTime = listingListDateConverter(serverFromTime);
-
-          whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
-              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
-
-          props.push(
-            formattedFromTime,
-            formattedFromTime,
-            formattedFromTime,
-            formattedFromTime
-          );
-        }
-
-        if (serverToTime) {
-          const formattedToTime = listingListDateConverter(serverToTime);
-
-          whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
-              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
-
-          props.push(
-            formattedToTime,
-            formattedToTime,
-            formattedToTime,
-            formattedToTime
-          );
-        }
-
-        const where = "(" + whereQueryParts.join(" OR ") + ")";
-        this.whereRaw(where, props);
-      });
+    if (serverFromTime && serverToTime) {
+      query = this.listTimeWhere(serverFromTime, serverToTime, query);
     }
 
     const queryCities = [...cities];
@@ -647,8 +658,6 @@ class ListingsModel extends Model {
           .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
       });
     }
-
-    query.where(`${LISTINGS_TABLE}.active`, true);
 
     if (props.userId) {
       query = query.where({ owner_id: props.userId });

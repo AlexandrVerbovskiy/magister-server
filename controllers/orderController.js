@@ -6,6 +6,7 @@ const {
   capturePaypalOrder,
   sendMoneyToPaypalByPaypalID,
   getDaysDifference,
+  tenantPaymentCalculate,
 } = require("../utils");
 const Controller = require("./Controller");
 const qrcode = require("qrcode");
@@ -34,7 +35,10 @@ class OrderController extends Controller {
       const { pricePerDay, startDate, endDate, listingId } = req.body;
       const tenantId = req.userData.userId;
 
-      const fee = await this.systemOptionModel.getTenantBaseCommissionPercent();
+      const tenantFee =
+        await this.systemOptionModel.getTenantBaseCommissionPercent();
+      const ownerFee =
+        await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
       const blockedDates = await this.orderModel.getBlockedListingDatesForUser(
         listingId,
@@ -61,7 +65,8 @@ class OrderController extends Controller {
         endDate,
         listingId,
         tenantId,
-        fee,
+        ownerFee: ownerFee,
+        tenantFee: tenantFee,
       });
 
       return this.sendSuccessResponse(
@@ -329,10 +334,9 @@ class OrderController extends Controller {
           newStartDate: lastUpdateRequestInfo.newStartDate,
           newEndDate: lastUpdateRequestInfo.newEndDate,
           newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-          newDuration: getDaysDifference(
-            lastUpdateRequestInfo.newStartDate,
-            lastUpdateRequestInfo.newEndDate
-          ),
+          prevPricePerDay: order.offerPricePerDay,
+          prevStartDate: order.offerStartDate,
+          prevEndDate: order.offerEndDate,
         });
         await this.orderUpdateRequestModel.closeLast(id);
       } else {
@@ -389,10 +393,9 @@ class OrderController extends Controller {
           newStartDate: lastUpdateRequestInfo.newStartDate,
           newEndDate: lastUpdateRequestInfo.newEndDate,
           newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-          newDuration: getDaysDifference(
-            lastUpdateRequestInfo.newStartDate,
-            lastUpdateRequestInfo.newEndDate
-          ),
+          prevPricePerDay: order.offerPricePerDay,
+          prevStartDate: order.offerStartDate,
+          prevEndDate: order.offerEndDate,
         };
       }
 
@@ -588,7 +591,12 @@ class OrderController extends Controller {
 
     await sendMoneyToPaypalByPaypalID(
       tenantInfo.paypalId,
-      orderInfo.factTotalPrice
+      tenantPaymentCalculate(
+        orderInfo.offerStartDate,
+        orderInfo.offerEndDate,
+        orderInfo.tenantFee,
+        orderInfo.offerPricePerDay
+      )
     );
 
     const unfinishedPAymentsSum =
@@ -665,7 +673,15 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      const { tenantId, status, cancelStatus, factTotalPrice } = orderInfo;
+      const {
+        tenantId,
+        status,
+        cancelStatus,
+        offerStartDate,
+        offerEndDate,
+        tenantFee,
+        offerPricePerDay,
+      } = orderInfo;
 
       if (tenantId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
@@ -708,7 +724,14 @@ class OrderController extends Controller {
         );
       }
 
-      await sendMoneyToPaypalByPaypalID(userInfo.paypalId, factTotalPrice);
+      const factTotalPrice = tenantPaymentCalculate(
+        offerStartDate,
+        offerEndDate,
+        tenantFee,
+        offerPricePerDay
+      );
+
+      await sendMoneyToPaypalByPaypalID(userInfo.paypalId);
 
       await this.orderModel.successCanceled(id);
 
