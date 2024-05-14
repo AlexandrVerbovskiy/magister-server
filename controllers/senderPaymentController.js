@@ -103,9 +103,7 @@ class SenderPaymentController extends Controller {
     const offerSubTotalPrice =
       getDaysDifference(offerStartDate, offerEndDate) * offerPricePerDay;
 
-    const factTotalFee =
-      (getDaysDifference(offerStartDate, offerEndDate) * payment.tenantFee) /
-      100;
+    const factTotalFee = (offerSubTotalPrice * payment.tenantFee) / 100;
 
     const durationString =
       offerStartDate == offerEndDate
