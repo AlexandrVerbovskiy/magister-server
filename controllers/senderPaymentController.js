@@ -6,6 +6,8 @@ const {
   shortTimeConverter,
   tenantPaymentCalculate,
 } = require("../utils");
+const fs = require("fs");
+const path = require("path");
 
 const Controller = require("./Controller");
 
@@ -130,9 +132,19 @@ class SenderPaymentController extends Controller {
       },
     };
 
-    const buffer = await this.generatePdf("/pdfs/invoice", params);
-    res.contentType("application/pdf");
-    res.send(buffer);
+    const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public/invoices");
+    const filename = destinationDir + `/inv-${payment.id}.pdf`;
+
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir, { recursive: true });
+    }
+
+    if (!fs.existsSync(filename)) {
+      const buffer = await this.generatePdf("/pdfs/invoice", params);
+      fs.writeFileSync(filename, buffer);
+    }
+
+    res.download(filename);
   };
 }
 
