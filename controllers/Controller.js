@@ -31,7 +31,7 @@ const {
   orderUpdateRequestModel,
   senderPaymentModel,
   recipientPaymentModel,
-  listingDefectModel
+  listingDefectModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -394,13 +394,21 @@ class Controller {
     const htmlContent = this.generateHtmlByHandlebars(templatePath, params);
 
     const pdf = await new Promise((resolve, reject) => {
-      htmlToPdf.create(htmlContent).toBuffer((err, buffer) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(buffer);
-        }
-      });
+      htmlToPdf
+        .create(htmlContent, {
+          childProcessOptions: {
+            env: {
+              OPENSSL_CONF: "/dev/null",
+            },
+          },
+        })
+        .toBuffer((err, buffer) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(buffer);
+          }
+        });
     });
 
     return pdf;
