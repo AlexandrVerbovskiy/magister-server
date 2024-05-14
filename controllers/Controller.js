@@ -396,7 +396,7 @@ class Controller {
     const pdf = await new Promise((resolve, reject) => {
       htmlToPdf
         .create(htmlContent, {
-          format: "A4", 
+          format: "A4",
           orientation: "portrait",
           childProcessOptions: {
             env: {
