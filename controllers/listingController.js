@@ -2,6 +2,8 @@ const STATIC = require("../static");
 const Controller = require("./Controller");
 
 class ListingController extends Controller {
+  defaultItemsPerPage = 6;
+
   checkUserCanGetNotificationOnCreateCategory = async (
     categories,
     optionCategories,
@@ -47,16 +49,18 @@ class ListingController extends Controller {
     const searchCity = req.body.searchCity ?? null;
     const searchCategory = req.body.searchCategory ?? null;
 
-    const { options, countItems } = await this.baseList(req, () =>
-      this.listingModel.totalCount({
-        serverFromTime: timeInfos["serverFromTime"],
-        serverToTime: timeInfos["serverToTime"],
-        cities: [...cities],
-        categories: [...categories],
-        userId,
-        searchCity,
-        searchCategory,
-      })
+    const { options, countItems } = await this.baseList(
+      req,
+      () =>
+        this.listingModel.totalCount({
+          serverFromTime: timeInfos["serverFromTime"],
+          serverToTime: timeInfos["serverToTime"],
+          cities: [...cities],
+          categories: [...categories],
+          userId,
+          searchCity,
+          searchCategory,
+        })
     );
 
     options["searchCity"] = searchCity;

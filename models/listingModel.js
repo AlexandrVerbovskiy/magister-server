@@ -686,6 +686,15 @@ class ListingsModel extends Model {
       orderType = "asc";
     }
 
+    console.log(
+      query
+        .orderBy(orderField, orderType)
+        .limit(count)
+        .groupBy(groupedParams)
+        .offset(start)
+        .toQuery()
+    );
+
     return await query
       .orderBy(orderField, orderType)
       .limit(count)
