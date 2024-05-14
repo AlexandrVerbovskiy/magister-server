@@ -69,9 +69,8 @@
           hsla(0, 0%, 100%, 0.15),
           hsla(0, 0%, 100%, 0)
         );
-        --rem-px-coef: 16px;
         --bs-body-font-family: var(--bs-font-sans-serif);
-        --bs-body-font-size: calc(var(--rem-px-coef) * 1);
+        --bs-body-font-size: 1rem;
         --bs-body-font-weight: 400;
         --bs-body-line-height: 1.5;
         --bs-body-color: #212529;
@@ -80,18 +79,18 @@
         --bs-border-style: solid;
         --bs-border-color: #dee2e6;
         --bs-border-color-translucent: rgba(0, 0, 0, 0.175);
-        --bs-border-radius: calc(var(--rem-px-coef) * 0.375);
-        --bs-border-radius-sm: calc(var(--rem-px-coef) * 0.25);
-        --bs-border-radius-lg: calc(var(--rem-px-coef) * 0.5);
-        --bs-border-radius-xl: calc(var(--rem-px-coef) * 1);
-        --bs-border-radius-2xl: calc(var(--rem-px-coef) * 2);
-        --bs-border-radius-pill: calc(var(--rem-px-coef) * 50);
+        --bs-border-radius: 0.375rem;
+        --bs-border-radius-sm: 0.25rem;
+        --bs-border-radius-lg: 0.5rem;
+        --bs-border-radius-xl: 1rem;
+        --bs-border-radius-2xl: 2rem;
+        --bs-border-radius-pill: 50rem;
         --bs-link-color: #0d6efd;
         --bs-link-hover-color: #0a58ca;
         --bs-code-color: #d63384;
         --bs-highlight-bg: #fff3cd;
       }
-      .body {
+      body {
         box-sizing: border-box;
         font-weight: var(--bs-body-font-weight);
         line-height: var(--bs-body-line-height);
@@ -103,10 +102,10 @@
         padding: 0;
         margin: 0;
         font-family: var(--fontFamily);
-        font-size: 3.705mm;
+        font-size: 14px;
       }
       .invoice-area {
-        margin-top: 5.292mm;
+        margin-top: 20px;
       }
       .invoice-area,
       .invoice-header,
@@ -124,15 +123,15 @@
       }
       .invoice-area {
         background-color: var(--whiteColor);
-        box-shadow: 0.3528mm 1.7639mm 8.4688mm 0 rgba(68, 102, 242, 0.05);
-        border-radius: 1.7639mm;
-        margin-bottom: 8.4688mm;
-        padding: 8.4688mm;
+        box-shadow: 1px 5px 24px 0 rgba(68, 102, 242, 0.05);
+        border-radius: 5px;
+        margin-bottom: 30px;
+        padding: 25px;
       }
       .invoice-header {
         display: table;
         width: 100%;
-        margin-bottom: 6.615mm;
+        margin-bottom: 25px;
       }
       .invoice-header > * {
         display: table-cell;
@@ -150,14 +149,14 @@
         color: var(--bs-heading-color);
         font-weight: 700;
         margin-bottom: 0 !important;
-        font-size: 5.82mm;
+        font-size: 22px;
       }
       .invoice-left-text > p,
       .invoice-right-text > p {
         color: var(--optionalColor);
         font-size: var(--fontSize);
         line-height: 1.8;
-        margin-top: calc(var(--rem-px-coef) * 0.5) !important;
+        margin-top: 0.5rem !important;
         margin-bottom: 0 !important;
         font-weight: 500;
       }
@@ -166,7 +165,7 @@
       }
       .invoice-middle {
         line-height: var(--bs-body-line-height);
-        margin-bottom: 6.615mm;
+        margin-bottom: 25px;
       }
       .invoice-middle > .row {
         display: table;
@@ -207,18 +206,18 @@
       }
       .invoice-middle > .row > .col-3 > .text > h4 {
         text-align: var(--bs-body-text-align);
-        --bs-gutter-x: calc(var(--rem-px-coef) * 1.5);
+        --bs-gutter-x: 1.5rem;
         --bs-gutter-y: 0;
         margin-top: 0;
         line-height: 1.2;
         color: var(--bs-heading-color);
         font-weight: 700;
-        margin-bottom: calc(var(--rem-px-coef) * 0.5) !important;
-        font-size: 4.494mm;
+        margin-bottom: 0.5rem !important;
+        font-size: 17px;
       }
       .invoice-middle > .row > .col-3 > .text > span {
         display: block !important;
-        margin-bottom: calc(var(--rem-px-coef) * 0.25) !important;
+        margin-bottom: 0.25rem !important;
         font-weight: 500;
       }
       .invoice-middle > .row,
@@ -228,7 +227,7 @@
       .invoice-middle > .row > .col-6,
       .invoice-middle > .row > .col-6 > .text {
         line-height: var(--bs-body-line-height);
-        --bs-gutter-x: calc(var(--rem-px-coef) * 1.5);
+        --bs-gutter-x: 1.5rem;
         --bs-gutter-y: 0;
       }
       .invoice-middle > .row > .col-6 > .text {
@@ -236,25 +235,25 @@
       }
       .invoice-middle > .row > .col-6 > .text > h5,
       .invoice-middle > .row > .col-6 > .text > h5 > sub {
-        --bs-gutter-x: calc(var(--rem-px-coef) * 1.5);
+        --bs-gutter-x: 1.5rem;
         --bs-gutter-y: 0;
         text-align: end;
         font-weight: 500;
-        font-size: 3.967mm;
+        font-size: 15px;
       }
       .invoice-middle > .row > .col-6 > .text > h5 {
         margin-top: 0;
         line-height: 1.2;
         color: var(--bs-heading-color);
-        margin-bottom: 3.175mm;
+        margin-bottom: 12px;
       }
       .invoice-middle > .row > .col-6 > .text > h5 > sub {
         position: relative;
         line-height: 0;
         vertical-align: baseline;
-        margin-left: 13.229mm;
+        margin-left: 50px;
         bottom: 0;
-        width: 23.72mm;
+        width: 90px;
         display: inline-block;
         color: #6084a4;
       }
@@ -369,13 +368,13 @@
         vertical-align: middle;
         border-color: inherit;
         border-style: solid;
-        padding: 2.646mm 3.967mm;
+        padding: 10px 15px;
       }
       .invoice-table > .table td,
       .invoice-table > .table td.text-right {
         font-weight: var(--bs-body-font-weight);
         color: #6084a4;
-        font-size: 3.831mm;
+        font-size: 14.5px;
       }
       .invoice-table > .table tbody,
       .invoice-table > .table tr {
@@ -383,7 +382,7 @@
       }
       .invoice-table > .table td,
       .invoice-table > .table th {
-        border-width: 0.265mm;
+        border-width: 1px;
       }
       .invoice-table > .table td.text-right strong {
         font-weight: 600;
@@ -392,7 +391,7 @@
       .invoice-table table tbody td.total,
       .invoice-table table tbody td.total-price {
         color: #221638;
-        font-size: 4.494mm;
+        font-size: 17px;
       }
     </style>
   </head>
