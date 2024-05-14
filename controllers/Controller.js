@@ -398,8 +398,8 @@ class Controller {
         .create(htmlContent, {
           format: "A4",
           orientation: "portrait",
-          width: "1103px",
-          height: "1555px",
+          width: "210mm",
+          height: "297mm",
           childProcessOptions: {
             env: {
               OPENSSL_CONF: "/dev/null",
