@@ -2,6 +2,8 @@ const STATIC = require("../static");
 const Controller = require("./Controller");
 
 class ListingController extends Controller {
+  defaultItemsPerPage = 6;
+
   checkUserCanGetNotificationOnCreateCategory = async (
     categories,
     optionCategories,
@@ -40,6 +42,12 @@ class ListingController extends Controller {
   baseCountListings = async (req, userId = null) => {
     const cities = req.body.cities ?? [];
     const categories = req.body.categories ?? [];
+    const distance = req.body.distance ?? null;
+    const minPrice = req.body.minPrice ?? null;
+    const maxPrice = req.body.maxPrice ?? null;
+    const lat = req.body.lat ?? null;
+    const lng = req.body.lng ?? null;
+
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.TODAY,
@@ -56,6 +64,11 @@ class ListingController extends Controller {
         userId,
         searchCity,
         searchCategory,
+        distance,
+        minPrice,
+        maxPrice,
+        lat,
+        lng,
       })
     );
 
@@ -68,18 +81,32 @@ class ListingController extends Controller {
       timeInfos,
       cities,
       categories,
+      distance,
+      minPrice,
+      maxPrice,
     };
   };
 
   baseListingList = async (req, userId = null) => {
-    const { options, countItems, timeInfos, cities, categories } =
-      await this.baseCountListings(req, userId);
+    const {
+      options,
+      countItems,
+      timeInfos,
+      cities,
+      categories,
+      distance,
+      minPrice,
+      maxPrice,
+    } = await this.baseCountListings(req, userId);
 
     const sessionUserId = req.userData.userId;
 
     options["userId"] = userId;
     options["cities"] = cities;
     options["categories"] = categories;
+    options["distance"] = distance;
+    options["minPrice"] = minPrice;
+    options["maxPrice"] = maxPrice;
 
     options["searchCity"] = req.body.searchCity ?? null;
     options["searchCategory"] = req.body.searchCategory ?? null;

@@ -263,7 +263,7 @@ class Controller {
   baseList = async (req, countByFilter) => {
     const {
       filter = "",
-      itemsPerPage = 20,
+      itemsPerPage = this.defaultItemsPerPage ?? 20,
       order = null,
       orderType = null,
     } = req.body;
