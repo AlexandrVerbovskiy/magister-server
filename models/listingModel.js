@@ -80,6 +80,8 @@ class ListingsModel extends Model {
     "users.name",
   ];
 
+  generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
+
   createImage = async ({ type, link, listingId }) => {
     const res = await db(LISTING_IMAGES_TABLE)
       .insert({
@@ -459,6 +461,26 @@ class ListingsModel extends Model {
     });
   };
 
+  baseDistanceFilter = (query, distance = null, lat = null, lng = null) => {
+    if (distance && lat && lng) {
+      distance = query.whereRaw(`${this.generateDistanceRow} <= ?`, [lat, lng, distance]);
+    }
+
+    return query;
+  };
+
+  basePriceFilter = (query, minPrice = null, maxPrice = null) => {
+    if (minPrice) {
+      query = query.where(`${LISTINGS_TABLE}.price_per_day`, ">=", minPrice);
+    }
+
+    if (maxPrice) {
+      query = query.where(`${LISTINGS_TABLE}.price_per_day`, "<=", maxPrice);
+    }
+
+    return query;
+  };
+
   totalCount = async ({
     serverFromTime,
     serverToTime,
@@ -467,6 +489,11 @@ class ListingsModel extends Model {
     userId = null,
     searchCity = null,
     searchCategory = null,
+    distance = null,
+    minPrice = null,
+    maxPrice = null,
+    lat = null,
+    lng = null,
   }) => {
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
 
@@ -513,6 +540,9 @@ class ListingsModel extends Model {
     if (userId) {
       query = query.where({ owner_id: userId });
     }
+
+    query = this.baseDistanceFilter(query, distance, lat, lng);
+    query = this.basePriceFilter(query, minPrice, maxPrice);
 
     const { count } = await query
       .count(`${LISTINGS_TABLE}.id as count`)
@@ -588,6 +618,9 @@ class ListingsModel extends Model {
       order = "default",
       searchCity = null,
       searchCategory = null,
+      distance = null,
+      minPrice = null,
+      maxPrice = null,
     } = props;
 
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
@@ -609,11 +642,10 @@ class ListingsModel extends Model {
     ];
 
     let canUseDefaultCoordsOrder = false;
-    const generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
 
     if (lat && lng && (!order || order == "default")) {
       selectParams.push(
-        db.raw(`${generateDistanceRow} AS distanceFromCenter`, [lat, lng])
+        db.raw(`${this.generateDistanceRow} AS distanceFromCenter`, [lat, lng])
       );
 
       canUseDefaultCoordsOrder = true;
@@ -682,18 +714,12 @@ class ListingsModel extends Model {
     }
 
     if (canUseDefaultCoordsOrder) {
-      orderField = db.raw(`${generateDistanceRow}`, [lat, lng]);
+      orderField = db.raw(`${this.generateDistanceRow}`, [lat, lng]);
       orderType = "asc";
     }
 
-    console.log(
-      query
-        .orderBy(orderField, orderType)
-        .limit(count)
-        .groupBy(groupedParams)
-        .offset(start)
-        .toQuery()
-    );
+    query = this.baseDistanceFilter(query, distance, lat, lng);
+    query = this.basePriceFilter(query, minPrice, maxPrice);
 
     return await query
       .orderBy(orderField, orderType)
