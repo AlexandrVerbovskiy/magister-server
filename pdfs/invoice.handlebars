@@ -91,7 +91,7 @@
         --bs-code-color: #d63384;
         --bs-highlight-bg: #fff3cd;
       }
-      body {
+      .body {
         box-sizing: border-box;
         font-weight: var(--bs-body-font-weight);
         line-height: var(--bs-body-line-height);
@@ -398,82 +398,84 @@
   </head>
 
   <body>
-    <div class="invoice-area">
-      <div class="invoice-header">
-        <div class="invoice-left-text">
-          <h3>Indice Admin</h3>
-          <p>RentAbout</p>
-        </div>
-        <div class="invoice-right-text">
-          <h3>Invoice</h3>
-        </div>
-      </div>
-
-      <div class="invoice-middle">
-        <div class="row">
-          <div class="col-3">
-            <div class="text">
-              <h4 class="mb-2">Bill To</h4>
-              <span class="d-block mb-1">{{billTo}}</span>
-            </div>
+    <div class="body">
+      <div class="invoice-area">
+        <div class="invoice-header">
+          <div class="invoice-left-text">
+            <h3>Indice Admin</h3>
+            <p>RentAbout</p>
           </div>
-          <div class="col-3">
-            <div class="text">
-              <h4 class="mb-2">Ship To</h4>
-              <span class="d-block mb-1">{{shipTo}}</span>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="text text-right">
-              <h5>Invoice # <sub>#Inv-{{invoiceId}}</sub></h5>
-              <h5>Invoice Date # <sub>{{invoiceDate}}</sub></h5>
-              <h5>P.O # <sub>#{{purchaseOrder}}</sub></h5>
-              <h5 class="mb-0">Due Date # <sub>{{dueDate}}</sub></h5>
-            </div>
+          <div class="invoice-right-text">
+            <h3>Invoice</h3>
           </div>
         </div>
-      </div>
-      <div class="invoice-table">
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Description</th>
-              <th>Price Per Day</th>
-              <th>Rental duration</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>01</td>
-              <td>{{offer.listingName}}</td>
-              <td class="text-right">${{offer.pricePerDay}}</td>
 
-              <td class="text-right">{{offer.durationString}}</td>
+        <div class="invoice-middle">
+          <div class="row">
+            <div class="col-3">
+              <div class="text">
+                <h4 class="mb-2">Bill To</h4>
+                <span class="d-block mb-1">{{billTo}}</span>
+              </div>
+            </div>
+            <div class="col-3">
+              <div class="text">
+                <h4 class="mb-2">Ship To</h4>
+                <span class="d-block mb-1">{{shipTo}}</span>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text text-right">
+                <h5>Invoice # <sub>#Inv-{{invoiceId}}</sub></h5>
+                <h5>Invoice Date # <sub>{{invoiceDate}}</sub></h5>
+                <h5>P.O # <sub>#{{purchaseOrder}}</sub></h5>
+                <h5 class="mb-0">Due Date # <sub>{{dueDate}}</sub></h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="invoice-table">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>Price Per Day</th>
+                <th>Rental duration</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>01</td>
+                <td>{{offer.listingName}}</td>
+                <td class="text-right">${{offer.pricePerDay}}</td>
 
-              <td class="text-right">${{offer.subTotalPrice}}</td>
-            </tr>
-            <tr>
-              <td class="text-right" colspan="4"><strong>Subtotal</strong></td>
-              <td class="text-right">${{offer.subTotalPrice}}</td>
-            </tr>
-            <tr>
-              <td class="text-right" colspan="4">
-                <strong>Sales Tax {{offer.fee}}%</strong>
-              </td>
-              <td class="text-right">${{offer.factTotalFee}}</td>
-            </tr>
-            <tr>
-              <td class="text-right total" colspan="4">
-                <strong>Total</strong>
-              </td>
-              <td class="text-right total-price">
-                <strong>${{offer.factTotalPrice}}</strong>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <td class="text-right">{{offer.durationString}}</td>
+
+                <td class="text-right">${{offer.subTotalPrice}}</td>
+              </tr>
+              <tr>
+                <td class="text-right" colspan="4"><strong>Subtotal</strong></td>
+                <td class="text-right">${{offer.subTotalPrice}}</td>
+              </tr>
+              <tr>
+                <td class="text-right" colspan="4">
+                  <strong>Sales Tax {{offer.fee}}%</strong>
+                </td>
+                <td class="text-right">${{offer.factTotalFee}}</td>
+              </tr>
+              <tr>
+                <td class="text-right total" colspan="4">
+                  <strong>Total</strong>
+                </td>
+                <td class="text-right total-price">
+                  <strong>${{offer.factTotalPrice}}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </body>
