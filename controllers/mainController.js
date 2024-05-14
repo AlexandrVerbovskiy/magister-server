@@ -271,12 +271,7 @@ class MainController extends Controller {
       let conflictOrders = null;
 
       if (userId == order.ownerId) {
-        conflictOrders = await this.orderModel.getConflictOrders(
-          order.id,
-          order.listingId,
-          order.offerStartDate,
-          order.offerEndDate
-        );
+        conflictOrders = await this.orderModel.getConflictOrders(order.id);
         order["ownerAcceptListingQrcode"] = null;
       } else {
         order["tenantAcceptListingQrcode"] = null;
