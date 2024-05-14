@@ -69,8 +69,9 @@
           hsla(0, 0%, 100%, 0.15),
           hsla(0, 0%, 100%, 0)
         );
+        --rem-px-coef: 16px;
         --bs-body-font-family: var(--bs-font-sans-serif);
-        --bs-body-font-size: 1rem;
+        --bs-body-font-size: calc(var(--rem-px-coef) * 1);
         --bs-body-font-weight: 400;
         --bs-body-line-height: 1.5;
         --bs-body-color: #212529;
@@ -79,12 +80,12 @@
         --bs-border-style: solid;
         --bs-border-color: #dee2e6;
         --bs-border-color-translucent: rgba(0, 0, 0, 0.175);
-        --bs-border-radius: 0.375rem;
-        --bs-border-radius-sm: 0.25rem;
-        --bs-border-radius-lg: 0.5rem;
-        --bs-border-radius-xl: 1rem;
-        --bs-border-radius-2xl: 2rem;
-        --bs-border-radius-pill: 50rem;
+        --bs-border-radius: calc(var(--rem-px-coef) * 0.375);
+        --bs-border-radius-sm: calc(var(--rem-px-coef) * 0.25);
+        --bs-border-radius-lg: calc(var(--rem-px-coef) * 0.5);
+        --bs-border-radius-xl: calc(var(--rem-px-coef) * 1);
+        --bs-border-radius-2xl: calc(var(--rem-px-coef) * 2);
+        --bs-border-radius-pill: calc(var(--rem-px-coef) * 50);
         --bs-link-color: #0d6efd;
         --bs-link-hover-color: #0a58ca;
         --bs-code-color: #d63384;
@@ -156,7 +157,7 @@
         color: var(--optionalColor);
         font-size: var(--fontSize);
         line-height: 1.8;
-        margin-top: 0.5rem !important;
+        margin-top: calc(var(--rem-px-coef) *0.5) !important;
         margin-bottom: 0 !important;
         font-weight: 500;
       }
@@ -206,18 +207,18 @@
       }
       .invoice-middle > .row > .col-3 > .text > h4 {
         text-align: var(--bs-body-text-align);
-        --bs-gutter-x: 1.5rem;
+        --bs-gutter-x: calc(var(--rem-px-coef) * 1.5);
         --bs-gutter-y: 0;
         margin-top: 0;
         line-height: 1.2;
         color: var(--bs-heading-color);
         font-weight: 700;
-        margin-bottom: 0.5rem !important;
+        margin-bottom: calc(var(--rem-px-coef) * 0.5) !important;
         font-size: 17px;
       }
       .invoice-middle > .row > .col-3 > .text > span {
         display: block !important;
-        margin-bottom: 0.25rem !important;
+        margin-bottom: calc(var(--rem-px-coef) * 0.25) !important;
         font-weight: 500;
       }
       .invoice-middle > .row,
@@ -227,7 +228,7 @@
       .invoice-middle > .row > .col-6,
       .invoice-middle > .row > .col-6 > .text {
         line-height: var(--bs-body-line-height);
-        --bs-gutter-x: 1.5rem;
+        --bs-gutter-x: calc(var(--rem-px-coef) * 1.5);
         --bs-gutter-y: 0;
       }
       .invoice-middle > .row > .col-6 > .text {
@@ -235,7 +236,7 @@
       }
       .invoice-middle > .row > .col-6 > .text > h5,
       .invoice-middle > .row > .col-6 > .text > h5 > sub {
-        --bs-gutter-x: 1.5rem;
+        --bs-gutter-x: calc(var(--rem-px-coef) * 1.5);
         --bs-gutter-y: 0;
         text-align: end;
         font-weight: 500;
