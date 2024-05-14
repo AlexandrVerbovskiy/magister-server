@@ -103,10 +103,10 @@
         padding: 0;
         margin: 0;
         font-family: var(--fontFamily);
-        font-size: 14px;
+        font-size: 3.705mm;
       }
       .invoice-area {
-        margin-top: 20px;
+        margin-top: 5.292mm;
       }
       .invoice-area,
       .invoice-header,
@@ -124,15 +124,15 @@
       }
       .invoice-area {
         background-color: var(--whiteColor);
-        box-shadow: 1px 5px 24px 0 rgba(68, 102, 242, 0.05);
-        border-radius: 5px;
-        margin-bottom: 30px;
-        padding: 25px;
+        box-shadow: 0.3528mm 1.7639mm 8.4688mm 0 rgba(68, 102, 242, 0.05);
+        border-radius: 1.7639mm;
+        margin-bottom: 8.4688mm;
+        padding: 8.4688mm;
       }
       .invoice-header {
         display: table;
         width: 100%;
-        margin-bottom: 25px;
+        margin-bottom: 6.615mm;
       }
       .invoice-header > * {
         display: table-cell;
@@ -150,14 +150,14 @@
         color: var(--bs-heading-color);
         font-weight: 700;
         margin-bottom: 0 !important;
-        font-size: 22px;
+        font-size: 5.82mm;
       }
       .invoice-left-text > p,
       .invoice-right-text > p {
         color: var(--optionalColor);
         font-size: var(--fontSize);
         line-height: 1.8;
-        margin-top: calc(var(--rem-px-coef) *0.5) !important;
+        margin-top: calc(var(--rem-px-coef) * 0.5) !important;
         margin-bottom: 0 !important;
         font-weight: 500;
       }
@@ -166,7 +166,7 @@
       }
       .invoice-middle {
         line-height: var(--bs-body-line-height);
-        margin-bottom: 25px;
+        margin-bottom: 6.615mm;
       }
       .invoice-middle > .row {
         display: table;
@@ -214,7 +214,7 @@
         color: var(--bs-heading-color);
         font-weight: 700;
         margin-bottom: calc(var(--rem-px-coef) * 0.5) !important;
-        font-size: 17px;
+        font-size: 4.494mm;
       }
       .invoice-middle > .row > .col-3 > .text > span {
         display: block !important;
@@ -240,21 +240,21 @@
         --bs-gutter-y: 0;
         text-align: end;
         font-weight: 500;
-        font-size: 15px;
+        font-size: 3.967mm;
       }
       .invoice-middle > .row > .col-6 > .text > h5 {
         margin-top: 0;
         line-height: 1.2;
         color: var(--bs-heading-color);
-        margin-bottom: 12px;
+        margin-bottom: 3.175mm;
       }
       .invoice-middle > .row > .col-6 > .text > h5 > sub {
         position: relative;
         line-height: 0;
         vertical-align: baseline;
-        margin-left: 50px;
+        margin-left: 13.229mm;
         bottom: 0;
-        width: 90px;
+        width: 23.72mm;
         display: inline-block;
         color: #6084a4;
       }
@@ -369,13 +369,13 @@
         vertical-align: middle;
         border-color: inherit;
         border-style: solid;
-        padding: 10px 15px;
+        padding: 2.646mm 3.967mm;
       }
       .invoice-table > .table td,
       .invoice-table > .table td.text-right {
         font-weight: var(--bs-body-font-weight);
         color: #6084a4;
-        font-size: 14.5px;
+        font-size: 3.831mm;
       }
       .invoice-table > .table tbody,
       .invoice-table > .table tr {
@@ -383,7 +383,7 @@
       }
       .invoice-table > .table td,
       .invoice-table > .table th {
-        border-width: 1px;
+        border-width: 0.265mm;
       }
       .invoice-table > .table td.text-right strong {
         font-weight: 600;
@@ -392,7 +392,7 @@
       .invoice-table table tbody td.total,
       .invoice-table table tbody td.total-price {
         color: #221638;
-        font-size: 17px;
+        font-size: 4.494mm;
       }
     </style>
   </head>
@@ -456,7 +456,9 @@
                 <td class="text-right">${{offer.subTotalPrice}}</td>
               </tr>
               <tr>
-                <td class="text-right" colspan="4"><strong>Subtotal</strong></td>
+                <td class="text-right" colspan="4">
+                  <strong>Subtotal</strong>
+                </td>
                 <td class="text-right">${{offer.subTotalPrice}}</td>
               </tr>
               <tr>
