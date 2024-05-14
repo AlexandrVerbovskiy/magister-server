@@ -690,57 +690,165 @@ class OrderModel extends Model {
     return this.generateBlockedDatesByOrders(orders);
   };
 
-  getConflictOrders = async (orderId, listingId, startDate, endDate) => {
-    let query = db(ORDERS_TABLE);
+  getConflictOrders = async (orderId) => {
+    let query = db(`${ORDERS_TABLE} as searching_order`)
+      .joinRaw(
+        `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} as searching_order_update_request ON searching_order_update_request.order_id = searching_order.id AND searching_order_update_request.active`
+      )
+      .join(
+        `${ORDERS_TABLE}`,
+        `${ORDERS_TABLE}.listing_id`,
+        "=",
+        `${ORDERS_TABLE}.listing_id`
+      );
     query = this.fullOrdersJoin(query);
     query = query
       .joinRaw(
         `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
      ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
       )
-      .where("listing_id", listingId)
-      .whereNot(`${ORDERS_TABLE}.id`, orderId)
+      .whereRaw(`${ORDERS_TABLE}.id != searching_order.id`)
+      .where(`searching_order.status`, STATIC.ORDER_STATUSES.PENDING_OWNER)
+      .whereRaw(`${ORDERS_TABLE}.listing_id = searching_order.listing_id`)
+      .whereIn(`searching_order.id`, [orderId])
       .whereRaw(
         `(
-        (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL 
-          AND (
-            (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= ?)
-            OR
-            (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= ?)
+          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND searching_order_update_request.id IS NOT NULL
+            AND (
+              (
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= searching_order_update_request.new_start_date 
+                AND 
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= searching_order_update_request.new_end_date
+              )
+              OR
+              (
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= searching_order_update_request.new_start_date 
+                AND 
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= searching_order_update_request.new_end_date
+              )
+            )
           )
-        )
-        OR
-        (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL 
-          AND (
-            (${ORDERS_TABLE}.start_date >= ? AND ${ORDERS_TABLE}.end_date <= ?)
-            OR
-            (${ORDERS_TABLE}.start_date >= ? AND ${ORDERS_TABLE}.end_date <= ?)
+          OR
+          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND searching_order_update_request.id IS NOT NULL
+            AND (
+              (
+                ${ORDERS_TABLE}.start_date >= searching_order_update_request.new_start_date 
+                AND 
+                ${ORDERS_TABLE}.start_date <= searching_order_update_request.new_end_date
+              )
+              OR
+              (
+                ${ORDERS_TABLE}.end_date >= searching_order_update_request.new_start_date 
+                AND 
+                ${ORDERS_TABLE}.end_date <= searching_order_update_request.new_end_date
+              )
+            )
+          ) 
+          OR 
+          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND searching_order_update_request.id IS NULL
+            AND (
+              (
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= searching_order.start_date 
+                AND 
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= searching_order.end_date
+              )
+              OR
+              (
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= searching_order.start_date 
+                AND 
+                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= searching_order.end_date
+              )
+            )
           )
-        )
-      )`,
-        [
-          startDate,
-          startDate,
-          endDate,
-          endDate,
-          startDate,
-          startDate,
-          endDate,
-          endDate,
-        ]
+          OR
+          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND searching_order_update_request.id IS NULL
+            AND (
+              (
+                ${ORDERS_TABLE}.start_date >= searching_order.start_date 
+                AND 
+                ${ORDERS_TABLE}.start_date <= searching_order.end_date
+              )
+              OR
+              (
+                ${ORDERS_TABLE}.end_date >= searching_order.start_date 
+                AND 
+                ${ORDERS_TABLE}.end_date <= searching_order.end_date
+              )
+            )
+          )
+        )`
       )
-      .whereNot("status", STATIC.ORDER_STATUSES.PENDING_OWNER)
+      .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.PENDING_OWNER)
       .whereRaw(
-        `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}')`
+        `NOT (${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}')`
       )
-      .whereNot("status", STATIC.ORDER_STATUSES.REJECTED);
+      .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
 
-    return await query.select([
-      ...this.fullVisibleFields,
-      `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
-      `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
-      `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
-    ]);
+    return await query
+      .groupBy([
+        `${ORDERS_TABLE}.id`,
+        `${ORDERS_TABLE}.status`,
+        `${ORDERS_TABLE}.cancel_status`,
+        `${ORDERS_TABLE}.price_per_day`,
+        `${ORDERS_TABLE}.start_date`,
+        `${ORDERS_TABLE}.end_date`,
+        `${ORDERS_TABLE}.tenant_fee`,
+        `${ORDERS_TABLE}.owner_fee`,
+        `${ORDERS_TABLE}.prev_price_per_day`,
+        `${ORDERS_TABLE}.prev_start_date`,
+        `${ORDERS_TABLE}.prev_end_date`,
+        `searching_order.id`,
+        `tenants.id`,
+        `tenants.name`,
+        `tenants.email`,
+        `tenants.photo`,
+        `tenants.phone`,
+        `owners.id`,
+        `owners.name`,
+        `owners.email`,
+        `owners.photo`,
+        `owners.phone`,
+        `${LISTINGS_TABLE}.id`,
+        `${LISTINGS_TABLE}.name`,
+        `${LISTINGS_TABLE}.city`,
+        `${LISTINGS_TABLE}.price_per_day`,
+        `${LISTINGS_TABLE}.min_rental_days`,
+        `${LISTINGS_TABLE}.category_id`,
+        `${LISTING_CATEGORIES_TABLE}.name`,
+        `${LISTINGS_TABLE}.description`,
+        `${LISTINGS_TABLE}.rental_terms`,
+        `${LISTINGS_TABLE}.address`,
+        `${LISTINGS_TABLE}.postcode`,
+        `${LISTINGS_TABLE}.rental_lat`,
+        `${LISTINGS_TABLE}.rental_lng`,
+        `${LISTINGS_TABLE}.rental_radius`,
+        `${LISTINGS_TABLE}.compensation_cost`,
+        `${LISTINGS_TABLE}.count_stored_items`,
+        `${ORDERS_TABLE}.tenant_accept_listing_qrcode`,
+        `${ORDERS_TABLE}.owner_accept_listing_qrcode`,
+        `tenants.phone`,
+        `owners.phone`,
+        `tenants.place_work`,
+        `owners.place_work`,
+        `owners.twitter_url`,
+        `owners.facebook_url`,
+        `owners.linkedin_url`,
+        `owners.instagram_url`,
+        `tenants.twitter_url`,
+        `tenants.facebook_url`,
+        `tenants.linkedin_url`,
+        `tenants.instagram_url`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
+      ])
+      .select([
+        ...this.fullVisibleFields,
+        `searching_order.id as searchingOrderId`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
+      ]);
   };
 
   getBlockedListingDates = async (listingId) => {
