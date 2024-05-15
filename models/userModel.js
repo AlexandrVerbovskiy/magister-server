@@ -231,6 +231,11 @@ class UserModel extends Model {
 
   checkUserPasswordEqual = async (userId, newPassword) => {
     const user = await this.getFullById(userId);
+
+    if (!user.password) {
+      return false;
+    }
+
     return await bcrypt.compare(newPassword, user.password);
   };
 
@@ -477,6 +482,10 @@ class UserModel extends Model {
       .select("password")
       .where({ id })
       .first();
+
+    if (!password) {
+      return false;
+    }
 
     return await bcrypt.compare(checkedPassword, password);
   };

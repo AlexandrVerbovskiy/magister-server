@@ -155,7 +155,7 @@ class OrderModel extends Model {
     return today > quickCancelLastPossible;
   };
 
-  fullBaseGetQuery = (filter, serverFromTime, serverToTime) => {
+  fullBaseGetQuery = (filter) => {
     let query = db(ORDERS_TABLE)
       .join(
         LISTINGS_TABLE,
@@ -183,9 +183,13 @@ class OrderModel extends Model {
       )
       .whereRaw(...this.baseStrFilter(filter));
 
+    return query;
+  };
+
+  orderTimeFilterWrap = (query, serverFromTime, serverToTime) => {
     if (serverFromTime) {
       query = query.where(
-        "start_date",
+        this.baseStringStartFilterDateWrap("start_date"),
         ">=",
         formatDateToSQLFormat(serverFromTime)
       );
@@ -193,7 +197,7 @@ class OrderModel extends Model {
 
     if (serverToTime) {
       query = query.where(
-        "end_date",
+        this.baseStringEndFilterDateWrap("end_date"),
         "<=",
         formatDateToSQLFormat(serverToTime)
       );
@@ -202,8 +206,36 @@ class OrderModel extends Model {
     return query;
   };
 
-  fullBaseGetQueryWithRequestInfo = (filter, serverFromTime, serverToTime) => {
-    let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+  orderWithRequestTimeFilterWrap = (query, serverFromTime, serverToTime) => {
+    if (serverFromTime) {
+      query = query.whereRaw(
+        `(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND CONCAT(DATE(${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date), ' 00:00:00') >= ?) 
+          OR 
+          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND CONCAT(DATE(${ORDERS_TABLE}.start_date), ' 00:00:00') >= ?)`,
+        [
+          formatDateToSQLFormat(serverFromTime),
+          formatDateToSQLFormat(serverFromTime),
+        ]
+      );
+    }
+
+    if (serverToTime) {
+      query = query.whereRaw(
+        `(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND CONCAT(DATE(${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date), ' 23:59:59') <= ?) 
+          OR 
+          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND CONCAT(DATE(${ORDERS_TABLE}.end_date), ' 23:59:59') <= ?)`,
+        [
+          formatDateToSQLFormat(serverToTime),
+          formatDateToSQLFormat(serverToTime),
+        ]
+      );
+    }
+
+    return query;
+  };
+
+  fullBaseGetQueryWithRequestInfo = (filter) => {
+    let query = this.fullBaseGetQuery(filter);
 
     return query.joinRaw(
       `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
@@ -222,7 +254,12 @@ class OrderModel extends Model {
     const baseGetReq = needRequestInfo
       ? this.fullBaseGetQueryWithRequestInfo
       : this.fullBaseGetQuery;
-    let query = baseGetReq(filter, serverFromTime, serverToTime);
+    let query = baseGetReq(filter);
+
+    query = needRequestInfo
+      ? this.orderWithRequestTimeFilterWrap(query, serverFromTime, serverToTime)
+      : this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+
     return query.whereRaw("tenants.id = ?", tenantId);
   };
 
@@ -236,7 +273,13 @@ class OrderModel extends Model {
     const baseGetReq = needRequestInfo
       ? this.fullBaseGetQueryWithRequestInfo
       : this.fullBaseGetQuery;
-    let query = baseGetReq(filter, serverFromTime, serverToTime);
+
+    let query = baseGetReq(filter);
+
+    query = needRequestInfo
+      ? this.orderWithRequestTimeFilterWrap(query, serverFromTime, serverToTime)
+      : this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+
     return query.whereRaw("owners.id = ?", ownerId);
   };
 
@@ -245,7 +288,8 @@ class OrderModel extends Model {
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
-    query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+    query = this.fullBaseGetQuery(filter);
+    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
 
     const { count } = await query.count("* as count").first();
     return count;
@@ -255,7 +299,8 @@ class OrderModel extends Model {
     const { filter, start, count, serverFromTime, serverToTime } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+    let query = this.fullBaseGetQuery(filter);
+    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
 
     return await query
       .select(this.lightVisibleFields)
@@ -322,7 +367,12 @@ class OrderModel extends Model {
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
-    query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+    query = this.fullBaseGetQueryWithRequestInfo(filter);
+    query = this.orderWithRequestTimeFilterWrap(
+      query,
+      serverFromTime,
+      serverToTime
+    );
 
     query = dopWhereCall(query);
 
@@ -340,7 +390,8 @@ class OrderModel extends Model {
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
-    query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+    query = this.fullBaseGetQuery(filter);
+    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
 
     query = dopWhereCall(query);
 
@@ -415,7 +466,8 @@ class OrderModel extends Model {
     const { filter, start, count, serverFromTime, serverToTime } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.fullBaseGetQuery(filter, serverFromTime, serverToTime);
+    let query = this.fullBaseGetQuery(filter);
+    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
 
     query = dopWhereCall(query);
 
@@ -430,8 +482,10 @@ class OrderModel extends Model {
     const { filter, start, count, serverFromTime, serverToTime } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.fullBaseGetQueryWithRequestInfo(
-      filter,
+    let query = this.fullBaseGetQueryWithRequestInfo(filter);
+
+    query = this.orderWithRequestTimeFilterWrap(
+      query,
       serverFromTime,
       serverToTime
     );
