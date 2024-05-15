@@ -79,7 +79,12 @@ class OrderController extends Controller {
       );
     });
 
-  baseRequestsList = async (req, totalCountCall, listCall) => {
+  baseRequestsList = async (
+    req,
+    totalCountCall,
+    listCall,
+    needConflictsInfo = false
+  ) => {
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
@@ -106,6 +111,26 @@ class OrderController extends Controller {
       "listingId"
     );
 
+    if (needConflictsInfo) {
+      const orderIds = requestsWithImages.map((request) => request.id);
+      const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
+
+      requestsWithImages.forEach((request, index) => {
+        const currentOrderConflicts = conflictOrders[request.id];
+
+        requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
+
+        requestsWithImages[index]["blockedDates"] =
+          this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
+
+        requestsWithImages[index]["canFastCancelPayed"] =
+          this.orderModel.canFastCancelPayedOrder(requestsWithImages);
+
+        requestsWithImages[index]["canFinalization"] =
+          this.orderModel.canFinalizationOrder(requestsWithImages);
+      });
+    }
+
     return {
       items: requestsWithImages,
       options: { ...options, type },
@@ -129,7 +154,7 @@ class OrderController extends Controller {
       return this.orderModel.tenantBookingsList(options);
     };
 
-    return await this.baseRequestsList(req, totalCountCall, listCall);
+    return await this.baseRequestsList(req, totalCountCall, listCall, true);
   };
 
   baseListingOwnerBookingList = async (req) => {
@@ -148,7 +173,7 @@ class OrderController extends Controller {
       return this.orderModel.ownerBookingsList(options);
     };
 
-    return await this.baseRequestsList(req, totalCountCall, listCall);
+    return await this.baseRequestsList(req, totalCountCall, listCall, true);
   };
 
   bookingList = (req, res) =>
@@ -257,7 +282,7 @@ class OrderController extends Controller {
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.orderModel.allOrderList(
+        this.orderModel.allOrdersTotalCount(
           filter,
           timeInfos["serverFromTime"],
           timeInfos["serverToTime"]
@@ -277,7 +302,7 @@ class OrderController extends Controller {
 
   adminOrderList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseAdminBookingList(req);
+      const result = await this.baseAdminOrderList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -400,7 +425,7 @@ class OrderController extends Controller {
       }
 
       if (order.tenantId == userId) {
-        await this.orderModel.successCanceled(id, newData);
+        await this.orderModel.successCancelled(id, newData);
       } else {
         await this.orderModel.rejectOrder(id, newData);
       }
@@ -540,7 +565,7 @@ class OrderController extends Controller {
       return this.sendErrorResponse(
         res,
         STATIC.ERRORS.DATA_CONFLICT,
-        "You cannot cancel an order if it has already been canceled or is in the process of being canceled"
+        "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
       );
     }
 
@@ -573,7 +598,7 @@ class OrderController extends Controller {
       return this.sendErrorResponse(
         res,
         STATIC.ERRORS.DATA_CONFLICT,
-        "You cannot cancel an order if it has already been canceled or is in the process of being canceled"
+        "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
       );
     }
 
@@ -611,7 +636,7 @@ class OrderController extends Controller {
       });
     }
 
-    await this.orderModel.successCanceled(id);
+    await this.orderModel.successCancelled(id);
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
   };
@@ -691,7 +716,7 @@ class OrderController extends Controller {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
-          "You cannot cancel an order if it has already been canceled or is in the process of being canceled"
+          "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
         );
       }
 
@@ -733,7 +758,7 @@ class OrderController extends Controller {
 
       await sendMoneyToPaypalByPaypalID(userInfo.paypalId);
 
-      await this.orderModel.successCanceled(id);
+      await this.orderModel.successCancelled(id);
 
       await this.recipientPaymentModel.createRefundPayment({
         money: factTotalPrice,
@@ -758,7 +783,7 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_OWNER,
           STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
         ],
-        cancelFunc: this.orderModel.successCanceled,
+        cancelFunc: this.orderModel.successCancelled,
       });
     });
 
@@ -778,7 +803,7 @@ class OrderController extends Controller {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
-          "You cannot finished an order if it has already been canceled or is in the process of being canceled"
+          "You cannot finished an order if it has already been cancelled or is in the process of being cancelled"
         );
       }
 

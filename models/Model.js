@@ -61,6 +61,12 @@ class Model {
   baseGetById = async (id, model) => {
     return await db(model).where("id", id).select(this.visibleFields).first();
   };
+
+  baseStringStartFilterDateWrap = (fieldName) =>
+    db.raw(`CONCAT(DATE(${fieldName}), ' 00:00:00')`);
+
+  baseStringEndFilterDateWrap = (fieldName) =>
+    db.raw(`CONCAT(DATE(${fieldName}), ' 23:59:59')`);
 }
 
 module.exports = Model;
