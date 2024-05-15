@@ -6,6 +6,7 @@ const {
   getDaysDifference,
   listingListDateConverter,
   separateDate,
+  formatDateToSQLFormat,
 } = require("../utils");
 
 const RECIPIENT_PAYMENTS_TABLE = STATIC.TABLES.RECIPIENT_PAYMENTS;
@@ -219,8 +220,12 @@ class RecipientPayment extends Model {
         props.userId ? this.strFilterFields : this.strFullFilterFields
       )
     );
-    
-    query = this.timeFilterWrap(query, props.serverFromTime, props.serverToTime);
+
+    query = this.timeFilterWrap(
+      query,
+      props.serverFromTime,
+      props.serverToTime
+    );
 
     if (props.userId) {
       query = query.where({ user_id: props.userId });
