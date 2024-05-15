@@ -80,6 +80,8 @@ class ListingsModel extends Model {
     "count_stored_items",
     "price_per_day",
     "users.name",
+    "approved",
+    "active"
   ];
 
   generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;

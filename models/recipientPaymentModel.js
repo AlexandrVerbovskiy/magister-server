@@ -152,6 +152,30 @@ class RecipientPayment extends Model {
     return query;
   };
 
+  timeFilterWrap = (query, serverFromTime, serverToTime) => {
+    if (serverFromTime) {
+      query = query.where(
+        this.baseStringStartFilterDateWrap(
+          `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
+        ),
+        ">=",
+        formatDateToSQLFormat(serverFromTime)
+      );
+    }
+
+    if (serverToTime) {
+      query = query.where(
+        this.baseStringEndFilterDateWrap(
+          `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
+        ),
+        "<=",
+        formatDateToSQLFormat(serverToTime)
+      );
+    }
+
+    return query;
+  };
+
   totalCount = async (
     filter,
     serverFromTime,
@@ -166,11 +190,7 @@ class RecipientPayment extends Model {
       )
     );
 
-    query = this.baseListTimeFilter(
-      { serverFromTime, serverToTime },
-      query,
-      `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
-    );
+    query = this.timeFilterWrap(query, serverFromTime, serverToTime);
 
     if (userId) {
       query = query.where({ user_id: userId });
@@ -199,12 +219,8 @@ class RecipientPayment extends Model {
         props.userId ? this.strFilterFields : this.strFullFilterFields
       )
     );
-
-    query = this.baseListTimeFilter(
-      props,
-      query,
-      `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
-    );
+    
+    query = this.timeFilterWrap(query, props.serverFromTime, props.serverToTime);
 
     if (props.userId) {
       query = query.where({ user_id: props.userId });
@@ -325,16 +341,24 @@ class RecipientPayment extends Model {
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
       .where("received_type", STATIC.RECIPIENT_TYPES.RENTAL);
 
+    let sum = 0;
+
     const lasActivePayment = await query.first();
 
-    const cancelledPayments = await query.where("id", ">", lasActivePayment.id);
+    if (lasActivePayment) {
+      const cancelledPayments = await query.where(
+        "id",
+        ">",
+        lasActivePayment.id
+      );
 
-    await query.where("id", ">", lasActivePayment.id).update({
-      status: STATIC.RECIPIENT_STATUSES.CANCELLED,
-    });
+      await query.where("id", ">", lasActivePayment.id).update({
+        status: STATIC.RECIPIENT_STATUSES.CANCELLED,
+      });
 
-    let sum = 0;
-    cancelledPayments.forEach((payment) => (sum += payment.money));
+      cancelledPayments.forEach((payment) => (sum += payment.money));
+    }
+
     return sum;
   };
 }

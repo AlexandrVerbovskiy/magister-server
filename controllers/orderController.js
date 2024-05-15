@@ -120,10 +120,8 @@ class OrderController extends Controller {
 
         requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
 
-
-        requestsWithImages[index]["blockedDates"] = this.orderModel.generateBlockedDatesByOrders(
-          currentOrderConflicts
-        );
+        requestsWithImages[index]["blockedDates"] =
+          this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
 
         requestsWithImages[index]["canFastCancelPayed"] =
           this.orderModel.canFastCancelPayedOrder(requestsWithImages);
@@ -284,7 +282,7 @@ class OrderController extends Controller {
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.orderModel.allOrderList(
+        this.orderModel.allOrdersTotalCount(
           filter,
           timeInfos["serverFromTime"],
           timeInfos["serverToTime"]
@@ -304,7 +302,7 @@ class OrderController extends Controller {
 
   adminOrderList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseAdminBookingList(req);
+      const result = await this.baseAdminOrderList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
