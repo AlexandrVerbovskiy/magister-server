@@ -264,14 +264,15 @@ class MainController extends Controller {
         );
       }
 
-      const blockedDates = await this.orderModel.getBlockedListingDates(
-        order.listingId
-      );
-
-      let conflictOrders = null;
+      const resGetConflictOrders = await this.orderModel.getConflictOrders([
+        order.id,
+      ]);
+      const conflictOrders = resGetConflictOrders[order.id];
+      order["blockedDates"] =
+        this.orderModel.generateBlockedDatesByOrders(conflictOrders);
 
       if (userId == order.ownerId) {
-        conflictOrders = await this.orderModel.getConflictOrders(order.id);
+        order["conflictOrders"] = conflictOrders;
         order["ownerAcceptListingQrcode"] = null;
       } else {
         order["tenantAcceptListingQrcode"] = null;
@@ -288,11 +289,8 @@ class MainController extends Controller {
       const dopOptions = getDopOptions ? getDopOptions(order) : {};
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        order,
+        order: { ...order, ...dopOptions },
         categories,
-        blockedDates,
-        conflictOrders,
-        ...dopOptions,
       });
     });
 
