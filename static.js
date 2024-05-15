@@ -117,7 +117,7 @@ module.exports = {
     WAITING_OWNER_APPROVE: "waiting_owner_approve",
     WAITING_TENANT_APPROVE: "waiting_tenant_approve",
     WAITING_ADMIN_APPROVE: "waiting_admin_approve",
-    CANCELED: "canceled",
+    CANCELLED: "cancelled",
   },
   ORDER_UPDATE_REQUEST_RECIPIENTS: {
     TO_OWNER: "to_owner",

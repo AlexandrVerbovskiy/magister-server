@@ -36,6 +36,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_radius`,
     `${LISTINGS_TABLE}.rental_terms`,
     `${LISTINGS_TABLE}.key_words`,
+    `${LISTINGS_TABLE}.dop_defect`,
   ];
 
   visibleFields = [
@@ -58,6 +59,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
     `${LISTINGS_TABLE}.rental_terms as rentalTerms`,
     `${LISTINGS_TABLE}.key_words as keyWords`,
+    `${LISTINGS_TABLE}.dop_defect as dopDefect`,
   ];
 
   listingImageVisibleFields = ["id", "listing_id as listingId", "type", "link"];
@@ -422,7 +424,7 @@ class ListingsModel extends Model {
                ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
         ).whereRaw(`${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND
             ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND
-            (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}') AND
+            (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}') AND
             ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'`);
 
       const whereQueryParts = [];

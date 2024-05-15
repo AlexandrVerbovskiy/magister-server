@@ -681,7 +681,7 @@ class OrderModel extends Model {
           );
         })
           .whereRaw(
-            `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}')`
+            `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
           )
           .whereNot("status", STATIC.ORDER_STATUSES.REJECTED);
       })
@@ -690,7 +690,7 @@ class OrderModel extends Model {
     return this.generateBlockedDatesByOrders(orders);
   };
 
-  getConflictOrders = async (orderId) => {
+  getConflictOrders = async (orderIds) => {
     let query = db(`${ORDERS_TABLE} as searching_order`)
       .joinRaw(
         `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} as searching_order_update_request ON searching_order_update_request.order_id = searching_order.id AND searching_order_update_request.active`
@@ -710,7 +710,7 @@ class OrderModel extends Model {
       .whereRaw(`${ORDERS_TABLE}.id != searching_order.id`)
       .where(`searching_order.status`, STATIC.ORDER_STATUSES.PENDING_OWNER)
       .whereRaw(`${ORDERS_TABLE}.listing_id = searching_order.listing_id`)
-      .whereIn(`searching_order.id`, [orderId])
+      .whereIn(`searching_order.id`, orderIds)
       .whereRaw(
         `(
           (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND searching_order_update_request.id IS NOT NULL
@@ -780,11 +780,11 @@ class OrderModel extends Model {
       )
       .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.PENDING_OWNER)
       .whereRaw(
-        `NOT (${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}')`
+        `NOT (${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
       )
       .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
 
-    return await query
+    const conflictOrders = await query
       .groupBy([
         `${ORDERS_TABLE}.id`,
         `${ORDERS_TABLE}.status`,
@@ -849,6 +849,22 @@ class OrderModel extends Model {
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
       ]);
+
+    const res = {};
+
+    orderIds.forEach((orderId) => {
+      const currentOrderConflicts = [];
+
+      conflictOrders.forEach((conflict) => {
+        if (conflict.searchingOrderId == orderId) {
+          currentOrderConflicts.push(conflict);
+        }
+      });
+
+      res[orderId] = currentOrderConflicts;
+    });
+
+    return res;
   };
 
   getBlockedListingDates = async (listingId) => {
@@ -866,7 +882,7 @@ class OrderModel extends Model {
       )
       .whereNot("status", STATIC.ORDER_STATUSES.PENDING_OWNER)
       .whereRaw(
-        `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELED}')`
+        `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
       )
       .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
       .select(["end_date as endDate", "start_date as startDate"]);
@@ -947,10 +963,10 @@ class OrderModel extends Model {
     });
   };
 
-  successCanceled = async (orderId, newData = {}) => {
+  successCancelled = async (orderId, newData = {}) => {
     await db(ORDERS_TABLE)
       .where("id", orderId)
-      .update({ cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELED });
+      .update({ cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELLED });
   };
 
   getUnfinishedTenantCount = async (tenantId) => {
