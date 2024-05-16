@@ -66,14 +66,14 @@ class UserVerifyRequestModel extends Model {
       `${USER_VERIFY_REQUESTS_TABLE}.user_id`
     );
 
-  totalCount = async (filter, serverFromTime, serverToTime) => {
+  totalCount = async (filter, timeInfos) => {
     let query = db(USER_VERIFY_REQUESTS_TABLE);
     query = this.baseListJoin(query);
     query = query
       .where("has_response", false)
       .whereRaw(...this.baseStrFilter(filter));
     query = this.baseListTimeFilter(
-      { serverFromTime, serverToTime },
+      timeInfos,
       query,
       `${USER_VERIFY_REQUESTS_TABLE}.created_at`
     );
@@ -92,7 +92,7 @@ class UserVerifyRequestModel extends Model {
       .whereRaw(...this.baseStrFilter(filter));
 
     query = this.baseListTimeFilter(
-      props,
+      props.timeInfos,
       query,
       `${USER_VERIFY_REQUESTS_TABLE}.created_at`
     );

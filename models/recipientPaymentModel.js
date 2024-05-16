@@ -153,24 +153,24 @@ class RecipientPayment extends Model {
     return query;
   };
 
-  timeFilterWrap = (query, serverFromTime, serverToTime) => {
-    if (serverFromTime) {
+  timeFilterWrap = (query, timeInfos) => {
+    if (timeInfos.serverFromTime) {
       query = query.where(
         this.baseStringStartFilterDateWrap(
           `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
         ),
         ">=",
-        formatDateToSQLFormat(serverFromTime)
+        formatDateToSQLFormat(timeInfos.serverFromTime)
       );
     }
 
-    if (serverToTime) {
+    if (timeInfos.serverToTime) {
       query = query.where(
         this.baseStringEndFilterDateWrap(
           `${RECIPIENT_PAYMENTS_TABLE}.planned_time`
         ),
         "<=",
-        formatDateToSQLFormat(serverToTime)
+        formatDateToSQLFormat(timeInfos.serverToTime)
       );
     }
 
@@ -179,8 +179,7 @@ class RecipientPayment extends Model {
 
   totalCount = async (
     filter,
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     { status = null, type = null, userId = null }
   ) => {
     let query = db(RECIPIENT_PAYMENTS_TABLE);
@@ -191,7 +190,7 @@ class RecipientPayment extends Model {
       )
     );
 
-    query = this.timeFilterWrap(query, serverFromTime, serverToTime);
+    query = this.timeFilterWrap(query, timeInfos);
 
     if (userId) {
       query = query.where({ user_id: userId });
@@ -221,11 +220,7 @@ class RecipientPayment extends Model {
       )
     );
 
-    query = this.timeFilterWrap(
-      query,
-      props.serverFromTime,
-      props.serverToTime
-    );
+    query = this.timeFilterWrap(query, props.timeInfos);
 
     if (props.userId) {
       query = query.where({ user_id: props.userId });

@@ -35,11 +35,11 @@ class UserEventLogModel extends Model {
     });
   };
 
-  totalCount = async (filter, serverFromTime, serverToTime) => {
+  totalCount = async (filter, timeInfos) => {
     let query = db(USER_EVENT_LOGS_TABLE).whereRaw(
       ...this.baseStrFilter(filter)
     );
-    query = this.baseListTimeFilter({ serverFromTime, serverToTime }, query);
+    query = this.baseListTimeFilter(timeInfos, query);
     const { count } = await query.count("* as count").first();
     return count;
   };
@@ -52,7 +52,7 @@ class UserEventLogModel extends Model {
       ...this.baseStrFilter(filter)
     );
 
-    query = this.baseListTimeFilter(props, query);
+    query = this.baseListTimeFilter(props.timeInfos, query);
 
     return await query
       .select(this.visibleFields)
