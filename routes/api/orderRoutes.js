@@ -4,7 +4,6 @@ const { orderController } = require("../../controllers");
 const {
   isAuth,
   isAdmin,
-  isFileLimit,
   isVerified,
   authId,
   isSupport,
@@ -17,6 +16,7 @@ const {
   listValidation,
   approveClientGotListingValidation,
   paypalOrderPayedValidation,
+  finishOrderByOwnerValidation,
 } = require("../../validations/order");
 
 router.post(
@@ -112,6 +112,7 @@ router.post(
   "/cancel-by-tenant",
   isAuth,
   isVerifiedAndHasPaypalId,
+  idBodyValidation,
   orderController.cancelByTenant
 );
 
@@ -119,6 +120,7 @@ router.post(
   "/cancel-by-owner",
   isAuth,
   isVerifiedAndHasPaypalId,
+  idBodyValidation,
   orderController.cancelByOwner
 );
 
@@ -126,6 +128,7 @@ router.post(
   "/finished-by-owner",
   isAuth,
   isVerifiedAndHasPaypalId,
+  finishOrderByOwnerValidation,
   orderController.finishedByOwner
 );
 
@@ -133,6 +136,7 @@ router.post(
   "/accept-cancel-by-tenant",
   isAuth,
   isVerifiedAndHasPaypalId,
+  idBodyValidation,
   orderController.acceptCancelByTenant
 );
 
@@ -140,6 +144,7 @@ router.post(
   "/accept-cancel-by-owner",
   isAuth,
   isVerifiedAndHasPaypalId,
+  idBodyValidation,
   orderController.acceptCancelByOwner
 );
 
@@ -147,6 +152,7 @@ router.post(
   "/full-cancel-payed",
   isAuth,
   isVerifiedAndHasPaypalId,
+  idBodyValidation,
   orderController.fullCancelPayed
 );
 
@@ -154,6 +160,7 @@ router.post(
   "/full-cancel",
   isAuth,
   isVerifiedAndHasPaypalId,
+  idBodyValidation,
   orderController.fullCancel
 );
 
