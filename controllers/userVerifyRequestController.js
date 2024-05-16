@@ -12,13 +12,13 @@ class UserVerifyRequestController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
         this.userVerifyRequestModel.totalCount(filter, timeInfos)
     );
 
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const requests = await this.userVerifyRequestModel.list(options);
 
