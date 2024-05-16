@@ -16,4 +16,11 @@ module.exports = {
   seeds: {
     directory: "./seeds",
   },
+  pool: {
+    afterCreate: function(connection, callback) {
+      connection.query('SET TIME ZONE \'Europe/Kiev\';', function(err) {
+        callback(err, connection);
+      });
+    }
+  }
 };
