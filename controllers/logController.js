@@ -14,15 +14,10 @@ class LogController extends Controller {
 
     const { options, countItems } = await this.baseList(
       req,
-      ({ filter = "" }) =>
-        this.logModel.totalCount(
-          filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"]
-        )
+      ({ filter = "" }) => this.logModel.totalCount(filter, timeInfos)
     );
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["timeInfos"] = timeInfos;
 
     const requests = await this.logModel.list(options);
 

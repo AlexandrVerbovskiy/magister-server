@@ -186,47 +186,47 @@ class OrderModel extends Model {
     return query;
   };
 
-  orderTimeFilterWrap = (query, serverFromTime, serverToTime) => {
-    if (serverFromTime) {
+  orderTimeFilterWrap = (query, timeInfos) => {
+    if (timeInfos.serverFromTime) {
       query = query.where(
         this.baseStringStartFilterDateWrap("start_date"),
         ">=",
-        formatDateToSQLFormat(serverFromTime)
+        formatDateToSQLFormat(timeInfos.serverFromTime)
       );
     }
 
-    if (serverToTime) {
+    if (timeInfos.serverToTime) {
       query = query.where(
         this.baseStringEndFilterDateWrap("end_date"),
         "<=",
-        formatDateToSQLFormat(serverToTime)
+        formatDateToSQLFormat(timeInfos.serverToTime)
       );
     }
 
     return query;
   };
 
-  orderWithRequestTimeFilterWrap = (query, serverFromTime, serverToTime) => {
-    if (serverFromTime) {
+  orderWithRequestTimeFilterWrap = (query, timeInfos) => {
+    if (timeInfos.serverFromTime) {
       query = query.whereRaw(
         `(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND CONCAT(DATE(${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date), ' 00:00:00') >= ?) 
           OR 
           (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND CONCAT(DATE(${ORDERS_TABLE}.start_date), ' 00:00:00') >= ?)`,
         [
-          formatDateToSQLFormat(serverFromTime),
-          formatDateToSQLFormat(serverFromTime),
+          formatDateToSQLFormat(timeInfos.serverFromTime),
+          formatDateToSQLFormat(timeInfos.serverFromTime),
         ]
       );
     }
 
-    if (serverToTime) {
+    if (timeInfos.serverToTime) {
       query = query.whereRaw(
         `(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND CONCAT(DATE(${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date), ' 23:59:59') <= ?) 
           OR 
           (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND CONCAT(DATE(${ORDERS_TABLE}.end_date), ' 23:59:59') <= ?)`,
         [
-          formatDateToSQLFormat(serverToTime),
-          formatDateToSQLFormat(serverToTime),
+          formatDateToSQLFormat(timeInfos.serverToTime),
+          formatDateToSQLFormat(timeInfos.serverToTime),
         ]
       );
     }
@@ -246,8 +246,7 @@ class OrderModel extends Model {
 
   tenantBaseGetQuery = (
     filter,
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     tenantId,
     needRequestInfo = false
   ) => {
@@ -257,16 +256,15 @@ class OrderModel extends Model {
     let query = baseGetReq(filter);
 
     query = needRequestInfo
-      ? this.orderWithRequestTimeFilterWrap(query, serverFromTime, serverToTime)
-      : this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+      ? this.orderWithRequestTimeFilterWrap(query, timeInfos)
+      : this.orderTimeFilterWrap(query, timeInfos);
 
     return query.whereRaw("tenants.id = ?", tenantId);
   };
 
   ownerBaseGetQuery = (
     filter,
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     ownerId,
     needRequestInfo = false
   ) => {
@@ -277,30 +275,30 @@ class OrderModel extends Model {
     let query = baseGetReq(filter);
 
     query = needRequestInfo
-      ? this.orderWithRequestTimeFilterWrap(query, serverFromTime, serverToTime)
-      : this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+      ? this.orderWithRequestTimeFilterWrap(query, timeInfos)
+      : this.orderTimeFilterWrap(query, timeInfos);
 
     return query.whereRaw("owners.id = ?", ownerId);
   };
 
-  fullTotalCount = async (filter, serverFromTime, serverToTime) => {
+  fullTotalCount = async (filter, timeInfos) => {
     let query = db(ORDERS_TABLE).whereRaw(
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
     query = this.fullBaseGetQuery(filter);
-    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+    query = this.orderTimeFilterWrap(query, timeInfos);
 
     const { count } = await query.count("* as count").first();
     return count;
   };
 
   fullList = async (props) => {
-    const { filter, start, count, serverFromTime, serverToTime } = props;
+    const { filter, start, count, timeInfos } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.fullBaseGetQuery(filter);
-    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+    query = this.orderTimeFilterWrap(query, timeInfos);
 
     return await query
       .select(this.lightVisibleFields)
@@ -309,23 +307,12 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  baseTenantTotalCount = async (
-    filter,
-    serverFromTime,
-    serverToTime,
-    tenantId,
-    dopWhereCall
-  ) => {
+  baseTenantTotalCount = async (filter, timeInfos, tenantId, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
-    query = this.tenantBaseGetQuery(
-      filter,
-      serverFromTime,
-      serverToTime,
-      tenantId
-    );
+    query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
 
     query = dopWhereCall(query);
 
@@ -333,23 +320,12 @@ class OrderModel extends Model {
     return count;
   };
 
-  baseOwnerTotalCount = async (
-    filter,
-    serverFromTime,
-    serverToTime,
-    ownerId,
-    dopWhereCall
-  ) => {
+  baseOwnerTotalCount = async (filter, timeInfos, ownerId, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
-    query = this.ownerBaseGetQuery(
-      filter,
-      serverFromTime,
-      serverToTime,
-      ownerId
-    );
+    query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
 
     query = dopWhereCall(query);
 
@@ -357,22 +333,13 @@ class OrderModel extends Model {
     return count;
   };
 
-  baseWithRequestInfoTotalCount = async (
-    filter,
-    serverFromTime,
-    serverToTime,
-    dopWhereCall
-  ) => {
+  baseWithRequestInfoTotalCount = async (filter, timeInfos, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
       ...this.baseStrFilter(filter, this.strFilterFields)
     );
 
     query = this.fullBaseGetQueryWithRequestInfo(filter);
-    query = this.orderWithRequestTimeFilterWrap(
-      query,
-      serverFromTime,
-      serverToTime
-    );
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
 
     query = dopWhereCall(query);
 
@@ -382,8 +349,7 @@ class OrderModel extends Model {
 
   baseAllTotalCount = async (
     filter,
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     dopWhereCall
   ) => {
     let query = db(ORDERS_TABLE).whereRaw(
@@ -391,7 +357,7 @@ class OrderModel extends Model {
     );
 
     query = this.fullBaseGetQuery(filter);
-    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+    query = this.orderTimeFilterWrap(query, timeInfos);
 
     query = dopWhereCall(query);
 
@@ -400,15 +366,14 @@ class OrderModel extends Model {
   };
 
   baseTenantList = async (props, type) => {
-    const { filter, start, count, serverFromTime, serverToTime, tenantId } =
+    const { filter, start, count, timeInfos, tenantId } =
       props;
 
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.tenantBaseGetQuery(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       tenantId,
       type == "booking"
     );
@@ -432,14 +397,13 @@ class OrderModel extends Model {
   };
 
   baseOwnerList = async (props, type) => {
-    const { filter, start, count, serverFromTime, serverToTime, ownerId } =
+    const { filter, start, count, timeInfos, ownerId } =
       props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.ownerBaseGetQuery(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       ownerId,
       type == "booking"
     );
@@ -463,11 +427,11 @@ class OrderModel extends Model {
   };
 
   baseAllList = async (props, dopWhereCall) => {
-    const { filter, start, count, serverFromTime, serverToTime } = props;
+    const { filter, start, count, timeInfos } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.fullBaseGetQuery(filter);
-    query = this.orderTimeFilterWrap(query, serverFromTime, serverToTime);
+    query = this.orderTimeFilterWrap(query, timeInfos);
 
     query = dopWhereCall(query);
 
@@ -479,15 +443,14 @@ class OrderModel extends Model {
   };
 
   baseWithRequestInfoList = async (props, dopWhereCall) => {
-    const { filter, start, count, serverFromTime, serverToTime } = props;
+    const { filter, start, count, timeInfos } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.fullBaseGetQueryWithRequestInfo(filter);
 
     query = this.orderWithRequestTimeFilterWrap(
       query,
-      serverFromTime,
-      serverToTime
+      timeInfos
     );
 
     query = dopWhereCall(query);
@@ -503,16 +466,10 @@ class OrderModel extends Model {
   dopWhereOrder = (query) =>
     query.whereNotIn(`${ORDERS_TABLE}.status`, this.bookingStatuses);
 
-  tenantBookingsTotalCount = async (
-    filter,
-    serverFromTime,
-    serverToTime,
-    tenantId
-  ) => {
+  tenantBookingsTotalCount = async (filter, timeInfos, tenantId) => {
     return await this.baseTenantTotalCount(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       tenantId,
       this.dopWhereBooking
     );
@@ -520,14 +477,12 @@ class OrderModel extends Model {
 
   tenantOrdersTotalCount = async (
     filter,
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     userId
   ) => {
     return await this.baseTenantTotalCount(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       userId,
       this.dopWhereOrder
     );
@@ -543,14 +498,12 @@ class OrderModel extends Model {
 
   ownerBookingsTotalCount = async (
     filter,
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     userId
   ) => {
     return await this.baseOwnerTotalCount(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       userId,
       this.dopWhereBooking
     );
@@ -558,14 +511,12 @@ class OrderModel extends Model {
 
   ownerOrdersTotalCount = async (
     filter,
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     userId
   ) => {
     return await this.baseOwnerTotalCount(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       userId,
       this.dopWhereOrder
     );
@@ -579,20 +530,18 @@ class OrderModel extends Model {
     return await this.baseOwnerList(props, "order");
   };
 
-  allBookingsTotalCount = async (filter, serverFromTime, serverToTime) => {
+  allBookingsTotalCount = async (filter, timeInfos) => {
     return await this.baseWithRequestInfoTotalCount(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       this.dopWhereBooking
     );
   };
 
-  allOrdersTotalCount = async (filter, serverFromTime, serverToTime) => {
+  allOrdersTotalCount = async (filter, timeInfos) => {
     return await this.baseAllTotalCount(
       filter,
-      serverFromTime,
-      serverToTime,
+      timeInfos,
       this.dopWhereOrder
     );
   };

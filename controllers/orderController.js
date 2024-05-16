@@ -94,15 +94,10 @@ class OrderController extends Controller {
 
     const { options, countItems } = await this.baseList(
       req,
-      ({ filter = "" }) =>
-        totalCountCall(
-          filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"]
-        )
+      ({ filter = "" }) => totalCountCall(filter, timeInfos)
     );
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["timeInfos"] = timeInfos;
 
     const requests = await listCall(options);
 
@@ -141,13 +136,8 @@ class OrderController extends Controller {
   baseTenantBookingList = async (req) => {
     const tenantId = req.userData.userId;
 
-    const totalCountCall = (filter, serverFromTime, serverToTime) =>
-      this.orderModel.tenantBookingsTotalCount(
-        filter,
-        serverFromTime,
-        serverToTime,
-        tenantId
-      );
+    const totalCountCall = (filter, timeInfos) =>
+      this.orderModel.tenantBookingsTotalCount(filter, timeInfos, tenantId);
 
     const listCall = (options) => {
       options["tenantId"] = tenantId;
@@ -160,13 +150,8 @@ class OrderController extends Controller {
   baseListingOwnerBookingList = async (req) => {
     const ownerId = req.userData.userId;
 
-    const totalCountCall = (filter, serverFromTime, serverToTime) =>
-      this.orderModel.ownerBookingsTotalCount(
-        filter,
-        serverFromTime,
-        serverToTime,
-        ownerId
-      );
+    const totalCountCall = (filter, timeInfos) =>
+      this.orderModel.ownerBookingsTotalCount(filter, timeInfos, ownerId);
 
     const listCall = (options) => {
       options["ownerId"] = ownerId;
@@ -198,14 +183,10 @@ class OrderController extends Controller {
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.orderModel.allBookingsTotalCount(
-          filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"]
-        )
+        this.orderModel.allBookingsTotalCount(filter, timeInfos)
     );
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["timeInfos"] = timeInfos;
 
     const orders = await this.orderModel.allBookingsList(options);
 
@@ -225,13 +206,8 @@ class OrderController extends Controller {
   baseTenantOrderList = async (req) => {
     const tenantId = req.userData.userId;
 
-    const totalCountCall = (filter, serverFromTime, serverToTime) =>
-      this.orderModel.tenantOrdersTotalCount(
-        filter,
-        serverFromTime,
-        serverToTime,
-        tenantId
-      );
+    const totalCountCall = (filter, timeInfos) =>
+      this.orderModel.tenantOrdersTotalCount(filter, timeInfos, tenantId);
 
     const listCall = (options) => {
       options["tenantId"] = tenantId;
@@ -244,13 +220,8 @@ class OrderController extends Controller {
   baseListingOwnerOrderList = async (req) => {
     const ownerId = req.userData.userId;
 
-    const totalCountCall = (filter, serverFromTime, serverToTime) =>
-      this.orderModel.ownerOrdersTotalCount(
-        filter,
-        serverFromTime,
-        serverToTime,
-        ownerId
-      );
+    const totalCountCall = (filter, timeInfos) =>
+      this.orderModel.ownerOrdersTotalCount(filter, timeInfos, ownerId);
 
     const listCall = (options) => {
       options["ownerId"] = ownerId;
@@ -282,14 +253,10 @@ class OrderController extends Controller {
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.orderModel.allOrdersTotalCount(
-          filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"]
-        )
+        this.orderModel.allOrdersTotalCount(filter, timeInfos)
     );
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["timeInfos"] = timeInfos;
 
     const orders = await this.orderModel.allOrderList(options);
 
@@ -308,11 +275,11 @@ class OrderController extends Controller {
 
   allList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const totalCountCall = (filter, serverFromTime, serverToTime) =>
-        this.orderModel.fullTotalCount(filter, serverFromTime, serverToTime);
+      const totalCountCall = (filter, timeInfos) =>
+        this.orderModel.fullTotalCount(filter, timeInfos);
 
       const listCall = (options) => {
-        return this.orderModel.fullList(filter, serverFromTime, serverToTime);
+        return this.orderModel.fullList(filter, timeInfos);
       };
 
       const result = await this.baseRequestsList(req, totalCountCall, listCall);

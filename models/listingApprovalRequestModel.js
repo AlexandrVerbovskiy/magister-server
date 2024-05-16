@@ -104,18 +104,12 @@ class ListingApprovalRequestModel extends Model {
         `${LISTINGS_TABLE}.category_id`
       );
 
-  totalCount = async (
-    filter,
-    serverFromTime,
-    serverToTime,
-    userId = null,
-    status = "all"
-  ) => {
+  totalCount = async (filter, timeInfos, userId = null, status = "all") => {
     let query = db(LISTING_APPROVAL_REQUESTS_TABLE);
     query = this.baseListJoin(query).whereRaw(...this.baseStrFilter(filter));
 
     query = this.baseListTimeFilter(
-      { serverFromTime, serverToTime },
+      timeInfos,
       query,
       `${LISTING_APPROVAL_REQUESTS_TABLE}.created_at`
     );
@@ -127,7 +121,7 @@ class ListingApprovalRequestModel extends Model {
       query = query.where({ owner_id: userId });
     }
 
-    console.log(query.count("* as count").toQuery())
+    console.log(query.count("* as count").toQuery());
 
     const { count } = await query.count("* as count").first();
     return count;
@@ -146,7 +140,7 @@ class ListingApprovalRequestModel extends Model {
     //query = this.queryByStatus(query, status);
 
     query = this.baseListTimeFilter(
-      props,
+      props.timeInfos,
       query,
       `${LISTING_APPROVAL_REQUESTS_TABLE}.created_at`
     );

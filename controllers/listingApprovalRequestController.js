@@ -9,22 +9,17 @@ class ListingApprovalRequestController extends Controller {
     });
 
     const status = req.body.status;
-    
+
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.listingApprovalRequestModel.totalCount(
-          filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"],
-          userId
-        )
+        this.listingApprovalRequestModel.totalCount(filter, timeInfos, userId)
     );
-
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
 
     options["userId"] = userId;
     options["status"] = status;
+    options["timeInfos"] = timeInfos;
+
     const requests = await this.listingApprovalRequestModel.list(options);
 
     return {

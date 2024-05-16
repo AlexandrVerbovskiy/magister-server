@@ -50,13 +50,12 @@ class SenderPaymentController extends Controller {
       ({ filter = "" }) =>
         this.senderPaymentModel.totalCount(
           filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"],
+          timeInfos,
           userId
         )
     );
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["timeInfos"] = timeInfos;
 
     options["userId"] = userId;
 

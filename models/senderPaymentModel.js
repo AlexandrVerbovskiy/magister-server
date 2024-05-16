@@ -91,7 +91,7 @@ class SenderPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       );
 
-  totalCount = async (filter, serverFromTime, serverToTime, userId = null) => {
+  totalCount = async (filter, timeInfos, userId = null) => {
     let query = db(SENDER_PAYMENTS_TABLE);
     query = this.baseListJoin(query).whereRaw(
       ...this.baseStrFilter(
@@ -101,7 +101,7 @@ class SenderPayment extends Model {
     );
 
     query = this.baseListTimeFilter(
-      { serverFromTime, serverToTime },
+      timeInfos,
       query,
       `${SENDER_PAYMENTS_TABLE}.created_at`
     );
@@ -127,7 +127,7 @@ class SenderPayment extends Model {
     );
 
     query = this.baseListTimeFilter(
-      props,
+      props.timeInfos,
       query,
       `${SENDER_PAYMENTS_TABLE}.created_at`
     );
