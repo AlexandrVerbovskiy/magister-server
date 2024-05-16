@@ -390,6 +390,12 @@ class Controller {
     return template(params);
   }
 
+  addTimeInfoToOptions = (options, timeInfos) => {
+    options["timeInfos"] = timeInfos;
+    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    return options;
+  };
+
   async generatePdf(templatePath, params = {}) {
     const htmlContent = this.generateHtmlByHandlebars(templatePath, params);
 

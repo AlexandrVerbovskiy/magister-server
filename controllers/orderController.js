@@ -92,12 +92,12 @@ class OrderController extends Controller {
 
     const type = req.body.type == "owner" ? "owner" : "tenant";
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) => totalCountCall(filter, timeInfos)
     );
 
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const requests = await listCall(options);
 
@@ -180,13 +180,13 @@ class OrderController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
         this.orderModel.allBookingsTotalCount(filter, timeInfos)
     );
 
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const orders = await this.orderModel.allBookingsList(options);
 
@@ -250,13 +250,13 @@ class OrderController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
         this.orderModel.allOrdersTotalCount(filter, timeInfos)
     );
 
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const orders = await this.orderModel.allOrderList(options);
 
@@ -495,6 +495,7 @@ class OrderController extends Controller {
         userId: orderInfo.ownerId,
         orderId: orderInfo.id,
         paypalId: "123",
+        fee: orderInfo.ownerFee,
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

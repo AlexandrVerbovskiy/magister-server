@@ -12,12 +12,12 @@ class UserEventLogController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) => this.userEventLogModel.totalCount(filter, timeInfos)
     );
 
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const logs = await this.userEventLogModel.list(options);
 

@@ -8,9 +8,9 @@ class ListingApprovalRequestController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    const status = req.body.status;
+    let status = req.body.status;
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
         this.listingApprovalRequestModel.totalCount(filter, timeInfos, userId)
@@ -18,7 +18,7 @@ class ListingApprovalRequestController extends Controller {
 
     options["userId"] = userId;
     options["status"] = status;
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const requests = await this.listingApprovalRequestModel.list(options);
 

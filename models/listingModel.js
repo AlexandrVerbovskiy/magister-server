@@ -661,7 +661,7 @@ class ListingsModel extends Model {
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
 
-    if (timeInfos.serverFromTime && timeInfos.serverToTime) {
+    if (timeInfos && timeInfos.serverFromTime && timeInfos.serverToTime) {
       query = this.listTimeWhere(timeInfos, query);
     }
 

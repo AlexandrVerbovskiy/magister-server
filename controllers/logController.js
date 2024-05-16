@@ -12,12 +12,12 @@ class LogController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) => this.logModel.totalCount(filter, timeInfos)
     );
 
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const requests = await this.logModel.list(options);
 

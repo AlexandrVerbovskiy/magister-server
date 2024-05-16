@@ -12,7 +12,7 @@ class RecipientPaymentController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    const { options, countItems } = await this.baseList(
+    let { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
         this.recipientPaymentModel.totalCount(filter, timeInfos, {
@@ -22,7 +22,7 @@ class RecipientPaymentController extends Controller {
         })
     );
 
-    options["timeInfos"] = timeInfos;
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     options["userId"] = userId;
     options["type"] = req.body.type;
