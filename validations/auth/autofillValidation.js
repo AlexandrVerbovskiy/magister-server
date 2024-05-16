@@ -1,3 +1,3 @@
-const { validateIntegerBody } = require("../base");
+const { validateSmallStringBody } = require("../base");
 
-module.exports = [...validateIntegerBody({ field: "paypalId", fieldName:"Paypal Id" })];
+module.exports = [...validateSmallStringBody({ field: "paypalId", fieldName:"Paypal Id" })];
