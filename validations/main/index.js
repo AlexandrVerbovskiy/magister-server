@@ -15,4 +15,10 @@ module.exports = {
   adminListingApprovalRequestOptionsValidation: require("./adminListingApprovalRequestOptionsValidation"),
   userDocumentsOptionsValidation: require("./userDocumentsOptionsValidation"),
   listingFullByIdOptionsValidation: require("./listingFullByIdOptionsValidation"),
+  orderFullByIdOptionsValidation: require("./orderFullByIdOptionsValidation"),
+  orderFullByTokenOptionsValidation: require("./orderFullByTokenOptionsValidation"),
+  adminOrderListOptionsValidation: require("./adminOrderListOptionsValidation"),
+  orderListOptionsValidation: require("./orderListOptionsValidation"),
+  recipientPaymentListValidation: require("./recipientPaymentListValidation"),
+  senderPaymentListValidation: require("./senderPaymentListValidation"),
 };

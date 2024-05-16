@@ -25,9 +25,15 @@ const {
   adminListingApprovalRequestOptionsValidation,
   userDocumentsOptionsValidation,
   listingFullByIdOptionsValidation,
+  orderFullByIdOptionsValidation,
+  orderFullByTokenOptionsValidation,
+  orderListOptionsValidation,
+  adminOrderListOptionsValidation,
+  recipientPaymentListValidation,
+  senderPaymentListValidation
 } = require("../../validations/main");
 const isSupport = require("../../middlewares/isSupport");
-const { idParamValidation } = require("../../validations/user");
+const { validateIdParam } = require("../../validations/base");
 
 router.get("/index-options", mainController.getIndexPageOptions);
 
@@ -132,19 +138,21 @@ router.get(
 router.get(
   "/order-full-by-id-options/:id",
   isAuth,
-  listingFullByIdOptionsValidation,
+  orderFullByIdOptionsValidation,
   mainController.getOrderFullByIdOptions
 );
 
 router.get(
   "/tenant-scanning-listing-rental-code/:token",
   isAuth,
+  orderFullByTokenOptionsValidation,
   mainController.getOrderTenantQrCodeInfo
 );
 
 router.get(
   "/owner-scanning-listing-rental-code/:token",
   isAuth,
+  orderFullByTokenOptionsValidation,
   mainController.getOrderOwnerQrCodeInfo
 );
 
@@ -196,7 +204,7 @@ router.get(
   "/admin-full-order-info-options/:id",
   isAuth,
   isSupport,
-  idParamValidation,
+  validateIdParam(),
   mainController.getFullOrderByIdPageOption
 );
 
@@ -204,7 +212,7 @@ router.get(
   "/admin-full-booking-info-options/:id",
   isAuth,
   isSupport,
-  idParamValidation,
+  validateIdParam(),
   mainController.getFullOrderByIdWithRequestsToUpdatePageOption
 );
 
@@ -220,27 +228,31 @@ router.post(
   "/booking-list-options",
   isAuth,
   isVerified,
+  orderListOptionsValidation,
   mainController.getBookingListOptions
-);
-
-router.post(
-  "/admin-booking-list-options",
-  isAuth,
-  isSupport,
-  mainController.getAdminBookingListOptions
 );
 
 router.post(
   "/order-list-options",
   isAuth,
   isVerifiedAndHasPaypalId,
+  orderListOptionsValidation,
   mainController.getOrderListOptions
+);
+
+router.post(
+  "/admin-booking-list-options",
+  isAuth,
+  isSupport,
+  adminOrderListOptionsValidation,
+  mainController.getAdminBookingListOptions
 );
 
 router.post(
   "/admin-order-list-options",
   isAuth,
   isSupport,
+  adminOrderListOptionsValidation,
   mainController.getAdminOrderListOptions
 );
 
@@ -248,6 +260,7 @@ router.post(
   "/sender-payment-list-options",
   isAuth,
   isVerifiedAndHasPaypalId,
+  senderPaymentListValidation,
   mainController.getSenderPaymentListOptions
 );
 
@@ -255,6 +268,7 @@ router.post(
   "/recipient-payment-list-options",
   isAuth,
   isVerifiedAndHasPaypalId,
+  recipientPaymentListValidation,
   mainController.getRecipientPaymentListOptions
 );
 
@@ -262,6 +276,7 @@ router.post(
   "/admin-sender-payment-list-options",
   isAuth,
   isAdmin,
+  adminOrderListOptionsValidation,
   mainController.getAdminSenderPaymentListOptions
 );
 
@@ -269,6 +284,7 @@ router.post(
   "/admin-recipient-payment-list-options",
   isAuth,
   isAdmin,
+  adminOrderListOptionsValidation,
   mainController.getAdminRecipientPaymentListOptions
 );
 
@@ -276,6 +292,7 @@ router.get(
   "/admin-listing-defects-edit-options",
   isAuth,
   isAdmin,
+  adminOrderListOptionsValidation,
   mainController.getAdminListingDefectsEditOptions
 );
 
@@ -283,6 +300,7 @@ router.get(
   "/get-order-invoice-options/:id",
   isAuth,
   isVerifiedAndHasPaypalId,
+  validateIdParam(),
   mainController.getOrderInvoiceOptions
 );
 

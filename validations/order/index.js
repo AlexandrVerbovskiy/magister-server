@@ -5,4 +5,5 @@ module.exports = {
   listValidation: require("./listValidation"),
   approveClientGotListingValidation: require("./approveClientGotListingValidation"),
   paypalOrderPayedValidation: require("./paypalOrderPayedValidation"),
+  finishOrderByOwnerValidation: require("./finishOrderByOwnerValidation"),
 };

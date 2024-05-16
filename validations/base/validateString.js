@@ -35,9 +35,7 @@ const validateString = ({
     validate = validate.optional({ nullable: true });
   }
 
-  validate = validate
-    .isLength({ max })
-    .withMessage(maxMessage);
+  validate = validate.isLength({ max }).withMessage(maxMessage);
 
   return [validate];
 };
@@ -87,8 +85,24 @@ const validateSmallStringQuery = ({
     type: "query",
   });
 
+const validateSmallStringParam = ({
+  field,
+  fieldName = null,
+  message = null,
+  required = true,
+}) =>
+  validateString({
+    field,
+    fieldName,
+    message,
+    required,
+    max: 255,
+    type: "param",
+  });
+
 module.exports = {
   validateSmallStringBody,
   validateBigStringBody,
   validateSmallStringQuery,
+  validateSmallStringParam,
 };
