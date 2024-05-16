@@ -15,15 +15,14 @@ class RecipientPaymentController extends Controller {
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.recipientPaymentModel.totalCount(
-          filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"],
-          { userId, type: req.body.type, status: req.body.status }
-        )
+        this.recipientPaymentModel.totalCount(filter, timeInfos, {
+          userId,
+          type: req.body.type,
+          status: req.body.status,
+        })
     );
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["timeInfos"] = timeInfos;
 
     options["userId"] = userId;
     options["type"] = req.body.type;

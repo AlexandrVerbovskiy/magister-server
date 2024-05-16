@@ -15,14 +15,10 @@ class UserVerifyRequestController extends Controller {
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.userVerifyRequestModel.totalCount(
-          filter,
-          timeInfos["serverFromTime"],
-          timeInfos["serverToTime"]
-        )
+        this.userVerifyRequestModel.totalCount(filter, timeInfos)
     );
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
+    options["timeInfos"] = timeInfos;
 
     const requests = await this.userVerifyRequestModel.list(options);
 

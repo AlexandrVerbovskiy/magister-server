@@ -34,9 +34,9 @@ class LogModel extends Model {
 
   getById = (id) => this.baseGetById(id, LOGS_TABLE);
 
-  totalCount = async (filter, serverFromTime, serverToTime) => {
+  totalCount = async (filter, timeInfos) => {
     let query = db(LOGS_TABLE).whereRaw(...this.baseStrFilter(filter));
-    query = this.baseListTimeFilter({ serverFromTime, serverToTime }, query);
+    query = this.baseListTimeFilter(timeInfos, query);
     const { count } = await query.count("* as count").first();
     return count;
   };
@@ -49,7 +49,7 @@ class LogModel extends Model {
       .select(this.visibleFields)
       .whereRaw(...this.baseStrFilter(filter));
 
-    query = this.baseListTimeFilter(props, query);
+    query = this.baseListTimeFilter(props.timeInfos, query);
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };

@@ -417,7 +417,7 @@ class ListingsModel extends Model {
         `c3.id`
       );
 
-  listTimeWhere = (serverFromTime, serverToTime, query) => {
+  listTimeWhere = (timeInfos, query) => {
     return query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
       this.select("listing_id")
         .from(ORDERS_TABLE)
@@ -486,8 +486,7 @@ class ListingsModel extends Model {
   };
 
   totalCount = async ({
-    serverFromTime,
-    serverToTime,
+    timeInfos,
     cities = [],
     categories = [],
     userId = null,
@@ -509,8 +508,8 @@ class ListingsModel extends Model {
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
 
-    if (serverFromTime && serverToTime) {
-      query = this.listTimeWhere(serverFromTime, serverToTime, query);
+    if (timeInfos.serverFromTime && timeInfos.serverToTime) {
+      query = this.listTimeWhere(timeInfos, query);
     }
 
     const queryCities = [...cities];
@@ -611,8 +610,7 @@ class ListingsModel extends Model {
 
   list = async (props) => {
     const {
-      serverFromTime = null,
-      serverToTime = null,
+      timeInfos,
       cities = [],
       categories = [],
       start,
@@ -663,8 +661,8 @@ class ListingsModel extends Model {
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
 
-    if (serverFromTime && serverToTime) {
-      query = this.listTimeWhere(serverFromTime, serverToTime, query);
+    if (timeInfos.serverFromTime && timeInfos.serverToTime) {
+      query = this.listTimeWhere(timeInfos, query);
     }
 
     const queryCities = [...cities];

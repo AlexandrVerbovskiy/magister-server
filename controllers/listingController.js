@@ -57,8 +57,7 @@ class ListingController extends Controller {
 
     const { options, countItems } = await this.baseList(req, () =>
       this.listingModel.totalCount({
-        serverFromTime: timeInfos["serverFromTime"],
-        serverToTime: timeInfos["serverToTime"],
+        timeInfos,
         cities: [...cities],
         categories: [...categories],
         userId,
@@ -111,8 +110,7 @@ class ListingController extends Controller {
     options["searchCity"] = req.body.searchCity ?? null;
     options["searchCategory"] = req.body.searchCategory ?? null;
 
-    Object.keys(timeInfos).forEach((key) => (options[key] = timeInfos[key]));
-
+    options["timeInfos"] = timeInfos;
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
