@@ -243,6 +243,7 @@ class RecipientPayment extends Model {
     pricePerDay,
     userId,
     orderId,
+    fee,
   }) => {
     const dateDuration = getDaysDifference(startDate, endDate);
 
@@ -265,7 +266,7 @@ class RecipientPayment extends Model {
 
         const paymentDate = separateDate(lastDay);
 
-        paymentDays[paymentDate] = dateDuration * pricePerDay;
+        paymentDays[paymentDate] = +(dateDuration * pricePerDay * (100 - fee)/100).toFixed(2);
 
         const nextMonth = currentDate.getMonth() + 1;
         currentDate.setMonth(nextMonth, 0);
@@ -274,7 +275,7 @@ class RecipientPayment extends Model {
         iteration++;
       }
     } else {
-      paymentDays[endDate] = dateDuration * pricePerDay;
+      paymentDays[endDate] = +(dateDuration * pricePerDay * (100 - fee)/100).toFixed(2);
     }
 
     const dataToInsert = [];
