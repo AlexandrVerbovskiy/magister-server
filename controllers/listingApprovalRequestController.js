@@ -9,7 +9,7 @@ class ListingApprovalRequestController extends Controller {
     });
 
     const status = req.body.status;
-
+    
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
