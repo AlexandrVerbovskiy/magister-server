@@ -2,9 +2,9 @@ const { body } = require("express-validator");
 const validateDate = require("./validateDate");
 
 module.exports = [
-  body("clientTime")
+  body("clientHoursUtc")
     .isNumeric()
-    .withMessage("Body field 'Client time' must be a number"),
+    .withMessage("Body field 'Client Hours Utc' must be a number"),
   ...validateDate({
     field: "fromTime",
     fieldName: "From Time",

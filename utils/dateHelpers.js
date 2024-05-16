@@ -21,17 +21,25 @@ const shortTimeConverter = (time) => {
   return `${month}/${day}/${year}`;
 };
 
-const getDateByCurrentAdd = (clientCurrentTime, daysToAdd = 0) => {
-  const date = new Date(clientCurrentTime);
+const getDateByCurrentAdd = (clientHoursUtc, daysToAdd = 0) => {
+  const date = new Date();
+
   date.setDate(date.getDate() + daysToAdd);
   date.setHours(23, 59, 59, 999);
+  let time = date.getTime();
+  time += clientHoursUtc * 60 * 60 * 1000;
+  date.setTime(time);
   return date;
 };
 
-const getDateByCurrentReject = (clientCurrentTime, daysToReject = 0) => {
-  const date = new Date(clientCurrentTime);
+const getDateByCurrentReject = (clientHoursUtc, daysToReject = 0) => {
+  const date = new Date();
+
   date.setDate(date.getDate() - daysToReject);
   date.setHours(0, 0, 0, 0);
+  let time = date.getTime();
+  time += clientHoursUtc * 60 * 60 * 1000;
+  date.setTime(time);
   return date;
 };
 
@@ -49,13 +57,6 @@ const formatDateToSQLFormat = (dateString) => {
   const seconds = String(date.getSeconds()).padStart(2, "0");
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
-const clientServerHoursDifference = (clientTime) => {
-  const serverTime = Date.now();
-  const timeDifference = clientTime - serverTime;
-  const hoursDiff = timeDifference / (1000 * 60 * 60);
-  return Math.round(hoursDiff);
 };
 
 const adaptTimeByHoursDiff = (dateStr, hoursDiff, dopTime = null) => {
@@ -126,7 +127,6 @@ module.exports = {
   timeConverter,
   getOneHourAgo,
   formatDateToSQLFormat,
-  clientServerHoursDifference,
   adaptClientTimeToServer,
   adaptServerTimeToClient,
   getDateByCurrentAdd,
@@ -135,5 +135,5 @@ module.exports = {
   separateDate,
   generateDatesBetween,
   listingListDateConverter,
-  shortTimeConverter
+  shortTimeConverter,
 };

@@ -11,7 +11,6 @@ const {
   getDateByCurrentAdd,
   getDateByCurrentReject,
   adaptClientTimeToServer,
-  clientServerHoursDifference,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -299,9 +298,8 @@ class Controller {
     endToCurrentDaysReject = 1,
     type = STATIC.TIME_OPTIONS_TYPE_DEFAULT.BASE,
   }) => {
-    const { clientTime } = req.body;
+    const { clientHoursUtc } = req.body;
     let { fromTime = null, toTime = null } = req.body;
-    const clientServerHoursDiff = clientServerHoursDifference(clientTime);
 
     let serverFromTime = null;
     let serverToTime = null;
@@ -311,7 +309,7 @@ class Controller {
 
       if (!fromTime) {
         fromTime = timeConverter(
-          getDateByCurrentReject(clientTime, startFromCurrentDaysAdd)
+          getDateByCurrentReject(clientHoursUtc, startFromCurrentDaysAdd)
         );
       }
     }
@@ -319,13 +317,13 @@ class Controller {
     if (type == STATIC.TIME_OPTIONS_TYPE_DEFAULT.BASE) {
       if (!fromTime) {
         fromTime = timeConverter(
-          getDateByCurrentReject(clientTime, startFromCurrentDaysAdd)
+          getDateByCurrentReject(clientHoursUtc, startFromCurrentDaysAdd)
         );
       }
 
       if (!toTime) {
         toTime = timeConverter(
-          getDateByCurrentAdd(clientTime, endToCurrentDaysReject)
+          getDateByCurrentAdd(clientHoursUtc, endToCurrentDaysReject)
         );
       }
     }
@@ -333,13 +331,13 @@ class Controller {
     if (fromTime) {
       serverFromTime = adaptClientTimeToServer(
         fromTime,
-        clientServerHoursDiff,
+        clientHoursUtc,
         { h: 0, m: 0, s: 0, ms: 0 }
       );
     }
 
     if (toTime) {
-      serverToTime = adaptClientTimeToServer(toTime, clientServerHoursDiff, {
+      serverToTime = adaptClientTimeToServer(toTime, clientHoursUtc, {
         h: 23,
         m: 59,
         s: 59,
