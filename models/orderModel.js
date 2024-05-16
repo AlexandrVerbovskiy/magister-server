@@ -67,6 +67,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.rental_lng as listingRentalLng`,
     `${LISTINGS_TABLE}.rental_radius as listingRentalRadius`,
     `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
+    `${LISTINGS_TABLE}.dop_defect as listingDopDefect`,
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${ORDERS_TABLE}.tenant_accept_listing_qrcode as tenantAcceptListingQrcode`,
     `${ORDERS_TABLE}.owner_accept_listing_qrcode as ownerAcceptListingQrcode`,
