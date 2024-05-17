@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const { validateBoolean, validateBigStringBody } = require("../base");
 
 module.exports = [
   body("listingId").isInt().withMessage("Body field 'Listing Id' is required"),
@@ -46,4 +47,6 @@ module.exports = [
       }
       return true;
     }),
+  ...validateBoolean({ field: "feeActive", fieldName: "Fee Active" }),
+  ...validateBigStringBody({ field: "message", fieldName: "Message" }),
 ];

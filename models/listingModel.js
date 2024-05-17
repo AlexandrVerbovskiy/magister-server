@@ -81,7 +81,7 @@ class ListingsModel extends Model {
     "price_per_day",
     "users.name",
     "approved",
-    "active"
+    "active",
   ];
 
   generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
@@ -237,6 +237,9 @@ class ListingsModel extends Model {
       listing["categoryId"]
     );
     const defects = await this.getDefects(id);
+    listing["userCountItems"] = await this.getOwnerCountListings(
+      listing.userId
+    );
 
     return { ...listing, listingImages, categoryInfo, defects };
   };
@@ -467,7 +470,11 @@ class ListingsModel extends Model {
 
   baseDistanceFilter = (query, distance = null, lat = null, lng = null) => {
     if (distance && lat && lng) {
-      distance = query.whereRaw(`${this.generateDistanceRow} <= ?`, [lat, lng, distance]);
+      distance = query.whereRaw(`${this.generateDistanceRow} <= ?`, [
+        lat,
+        lng,
+        distance,
+      ]);
     }
 
     return query;
@@ -548,6 +555,14 @@ class ListingsModel extends Model {
     query = this.basePriceFilter(query, minPrice, maxPrice);
 
     const { count } = await query
+      .count(`${LISTINGS_TABLE}.id as count`)
+      .first();
+    return count;
+  };
+
+  getOwnerCountListings = async (userId) => {
+    const { count } = await db(LISTINGS_TABLE)
+      .where({ owner_id: userId })
       .count(`${LISTINGS_TABLE}.id as count`)
       .first();
     return count;
