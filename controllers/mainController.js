@@ -286,7 +286,7 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
-      const dopOptions = getDopOptions ? getDopOptions(order) : {};
+      const dopOptions = getDopOptions ? await getDopOptions(order) : {};
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order: { ...order, ...dopOptions },
@@ -299,9 +299,15 @@ class MainController extends Controller {
 
     const getOrderByRequest = () => this.orderModel.getFullById(id);
 
-    const getDopOptions = (order) => ({
-      canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
-    });
+    const getDopOptions = async (order) => {
+      const tenantCancelFee =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+
+      return {
+        canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
+        tenantCancelFee,
+      };
+    };
 
     return this.baseGetFullOrderInfo(
       req,
@@ -317,10 +323,16 @@ class MainController extends Controller {
     const getOrderByRequest = () =>
       this.orderModel.getFullByTenantListingToken(token);
 
-    const getDopOptions = () => ({
-      canAcceptTenantListing: true,
-      acceptListingTenantToken: token,
-    });
+    const getDopOptions = async () => {
+      const tenantCancelFee =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+
+      return {
+        canAcceptTenantListing: true,
+        acceptListingTenantToken: token,
+        tenantCancelFee,
+      };
+    };
 
     return this.baseGetFullOrderInfo(
       req,
@@ -336,11 +348,17 @@ class MainController extends Controller {
     const getOrderByRequest = () =>
       this.orderModel.getFullByOwnerListingToken(token);
 
-    const getDopOptions = (order) => ({
-      canAcceptOwnerListing: true,
-      acceptListingOwnerToken: token,
-      canFinalization: this.orderModel.canFinalizationOrder(order),
-    });
+    const getDopOptions = async (order) => {
+      const tenantCancelFee =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+
+      return {
+        canAcceptOwnerListing: true,
+        acceptListingOwnerToken: token,
+        canFinalization: this.orderModel.canFinalizationOrder(order),
+        tenantCancelFee,
+      };
+    };
 
     return this.baseGetFullOrderInfo(
       req,
@@ -506,7 +524,10 @@ class MainController extends Controller {
 
   getBookingListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
       const isForTenant = req.body.type !== "owner";
+      const tenantCancelFee =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
 
       const request = isForTenant
         ? orderController.baseTenantBookingList
@@ -516,9 +537,31 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
+      let countForTenant = 0;
+      let countForOwner = 0;
+
+      if (isForTenant) {
+        countForOwner = await this.orderModel.ownerOrdersTotalCount(
+          "",
+          {},
+          userId
+        );
+        countForTenant = result.countItems;
+      } else {
+        countForTenant = await this.orderModel.tenantOrdersTotalCount(
+          "",
+          {},
+          userId
+        );
+        countForOwner = result.countItems;
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
         categories,
+        tenantCancelFee,
+        countForTenant,
+        countForOwner,
       });
     });
 
@@ -535,7 +578,10 @@ class MainController extends Controller {
 
   getOrderListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
       const isForTenant = req.body.type !== "owner";
+      const tenantCancelFee =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
 
       const request = isForTenant
         ? orderController.baseTenantOrderList
@@ -544,9 +590,31 @@ class MainController extends Controller {
       const result = await request(req);
       const categories = await this.getNavigationCategories();
 
+      let countForTenant = 0;
+      let countForOwner = 0;
+
+      if (isForTenant) {
+        countForOwner = await this.orderModel.ownerOrdersTotalCount(
+          "",
+          {},
+          userId
+        );
+        countForTenant = result.countItems;
+      } else {
+        countForTenant = await this.orderModel.tenantOrdersTotalCount(
+          "",
+          {},
+          userId
+        );
+        countForOwner = result.countItems;
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
         categories,
+        tenantCancelFee,
+        countForTenant,
+        countForOwner,
       });
     });
 

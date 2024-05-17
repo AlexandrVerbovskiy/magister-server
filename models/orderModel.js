@@ -139,7 +139,7 @@ class OrderModel extends Model {
     const offerStartDate = order.offerStartDate;
 
     let quickCancelLastPossible = new Date(offerStartDate);
-    quickCancelLastPossible.setDate(quickCancelLastPossible.getDate() - 1);
+    quickCancelLastPossible.setDate(quickCancelLastPossible.getDate() - 2);
 
     return today <= quickCancelLastPossible;
   };
@@ -543,6 +543,8 @@ class OrderModel extends Model {
     tenantId,
     ownerFee,
     tenantFee,
+    feeActive,
+    message,
   }) => {
     const res = await db(ORDERS_TABLE)
       .insert({
@@ -556,6 +558,8 @@ class OrderModel extends Model {
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
         tenant_accept_listing_qrcode: "",
         owner_accept_listing_qrcode: "",
+        fee_active: feeActive,
+        message,
       })
       .returning("id");
 
