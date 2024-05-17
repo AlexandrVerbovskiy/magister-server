@@ -36,4 +36,8 @@ module.exports = [
     field: "tenantBaseCommissionPercent",
     fieldName: "Tenant Rent Commission",
   }),
+  ...validatePercent({
+    field: "tenantCancelFeePercent",
+    fieldName: "Tenant Cancel Commission",
+  }),
 ];

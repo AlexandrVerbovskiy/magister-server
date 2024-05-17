@@ -32,7 +32,8 @@ class OrderController extends Controller {
 
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { pricePerDay, startDate, endDate, listingId } = req.body;
+      const { pricePerDay, startDate, endDate, listingId, feeActive, message } =
+        req.body;
       const tenantId = req.userData.userId;
 
       const tenantFee =
@@ -67,6 +68,8 @@ class OrderController extends Controller {
         tenantId,
         ownerFee: ownerFee,
         tenantFee: tenantFee,
+        feeActive,
+        message,
       });
 
       return this.sendSuccessResponse(
@@ -92,9 +95,8 @@ class OrderController extends Controller {
 
     const type = req.body.type == "owner" ? "owner" : "tenant";
 
-    let { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) => totalCountCall(filter, timeInfos)
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      totalCountCall(filter, timeInfos)
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
@@ -117,14 +119,16 @@ class OrderController extends Controller {
 
         requestsWithImages[index]["blockedDates"] =
           this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
-
-        requestsWithImages[index]["canFastCancelPayed"] =
-          this.orderModel.canFastCancelPayedOrder(requestsWithImages);
-
-        requestsWithImages[index]["canFinalization"] =
-          this.orderModel.canFinalizationOrder(requestsWithImages);
       });
     }
+
+    requestsWithImages.forEach((request, index) => {
+      requestsWithImages[index]["canFastCancelPayed"] =
+        this.orderModel.canFastCancelPayedOrder(request);
+
+      requestsWithImages[index]["canFinalization"] =
+        this.orderModel.canFinalizationOrder(request);
+    });
 
     return {
       items: requestsWithImages,
@@ -180,10 +184,8 @@ class OrderController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    let { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) =>
-        this.orderModel.allBookingsTotalCount(filter, timeInfos)
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.orderModel.allBookingsTotalCount(filter, timeInfos)
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
@@ -250,10 +252,8 @@ class OrderController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    let { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) =>
-        this.orderModel.allOrdersTotalCount(filter, timeInfos)
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.orderModel.allOrdersTotalCount(filter, timeInfos)
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
@@ -724,12 +724,18 @@ class OrderController extends Controller {
         offerPricePerDay
       );
 
+      const tenantCancelFeePercent =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+
+      const factTotalPriceWithoutCommission =
+        (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
+
       await sendMoneyToPaypalByPaypalID(userInfo.paypalId);
 
       await this.orderModel.successCancelled(id);
 
       await this.recipientPaymentModel.createRefundPayment({
-        money: factTotalPrice,
+        money: factTotalPriceWithoutCommission,
         userId: userId,
         orderId: id,
         paypalId: userInfo.paypalId,
