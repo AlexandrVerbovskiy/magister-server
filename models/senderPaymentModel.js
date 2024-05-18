@@ -22,7 +22,12 @@ class SenderPayment extends Model {
     `${SENDER_PAYMENTS_TABLE}.paypal_sender_id as paypalSenderId`,
     `${SENDER_PAYMENTS_TABLE}.paypal_order_id as paypalOrderId`,
     `${SENDER_PAYMENTS_TABLE}.paypal_capture_id as paypalCaptureId`,
-    `${ORDERS_TABLE}.status as orderStatus`,
+    `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
+    `${ORDERS_TABLE}.start_date as offerStartDate`,
+    `${ORDERS_TABLE}.end_date as offerEndDate`,
+    `${ORDERS_TABLE}.start_date as offerStartDate`,
+    `${ORDERS_TABLE}.tenant_fee as tenantFee`,
+    `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `owners.name as ownerName`,
     `owners.id as ownerId`,
   ];
@@ -137,6 +142,14 @@ class SenderPayment extends Model {
     }
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
+  };
+
+  getTotalPayed = async (userId) => {
+    const resultSelect = await db(SENDER_PAYMENTS_TABLE)
+      .select(db.raw("SUM(money) as sum"))
+      .where({ user_id: userId })
+      .first();
+    return resultSelect.sum;
   };
 
   getFullById = async (id) => {

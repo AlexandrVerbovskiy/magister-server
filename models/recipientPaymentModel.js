@@ -25,6 +25,12 @@ class RecipientPayment extends Model {
     `${RECIPIENT_PAYMENTS_TABLE}.user_id as recipientId`,
     `${RECIPIENT_PAYMENTS_TABLE}.paypal_id as paypalId`,
     `${RECIPIENT_PAYMENTS_TABLE}.order_id as orderId`,
+    `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
+    `${ORDERS_TABLE}.start_date as offerStartDate`,
+    `${ORDERS_TABLE}.end_date as offerEndDate`,
+    `${ORDERS_TABLE}.start_date as offerStartDate`,
+    `${ORDERS_TABLE}.tenant_fee as tenantFee`,
+    `${ORDERS_TABLE}.owner_fee as ownerFee`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
     `${USERS_TABLE}.name as recipientName`,
@@ -266,7 +272,10 @@ class RecipientPayment extends Model {
 
         const paymentDate = separateDate(lastDay);
 
-        paymentDays[paymentDate] = +(dateDuration * pricePerDay * (100 - fee)/100).toFixed(2);
+        paymentDays[paymentDate] = +(
+          (dateDuration * pricePerDay * (100 - fee)) /
+          100
+        ).toFixed(2);
 
         const nextMonth = currentDate.getMonth() + 1;
         currentDate.setMonth(nextMonth, 0);
@@ -275,7 +284,10 @@ class RecipientPayment extends Model {
         iteration++;
       }
     } else {
-      paymentDays[endDate] = +(dateDuration * pricePerDay * (100 - fee)/100).toFixed(2);
+      paymentDays[endDate] = +(
+        (dateDuration * pricePerDay * (100 - fee)) /
+        100
+      ).toFixed(2);
     }
 
     const dataToInsert = [];
@@ -292,7 +304,9 @@ class RecipientPayment extends Model {
       });
     });
 
-    await db.batchInsert(RECIPIENT_PAYMENTS_TABLE, dataToInsert);
+    if (dataToInsert.length > 0) {
+      await db.batchInsert(RECIPIENT_PAYMENTS_TABLE, dataToInsert);
+    }
 
     return paymentDays;
   };
@@ -334,6 +348,14 @@ class RecipientPayment extends Model {
     await db(RECIPIENT_PAYMENTS_TABLE).whereIn("id", ids).update({
       status: STATIC.RECIPIENT_STATUSES.COMPLETED,
     });
+  };
+
+  getTotalGet = async (userId) => {
+    const resultSelect = await db(RECIPIENT_PAYMENTS_TABLE)
+      .select(db.raw("SUM(money) as sum"))
+      .where({ user_id: userId })
+      .first();
+    return resultSelect.sum;
   };
 
   markRentalAsCancelledByOrderId = async (orderId) => {

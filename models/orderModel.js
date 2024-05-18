@@ -16,6 +16,8 @@ const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
+const LISTING_DEFECT_QUESTION_RELATIONS_TABLE =
+  STATIC.TABLES.LISTING_DEFECT_QUESTION_RELATIONS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -1028,6 +1030,45 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE).where({ owner_accept_listing_token: token }).update({
       status: STATIC.ORDER_STATUSES.FINISHED,
     });
+  };
+
+  generateDefectQuestionList = async ({ questionInfos, type, orderId }) => {
+    const toInsert = [];
+
+    questionInfos.forEach((questionInfo) =>
+      toInsert.push({
+        question: questionInfo.question,
+        answer: questionInfo.answer,
+        description: questionInfo.description,
+        type,
+        order_id: orderId,
+      })
+    );
+
+    if (questionInfos.length > 0) {
+      await db.batchInsert(LISTING_DEFECT_QUESTION_RELATIONS_TABLE, toInsert);
+    }
+  };
+
+  generateDefectFromOwnerQuestionList = (questionInfos, orderId) =>
+    this.generateDefectQuestionList({ questionInfos, orderId, type: "owner" });
+
+  generateDefectFromTenantQuestionList = (questionInfos, orderId) =>
+    this.generateDefectQuestionList({ questionInfos, orderId, type: "tenant" });
+
+  getUserTotalCountOrders = async (userId) => {
+    const resultSelect = await db(ORDERS_TABLE)
+      .join(
+        LISTINGS_TABLE,
+        `${LISTINGS_TABLE}.id`,
+        "=",
+        `${ORDERS_TABLE}.listing_id`
+      )
+      .select(db.raw('COUNT(*) as count'))
+      .where(`${LISTINGS_TABLE}.owner_id`, userId)
+      .orWhere(`${ORDERS_TABLE}.tenant_id`, userId)
+      .first();
+    return resultSelect.count;
   };
 }
 

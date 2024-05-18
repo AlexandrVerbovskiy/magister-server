@@ -453,7 +453,7 @@ class OrderController extends Controller {
 
   approveClientGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { token } = req.body;
+      const { token, questions } = req.body;
       const { userId } = req.userData;
 
       const orderInfo = await this.orderModel.getFullByTenantListingToken(
@@ -481,6 +481,11 @@ class OrderController extends Controller {
           STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL +
           "/" +
           ownerToken
+      );
+
+      await this.orderModel.generateDefectFromTenantQuestionList(
+        questions,
+        orderInfo.id
       );
 
       await this.orderModel.orderTenantGotListing(orderInfo.id, {
@@ -765,7 +770,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      const { token } = req.body;
+      const { token, questions } = req.body;
 
       const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
@@ -788,6 +793,11 @@ class OrderController extends Controller {
           "You cannot finished an order with its current status"
         );
       }
+
+      await this.orderModel.generateDefectFromOwnerQuestionList(
+        questions,
+        orderInfo.id
+      );
 
       await this.orderModel.orderFinished(token);
 
