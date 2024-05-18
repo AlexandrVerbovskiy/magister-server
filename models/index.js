@@ -14,4 +14,5 @@ module.exports = {
   orderUpdateRequestModel: require("./orderUpdateRequestModel"),
   senderPaymentModel: require("./senderPaymentModel"),
   recipientPaymentModel: require("./recipientPaymentModel"),
+  listingDefectQuestionModel: require("./listingDefectQuestionModel"),
 };

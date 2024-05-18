@@ -45,14 +45,8 @@ class SenderPaymentController extends Controller {
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    let { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) =>
-        this.senderPaymentModel.totalCount(
-          filter,
-          timeInfos,
-          userId
-        )
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.senderPaymentModel.totalCount(filter, timeInfos, userId)
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
@@ -136,6 +130,7 @@ class SenderPaymentController extends Controller {
       res.contentType("application/pdf");
       res.send(buffer);
     });
+
 }
 
 module.exports = new SenderPaymentController();

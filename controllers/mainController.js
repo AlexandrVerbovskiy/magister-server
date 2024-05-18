@@ -22,6 +22,8 @@ class MainController extends Controller {
 
   getListingDefects = () => this.listingDefectModel.getAll();
 
+  getListingDefectQuestions = () => this.listingDefectQuestionModel.getAll();
+
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.listingCategoryModel.getFullInfoList();
@@ -251,7 +253,13 @@ class MainController extends Controller {
       });
     });
 
-  baseGetFullOrderInfo = (req, res, getOrderByRequest, getDopOptions = null) =>
+  baseGetFullOrderInfo = (
+    req,
+    res,
+    getOrderByRequest,
+    getDopOrderOptions = null,
+    getDopOptions = null
+  ) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
       const order = await getOrderByRequest();
@@ -286,11 +294,16 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
+      const dopOrderOptions = getDopOrderOptions
+        ? await getDopOrderOptions(order)
+        : {};
+
       const dopOptions = getDopOptions ? await getDopOptions(order) : {};
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        order: { ...order, ...dopOptions },
+        order: { ...order, ...dopOrderOptions },
         categories,
+        ...dopOptions,
       });
     });
 
@@ -299,7 +312,7 @@ class MainController extends Controller {
 
     const getOrderByRequest = () => this.orderModel.getFullById(id);
 
-    const getDopOptions = async (order) => {
+    const getDopOrderOptions = async (order) => {
       const tenantCancelFee =
         await this.systemOptionModel.getTenantCancelCommissionPercent();
 
@@ -313,7 +326,7 @@ class MainController extends Controller {
       req,
       res,
       getOrderByRequest,
-      getDopOptions
+      getDopOrderOptions
     );
   };
 
@@ -323,7 +336,7 @@ class MainController extends Controller {
     const getOrderByRequest = () =>
       this.orderModel.getFullByTenantListingToken(token);
 
-    const getDopOptions = async () => {
+    const getDopOrderOptions = async () => {
       const tenantCancelFee =
         await this.systemOptionModel.getTenantCancelCommissionPercent();
 
@@ -334,10 +347,16 @@ class MainController extends Controller {
       };
     };
 
+    const getDopOptions = async () => {
+      const questions = await this.getListingDefectQuestions();
+      return { questions };
+    };
+
     return this.baseGetFullOrderInfo(
       req,
       res,
       getOrderByRequest,
+      getDopOrderOptions,
       getDopOptions
     );
   };
@@ -348,7 +367,7 @@ class MainController extends Controller {
     const getOrderByRequest = () =>
       this.orderModel.getFullByOwnerListingToken(token);
 
-    const getDopOptions = async (order) => {
+    const getDopOrderOptions = async (order) => {
       const tenantCancelFee =
         await this.systemOptionModel.getTenantCancelCommissionPercent();
 
@@ -360,10 +379,16 @@ class MainController extends Controller {
       };
     };
 
+    const getDopOptions = async () => {
+      const questions = await this.getListingDefectQuestions();
+      return { questions };
+    };
+
     return this.baseGetFullOrderInfo(
       req,
       res,
       getOrderByRequest,
+      getDopOrderOptions,
       getDopOptions
     );
   };
@@ -737,6 +762,45 @@ class MainController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         defects,
+      });
+    });
+
+  getAdminListingDefectQuestionsEditOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const questions = await this.getListingDefectQuestions();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        questions,
+      });
+    });
+
+  getWalletInfoOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const categories = await this.getNavigationCategories();
+      const { userId } = req.userData;
+
+      const senderPaymentInfo =
+        await senderPaymentController.baseSenderPaymentList(req, userId);
+
+      const recipientPaymentInfo =
+        await recipientPaymentController.baseRecipientPaymentList(req, userId);
+
+      const totalPayed = await this.senderPaymentModel.getTotalPayed(userId);
+
+      const totalGet = await this.recipientPaymentModel.getTotalGet(userId);
+
+      const feeInfo = await this.systemOptionModel.getCommissionInfo();
+
+      const totalOrders = await this.orderModel.getUserTotalCountOrders(userId);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        senderPaymentInfo,
+        recipientPaymentInfo,
+        totalPayed,
+        totalGet,
+        feeInfo,
+        totalOrders,
       });
     });
 }

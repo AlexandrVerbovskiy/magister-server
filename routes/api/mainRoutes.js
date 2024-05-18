@@ -30,7 +30,7 @@ const {
   orderListOptionsValidation,
   adminOrderListOptionsValidation,
   recipientPaymentListValidation,
-  senderPaymentListValidation
+  senderPaymentListValidation,
 } = require("../../validations/main");
 const isSupport = require("../../middlewares/isSupport");
 const { validateIdParam } = require("../../validations/base");
@@ -292,8 +292,14 @@ router.get(
   "/admin-listing-defects-edit-options",
   isAuth,
   isAdmin,
-  adminOrderListOptionsValidation,
   mainController.getAdminListingDefectsEditOptions
+);
+
+router.get(
+  "/admin-listing-defect-questions-edit-options",
+  isAuth,
+  isAdmin,
+  mainController.getAdminListingDefectQuestionsEditOptions
 );
 
 router.get(
@@ -302,6 +308,12 @@ router.get(
   isVerifiedAndHasPaypalId,
   validateIdParam(),
   mainController.getOrderInvoiceOptions
+);
+
+router.get(
+  "/get-wallet-info-options",
+  isAuth,
+  mainController.getWalletInfoOptions
 );
 
 module.exports = router;

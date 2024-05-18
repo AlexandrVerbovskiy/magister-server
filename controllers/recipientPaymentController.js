@@ -6,20 +6,20 @@ class RecipientPaymentController extends Controller {
     super();
   }
 
+  defaultItemsPerPage = 10;
+
   baseRecipientPaymentList = async (req, userId = null) => {
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
-    let { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) =>
-        this.recipientPaymentModel.totalCount(filter, timeInfos, {
-          userId,
-          type: req.body.type,
-          status: req.body.status,
-        })
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.recipientPaymentModel.totalCount(filter, timeInfos, {
+        userId,
+        type: req.body.type,
+        status: req.body.status,
+      })
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
@@ -49,6 +49,8 @@ class RecipientPaymentController extends Controller {
       const result = await this.baseRecipientPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
+
+  getTotalGet = async (userId) => {};
 }
 
 module.exports = new RecipientPaymentController();
