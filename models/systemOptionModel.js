@@ -8,7 +8,7 @@ const SYSTEM_TABLE = STATIC.TABLES.SYSTEM;
 class SystemOptionModel extends Model {
   getByKey = async (key) => {
     const res = await db(SYSTEM_TABLE).where("key", key).first();
-    return res["value"];
+    return res?.["value"];
   };
 
   updateByKey = async (key, newValue) => {
