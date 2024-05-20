@@ -572,14 +572,14 @@ class MainController extends Controller {
       let countForOwner = 0;
 
       if (isForTenant) {
-        countForOwner = await this.orderModel.ownerOrdersTotalCount(
+        countForOwner = await this.orderModel.ownerBookingsTotalCount(
           "",
           {},
           userId
         );
         countForTenant = result.countItems;
       } else {
-        countForTenant = await this.orderModel.tenantOrdersTotalCount(
+        countForTenant = await this.orderModel.tenantBookingsTotalCount(
           "",
           {},
           userId
