@@ -14,14 +14,16 @@ class SenderPayment extends Model {
     `${SENDER_PAYMENTS_TABLE}.money`,
     `${SENDER_PAYMENTS_TABLE}.user_id as payerId`,
     `${SENDER_PAYMENTS_TABLE}.order_id as orderId`,
+    `${SENDER_PAYMENTS_TABLE}.admin_approved as adminApproved`,
+    `${SENDER_PAYMENTS_TABLE}.payed_proof as payedProof`,
+    `${SENDER_PAYMENTS_TABLE}.data`,
     `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
+    `${SENDER_PAYMENTS_TABLE}.waiting_approved as waitingApproved`,
+    `${SENDER_PAYMENTS_TABLE}.failed_description as failedDescription`,
     `${USERS_TABLE}.name as payerName`,
     `${USERS_TABLE}.email as payerEmail`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
-    `${SENDER_PAYMENTS_TABLE}.paypal_sender_id as paypalSenderId`,
-    `${SENDER_PAYMENTS_TABLE}.paypal_order_id as paypalOrderId`,
-    `${SENDER_PAYMENTS_TABLE}.paypal_capture_id as paypalCaptureId`,
     `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
     `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.end_date as offerEndDate`,
@@ -42,8 +44,6 @@ class SenderPayment extends Model {
     `${SENDER_PAYMENTS_TABLE}.created_at`,
     `${USERS_TABLE}.name`,
     `${LISTINGS_TABLE}.name`,
-    `${SENDER_PAYMENTS_TABLE}.paypal_sender_id`,
-    `${SENDER_PAYMENTS_TABLE}.paypal_order_id`,
     `owners.name`,
   ];
 
@@ -51,22 +51,93 @@ class SenderPayment extends Model {
     money,
     userId,
     orderId,
-    paypalSenderId,
-    paypalOrderId,
-    paypalCaptureId,
+    data,
+    payedProof,
+    adminApproved,
+    type,
   }) => {
     const res = await db(SENDER_PAYMENTS_TABLE)
       .insert({
+        type,
+        data,
         money,
         user_id: userId,
         order_id: orderId,
-        paypal_sender_id: paypalSenderId,
-        paypal_order_id: paypalOrderId,
-        paypal_capture_id: paypalCaptureId,
+        payed_proof: payedProof,
+        admin_approved: adminApproved,
       })
       .returning("id");
 
     return res[0]["id"];
+  };
+
+  createByPaypal = ({
+    money,
+    userId,
+    orderId,
+    paypalSenderId,
+    paypalOrderId,
+    paypalCaptureId,
+  }) =>
+    this.create({
+      money,
+      userId,
+      orderId,
+      payedProof: paypalOrderId,
+      data: JSON.stringify({ paypalSenderId, paypalCaptureId, paypalOrderId }),
+      adminApproved: true,
+      type: "paypal",
+    });
+
+  createByCreditCard = ({ money, userId, orderId }) =>
+    this.create({
+      money,
+      userId,
+      orderId,
+      payedProof: null,
+      data: JSON.stringify({}),
+      adminApproved: false,
+      type: "credit-card",
+    });
+
+  checkCanCreditCardProofAppend = async (orderId) => {
+    const result = await query
+      .where(`${SENDER_PAYMENTS_TABLE}.order_id`, orderId)
+      .select([...this.visibleFields])
+      .first();
+
+    let canProof = true;
+
+    if (!result) {
+      canProof = false;
+    } else {
+      canProof = result.type === "credit-card" && !adminApproved;
+    }
+
+    return canProof;
+  };
+
+  updateCreditCardTransactionProof = async (orderId, proof) => {
+    await db.where({ order_id: orderId, type: "credit-card" }).update({
+      payed_proof: proof,
+      waiting_approved: true,
+    });
+  };
+
+  approveCreditCardTransaction = async (orderId) => {
+    await db.where({ order_id: orderId, type: "credit-card" }).update({
+      admin_approved: true,
+      waiting_approved: false,
+      failed_description: null,
+    });
+  };
+
+  rejectCreditCardTransaction = async (orderId, description) => {
+    await db.where({ order_id: orderId, type: "credit-card" }).update({
+      admin_approved: false,
+      waiting_approved: false,
+      failed_description: description,
+    });
   };
 
   baseListJoin = (query) =>
@@ -150,6 +221,24 @@ class SenderPayment extends Model {
       .where({ user_id: userId })
       .first();
     return resultSelect.sum;
+  };
+
+  getInfoByOrderId = async (orderId) => {
+    return await db(SENDER_PAYMENTS_TABLE)
+      .select([
+        `${SENDER_PAYMENTS_TABLE}.id`,
+        `${SENDER_PAYMENTS_TABLE}.money`,
+        `${SENDER_PAYMENTS_TABLE}.user_id as payerId`,
+        `${SENDER_PAYMENTS_TABLE}.order_id as orderId`,
+        `${SENDER_PAYMENTS_TABLE}.admin_approved as adminApproved`,
+        `${SENDER_PAYMENTS_TABLE}.payed_proof as payedProof`,
+        `${SENDER_PAYMENTS_TABLE}.data`,
+        `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
+        `${SENDER_PAYMENTS_TABLE}.waiting_approved as waitingApproved`,
+        `${SENDER_PAYMENTS_TABLE}.failed_description as failedDescription`,
+      ])
+      .where({ order_id: orderId })
+      .first();
   };
 
   getFullById = async (id) => {

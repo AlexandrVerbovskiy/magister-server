@@ -17,6 +17,7 @@ const {
   approveClientGotListingValidation,
   paypalOrderPayedValidation,
   finishOrderByOwnerValidation,
+  creditCardUnpaidTransactionValidation,
 } = require("../../validations/order");
 
 router.post(
@@ -98,6 +99,14 @@ router.post(
   isVerifiedAndHasPaypalId,
   paypalOrderPayedValidation,
   orderController.paypalOrderPayed
+);
+
+router.post(
+  "/credit-card-unpaid-order-transaction-create",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  creditCardUnpaidTransactionValidation,
+  orderController.createUnpaidTransactionByCreditCard
 );
 
 router.post(

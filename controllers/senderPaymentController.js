@@ -131,6 +131,48 @@ class SenderPaymentController extends Controller {
       res.send(buffer);
     });
 
+  updateCreditCardTransactionProof = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
+      const { orderId } = req.body;
+
+      const order = await this.orderModel.getById(orderId);
+
+      if (order.tenantId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const proofUrl = this.moveUploadsFileToFolder(
+        req.file,
+        "payment-approves"
+      );
+
+      await this.searchedWordModel.updateCreditCardTransactionProof(
+        orderId,
+        proofUrl
+      );
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        proofUrl,
+      });
+    });
+
+  approveCreditCardTransaction = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { orderId } = req.body;
+      await this.senderPaymentModel.approveCreditCardTransaction(orderId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  rejectCreditCardTransaction = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { orderId, description } = req.body;
+      await this.senderPaymentModel.rejectCreditCardTransaction(
+        orderId,
+        description
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
 }
 
 module.exports = new SenderPaymentController();

@@ -18,6 +18,7 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 const LISTING_DEFECT_QUESTION_RELATIONS_TABLE =
   STATIC.TABLES.LISTING_DEFECT_QUESTION_RELATIONS;
+const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -256,16 +257,29 @@ class OrderModel extends Model {
     );
   };
 
+  payedInfoJoin = (query) => {
+    return query.joinRaw(
+      `LEFT JOIN ${SENDER_PAYMENTS_TABLE} ON
+       ${SENDER_PAYMENTS_TABLE}.order_id = ${ORDERS_TABLE}.id`
+    );
+  };
+
   tenantBaseGetQuery = (
     filter,
     timeInfos,
     tenantId,
-    needRequestInfo = false
+    needRequestInfo = false,
+    needPayedInfo = false
   ) => {
     const baseGetReq = needRequestInfo
       ? this.fullBaseGetQueryWithRequestInfo
       : this.fullBaseGetQuery;
+
     let query = baseGetReq(filter);
+
+    if (needPayedInfo) {
+      query = this.payedInfoJoin(query);
+    }
 
     query = needRequestInfo
       ? this.orderWithRequestTimeFilterWrap(query, timeInfos)
@@ -377,6 +391,7 @@ class OrderModel extends Model {
       filter,
       timeInfos,
       tenantId,
+      type == "booking",
       type == "booking"
     );
 
@@ -388,7 +403,12 @@ class OrderModel extends Model {
 
     const visibleFields =
       type == "booking"
-        ? this.lightRequestVisibleFields
+        ? [
+            ...this.lightRequestVisibleFields,
+            `${SENDER_PAYMENTS_TABLE}.failed_description as payedFailedDescription`,
+            `${SENDER_PAYMENTS_TABLE}.waiting_approved as payedWaitingApproved`,
+            `${SENDER_PAYMENTS_TABLE}.admin_approved as payedAdminApproved`,
+          ]
         : this.lightVisibleFields;
 
     return await query
@@ -1063,7 +1083,7 @@ class OrderModel extends Model {
         "=",
         `${ORDERS_TABLE}.listing_id`
       )
-      .select(db.raw('COUNT(*) as count'))
+      .select(db.raw("COUNT(*) as count"))
       .where(`${LISTINGS_TABLE}.owner_id`, userId)
       .orWhere(`${ORDERS_TABLE}.tenant_id`, userId)
       .first();

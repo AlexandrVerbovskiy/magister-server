@@ -27,6 +27,12 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
+      if (order.status === STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) {
+        order["payedInfo"] = await this.senderPaymentModel.getInfoByOrderId(
+          order.id
+        );
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
@@ -421,6 +427,13 @@ class OrderController extends Controller {
 
       const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
       const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
+
+      const order = await this.orderModel.getById(orderId);
+
+      if (order.tenantId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
       const paypalCaptureId =
         paypalOrderInfo.purchase_units[0].payments.captures[0].id;
 
@@ -439,7 +452,7 @@ class OrderController extends Controller {
         qrCode: generatedImage,
       });
 
-      await this.senderPaymentModel.create({
+      await this.senderPaymentModel.createByPaypal({
         money: amount,
         userId: userId,
         orderId: orderId,
@@ -450,6 +463,27 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
+
+  createUnpaidTransactionByCreditCard = async (req, res) => {
+    const { userId } = req.userData;
+    const { orderId, amount: money } = req.body;
+
+    const order = await this.orderModel.getById(orderId);
+
+    if (order.tenantId != userId) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const transactionId = await this.senderPaymentModel.createByCreditCard({
+      money,
+      userId,
+      orderId,
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      transactionId,
+    });
+  };
 
   approveClientGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
