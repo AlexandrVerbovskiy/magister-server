@@ -466,7 +466,7 @@ class OrderController extends Controller {
 
   createUnpaidTransactionByCreditCard = async (req, res) => {
     const { userId } = req.userData;
-    const { orderId, amount: money } = req.body;
+    const { orderId } = req.body;
 
     const order = await this.orderModel.getById(orderId);
 
@@ -474,10 +474,20 @@ class OrderController extends Controller {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
+    const proofUrl = this.moveUploadsFileToFolder(req.file, "paymentProofs");
+
+    const money = tenantPaymentCalculate(
+      order.offerStartDate,
+      order.offerEndDate,
+      order.tenantFee,
+      order.offerPricePerDay
+    );
+
     const transactionId = await this.senderPaymentModel.createByCreditCard({
       money,
       userId,
       orderId,
+      proofUrl,
     });
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
