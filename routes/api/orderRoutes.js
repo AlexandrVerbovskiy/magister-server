@@ -8,7 +8,11 @@ const {
   authId,
   isSupport,
   isVerifiedAndHasPaypalId,
+  isFileLimit,
 } = require("../../middlewares");
+
+const { upload } = require("../../utils");
+
 const {
   idParamValidation,
   idBodyValidation,
@@ -103,6 +107,8 @@ router.post(
 
 router.post(
   "/credit-card-unpaid-order-transaction-create",
+  upload.single("proof"),
+  isFileLimit,
   isAuth,
   isVerifiedAndHasPaypalId,
   creditCardUnpaidTransactionValidation,

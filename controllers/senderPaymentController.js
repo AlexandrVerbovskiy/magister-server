@@ -142,10 +142,7 @@ class SenderPaymentController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const proofUrl = this.moveUploadsFileToFolder(
-        req.file,
-        "payment-approves"
-      );
+      const proofUrl = this.moveUploadsFileToFolder(req.file, "paymentProofs");
 
       await this.searchedWordModel.updateCreditCardTransactionProof(
         orderId,

@@ -143,6 +143,13 @@ router.get(
 );
 
 router.get(
+  "/get-booking-for-card-pay-options/:id",
+  isAuth,
+  orderFullByIdOptionsValidation,
+  mainController.getBookingFullForCardPay
+);
+
+router.get(
   "/tenant-scanning-listing-rental-code/:token",
   isAuth,
   orderFullByTokenOptionsValidation,

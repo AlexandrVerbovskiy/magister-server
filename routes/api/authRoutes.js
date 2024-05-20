@@ -42,7 +42,6 @@ router.post(
   upload.single("photo"),
   isFileLimit,
   isAuth,
-  isFileLimit,
   saveProfileValidation,
   userController.saveProfile
 );

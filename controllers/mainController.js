@@ -336,6 +336,21 @@ class MainController extends Controller {
     );
   };
 
+  getBookingFullForCardPay = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const booking = await this.orderModel.getFullById(id);
+      const bankAccount = await this.systemOptionModel.getBankAccountInfo();
+      console.log(bankAccount);
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        booking,
+        bankAccount,
+        categories,
+      });
+    });
+
   getOrderTenantQrCodeInfo = (req, res) => {
     const { token } = req.params;
 

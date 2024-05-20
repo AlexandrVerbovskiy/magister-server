@@ -89,12 +89,12 @@ class SenderPayment extends Model {
       type: "paypal",
     });
 
-  createByCreditCard = ({ money, userId, orderId }) =>
+  createByCreditCard = ({ money, userId, orderId, proofUrl }) =>
     this.create({
       money,
       userId,
       orderId,
-      payedProof: null,
+      payedProof: proofUrl,
       data: JSON.stringify({}),
       adminApproved: false,
       type: "credit-card",

@@ -20,10 +20,6 @@ const validatePercent = ({ field, fieldName }) => [
 ];
 
 module.exports = [
-  ...validateBoolean({
-    field: "userLogActive",
-    fieldName: "User sog Active",
-  }),
   ...validatePercent({
     field: "ownerBaseCommissionPercent",
     fieldName: "Listing Owner Commission",
