@@ -1,3 +1,5 @@
 module.exports = {
-  setOptionsValidation: require("./setOptionsValidation"),
+  setCommissionOptionsValidation: require("./setCommissionOptionsValidation"),
+  setMainOptionsValidation: require("./setMainOptionsValidation"),
+  setSystemBankAccountInfoValidation: require("./setSystemBankAccountInfoValidation"),
 };

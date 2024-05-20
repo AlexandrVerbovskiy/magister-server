@@ -31,6 +31,39 @@ class SystemOptionModel extends Model {
     return value ? Number(value) : 0;
   };
 
+  getBankAccountInfo = async () => {
+    const bankAccountInfos = await db(SYSTEM_TABLE).whereIn("key", [
+      "bank_account_iban",
+      "bank_account_swift_bic",
+      "bank_account_beneficiary",
+      "bank_account_reference_concept_code",
+    ]);
+    const bankAccountIban = bankAccountInfos.find(
+      (info) => info.key == "bank_account_iban"
+    );
+
+    const bankAccountSwiftBic = bankAccountInfos.find(
+      (info) => info.key == "bank_account_swift_bic"
+    );
+
+    const bankAccountBeneficiary = bankAccountInfos.find(
+      (info) => info.key == "bank_account_beneficiary"
+    );
+
+    const bankAccountReferenceConceptCode = bankAccountInfos.find(
+      (info) => info.key == "bank_account_reference_concept_code"
+    );
+
+    const result = {
+      bankAccountIban: bankAccountIban ?? "",
+      bankAccountSwiftBic: bankAccountSwiftBic ?? "",
+      bankAccountBeneficiary: bankAccountBeneficiary ?? "",
+      bankAccountReferenceConceptCode: bankAccountReferenceConceptCode ?? "",
+    };
+
+    return result;
+  };
+
   getOwnerBoostCommissionPercent = async () => {
     const value = await this.getByKey("owner_boost_commission_percent");
     return value ? Number(value) : 0;
@@ -104,6 +137,11 @@ class SystemOptionModel extends Model {
     const tenantBaseCommissionPercent =
       resObj["tenant_base_commission_percent"] ?? "";
     const tenantCancelFeePercent = resObj["tenant_cancel_fee_percent"] ?? "";
+    const bankAccountIban = resObj["bank_account_iban"] ?? "";
+    const bankAccountSwiftBic = resObj["bank_account_swift_bic"] ?? "";
+    const bankAccountBeneficiary = resObj["bank_account_beneficiary"] ?? "";
+    const bankAccountReferenceConceptCode =
+      resObj["bank_account_reference_concept_code"] ?? "";
 
     return {
       userLogActive,
@@ -111,32 +149,78 @@ class SystemOptionModel extends Model {
       ownerBoostCommissionPercent,
       tenantBaseCommissionPercent,
       tenantCancelFeePercent,
+      bankAccountIban,
+      bankAccountSwiftBic,
+      bankAccountBeneficiary,
+      bankAccountReferenceConceptCode,
     };
   };
 
   setOptions = async ({
-    userLogActive,
-    ownerBaseCommissionPercent,
-    ownerBoostCommissionPercent,
-    tenantBaseCommissionPercent,
-    tenantCancelFeePercent,
+    userLogActive = null,
+    ownerBaseCommissionPercent = null,
+    ownerBoostCommissionPercent = null,
+    tenantBaseCommissionPercent = null,
+    tenantCancelFeePercent = null,
+    bankAccountIban = null,
+    bankAccountSwiftBic = null,
+    bankAccountBeneficiary = null,
+    bankAccountReferenceConceptCode = null,
   }) => {
-    const userLogActiveStringValue = userLogActive ? "true" : "false";
+    if (userLogActive !== null) {
+      const userLogActiveStringValue = userLogActive ? "true" : "false";
+      await this.updateByKey("user_log_active", userLogActiveStringValue);
+    }
 
-    await this.updateByKey("user_log_active", userLogActiveStringValue);
-    await this.updateByKey(
-      "owner_base_commission_percent",
-      ownerBaseCommissionPercent
-    );
-    await this.updateByKey(
-      "owner_boost_commission_percent",
-      ownerBoostCommissionPercent
-    );
-    await this.updateByKey(
-      "tenant_base_commission_percent",
-      tenantBaseCommissionPercent
-    );
-    await this.updateByKey("tenant_cancel_fee_percent", tenantCancelFeePercent);
+    if (ownerBaseCommissionPercent !== null) {
+      await this.updateByKey(
+        "owner_base_commission_percent",
+        ownerBaseCommissionPercent
+      );
+    }
+
+    if (ownerBoostCommissionPercent !== null) {
+      await this.updateByKey(
+        "owner_boost_commission_percent",
+        ownerBoostCommissionPercent
+      );
+    }
+
+    if (tenantBaseCommissionPercent !== null) {
+      await this.updateByKey(
+        "tenant_base_commission_percent",
+        tenantBaseCommissionPercent
+      );
+    }
+
+    if (tenantCancelFeePercent !== null) {
+      await this.updateByKey(
+        "tenant_cancel_fee_percent",
+        tenantCancelFeePercent
+      );
+    }
+
+    if (bankAccountIban !== null) {
+      await this.updateByKey("bank_account_iban", bankAccountIban);
+    }
+
+    if (bankAccountSwiftBic !== null) {
+      await this.updateByKey("bank_account_swift_bic", bankAccountSwiftBic);
+    }
+
+    if (bankAccountSwiftBic !== null) {
+      await this.updateByKey(
+        "bank_account_beneficiary",
+        bankAccountBeneficiary
+      );
+    }
+
+    if (bankAccountReferenceConceptCode !== null) {
+      await this.updateByKey(
+        "bank_account_reference_concept_code",
+        bankAccountReferenceConceptCode
+      );
+    }
   };
 }
 
