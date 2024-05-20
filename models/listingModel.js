@@ -756,8 +756,12 @@ class ListingsModel extends Model {
         `${USERS_TABLE}.name as userName`,
         `${LISTING_APPROVAL_REQUESTS_TABLE}.id as requestId`,
         `${LISTING_APPROVAL_REQUESTS_TABLE}.approved as requestApproved`,
+        db.raw(`COUNT(${ORDERS_TABLE}.id) as "ordersCount"`),
       ])
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+      .joinRaw(
+        `LEFT JOIN ${ORDERS_TABLE} ON ${LISTINGS_TABLE}.id = ${ORDERS_TABLE}.listing_id AND (${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.FINISHED}' AND ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}' AND (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}'))`
+      )
       .join(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
@@ -806,7 +810,18 @@ class ListingsModel extends Model {
       query = query.where({ owner_id: props.userId });
     }
 
-    return await query.orderBy(order, orderType).limit(count).offset(start);
+    return await query
+      .groupBy([
+        ...this.baseGroupedFields,
+        `${LISTING_CATEGORIES_TABLE}.name`,
+        `${USERS_TABLE}.name`,
+        `${LISTING_APPROVAL_REQUESTS_TABLE}.id`,
+        `${LISTING_APPROVAL_REQUESTS_TABLE}.approved`,
+      ])
+      .orderBy(`${LISTINGS_TABLE}.active`, "desc")
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
   };
 
   changeApprove = async (id) => {

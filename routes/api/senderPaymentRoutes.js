@@ -8,8 +8,11 @@ const {
 } = require("../../middlewares");
 const {
   paypalCreateOrderValidation,
-  listValidation
+  listValidation,
+  approveCreditCardTransactionValidation,
+  rejectCreditCardTransactionValidation,
 } = require("../../validations/senderPayment");
+
 const { validateIdParam } = require("../../validations/base");
 
 router.post(
@@ -40,6 +43,20 @@ router.get(
   isAuth,
   validateIdParam(),
   senderPaymentController.generateInvoicePdf
+);
+
+router.get(
+  "/approve-credit-card-transaction",
+  isAuth,
+  approveCreditCardTransactionValidation,
+  senderPaymentController.approveCreditCardTransaction
+);
+
+router.get(
+  "/reject-credit-card-transaction",
+  isAuth,
+  rejectCreditCardTransactionValidation,
+  senderPaymentController.rejectCreditCardTransaction
 );
 
 module.exports = router;
