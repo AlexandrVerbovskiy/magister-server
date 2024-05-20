@@ -385,7 +385,6 @@ class OrderModel extends Model {
     } else {
       query = this.dopWhereOrder(query);
     }
-    console.log("Query: ", query.toQuery());
 
     const visibleFields =
       type == "booking"
