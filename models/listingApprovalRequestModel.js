@@ -121,8 +121,6 @@ class ListingApprovalRequestModel extends Model {
       query = query.where({ owner_id: userId });
     }
 
-    console.log(query.count("* as count").toQuery());
-
     const { count } = await query.count("* as count").first();
     return count;
   };
