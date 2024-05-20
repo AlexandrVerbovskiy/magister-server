@@ -272,6 +272,12 @@ class MainController extends Controller {
         );
       }
 
+      if (order.status === STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) {
+        order["payedInfo"] = await this.senderPaymentModel.getInfoByOrderId(
+          order.id
+        );
+      }
+
       const resGetConflictOrders = await this.orderModel.getConflictOrders([
         order.id,
       ]);
