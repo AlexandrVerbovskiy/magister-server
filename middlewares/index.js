@@ -7,4 +7,5 @@ module.exports = {
   isVerified: require("./isVerified"),
   isUnverified: require("./isUnverified"),
   authId: require("./authId"),
+  isVerifiedAndHasPaypalId: require("./isVerifiedAndHasPaypalId"),
 };

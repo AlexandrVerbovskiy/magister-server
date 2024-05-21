@@ -260,6 +260,16 @@ class UserModel extends Model {
       .first();
   };
 
+  checkVerifiedAndHasPaypal = async (id) => {
+    const userInfo = await db(USERS_TABLE)
+      .select("paypal_id as paypalId")
+      .where({ id, verified: true })
+      .first();
+
+    const paypalId = userInfo?.paypalId;
+    return paypalId && paypalId.length > 0;
+  };
+
   checkIsSupport = async (id) => {
     const isSupport = await this.checkRole(id, STATIC.ROLES.SUPPORT);
     if (isSupport) return true;

@@ -61,7 +61,6 @@ router.post(
   "/create",
   isAuth,
   isVerified,
-  isVerified,
   upload.any(),
   isFileLimit,
   createValidation,
