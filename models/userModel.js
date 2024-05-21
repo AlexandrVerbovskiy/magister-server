@@ -260,26 +260,6 @@ class UserModel extends Model {
       .first();
   };
 
-  checkHasPaypal = async (id) => {
-    const userInfo = await db(USERS_TABLE)
-      .select("paypal_id as paypalId")
-      .where({ id })
-      .first();
-
-    const paypalId = userInfo?.paypalId;
-    return paypalId && paypalId.length > 0;
-  };
-
-  checkVerifiedAndHasPaypal = async (id) => {
-    const userInfo = await db(USERS_TABLE)
-      .select("paypal_id as paypalId")
-      .where({ id, verified: true })
-      .first();
-
-    const paypalId = userInfo?.paypalId;
-    return paypalId && paypalId.length > 0;
-  };
-
   checkIsSupport = async (id) => {
     const isSupport = await this.checkRole(id, STATIC.ROLES.SUPPORT);
     if (isSupport) return true;
@@ -547,10 +527,6 @@ class UserModel extends Model {
       .limit(count)
       .offset(start);
     return res;
-  };
-
-  autofillFieldsSave = async ({ paypalId }, userId) => {
-    await db(USERS_TABLE).where("id", userId).update({ paypal_id: paypalId });
   };
 }
 

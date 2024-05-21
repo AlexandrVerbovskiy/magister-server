@@ -331,22 +331,24 @@ class RecipientPayment extends Model {
       .select([
         `${RECIPIENT_PAYMENTS_TABLE}.id`,
         `${RECIPIENT_PAYMENTS_TABLE}.money`,
-        `${USERS_TABLE}.paypal_id as paypalId`,
+        `${USERS_TABLE}.paypal_id as userPaypalId`,
       ]);
 
     return res;
   };
 
-  markAsFailed = async (id, description) => {
+  markAsFailed = async (id, paypalId, description) => {
     await db(RECIPIENT_PAYMENTS_TABLE).where("id", id).update({
       failed_details: description,
+      paypal_id: paypalId,
       status: STATIC.RECIPIENT_STATUSES.FAILED,
     });
   };
 
-  markAsCompletedByIds = async (ids) => {
-    await db(RECIPIENT_PAYMENTS_TABLE).whereIn("id", ids).update({
+  markAsCompletedById = async (id, paypalId) => {
+    await db(RECIPIENT_PAYMENTS_TABLE).where("id", id).update({
       status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+      paypal_id: paypalId,
     });
   };
 

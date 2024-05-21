@@ -543,7 +543,7 @@ class OrderController extends Controller {
         pricePerDay: orderInfo.offerPricePerDay,
         userId: orderInfo.ownerId,
         orderId: orderInfo.id,
-        paypalId: "123",
+        paypalId: "-",
         fee: orderInfo.ownerFee,
       });
 
@@ -629,7 +629,7 @@ class OrderController extends Controller {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
-    const tenantInfo = await this.userModel.getById(orderInfo.tenantId);
+    /*const tenantInfo = await this.userModel.getById(orderInfo.tenantId);
 
     await sendMoneyToPaypalByPaypalID(
       tenantInfo.paypalId,
@@ -651,7 +651,7 @@ class OrderController extends Controller {
         orderId: id,
         paypalId: tenantInfo.paypalId,
       });
-    }
+    }*/
 
     await this.orderModel.successCancelled(id);
 
@@ -758,14 +758,6 @@ class OrderController extends Controller {
 
       const userInfo = await this.userModel.getById(userId);
 
-      if (!userInfo.paypalId) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.UNPREDICTABLE,
-          "You cannot get a refund until you have a PayPal ID in your profile"
-        );
-      }
-
       const factTotalPrice = tenantPaymentCalculate(
         offerStartDate,
         offerEndDate,
@@ -779,16 +771,16 @@ class OrderController extends Controller {
       const factTotalPriceWithoutCommission =
         (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
 
-      await sendMoneyToPaypalByPaypalID(userInfo.paypalId);
+      //await sendMoneyToPaypalByPaypalID(userInfo.paypalId);
 
       await this.orderModel.successCancelled(id);
 
-      await this.recipientPaymentModel.createRefundPayment({
+      /*await this.recipientPaymentModel.createRefundPayment({
         money: factTotalPriceWithoutCommission,
         userId: userId,
         orderId: id,
         paypalId: userInfo.paypalId,
-      });
+      });*/
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });

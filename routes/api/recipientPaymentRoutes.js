@@ -1,13 +1,13 @@
 const { Router } = require("express");
 const router = Router();
 const { recipientPaymentController } = require("../../controllers");
-const { isAuth, isAdmin, isVerifiedAndHasPaypalId } = require("../../middlewares");
+const { isAuth, isAdmin, isVerified } = require("../../middlewares");
 const { listValidation } = require("../../validations/recipientPayment");
 
 router.post(
   "/list",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   listValidation,
   recipientPaymentController.userList
 );
