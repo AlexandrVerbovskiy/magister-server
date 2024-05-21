@@ -89,6 +89,10 @@ class SenderPayment extends Model {
       type: "paypal",
     });
 
+  getInfoAboutOrderPayment = async (orderId) => {
+    return await db(SENDER_PAYMENTS_TABLE).where("order_id", orderId).first();
+  };
+
   createByCreditCard = ({ money, userId, orderId, proofUrl }) =>
     this.create({
       money,
@@ -101,10 +105,7 @@ class SenderPayment extends Model {
     });
 
   checkCanCreditCardProofAppend = async (orderId) => {
-    const result = await query
-      .where(`${SENDER_PAYMENTS_TABLE}.order_id`, orderId)
-      .select([...this.visibleFields])
-      .first();
+    const result = await this.getInfoAboutOrderPayment(orderId);
 
     let canProof = true;
 
@@ -118,14 +119,16 @@ class SenderPayment extends Model {
   };
 
   updateCreditCardTransactionProof = async (orderId, proof) => {
-    await db.where({ order_id: orderId, type: "credit-card" }).update({
+    console.log("updateCreditCardTransactionProof: ", orderId, proof);
+
+    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId, type: "credit-card" }).update({
       payed_proof: proof,
       waiting_approved: true,
     });
   };
 
   approveCreditCardTransaction = async (orderId) => {
-    await db.where({ order_id: orderId, type: "credit-card" }).update({
+    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId, type: "credit-card" }).update({
       admin_approved: true,
       waiting_approved: false,
       failed_description: null,
@@ -133,7 +136,7 @@ class SenderPayment extends Model {
   };
 
   rejectCreditCardTransaction = async (orderId, description) => {
-    await db.where({ order_id: orderId, type: "credit-card" }).update({
+    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId, type: "credit-card" }).update({
       admin_approved: false,
       waiting_approved: false,
       failed_description: description,
