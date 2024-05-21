@@ -11,5 +11,4 @@ module.exports = {
   twoFactorAuthVerifyValidation: require("./twoFactorAuthVerifyValidation"),
   updatePasswordValidation: require("./updatePasswordValidation"),
   verifyEmailValidation: require("./verifyEmailValidation"),
-  autofillValidation: require("./autofillValidation")
 };
