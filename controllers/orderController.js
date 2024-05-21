@@ -464,7 +464,7 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
-  createUnpaidTransactionByCreditCard = async (req, res) => {
+  unpaidTransactionByCreditCard = async (req, res) => {
     const { userId } = req.userData;
     const { orderId } = req.body;
 
@@ -483,15 +483,30 @@ class OrderController extends Controller {
       order.offerPricePerDay
     );
 
-    const transactionId = await this.senderPaymentModel.createByCreditCard({
-      money,
-      userId,
-      orderId,
-      proofUrl,
-    });
+    let type = "created";
+    let transactionId = null;
+    const paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(orderId);
+
+    if (paymentInfo) {
+      transactionId = paymentInfo.id;
+      type = "updated";
+
+      await this.senderPaymentModel.updateCreditCardTransactionProof(
+        orderId,
+        proofUrl
+      );
+    } else {
+      transactionId = await this.senderPaymentModel.createByCreditCard({
+        money,
+        userId,
+        orderId,
+        proofUrl,
+      });
+    }
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
       transactionId,
+      type,
     });
   };
 
