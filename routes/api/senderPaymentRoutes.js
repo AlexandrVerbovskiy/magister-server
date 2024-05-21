@@ -4,7 +4,7 @@ const { senderPaymentController } = require("../../controllers");
 const {
   isAuth,
   isAdmin,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   isFileLimit,
 } = require("../../middlewares");
 
@@ -29,7 +29,7 @@ router.post(
 router.post(
   "/list",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   listValidation,
   senderPaymentController.userList
 );

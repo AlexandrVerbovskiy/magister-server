@@ -6,7 +6,7 @@ const {
   isVerified,
   isAdmin,
   authId,
-  isVerifiedAndHasPaypalId,
+  isSupport
 } = require("../../middlewares");
 const {
   updateListingOptionsValidation,
@@ -32,7 +32,6 @@ const {
   recipientPaymentListValidation,
   senderPaymentListValidation,
 } = require("../../validations/main");
-const isSupport = require("../../middlewares/isSupport");
 const { validateIdParam } = require("../../validations/base");
 
 router.get("/index-options", mainController.getIndexPageOptions);
@@ -41,7 +40,7 @@ router.get(
   "/create-listing-options",
   isAuth,
   isVerified,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   mainController.getCreateListingPageOptions
 );
 
@@ -166,7 +165,7 @@ router.get(
 router.post(
   "/user-listing-list-options",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   userListingListOptionsValidation,
   mainController.getUserListingListPageOptions
 );
@@ -242,7 +241,7 @@ router.post(
 router.post(
   "/order-list-options",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   orderListOptionsValidation,
   mainController.getOrderListOptions
 );
@@ -261,22 +260,6 @@ router.post(
   isSupport,
   adminOrderListOptionsValidation,
   mainController.getAdminOrderListOptions
-);
-
-router.post(
-  "/sender-payment-list-options",
-  isAuth,
-  isVerifiedAndHasPaypalId,
-  senderPaymentListValidation,
-  mainController.getSenderPaymentListOptions
-);
-
-router.post(
-  "/recipient-payment-list-options",
-  isAuth,
-  isVerifiedAndHasPaypalId,
-  recipientPaymentListValidation,
-  mainController.getRecipientPaymentListOptions
 );
 
 router.post(
@@ -312,7 +295,7 @@ router.get(
 router.get(
   "/get-order-invoice-options/:id",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   validateIdParam(),
   mainController.getOrderInvoiceOptions
 );

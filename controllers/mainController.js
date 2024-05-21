@@ -341,7 +341,6 @@ class MainController extends Controller {
       const { id } = req.params;
       const booking = await this.orderModel.getFullById(id);
       const bankAccount = await this.systemOptionModel.getBankAccountInfo();
-      console.log(bankAccount);
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -709,43 +708,11 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  getSenderPaymentListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      const result = await senderPaymentController.baseSenderPaymentList(
-        req,
-        userId
-      );
-      const categories = await this.getNavigationCategories();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-        categories,
-      });
-    });
-
   getAdminSenderPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await senderPaymentController.baseSenderPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
-      });
-    });
-
-  getRecipientPaymentListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      const categories = await this.getNavigationCategories();
-      const result = await recipientPaymentController.baseRecipientPaymentList(
-        req,
-        userId
-      );
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-        categories,
       });
     });
 

@@ -143,11 +143,4 @@ router.post(
   userController.authByProvider
 );
 
-router.post(
-  "/autofill-save",
-  isAuth,
-  autofillValidation,
-  userController.autofillFieldsSave
-);
-
 module.exports = router;

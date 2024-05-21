@@ -828,14 +828,6 @@ class UserController extends Controller {
       await this.userModel.noNeedRegularViewInfoForm(userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
-
-  autofillFieldsSave = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const { paypalId } = req.body;
-      await this.userModel.autofillFieldsSave({ paypalId }, userId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
 }
 
 module.exports = new UserController();

@@ -16,8 +16,7 @@
     "migrate-rollback-all": "npx knex migrate:rollback --all",
     "create-migration": "npx knex migrate:make",
     "create-seed": "npx knex seed:make",
-    "command-pay-rent": "node commands/payRent.js",
-    "command-test": "node commands/test.js"
+    "command-pay-rent": "node commands/payRent.js"
   },
   "author": "",
   "license": "ISC",

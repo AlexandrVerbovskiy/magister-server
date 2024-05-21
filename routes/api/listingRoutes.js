@@ -7,7 +7,6 @@ const {
   isFileLimit,
   isVerified,
   authId,
-  isVerifiedAndHasPaypalId,
 } = require("../../middlewares");
 const { upload } = require("../../utils");
 const {
@@ -42,7 +41,7 @@ router.post(
 router.post(
   "/user-list",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   listStatusValidation,
   listingController.getCurrentUserList
 );
@@ -62,7 +61,7 @@ router.post(
   "/create",
   isAuth,
   isVerified,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   upload.any(),
   isFileLimit,
   createValidation,
