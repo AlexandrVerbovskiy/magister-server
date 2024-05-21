@@ -162,6 +162,124 @@ class Controller {
     });
   };
 
+  sendProfileVerificationMail = async (email) => {
+    const title = "Owner Verification";
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "userDocumentsVerification", {
+      link,
+    });
+  };
+
+  sendBookingApprovalRequestMail = async (email) => {
+    const title = "Booking Approval Request";
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "bookingApprovalRequest", {
+      link,
+    });
+  };
+
+  sendAssetPickupMail = async (email, orderId) => {
+    const title = "Asset Pickup Confirmation";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "assetPickup", {
+      link,
+    });
+  };
+
+  sendAssetPickupMail = async (email, invoiceId) => {
+    const title = "Asset Drop Off Confirmation";
+    //const link = CLIENT_URL + "/dashboard/invoices/" + invoiceId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "assetDropOff", {
+      link,
+    });
+  };
+
+  sendLateReturnNotificationMail = async (email, orderId) => {
+    const title = "Late Return Notification";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "assetDropOff", {
+      link,
+    });
+  };
+
+  sendEarlyReturnOfAssetMail = async (email, orderId) => {
+    const title = "Early Return of Asset";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "assetDropOff", {
+      link,
+    });
+  };
+
+  sendBookingExtensionMail = async (email, orderId) => {
+    const title = "Booking Extension Request";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "bookingExtension", {
+      link,
+    });
+  };
+
+  sendBookingCancellationRenterMail = async (email, orderId) => {
+    const title = "Booking Cancellation Request";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "bookingCancellationRenter", {
+      link,
+    });
+  };
+
+  sendBookingCancellationOwnerMail = async (email, orderId) => {
+    const title = "Booking Cancellation Request";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "bookingCancellationOwner", {
+      link,
+    });
+  };
+
+  sendPaymentNotificationMail = async (email, orderId) => {
+    const title = "Payment to Partners";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "paymentNotification", {
+      link,
+    });
+  };
+
+  sendRefundProcessMail = async (email, orderId) => {
+    const title = "Refund Process";
+    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
+    const link = CLIENT_URL + "/";
+
+    await this.sendMail(email, title, "refundProcess", {
+      link,
+    });
+  };
+
+  sendListingVerifiedMail = async (email, name, id) => {
+    const title = "Asset Registration Approved";
+    const link = CLIENT_URL + "/listing/" + id;
+
+    await this.sendMail(email, title, "listingVerified", {
+      link,
+      name,
+    });
+  };
+
   sendCreatedListingCategory = async (email, categoryName) => {
     const title = "A new listing category has been created";
     const link =
