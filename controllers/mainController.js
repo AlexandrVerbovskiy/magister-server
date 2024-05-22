@@ -726,6 +726,16 @@ class MainController extends Controller {
       });
     });
 
+  getAdminWaitingRefundsRecipientPaymentListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await recipientPaymentController.baseWaitingRefundsList(
+        req
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
   getOrderInvoiceOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
@@ -789,6 +799,46 @@ class MainController extends Controller {
         totalGet,
         feeInfo,
         totalOrders,
+      });
+    });
+
+  getWaitingRefundById = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const { userId } = req.userData;
+
+      const recipient = await this.recipientPaymentModel.getById(id);
+
+      if (!recipient || recipient.recipientId !== userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const categories = await this.getNavigationCategories();
+
+      const refundCommission =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        recipient,
+        refundCommission,
+        categories,
+      });
+    });
+
+  getAdminWaitingRefundById = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const recipient = await this.recipientPaymentModel.getById(id);
+
+      if (!recipient) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const refundCommission =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        recipient,
+        refundCommission,
       });
     });
 }

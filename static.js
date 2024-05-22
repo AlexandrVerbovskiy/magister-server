@@ -102,6 +102,7 @@ module.exports = {
     ORDER_UPDATE_REQUESTS: "order_update_requests",
     SENDER_PAYMENTS: "sender_payments",
     RECIPIENT_PAYMENTS: "recipient_payments",
+    REFUND_PAYMENT_REQUESTS: "refund_payment_requests",
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
@@ -142,7 +143,6 @@ module.exports = {
   },
   MONTH_DURATION: 30,
   INFINITY_SELECT_ITERATION_LIMIT: 1000,
-  ORDER_TENANT_GOT_ITEM_APPROVE_URL:
-    "/dashboard/orders/approve-tenant-listing",
+  ORDER_TENANT_GOT_ITEM_APPROVE_URL: "/dashboard/orders/approve-tenant-listing",
   ORDER_OWNER_GOT_ITEM_APPROVE_URL: "/dashboard/orders/approve-owner-listing",
 };
