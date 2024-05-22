@@ -6,7 +6,7 @@ const {
   isVerified,
   isAdmin,
   authId,
-  isSupport
+  isSupport,
 } = require("../../middlewares");
 const {
   updateListingOptionsValidation,
@@ -278,6 +278,14 @@ router.post(
   mainController.getAdminRecipientPaymentListOptions
 );
 
+router.post(
+  "/admin-waiting-refunds-recipient-payment-list-options",
+  isAuth,
+  isAdmin,
+  adminOrderListOptionsValidation,
+  mainController.getAdminWaitingRefundsRecipientPaymentListOptions
+);
+
 router.get(
   "/admin-listing-defects-edit-options",
   isAuth,
@@ -304,6 +312,21 @@ router.get(
   "/get-wallet-info-options",
   isAuth,
   mainController.getWalletInfoOptions
+);
+
+router.get(
+  "/admin-waiting-refund-options/:id",
+  isAuth,
+  isAdmin,
+  validateIdParam(),
+  mainController.getAdminWaitingRefundById
+);
+
+router.get(
+  "/get-waiting-refund-options/:id",
+  isAuth,
+  validateIdParam(),
+  mainController.getWaitingRefundById
 );
 
 module.exports = router;

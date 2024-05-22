@@ -13,7 +13,7 @@ exports.up = function (knex) {
       table.json("data").nullable().defaultTo(null);
       table.boolean("admin_approved").defaultTo(false);
       table.boolean("waiting_approved").defaultTo(true);
-      table.text("failed_description").nullable().defaultTo(null);
+      table.text("failed_description");
       table.dropColumn("paypal_sender_id");
       table.dropColumn("paypal_order_id");
       table.dropColumn("paypal_capture_id");
