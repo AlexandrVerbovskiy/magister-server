@@ -13,7 +13,6 @@ const RECIPIENT_PAYMENTS_TABLE = STATIC.TABLES.RECIPIENT_PAYMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
-const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 
 class RecipientPayment extends Model {
   visibleFields = [
@@ -23,7 +22,6 @@ class RecipientPayment extends Model {
     `${RECIPIENT_PAYMENTS_TABLE}.received_type as receivedType`,
     `${RECIPIENT_PAYMENTS_TABLE}.status as status`,
     `${RECIPIENT_PAYMENTS_TABLE}.user_id as recipientId`,
-    `${RECIPIENT_PAYMENTS_TABLE}.paypal_id as paypalId`,
     `${RECIPIENT_PAYMENTS_TABLE}.order_id as orderId`,
     `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
     `${ORDERS_TABLE}.start_date as offerStartDate`,
@@ -41,6 +39,9 @@ class RecipientPayment extends Model {
     `owners.id as ownerId`,
     `tenants.name as tenantName`,
     `tenants.id as tenantId`,
+    `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
+    `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
+    `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
   ];
 
   strFilterFields = [`${LISTINGS_TABLE}.name`];
@@ -56,7 +57,6 @@ class RecipientPayment extends Model {
     `${RECIPIENT_PAYMENTS_TABLE}.id`,
     "money",
     "planned_time",
-    `${RECIPIENT_PAYMENTS_TABLE}.paypal_id`,
     "last_tried_at",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at`,
     `${USERS_TABLE}.name`,
@@ -70,34 +70,71 @@ class RecipientPayment extends Model {
     plannedTime,
     receivedType,
     status,
-    paypalId,
+    type,
+    data = {},
+    failedDescription = null,
   }) => {
     const res = await db(RECIPIENT_PAYMENTS_TABLE)
       .insert({
+        type,
         money,
         planned_time: plannedTime,
         received_type: receivedType,
         status: status,
-        paypal_id: paypalId,
+        data: JSON.stringify(data),
         failed_details: "",
         user_id: userId,
         order_id: orderId,
+        failed_description: failedDescription,
       })
       .returning("id");
 
     return res[0]["id"];
   };
 
-  createRefundPayment = ({ money, userId, orderId, paypalId }) =>
+  createRefundPayment = ({
+    money,
+    userId,
+    orderId,
+    data,
+    type,
+    status,
+    failedDescription = null,
+  }) =>
     this.create({
+      data,
       money,
       userId,
       orderId,
+      type,
+      status,
       plannedTime: separateDate(new Date()),
       receivedType: STATIC.RECIPIENT_TYPES.REFUND,
-      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-      paypalId,
+      failedDescription,
     });
+
+  updateRefundPayment = async ({
+    id,
+    type,
+    data,
+    status,
+    failedDescription = null,
+  }) => {
+    console.log(type, data);
+
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where({
+        id,
+        received_type: STATIC.RECIPIENT_TYPES.REFUND,
+        status: STATIC.RECIPIENT_STATUSES.FAILED,
+      })
+      .update({
+        type,
+        data: JSON.stringify(data),
+        status,
+        failed_description: failedDescription,
+      });
+  };
 
   baseListJoin = (query) =>
     query
@@ -243,7 +280,7 @@ class RecipientPayment extends Model {
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };
 
-  paymentPlanGeneration = async ({
+  paypalPaymentPlanGeneration = async ({
     startDate,
     endDate,
     pricePerDay,
@@ -301,6 +338,8 @@ class RecipientPayment extends Model {
         failed_details: "",
         user_id: userId,
         order_id: orderId,
+        type: "paypal",
+        data: JSON.stringify({ paypalId: "-" }),
       });
     });
 
@@ -326,6 +365,7 @@ class RecipientPayment extends Model {
       )
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
       .where("planned_time", "<=", currentDate)
+      .where("type", "paypal")
       .limit(limit)
       .offset(start)
       .select([
@@ -337,19 +377,23 @@ class RecipientPayment extends Model {
     return res;
   };
 
-  markAsFailed = async (id, paypalId, description) => {
-    await db(RECIPIENT_PAYMENTS_TABLE).where("id", id).update({
-      failed_details: description,
-      paypal_id: paypalId,
-      status: STATIC.RECIPIENT_STATUSES.FAILED,
-    });
+  markAsFailed = async (id, data, description) => {
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where("id", id)
+      .update({
+        failed_details: description,
+        data: JSON.stringify(data),
+        status: STATIC.RECIPIENT_STATUSES.FAILED,
+      });
   };
 
-  markAsCompletedById = async (id, paypalId) => {
-    await db(RECIPIENT_PAYMENTS_TABLE).where("id", id).update({
-      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-      paypal_id: paypalId,
-    });
+  markAsCompletedById = async (id, data) => {
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where("id", id)
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+        data: JSON.stringify(data),
+      });
   };
 
   getTotalGet = async (userId) => {
@@ -385,6 +429,85 @@ class RecipientPayment extends Model {
     }
 
     return sum;
+  };
+
+  baseWaitingRefund = (query) => {
+    query = query.where(
+      `${RECIPIENT_PAYMENTS_TABLE}.status`,
+      STATIC.RECIPIENT_STATUSES.WAITING
+    );
+    query = query.where(
+      `${RECIPIENT_PAYMENTS_TABLE}.received_type`,
+      STATIC.RECIPIENT_TYPES.REFUND
+    );
+    query = query.where(`${RECIPIENT_PAYMENTS_TABLE}.type`, "card");
+    return query;
+  };
+
+  totalCountWaitingRefunds = async (filter, timeInfos) => {
+    let query = db(RECIPIENT_PAYMENTS_TABLE);
+    query = this.baseListJoin(query).whereRaw(
+      ...this.baseStrFilter(filter, this.strFullFilterFields)
+    );
+
+    query = this.baseWaitingRefund(query);
+
+    query = this.baseListTimeFilter(
+      timeInfos,
+      query,
+      `${RECIPIENT_PAYMENTS_TABLE}.created_at`
+    );
+
+    const { count } = await query.count("* as count").first();
+    return count;
+  };
+
+  listWaitingRefunds = async (props) => {
+    const { filter, start, count } = props;
+    const { order, orderType } = this.getOrderInfo(props);
+
+    let query = db(RECIPIENT_PAYMENTS_TABLE).select(this.visibleFields);
+    query = this.baseListJoin(query).whereRaw(
+      ...this.baseStrFilter(
+        filter,
+        props.userId ? this.strFilterFields : this.strFullFilterFields
+      )
+    );
+
+    query = this.baseWaitingRefund(query);
+
+    query = this.baseListTimeFilter(
+      props.timeInfos,
+      query,
+      `${RECIPIENT_PAYMENTS_TABLE}.created_at`
+    );
+
+    return await query.orderBy(order, orderType).limit(count).offset(start);
+  };
+
+  complete = async (id) => {
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where({ id: id, status: STATIC.RECIPIENT_STATUSES.WAITING })
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+        failed_description: null,
+      });
+  };
+
+  reject = async (id, description) => {
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where({ id: id, status: STATIC.RECIPIENT_STATUSES.WAITING })
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.FAILED,
+        failed_description: description,
+      });
+  };
+
+  getById = async (id) => {
+    let query = db(RECIPIENT_PAYMENTS_TABLE);
+    query = this.baseListJoin(query);
+    query = query.where(`${RECIPIENT_PAYMENTS_TABLE}.id`, id);
+    return await query.select(this.visibleFields).first();
   };
 }
 

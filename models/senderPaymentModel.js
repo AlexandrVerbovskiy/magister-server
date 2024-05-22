@@ -119,8 +119,6 @@ class SenderPayment extends Model {
   };
 
   updateCreditCardTransactionProof = async (orderId, proof) => {
-    console.log("updateCreditCardTransactionProof: ", orderId, proof);
-
     await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId, type: "credit-card" }).update({
       payed_proof: proof,
       waiting_approved: true,

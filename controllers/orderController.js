@@ -485,7 +485,9 @@ class OrderController extends Controller {
 
     let type = "created";
     let transactionId = null;
-    const paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(orderId);
+    const paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
+      orderId
+    );
 
     if (paymentInfo) {
       transactionId = paymentInfo.id;
@@ -558,7 +560,6 @@ class OrderController extends Controller {
         pricePerDay: orderInfo.offerPricePerDay,
         userId: orderInfo.ownerId,
         orderId: orderInfo.id,
-        paypalId: "-",
         fee: orderInfo.ownerFee,
       });
 
@@ -664,7 +665,7 @@ class OrderController extends Controller {
         money: unfinishedPAymentsSum,
         userId: orderInfo.tenantId,
         orderId: id,
-        paypalId: tenantInfo.paypalId,
+        data: {paypalId: tenantInfo.paypalId},
       });
     }*/
 
@@ -722,7 +723,7 @@ class OrderController extends Controller {
   fullCancelPayed = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const { id } = req.body;
+      const { id, type, paypalId = null, cardNumber = null } = req.body;
 
       const orderInfo = await this.orderModel.getById(id);
 
@@ -771,8 +772,6 @@ class OrderController extends Controller {
         );
       }
 
-      const userInfo = await this.userModel.getById(userId);
-
       const factTotalPrice = tenantPaymentCalculate(
         offerStartDate,
         offerEndDate,
@@ -786,16 +785,43 @@ class OrderController extends Controller {
       const factTotalPriceWithoutCommission =
         (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
 
-      //await sendMoneyToPaypalByPaypalID(userInfo.paypalId);
+      if (type == "paypal") {
+        try {
+          await sendMoneyToPaypalByPaypalID(paypalId, factTotalPriceWithoutCommission);
+
+          await this.recipientPaymentModel.createRefundPayment({
+            money: factTotalPriceWithoutCommission,
+            userId: userId,
+            orderId: id,
+            type: "paypal",
+            data: { paypalId: paypalId },
+            status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+          });
+        } catch (e) {
+          await this.recipientPaymentModel.createRefundPayment({
+            money: factTotalPriceWithoutCommission,
+            userId: userId,
+            orderId: id,
+            type: "paypal",
+            data: { paypalId: paypalId },
+            status: STATIC.RECIPIENT_STATUSES.FAILED,
+            failedDescription: e.message,
+          });
+        }
+      }
+
+      if (type == "card") {
+        await this.recipientPaymentModel.createRefundPayment({
+          money: factTotalPriceWithoutCommission,
+          userId: userId,
+          orderId: id,
+          type: "card",
+          data: { cardNumber: cardNumber },
+          status: STATIC.RECIPIENT_STATUSES.WAITING,
+        });
+      }
 
       await this.orderModel.successCancelled(id);
-
-      /*await this.recipientPaymentModel.createRefundPayment({
-        money: factTotalPriceWithoutCommission,
-        userId: userId,
-        orderId: id,
-        paypalId: userInfo.paypalId,
-      });*/
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
