@@ -6,7 +6,7 @@ const {
   isVerified,
   isAdmin,
   authId,
-  isVerifiedAndHasPaypalId,
+  isSupport,
 } = require("../../middlewares");
 const {
   updateListingOptionsValidation,
@@ -32,7 +32,6 @@ const {
   recipientPaymentListValidation,
   senderPaymentListValidation,
 } = require("../../validations/main");
-const isSupport = require("../../middlewares/isSupport");
 const { validateIdParam } = require("../../validations/base");
 
 router.get("/index-options", mainController.getIndexPageOptions);
@@ -41,7 +40,7 @@ router.get(
   "/create-listing-options",
   isAuth,
   isVerified,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   mainController.getCreateListingPageOptions
 );
 
@@ -166,7 +165,7 @@ router.get(
 router.post(
   "/user-listing-list-options",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   userListingListOptionsValidation,
   mainController.getUserListingListPageOptions
 );
@@ -242,7 +241,7 @@ router.post(
 router.post(
   "/order-list-options",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   orderListOptionsValidation,
   mainController.getOrderListOptions
 );
@@ -264,22 +263,6 @@ router.post(
 );
 
 router.post(
-  "/sender-payment-list-options",
-  isAuth,
-  isVerifiedAndHasPaypalId,
-  senderPaymentListValidation,
-  mainController.getSenderPaymentListOptions
-);
-
-router.post(
-  "/recipient-payment-list-options",
-  isAuth,
-  isVerifiedAndHasPaypalId,
-  recipientPaymentListValidation,
-  mainController.getRecipientPaymentListOptions
-);
-
-router.post(
   "/admin-sender-payment-list-options",
   isAuth,
   isAdmin,
@@ -293,6 +276,14 @@ router.post(
   isAdmin,
   adminOrderListOptionsValidation,
   mainController.getAdminRecipientPaymentListOptions
+);
+
+router.post(
+  "/admin-waiting-refunds-recipient-payment-list-options",
+  isAuth,
+  isAdmin,
+  adminOrderListOptionsValidation,
+  mainController.getAdminWaitingRefundsRecipientPaymentListOptions
 );
 
 router.get(
@@ -312,7 +303,7 @@ router.get(
 router.get(
   "/get-order-invoice-options/:id",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   validateIdParam(),
   mainController.getOrderInvoiceOptions
 );
@@ -321,6 +312,21 @@ router.get(
   "/get-wallet-info-options",
   isAuth,
   mainController.getWalletInfoOptions
+);
+
+router.get(
+  "/admin-waiting-refund-options/:id",
+  isAuth,
+  isAdmin,
+  validateIdParam(),
+  mainController.getAdminWaitingRefundById
+);
+
+router.get(
+  "/get-waiting-refund-options/:id",
+  isAuth,
+  validateIdParam(),
+  mainController.getWaitingRefundById
 );
 
 module.exports = router;

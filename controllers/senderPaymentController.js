@@ -124,6 +124,7 @@ class SenderPaymentController extends Controller {
           factTotalFee: factTotalFee.toFixed(2),
           durationString,
         },
+        payed: payment.adminApproved ? offerTotalPrice.toFixed(2) : (0).toFixed(2),
       };
 
       const buffer = await this.generatePdf("/pdfs/invoice", params);

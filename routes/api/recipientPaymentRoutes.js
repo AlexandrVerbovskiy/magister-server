@@ -1,13 +1,16 @@
 const { Router } = require("express");
 const router = Router();
 const { recipientPaymentController } = require("../../controllers");
-const { isAuth, isAdmin, isVerifiedAndHasPaypalId } = require("../../middlewares");
-const { listValidation } = require("../../validations/recipientPayment");
+const { isAuth, isAdmin, isVerified } = require("../../middlewares");
+const {
+  listValidation,
+  waitingRefundsListValidation,
+} = require("../../validations/recipientPayment");
 
 router.post(
   "/list",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   listValidation,
   recipientPaymentController.userList
 );
@@ -18,6 +21,34 @@ router.post(
   isAdmin,
   listValidation,
   recipientPaymentController.adminList
+);
+
+router.post(
+  "/get-waiting-refunds-list",
+  isAuth,
+  isAdmin,
+  waitingRefundsListValidation,
+  recipientPaymentController.waitingRefundsList
+);
+
+router.post(
+  "/completed",
+  isAuth,
+  isAdmin,
+  recipientPaymentController.markAsCompletedRefund
+);
+
+router.post(
+  "/rejected",
+  isAuth,
+  isAdmin,
+  recipientPaymentController.markAsFailedRefund
+);
+
+router.post(
+  "/update-failed",
+  isAuth,
+  recipientPaymentController.updateFailed
 );
 
 module.exports = router;

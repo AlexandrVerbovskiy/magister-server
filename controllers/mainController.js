@@ -341,7 +341,6 @@ class MainController extends Controller {
       const { id } = req.params;
       const booking = await this.orderModel.getFullById(id);
       const bankAccount = await this.systemOptionModel.getBankAccountInfo();
-      console.log(bankAccount);
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -709,22 +708,6 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  getSenderPaymentListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      const result = await senderPaymentController.baseSenderPaymentList(
-        req,
-        userId
-      );
-      const categories = await this.getNavigationCategories();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-        categories,
-      });
-    });
-
   getAdminSenderPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await senderPaymentController.baseSenderPaymentList(req);
@@ -733,25 +716,19 @@ class MainController extends Controller {
       });
     });
 
-  getRecipientPaymentListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      const categories = await this.getNavigationCategories();
-      const result = await recipientPaymentController.baseRecipientPaymentList(
-        req,
-        userId
-      );
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-        categories,
-      });
-    });
-
   getAdminRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await recipientPaymentController.baseRecipientPaymentList(
+        req
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminWaitingRefundsRecipientPaymentListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await recipientPaymentController.baseWaitingRefundsList(
         req
       );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -822,6 +799,46 @@ class MainController extends Controller {
         totalGet,
         feeInfo,
         totalOrders,
+      });
+    });
+
+  getWaitingRefundById = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const { userId } = req.userData;
+
+      const recipient = await this.recipientPaymentModel.getById(id);
+
+      if (!recipient || recipient.recipientId !== userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const categories = await this.getNavigationCategories();
+
+      const refundCommission =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        recipient,
+        refundCommission,
+        categories,
+      });
+    });
+
+  getAdminWaitingRefundById = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const recipient = await this.recipientPaymentModel.getById(id);
+
+      if (!recipient) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const refundCommission =
+        await this.systemOptionModel.getTenantCancelCommissionPercent();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        recipient,
+        refundCommission,
       });
     });
 }
