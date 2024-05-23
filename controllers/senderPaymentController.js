@@ -2,12 +2,9 @@ const STATIC = require("../static");
 const {
   createPaypalOrder,
   getDaysDifference,
-  timeConverter,
   shortTimeConverter,
   tenantPaymentCalculate,
 } = require("../utils");
-const fs = require("fs");
-const path = require("path");
 
 const Controller = require("./Controller");
 
@@ -39,21 +36,19 @@ class SenderPaymentController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  baseSenderPaymentList = async (req, userId = null) => {
+  baseSenderPaymentList = async ({ req, totalCount, list }) => {
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.senderPaymentModel.totalCount(filter, timeInfos, userId)
+      totalCount(filter, timeInfos)
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
-    options["userId"] = userId;
-
-    const requests = await this.senderPaymentModel.list(options);
+    const requests = await list(options);
 
     return {
       items: requests,
@@ -62,16 +57,41 @@ class SenderPaymentController extends Controller {
     };
   };
 
+  baseAllSenderPaymentList = async (req, userId = null) => {
+    const totalCount = (filter, timeInfos) =>
+      this.senderPaymentModel.totalCount(filter, timeInfos, userId);
+
+    const list = (options) => {
+      options["userId"] = userId;
+      return this.senderPaymentModel.list(options);
+    };
+
+    return await this.baseSenderPaymentList({ req, totalCount, list });
+  };
+
+  waitingAdminApprovalSenderPaymentList = async (req) => {
+    const totalCount = (filter, timeInfos) =>
+      this.senderPaymentModel.waitingAdminApprovalTransactionTotalCount(
+        filter,
+        timeInfos
+      );
+
+    const list = (options) =>
+      this.senderPaymentModel.waitingAdminApprovalTransactionList(options);
+
+    return await this.baseSenderPaymentList({ req, totalCount, list });
+  };
+
   userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const result = await this.baseSenderPaymentList(req, userId);
+      const result = await this.baseAllSenderPaymentList(req, userId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseSenderPaymentList(req);
+      const result = await this.baseAllSenderPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -124,7 +144,9 @@ class SenderPaymentController extends Controller {
           factTotalFee: factTotalFee.toFixed(2),
           durationString,
         },
-        payed: payment.adminApproved ? offerTotalPrice.toFixed(2) : (0).toFixed(2),
+        payed: payment.adminApproved
+          ? offerTotalPrice.toFixed(2)
+          : (0).toFixed(2),
       };
 
       const buffer = await this.generatePdf("/pdfs/invoice", params);
@@ -155,20 +177,26 @@ class SenderPaymentController extends Controller {
       });
     });
 
-  approveCreditCardTransaction = (req, res) =>
+  approveTransaction = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { orderId } = req.body;
-      await this.senderPaymentModel.approveCreditCardTransaction(orderId);
+      await this.senderPaymentModel.approveTransaction(orderId);
+
+      const { token: ownerToken, image: generatedImage } =
+        this.generateQrCodeInfo(STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL);
+
+      await this.orderModel.orderTenantGotListing(orderId, {
+        token: ownerToken,
+        qrCode: generatedImage,
+      });
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
-  rejectCreditCardTransaction = (req, res) =>
+  rejectTransaction = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { orderId, description } = req.body;
-      await this.senderPaymentModel.rejectCreditCardTransaction(
-        orderId,
-        description
-      );
+      await this.senderPaymentModel.rejectTransaction(orderId, description);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }

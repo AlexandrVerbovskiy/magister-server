@@ -1,15 +1,12 @@
 const STATIC = require("../static");
 const {
   generateDatesBetween,
-  generateRandomString,
   getPaypalOrderInfo,
   capturePaypalOrder,
   sendMoneyToPaypalByPaypalID,
-  getDaysDifference,
   tenantPaymentCalculate,
 } = require("../utils");
 const Controller = require("./Controller");
-const qrcode = require("qrcode");
 
 class OrderController extends Controller {
   constructor() {
@@ -439,12 +436,8 @@ class OrderController extends Controller {
 
       const amount = paypalOrderInfo.purchase_units[0].amount.value;
 
-      const token = generateRandomString();
-      const generatedImage = await qrcode.toDataURL(
-        process.env.CLIENT_URL +
-          STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL +
-          "/" +
-          token
+      const { token, image: generatedImage } = this.generateQrCodeInfo(
+        STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
       await this.orderModel.orderTenantPayed(orderId, {
@@ -536,13 +529,8 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      const ownerToken = generateRandomString();
-      const generatedImage = await qrcode.toDataURL(
-        process.env.CLIENT_URL +
-          STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL +
-          "/" +
-          ownerToken
-      );
+      const { token: ownerToken, image: generatedImage } =
+        this.generateQrCodeInfo(STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL);
 
       await this.orderModel.generateDefectFromTenantQuestionList(
         questions,
@@ -787,7 +775,10 @@ class OrderController extends Controller {
 
       if (type == "paypal") {
         try {
-          await sendMoneyToPaypalByPaypalID(paypalId, factTotalPriceWithoutCommission);
+          await sendMoneyToPaypalByPaypalID(
+            paypalId,
+            factTotalPriceWithoutCommission
+          );
 
           await this.recipientPaymentModel.createRefundPayment({
             money: factTotalPriceWithoutCommission,

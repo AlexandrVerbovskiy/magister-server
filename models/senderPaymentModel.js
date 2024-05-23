@@ -17,6 +17,7 @@ class SenderPayment extends Model {
     `${SENDER_PAYMENTS_TABLE}.admin_approved as adminApproved`,
     `${SENDER_PAYMENTS_TABLE}.payed_proof as payedProof`,
     `${SENDER_PAYMENTS_TABLE}.data`,
+    `${SENDER_PAYMENTS_TABLE}.type`,
     `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
     `${SENDER_PAYMENTS_TABLE}.waiting_approved as waitingApproved`,
     `${SENDER_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -119,22 +120,24 @@ class SenderPayment extends Model {
   };
 
   updateCreditCardTransactionProof = async (orderId, proof) => {
-    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId, type: "credit-card" }).update({
-      payed_proof: proof,
-      waiting_approved: true,
-    });
+    await db(SENDER_PAYMENTS_TABLE)
+      .where({ order_id: orderId, type: "credit-card" })
+      .update({
+        payed_proof: proof,
+        waiting_approved: true,
+      });
   };
 
-  approveCreditCardTransaction = async (orderId) => {
-    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId, type: "credit-card" }).update({
+  approveTransaction = async (orderId) => {
+    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId }).update({
       admin_approved: true,
       waiting_approved: false,
       failed_description: null,
     });
   };
 
-  rejectCreditCardTransaction = async (orderId, description) => {
-    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId, type: "credit-card" }).update({
+  rejectTransaction = async (orderId, description) => {
+    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId }).update({
       admin_approved: false,
       waiting_approved: false,
       failed_description: description,
@@ -168,13 +171,19 @@ class SenderPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       );
 
-  totalCount = async (filter, timeInfos, userId = null) => {
+  baseSenderTotalCount = async ({
+    filter,
+    timeInfos,
+    dopWhere = null,
+    select = null,
+  }) => {
+    if (!select) {
+      select = this.strFilterFields;
+    }
+
     let query = db(SENDER_PAYMENTS_TABLE);
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(
-        filter,
-        userId ? this.strFilterFields : this.strFullFilterFields
-      )
+      ...this.baseStrFilter(filter, select)
     );
 
     query = this.baseListTimeFilter(
@@ -183,24 +192,25 @@ class SenderPayment extends Model {
       `${SENDER_PAYMENTS_TABLE}.created_at`
     );
 
-    if (userId) {
-      query = query.where({ user_id: userId });
+    if (dopWhere) {
+      query = dopWhere(query);
     }
 
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  list = async (props) => {
+  baseSenderList = async ({ props, dopWhere = null, select = null }) => {
     const { filter, start, count } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
+    if (!select) {
+      select = this.strFilterFields;
+    }
+
     let query = db(SENDER_PAYMENTS_TABLE).select(this.visibleFields);
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(
-        filter,
-        props.userId ? this.strFilterFields : this.strFullFilterFields
-      )
+      ...this.baseStrFilter(filter, select)
     );
 
     query = this.baseListTimeFilter(
@@ -209,11 +219,63 @@ class SenderPayment extends Model {
       `${SENDER_PAYMENTS_TABLE}.created_at`
     );
 
-    if (props.userId) {
-      query = query.where({ user_id: props.userId });
+    if (dopWhere) {
+      query = dopWhere(query);
     }
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
+  };
+
+  totalCount = async (filter, timeInfos, userId = null) => {
+    const select = userId ? this.strFilterFields : this.strFullFilterFields;
+    const dopWhere = (query) => {
+      if (userId) {
+        query = query.where({ user_id: userId });
+      }
+
+      return query;
+    };
+
+    return await this.baseSenderTotalCount({
+      filter,
+      timeInfos,
+      dopWhere,
+      select,
+    });
+  };
+
+  waitingAdminApprovalTransactionTotalCount = async (filter, timeInfos) => {
+    const select = this.strFullFilterFields;
+    const dopWhere = (query) => query.where({ waiting_approved: true });
+
+    return await this.baseSenderTotalCount({
+      filter,
+      timeInfos,
+      dopWhere,
+      select,
+    });
+  };
+
+  list = async (props) => {
+    const select = props.userId
+      ? this.strFilterFields
+      : this.strFullFilterFields;
+
+    const dopWhere = (query) => {
+      if (props.userId) {
+        query = query.where({ user_id: props.userId });
+      }
+
+      return query;
+    };
+
+    return await this.baseSenderList({ props, select, dopWhere });
+  };
+
+  waitingAdminApprovalTransactionList = async (props) => {
+    const select = this.strFullFilterFields;
+    const dopWhere = (query) => query.where({ waiting_approved: true });
+    return await this.baseSenderList({ props, select, dopWhere });
   };
 
   getTotalPayed = async (userId) => {

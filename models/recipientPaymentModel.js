@@ -371,7 +371,7 @@ class RecipientPayment extends Model {
       .select([
         `${RECIPIENT_PAYMENTS_TABLE}.id`,
         `${RECIPIENT_PAYMENTS_TABLE}.money`,
-        `${USERS_TABLE}.paypal_id as userPaypalId`,
+        `${RECIPIENT_PAYMENTS_TABLE}.data`,
       ]);
 
     return res;
@@ -500,6 +500,15 @@ class RecipientPayment extends Model {
       .update({
         status: STATIC.RECIPIENT_STATUSES.FAILED,
         failed_description: description,
+      });
+  };
+
+  markFailedAsDone = async (id, paymentNumber) => {
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where({ id: id, status: STATIC.RECIPIENT_STATUSES.FAILED })
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+        data: JSON.stringify({ paypalId: paymentNumber }),
       });
   };
 

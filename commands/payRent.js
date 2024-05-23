@@ -13,20 +13,25 @@ const main = async () => {
 
     for (let i = 0; i < paymentInfos.length; i++) {
       const payment = paymentInfos[i];
+      const paypalId = payment.data.paypalId;
 
       try {
-        if (!payment.userPaypalId || payment.userPaypalId.length < 1) {
+        if (!paypalId || paypalId.length < 1) {
           throw new Error(
             "The paypal id is not specified - it is impossible to perform the operation without a paypal id"
           );
         }
 
-        await sendMoneyToPaypalByPaypalID(payment.userPaypalId, payment.money);
+        await sendMoneyToPaypalByPaypalID(paypalId, payment.money);
 
-        await recipientPaymentModel.markAsCompletedById(payment.id, payment.userPaypalId);
+        await recipientPaymentModel.markAsCompletedById(payment.id, paypalId);
       } catch (err) {
         console.log(err.message);
-        await recipientPaymentModel.markAsFailed(payment.id, payment.userPaypalId, err.message);
+        await recipientPaymentModel.markAsFailed(
+          payment.id,
+          paypalId,
+          err.message
+        );
       }
     }
 
