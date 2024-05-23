@@ -304,6 +304,14 @@ router.post(
 );
 
 router.post(
+  "/admin-failed-recipient-payment-list-options",
+  isAuth,
+  isAdmin,
+  adminOrderListOptionsValidation,
+  mainController.getAdminFailedRecipientPaymentListOptions
+);
+
+router.post(
   "/admin-waiting-refunds-recipient-payment-list-options",
   isAuth,
   isAdmin,

@@ -185,7 +185,7 @@ class SenderPaymentController extends Controller {
       const { token: ownerToken, image: generatedImage } =
         this.generateQrCodeInfo(STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL);
 
-      await this.orderModel.orderTenantGotListing(orderId, {
+      await this.orderModel.orderTenantPayed(orderId, {
         token: ownerToken,
         qrCode: generatedImage,
       });
