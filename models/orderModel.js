@@ -566,6 +566,7 @@ class OrderModel extends Model {
     tenantFee,
     feeActive,
     message,
+    parentOrderId = null,
   }) => {
     const res = await db(ORDERS_TABLE)
       .insert({
@@ -581,6 +582,7 @@ class OrderModel extends Model {
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
         message,
+        parentOrderId,
       })
       .returning("id");
 

@@ -22,6 +22,7 @@ const {
   paypalOrderPayedValidation,
   finishOrderByOwnerValidation,
   creditCardUnpaidTransactionValidation,
+  extendValidation,
 } = require("../../validations/order");
 
 router.post(
@@ -30,6 +31,14 @@ router.post(
   isVerifiedAndHasPaypalId,
   createValidation,
   orderController.create
+);
+
+router.post(
+  "/extend",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  extendValidation,
+  orderController.extend
 );
 
 router.get(

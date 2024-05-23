@@ -306,10 +306,19 @@ class MainController extends Controller {
 
       const dopOptions = getDopOptions ? await getDopOptions(order) : {};
 
+      const {
+        ownerBaseCommissionPercent: ownerBaseCommission,
+        tenantBaseCommissionPercent: tenantBaseCommission,
+        tenantCancelFeePercent: tenantCancelFee,
+      } = await this.systemOptionModel.getCommissionInfo();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order: { ...order, ...dopOrderOptions },
         categories,
         ...dopOptions,
+        ownerBaseCommission,
+        tenantBaseCommission,
+        tenantCancelFee,
       });
     });
 
@@ -319,12 +328,8 @@ class MainController extends Controller {
     const getOrderByRequest = () => this.orderModel.getFullById(id);
 
     const getDopOrderOptions = async (order) => {
-      const tenantCancelFee =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
-
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
-        tenantCancelFee,
       };
     };
 
@@ -755,9 +760,8 @@ class MainController extends Controller {
 
   getAdminRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await recipientPaymentController.baseAllRecipientPaymentList(
-        req
-      );
+      const result =
+        await recipientPaymentController.baseAllRecipientPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -765,9 +769,8 @@ class MainController extends Controller {
 
   getAdminFailedRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await recipientPaymentController.baseFailedRecipientPaymentList(
-        req
-      );
+      const result =
+        await recipientPaymentController.baseFailedRecipientPaymentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -828,7 +831,10 @@ class MainController extends Controller {
         await senderPaymentController.baseAllSenderPaymentList(req, userId);
 
       const recipientPaymentInfo =
-        await recipientPaymentController.baseAllRecipientPaymentList(req, userId);
+        await recipientPaymentController.baseAllRecipientPaymentList(
+          req,
+          userId
+        );
 
       const totalPayed = await this.senderPaymentModel.getTotalPayed(userId);
 

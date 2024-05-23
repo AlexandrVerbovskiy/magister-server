@@ -5,15 +5,14 @@ const STATIC = require("../static");
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.alterTable(
-    STATIC.TABLES.RECIPIENT_PAYMENTS,
-    function (table) {
-      table.dropColumn("paypal_id");
-      table.string("type");
-      table.json("data").nullable().defaultTo(null);
-      table.text("failed_description");
-    }
-  );
+  return knex.schema.alterTable(STATIC.TABLES.ORDERS, function (table) {
+    table
+      .integer("parent_id")
+      .unsigned()
+      .nullable()
+      .defaultTo(null)
+      .references(STATIC.TABLES.ORDERS + ".id");
+  });
 };
 
 /**
@@ -21,13 +20,7 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.alterTable(
-    STATIC.TABLES.RECIPIENT_PAYMENTS,
-    function (table) {
-      table.string("paypal_id");
-      table.dropColumn("type");
-      table.dropColumn("data");
-      table.dropColumn("failed_description");
-    }
-  );
+  return knex.schema.alterTable(STATIC.TABLES.ORDERS, function (table) {
+    table.dropColumns("parent_id");
+  });
 };

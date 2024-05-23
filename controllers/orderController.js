@@ -5,6 +5,7 @@ const {
   capturePaypalOrder,
   sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
+  getDaysDifference,
 } = require("../utils");
 const Controller = require("./Controller");
 
@@ -33,47 +34,112 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
+  baseCreate = async ({
+    pricePerDay,
+    startDate,
+    endDate,
+    listingId,
+    feeActive,
+    message,
+    tenantId,
+    parentOrderId = null,
+  }) => {
+    const tenantFee =
+      await this.systemOptionModel.getTenantBaseCommissionPercent();
+    const ownerFee =
+      await this.systemOptionModel.getOwnerBaseCommissionPercent();
+
+    const blockedDates = await this.orderModel.getBlockedListingDatesForUser(
+      listingId,
+      tenantId
+    );
+
+    const selectedDates = generateDatesBetween(startDate, endDate);
+
+    const hasBlockedDate = selectedDates.find((selectedDate) =>
+      blockedDates.includes(selectedDate)
+    );
+
+    if (hasBlockedDate) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "The selected date is not available for booking"
+      );
+    }
+
+    return await this.orderModel.create({
+      pricePerDay,
+      startDate,
+      endDate,
+      listingId,
+      tenantId,
+      ownerFee: ownerFee,
+      tenantFee: tenantFee,
+      feeActive,
+      message,
+      parentOrderId,
+    });
+  };
+
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { pricePerDay, startDate, endDate, listingId, feeActive, message } =
         req.body;
       const tenantId = req.userData.userId;
 
-      const tenantFee =
-        await this.systemOptionModel.getTenantBaseCommissionPercent();
-      const ownerFee =
-        await this.systemOptionModel.getOwnerBaseCommissionPercent();
-
-      const blockedDates = await this.orderModel.getBlockedListingDatesForUser(
-        listingId,
-        tenantId
-      );
-
-      const selectedDates = generateDatesBetween(startDate, endDate);
-
-      const hasBlockedDate = selectedDates.find((selectedDate) =>
-        blockedDates.includes(selectedDate)
-      );
-
-      if (hasBlockedDate) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "The selected date is not available for booking"
-        );
-      }
-
-      const createdOrderId = await this.orderModel.create({
+      const createdOrderId = await this.baseCreate({
         pricePerDay,
         startDate,
         endDate,
         listingId,
-        tenantId,
-        ownerFee: ownerFee,
-        tenantFee: tenantFee,
         feeActive,
         message,
+        tenantId,
       });
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        "Created successfully",
+        {
+          id: createdOrderId,
+        }
+      );
+    });
+
+  extend = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const {
+        pricePerDay,
+        startDate,
+        endDate,
+        listingId,
+        feeActive,
+        message,
+        parentOrderId,
+      } = req.body;
+      const tenantId = req.userData.userId;
+
+      const prevOrder = await this.orderModel.getById(parentOrderId);
+
+      const prevOrderEndDate = prevOrder.offerEndDate;
+
+      const dataToCreate = {
+        pricePerDay,
+        startDate,
+        endDate,
+        listingId,
+        feeActive,
+        message,
+        tenantId,
+      };
+
+      if (getDaysDifference(prevOrderEndDate, startDate) == 1) {
+        dataToCreate["parentOrderId"] = parentOrderId;
+      }
+
+      const createdOrderId = await this.baseCreate(dataToCreate);
 
       return this.sendSuccessResponse(
         res,
