@@ -42,6 +42,14 @@ router.post(
   senderPaymentController.adminList
 );
 
+router.post(
+  "/waiting-approval-list",
+  isAuth,
+  isAdmin,
+  listValidation,
+  senderPaymentController.waitingAdminApprovalSenderPaymentList
+);
+
 router.get(
   "/invoice-pdf/:id",
   isAuth,
@@ -49,18 +57,18 @@ router.get(
   senderPaymentController.generateInvoicePdf
 );
 
-router.get(
+router.post(
   "/approve-credit-card-transaction",
   isAuth,
   approveCreditCardTransactionValidation,
-  senderPaymentController.approveCreditCardTransaction
+  senderPaymentController.approveTransaction
 );
 
-router.get(
+router.post(
   "/reject-credit-card-transaction",
   isAuth,
   rejectCreditCardTransactionValidation,
-  senderPaymentController.rejectCreditCardTransaction
+  senderPaymentController.rejectTransaction
 );
 
 module.exports = router;
