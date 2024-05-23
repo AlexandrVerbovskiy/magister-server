@@ -1084,8 +1084,18 @@ class OrderModel extends Model {
         `${ORDERS_TABLE}.listing_id`
       )
       .select(db.raw("COUNT(*) as count"))
-      .where(`${LISTINGS_TABLE}.owner_id`, userId)
-      .orWhere(`${ORDERS_TABLE}.tenant_id`, userId)
+      .where(function () {
+        this.where(`${LISTINGS_TABLE}.owner_id`, userId);
+        /*.orWhere(
+          `${ORDERS_TABLE}.tenant_id`,
+          userId
+        );*/
+      })
+      .whereIn("status", [
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+        STATIC.ORDER_STATUSES.FINISHED,
+      ])
       .first();
     return resultSelect.count;
   };

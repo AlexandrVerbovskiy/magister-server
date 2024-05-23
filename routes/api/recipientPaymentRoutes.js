@@ -53,4 +53,10 @@ router.post(
   recipientPaymentController.markFailedRecipientDone
 );
 
+router.post(
+  "/admin-failed-recipient-payment-list",
+  isAuth,
+  recipientPaymentController.baseFailedRecipientPaymentList
+);
+
 module.exports = router;

@@ -535,7 +535,7 @@ class MainController extends Controller {
       const { id } = req.params;
       const request = await this.listingApprovalRequestModel.getById(id);
 
-      if (!request) {
+      if (!request.id) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
@@ -738,7 +738,7 @@ class MainController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         recipient,
-        refundCommission
+        refundCommission,
       });
     });
 
@@ -755,7 +755,17 @@ class MainController extends Controller {
 
   getAdminRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await recipientPaymentController.baseRecipientPaymentList(
+      const result = await recipientPaymentController.baseAllRecipientPaymentList(
+        req
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminFailedRecipientPaymentListOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await recipientPaymentController.baseFailedRecipientPaymentList(
         req
       );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -818,7 +828,7 @@ class MainController extends Controller {
         await senderPaymentController.baseAllSenderPaymentList(req, userId);
 
       const recipientPaymentInfo =
-        await recipientPaymentController.baseRecipientPaymentList(req, userId);
+        await recipientPaymentController.baseAllRecipientPaymentList(req, userId);
 
       const totalPayed = await this.senderPaymentModel.getTotalPayed(userId);
 

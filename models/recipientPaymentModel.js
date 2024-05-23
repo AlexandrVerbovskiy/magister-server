@@ -184,13 +184,21 @@ class RecipientPayment extends Model {
     return query;
   };
 
-  baseListTypeSelect = (query, type) => {
+  baseListReceivedTypeSelect = (query, receivedType) => {
     if (
       [STATIC.RECIPIENT_TYPES.REFUND, STATIC.RECIPIENT_TYPES.RENTAL].includes(
-        type
+        receivedType
       )
     ) {
-      query.where(`${RECIPIENT_PAYMENTS_TABLE}.received_type`, type);
+      query.where(`${RECIPIENT_PAYMENTS_TABLE}.received_type`, receivedType);
+    }
+
+    return query;
+  };
+
+  baseListTypeSelect = (query, type) => {
+    if (["paypal", "card"].includes(type)) {
+      query.where(`${RECIPIENT_PAYMENTS_TABLE}.type`, type);
     }
 
     return query;
@@ -223,7 +231,7 @@ class RecipientPayment extends Model {
   totalCount = async (
     filter,
     timeInfos,
-    { status = null, type = null, userId = null }
+    { status = null, receivedType = null, userId = null, type = null }
   ) => {
     let query = db(RECIPIENT_PAYMENTS_TABLE);
     query = this.baseListJoin(query).whereRaw(
@@ -241,6 +249,10 @@ class RecipientPayment extends Model {
 
     if (status) {
       query = this.baseListStatusSelect(query, status);
+    }
+
+    if (receivedType) {
+      query = this.baseListReceivedTypeSelect(query, receivedType);
     }
 
     if (type) {
@@ -271,6 +283,10 @@ class RecipientPayment extends Model {
 
     if (props.status) {
       query = this.baseListStatusSelect(query, props.status);
+    }
+
+    if (props.receivedType) {
+      query = this.baseListReceivedTypeSelect(query, props.receivedType);
     }
 
     if (props.type) {
@@ -399,7 +415,7 @@ class RecipientPayment extends Model {
   getTotalGet = async (userId) => {
     const resultSelect = await db(RECIPIENT_PAYMENTS_TABLE)
       .select(db.raw("SUM(money) as sum"))
-      .where({ user_id: userId })
+      .where({ user_id: userId, status: STATIC.RECIPIENT_STATUSES.COMPLETED })
       .first();
     return resultSelect.sum;
   };

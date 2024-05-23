@@ -281,7 +281,7 @@ class SenderPayment extends Model {
   getTotalPayed = async (userId) => {
     const resultSelect = await db(SENDER_PAYMENTS_TABLE)
       .select(db.raw("SUM(money) as sum"))
-      .where({ user_id: userId })
+      .where({ user_id: userId, admin_approved: true })
       .first();
     return resultSelect.sum;
   };
