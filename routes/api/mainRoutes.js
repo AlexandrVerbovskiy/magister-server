@@ -33,6 +33,7 @@ const {
   senderPaymentListValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
+const { idParamValidation } = require("../../validations/listing");
 
 router.get("/index-options", mainController.getIndexPageOptions);
 
@@ -270,12 +271,44 @@ router.post(
   mainController.getAdminSenderPaymentListOptions
 );
 
+router.get(
+  "/admin-sender-payment-options/:id",
+  isAuth,
+  isAdmin,
+  idParamValidation,
+  mainController.getAdminSenderPaymentOptions
+);
+
+router.get(
+  "/admin-recipient-payment-options/:id",
+  isAuth,
+  isAdmin,
+  idParamValidation,
+  mainController.getAdminRecipientPaymentOptions
+);
+
+router.post(
+  "/waiting-admin-approval-sender-payment-list-options",
+  isAuth,
+  isAdmin,
+  adminOrderListOptionsValidation,
+  mainController.getWaitingAdminApprovalSenderPaymentListOptions
+);
+
 router.post(
   "/admin-recipient-payment-list-options",
   isAuth,
   isAdmin,
   adminOrderListOptionsValidation,
   mainController.getAdminRecipientPaymentListOptions
+);
+
+router.post(
+  "/admin-failed-recipient-payment-list-options",
+  isAuth,
+  isAdmin,
+  adminOrderListOptionsValidation,
+  mainController.getAdminFailedRecipientPaymentListOptions
 );
 
 router.post(

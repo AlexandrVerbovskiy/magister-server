@@ -15,6 +15,7 @@ const {
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
+const qrcode = require("qrcode");
 
 const {
   userModel,
@@ -542,6 +543,15 @@ class Controller {
     });
 
     return pdf;
+  }
+
+  async generateQrCodeInfo(clientLink) {
+    const token = generateRandomString();
+    const image = await qrcode.toDataURL(
+      process.env.CLIENT_URL + clientLink + "/" + token
+    );
+
+    return { token, image };
   }
 }
 
