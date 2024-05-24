@@ -22,7 +22,9 @@ const {
   paypalOrderPayedValidation,
   finishOrderByOwnerValidation,
   creditCardUnpaidTransactionValidation,
+  extendValidation,
 } = require("../../validations/order");
+const { validateIdParam } = require("../../validations/base");
 
 router.post(
   "/create",
@@ -30,6 +32,14 @@ router.post(
   isVerifiedAndHasPaypalId,
   createValidation,
   orderController.create
+);
+
+router.post(
+  "/extend",
+  isAuth,
+  isVerifiedAndHasPaypalId,
+  extendValidation,
+  orderController.extend
 );
 
 router.get(
@@ -177,6 +187,13 @@ router.post(
   isVerified,
   idBodyValidation,
   orderController.fullCancel
+);
+
+router.get(
+  "/invoice-pdf/:id",
+  isAuth,
+  validateIdParam(),
+  orderController.generateInvoicePdf
 );
 
 module.exports = router;

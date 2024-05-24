@@ -12,6 +12,9 @@ const {
   getDateByCurrentReject,
   adaptClientTimeToServer,
   clientServerHoursDifference,
+  shortTimeConverter,
+  tenantPaymentCalculate,
+  getDaysDifference,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -553,6 +556,60 @@ class Controller {
 
     return { token, image };
   }
+
+  baseInvoicePdfGeneration = async (payment) => {
+    const offerStartDate = payment.orderOfferStartDate;
+    const offerEndDate = payment.orderOfferEndDate;
+    const offerPricePerDay = payment.orderOfferPricePerDay;
+
+    const offerTotalPrice = tenantPaymentCalculate(
+      offerStartDate,
+      offerEndDate,
+      payment.tenantFee,
+      offerPricePerDay
+    );
+
+    const offerSubTotalPrice =
+      getDaysDifference(offerStartDate, offerEndDate) * offerPricePerDay;
+
+    const factTotalFee = (offerSubTotalPrice * payment.tenantFee) / 100;
+
+    const durationString =
+      offerStartDate == offerEndDate
+        ? shortTimeConverter(offerStartDate)
+        : `${shortTimeConverter(offerStartDate)} - ${shortTimeConverter(
+            offerEndDate
+          )}`;
+
+    const createdInfo = payment.createdAt
+      ? shortTimeConverter(payment.createdAt)
+      : "-";
+
+    const dueInfo = payment.dueAt ? shortTimeConverter(payment.dueAt) : "-";
+
+    const params = {
+      billTo: payment.listingAddress ?? payment.listingCity,
+      shipTo: payment.listingAddress ?? payment.listingCity,
+      invoiceId: payment.orderId,
+      invoiceDate: createdInfo,
+      purchaseOrder: payment.orderId,
+      dueDate: dueInfo,
+      offer: {
+        factTotalPrice: offerTotalPrice.toFixed(2),
+        fee: payment.tenantFee,
+        listingName: payment.listingName,
+        pricePerDay: offerPricePerDay.toFixed(2),
+        subTotalPrice: offerSubTotalPrice.toFixed(2),
+        factTotalFee: factTotalFee.toFixed(2),
+        durationString,
+      },
+      payed: payment.adminApproved
+        ? offerTotalPrice.toFixed(2)
+        : (0).toFixed(2),
+    };
+
+    return await this.generatePdf("/pdfs/invoice", params);
+  };
 }
 
 module.exports = Controller;

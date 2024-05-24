@@ -21,6 +21,7 @@ class SenderPayment extends Model {
     `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
     `${SENDER_PAYMENTS_TABLE}.waiting_approved as waitingApproved`,
     `${SENDER_PAYMENTS_TABLE}.failed_description as failedDescription`,
+    `${SENDER_PAYMENTS_TABLE}.due_at as dueAt`,
     `${USERS_TABLE}.name as payerName`,
     `${USERS_TABLE}.email as payerEmail`,
     `${LISTINGS_TABLE}.id as listingId`,
@@ -56,6 +57,7 @@ class SenderPayment extends Model {
     payedProof,
     adminApproved,
     type,
+    dueAt = null,
   }) => {
     const res = await db(SENDER_PAYMENTS_TABLE)
       .insert({
@@ -66,6 +68,7 @@ class SenderPayment extends Model {
         order_id: orderId,
         payed_proof: payedProof,
         admin_approved: adminApproved,
+        due_at: dueAt,
       })
       .returning("id");
 
@@ -88,6 +91,7 @@ class SenderPayment extends Model {
       data: JSON.stringify({ paypalSenderId, paypalCaptureId, paypalOrderId }),
       adminApproved: true,
       type: "paypal",
+      dueAt: db.raw("CURRENT_TIMESTAMP")
     });
 
   getInfoAboutOrderPayment = async (orderId) => {
@@ -133,6 +137,7 @@ class SenderPayment extends Model {
       admin_approved: true,
       waiting_approved: false,
       failed_description: null,
+      due_at: db.raw("CURRENT_TIMESTAMP")
     });
   };
 

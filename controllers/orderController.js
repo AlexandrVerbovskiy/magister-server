@@ -5,6 +5,7 @@ const {
   capturePaypalOrder,
   sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
+  getDaysDifference,
 } = require("../utils");
 const Controller = require("./Controller");
 
@@ -30,8 +31,61 @@ class OrderController extends Controller {
         );
       }
 
+      order["extendOrders"] = await this.orderModel.getOrdersExtends([id]);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
+
+  baseCreate = async ({
+    pricePerDay,
+    startDate,
+    endDate,
+    listingId,
+    feeActive,
+    message,
+    tenantId,
+    parentOrderId = null,
+  }) => {
+    const tenantFee =
+      await this.systemOptionModel.getTenantBaseCommissionPercent();
+    const ownerFee =
+      await this.systemOptionModel.getOwnerBaseCommissionPercent();
+
+    const blockedDatesListings =
+      await this.orderModel.getBlockedListingsDatesForUser(
+        [listingId],
+        tenantId
+      );
+
+    const blockedDates = blockedDatesListings[listingId];
+
+    const selectedDates = generateDatesBetween(startDate, endDate);
+
+    const hasBlockedDate = selectedDates.find((selectedDate) =>
+      blockedDates.includes(selectedDate)
+    );
+
+    if (hasBlockedDate) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "The selected date is not available for booking"
+      );
+    }
+
+    return await this.orderModel.create({
+      pricePerDay,
+      startDate,
+      endDate,
+      listingId,
+      tenantId,
+      ownerFee: ownerFee,
+      tenantFee: tenantFee,
+      feeActive,
+      message,
+      parentOrderId,
+    });
+  };
 
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -39,40 +93,14 @@ class OrderController extends Controller {
         req.body;
       const tenantId = req.userData.userId;
 
-      const tenantFee =
-        await this.systemOptionModel.getTenantBaseCommissionPercent();
-      const ownerFee =
-        await this.systemOptionModel.getOwnerBaseCommissionPercent();
-
-      const blockedDates = await this.orderModel.getBlockedListingDatesForUser(
-        listingId,
-        tenantId
-      );
-
-      const selectedDates = generateDatesBetween(startDate, endDate);
-
-      const hasBlockedDate = selectedDates.find((selectedDate) =>
-        blockedDates.includes(selectedDate)
-      );
-
-      if (hasBlockedDate) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "The selected date is not available for booking"
-        );
-      }
-
-      const createdOrderId = await this.orderModel.create({
+      const createdOrderId = await this.baseCreate({
         pricePerDay,
         startDate,
         endDate,
         listingId,
-        tenantId,
-        ownerFee: ownerFee,
-        tenantFee: tenantFee,
         feeActive,
         message,
+        tenantId,
       });
 
       return this.sendSuccessResponse(
@@ -85,16 +113,63 @@ class OrderController extends Controller {
       );
     });
 
-  baseRequestsList = async (
-    req,
-    totalCountCall,
-    listCall,
-    needConflictsInfo = false
-  ) => {
+  extend = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const {
+        pricePerDay,
+        startDate,
+        endDate,
+        listingId,
+        feeActive,
+        message,
+        parentOrderId,
+      } = req.body;
+      const tenantId = req.userData.userId;
+
+      const prevOrder = await this.orderModel.getById(parentOrderId);
+
+      if (
+        !prevOrder ||
+        prevOrder.tenantId != tenantId ||
+        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const prevOrderEndDate = prevOrder.offerEndDate;
+
+      const dataToCreate = {
+        pricePerDay,
+        startDate,
+        endDate,
+        listingId,
+        feeActive,
+        message,
+        tenantId,
+      };
+
+      if (getDaysDifference(prevOrderEndDate, startDate) == 1) {
+        dataToCreate["parentOrderId"] = parentOrderId;
+      }
+
+      const createdOrderId = await this.baseCreate(dataToCreate);
+
+      return this.sendSuccessResponse(
+        res,
+        STATIC.SUCCESS.OK,
+        "Created successfully",
+        {
+          id: createdOrderId,
+        }
+      );
+    });
+
+  baseRequestsList = async (req, totalCountCall, listCall) => {
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
+    const userId = req.userData.userId;
 
     const type = req.body.type == "owner" ? "owner" : "tenant";
 
@@ -111,19 +186,44 @@ class OrderController extends Controller {
       "listingId"
     );
 
-    if (needConflictsInfo) {
-      const orderIds = requestsWithImages.map((request) => request.id);
-      const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
+    const orderIds = requestsWithImages.map((request) => request.id);
+    const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
 
-      requestsWithImages.forEach((request, index) => {
-        const currentOrderConflicts = conflictOrders[request.id];
+    const orderListingIds = Array.from(
+      new Set(requestsWithImages.map((request) => request.listingId))
+    );
 
-        requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
+    const blockedListingsDates =
+      await this.orderModel.getBlockedListingsDatesForUser(
+        orderListingIds,
+        userId
+      );
 
-        requestsWithImages[index]["blockedDates"] =
-          this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
-      });
-    }
+    requestsWithImages.forEach((request, index) => {
+      const currentOrderConflicts = conflictOrders[request.id];
+      requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
+
+      requestsWithImages[index]["blockedDates"] =
+        this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
+
+      requestsWithImages[index]["blockedForRentalDates"] =
+        blockedListingsDates[request.listingId];
+    });
+
+    const orderIdsNeedExtendInfoObj = {};
+
+    requestsWithImages.forEach((request) => {
+      if (request.parentId) {
+        orderIdsNeedExtendInfoObj[request.parentId] = true;
+      } else {
+        orderIdsNeedExtendInfoObj[request.id] = true;
+      }
+    });
+
+    const orderIdsNeedExtendInfo = Object.keys(orderIdsNeedExtendInfoObj);
+    const orderExtends = await this.orderModel.getOrdersExtends(
+      orderIdsNeedExtendInfo
+    );
 
     requestsWithImages.forEach((request, index) => {
       requestsWithImages[index]["canFastCancelPayed"] =
@@ -131,6 +231,13 @@ class OrderController extends Controller {
 
       requestsWithImages[index]["canFinalization"] =
         this.orderModel.canFinalizationOrder(request);
+
+      requestsWithImages[index]["extendOrders"] = [];
+      orderExtends.forEach((extendOrder) => {
+        if (extendOrder.orderParentId == request.id) {
+          requestsWithImages[index]["extendOrders"].push(extendOrder);
+        }
+      });
     });
 
     return {
@@ -151,7 +258,7 @@ class OrderController extends Controller {
       return this.orderModel.tenantBookingsList(options);
     };
 
-    return await this.baseRequestsList(req, totalCountCall, listCall, true);
+    return await this.baseRequestsList(req, totalCountCall, listCall);
   };
 
   baseListingOwnerBookingList = async (req) => {
@@ -165,7 +272,7 @@ class OrderController extends Controller {
       return this.orderModel.ownerBookingsList(options);
     };
 
-    return await this.baseRequestsList(req, totalCountCall, listCall, true);
+    return await this.baseRequestsList(req, totalCountCall, listCall);
   };
 
   bookingList = (req, res) =>
@@ -372,15 +479,6 @@ class OrderController extends Controller {
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-      if (
-        (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
-          order.tenantId != userId) ||
-        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.ownerId != userId)
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
       let newData = {};
 
       if (lastUpdateRequestInfo) {
@@ -440,10 +538,17 @@ class OrderController extends Controller {
         STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
-      await this.orderModel.orderTenantPayed(orderId, {
-        token,
-        qrCode: generatedImage,
-      });
+      if (order.parentId) {
+        await this.orderModel.orderTenantGotListing(orderId, {
+          token,
+          qrCode: generatedImage,
+        });
+      } else {
+        await this.orderModel.orderTenantPayed(orderId, {
+          token,
+          qrCode: generatedImage,
+        });
+      }
 
       await this.senderPaymentModel.createByPaypal({
         money: amount,
@@ -870,6 +975,32 @@ class OrderController extends Controller {
       await this.orderModel.orderFinished(token);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  generateInvoicePdf = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const userId = req.userData.userId;
+      const order = await this.orderModel.getFullById(id);
+
+      if (!order || order.tenantId != userId) {
+        return res.send(404);
+      }
+
+      const buffer = await this.baseInvoicePdfGeneration({
+        orderOfferStartDate: order.offerStartDate,
+        orderOfferEndDate: order.offerEndDate,
+        orderOfferPricePerDay: order.offerPricePerDay,
+        tenantFee: order.tenantFee,
+        listingAddress: order.listingAddress,
+        listingCity: order.listingCity,
+        orderId: order.id,
+        listingName: order.listingName,
+        adminApproved: false,
+        dueAt: null,
+      });
+      res.contentType("application/pdf");
+      res.send(buffer);
     });
 }
 
