@@ -33,6 +33,8 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.prev_price_per_day as prevPricePerDay`,
     `${ORDERS_TABLE}.prev_start_date as prevStartDate`,
     `${ORDERS_TABLE}.prev_end_date as prevEndDate`,
+    `${ORDERS_TABLE}.finished_at as offerFinishedAt`,
+    `${ORDERS_TABLE}.parent_id as orderParentId`,
     `tenants.id as tenantId`,
     `tenants.name as tenantName`,
     `tenants.email as tenantEmail`,
@@ -48,6 +50,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.city as listingCity`,
     `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
     `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
+    `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
   ];
@@ -71,7 +74,6 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.rental_radius as listingRentalRadius`,
     `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
     `${LISTINGS_TABLE}.dop_defect as listingDopDefect`,
-    `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${ORDERS_TABLE}.tenant_accept_listing_qrcode as tenantAcceptListingQrcode`,
     `${ORDERS_TABLE}.owner_accept_listing_qrcode as ownerAcceptListingQrcode`,
     `tenants.phone as tenantPhone`,
@@ -411,6 +413,10 @@ class OrderModel extends Model {
           ]
         : this.lightVisibleFields;
 
+    if (type == "order") {
+      query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
+    }
+
     return await query
       .select(visibleFields)
       .orderBy(order, orderType)
@@ -582,7 +588,7 @@ class OrderModel extends Model {
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
         message,
-        parentOrderId,
+        parent_id: parentOrderId,
       })
       .returning("id");
 
@@ -671,7 +677,7 @@ class OrderModel extends Model {
     return Object.keys(blockedDatesObj);
   };
 
-  getBlockedListingDatesForUser = async (listingId, userId) => {
+  getBlockedListingsDatesForUser = async (listingIds, userId) => {
     const currentDate = separateDate(new Date());
 
     const orders = await db(ORDERS_TABLE)
@@ -679,7 +685,7 @@ class OrderModel extends Model {
         `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
          ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
       )
-      .where("listing_id", listingId)
+      .whereIn("listing_id", listingIds)
       .whereRaw(
         `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?) OR (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND end_date >= ? ))`,
         [currentDate, currentDate]
@@ -696,9 +702,38 @@ class OrderModel extends Model {
           )
           .whereNot("status", STATIC.ORDER_STATUSES.REJECTED);
       })
-      .select(["end_date as endDate", "start_date as startDate"]);
+      .select([
+        "end_date as endDate",
+        "start_date as startDate",
+        "listing_id as listingId",
+      ]);
 
-    return this.generateBlockedDatesByOrders(orders);
+    const listingBlockedDates = {};
+
+    listingIds.forEach((listingId) => {
+      const listingOrders = [];
+
+      orders.forEach((order) => {
+        if (order.listingId == listingId) {
+          listingOrders.push(order);
+        }
+      });
+
+      listingBlockedDates[listingId] =
+        listingOrders.length > 0
+          ? this.generateBlockedDatesByOrders(listingOrders)
+          : [];
+    });
+
+    return listingBlockedDates;
+  };
+
+  getOrdersExtends = async (orderIds) => {
+    let query = db(ORDERS_TABLE);
+    query = this.fullOrdersJoin(query);
+    return await query
+      .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
+      .select(this.fullVisibleFields);
   };
 
   getConflictOrders = async (orderIds) => {
@@ -1048,9 +1083,12 @@ class OrderModel extends Model {
   };
 
   orderFinished = async (token) => {
-    await db(ORDERS_TABLE).where({ owner_accept_listing_token: token }).update({
-      status: STATIC.ORDER_STATUSES.FINISHED,
-    });
+    await db(ORDERS_TABLE)
+      .where({ owner_accept_listing_token: token })
+      .update({
+        status: STATIC.ORDER_STATUSES.FINISHED,
+        finished_at: db.raw("CURRENT_TIMESTAMP"),
+      });
   };
 
   generateDefectQuestionList = async ({ questionInfos, type, orderId }) => {

@@ -105,51 +105,7 @@ class SenderPaymentController extends Controller {
         return res.send(404);
       }
 
-      const offerStartDate = payment.orderOfferStartDate;
-      const offerEndDate = payment.orderOfferEndDate;
-      const offerPricePerDay = payment.orderOfferPricePerDay;
-
-      const offerTotalPrice = tenantPaymentCalculate(
-        offerStartDate,
-        offerEndDate,
-        payment.tenantFee,
-        offerPricePerDay
-      );
-
-      const offerSubTotalPrice =
-        getDaysDifference(offerStartDate, offerEndDate) * offerPricePerDay;
-
-      const factTotalFee = (offerSubTotalPrice * payment.tenantFee) / 100;
-
-      const durationString =
-        offerStartDate == offerEndDate
-          ? shortTimeConverter(offerStartDate)
-          : `${shortTimeConverter(offerStartDate)} - ${shortTimeConverter(
-              offerEndDate
-            )}`;
-
-      const params = {
-        billTo: payment.listingAddress ?? payment.listingCity,
-        shipTo: payment.listingAddress ?? payment.listingCity,
-        invoiceId: payment.id,
-        invoiceDate: shortTimeConverter(payment.createdAt),
-        purchaseOrder: payment.orderId,
-        dueDate: shortTimeConverter(payment.createdAt),
-        offer: {
-          factTotalPrice: offerTotalPrice.toFixed(2),
-          fee: payment.tenantFee,
-          listingName: payment.listingName,
-          pricePerDay: offerPricePerDay.toFixed(2),
-          subTotalPrice: offerSubTotalPrice.toFixed(2),
-          factTotalFee: factTotalFee.toFixed(2),
-          durationString,
-        },
-        payed: payment.adminApproved
-          ? offerTotalPrice.toFixed(2)
-          : (0).toFixed(2),
-      };
-
-      const buffer = await this.generatePdf("/pdfs/invoice", params);
+      const buffer = await this.baseInvoicePdfGeneration(payment);
       res.contentType("application/pdf");
       res.send(buffer);
     });
@@ -182,13 +138,22 @@ class SenderPaymentController extends Controller {
       const { orderId } = req.body;
       await this.senderPaymentModel.approveTransaction(orderId);
 
+      const order = await this.orderModel.getById(orderId);
+
       const { token: ownerToken, image: generatedImage } =
         this.generateQrCodeInfo(STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL);
 
-      await this.orderModel.orderTenantPayed(orderId, {
-        token: ownerToken,
-        qrCode: generatedImage,
-      });
+      if (order.parentId) {
+        await this.orderModel.orderTenantGotListing(orderId, {
+          token,
+          qrCode: generatedImage,
+        });
+      } else {
+        await this.orderModel.orderTenantPayed(orderId, {
+          token: ownerToken,
+          qrCode: generatedImage,
+        });
+      }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });

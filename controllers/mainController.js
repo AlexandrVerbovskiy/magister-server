@@ -233,11 +233,13 @@ class MainController extends Controller {
       }
 
       if (userId) {
-        listing["blockedDates"] =
-          await this.orderModel.getBlockedListingDatesForUser(
-            listing.id,
+        const blockedDates =
+          await this.orderModel.getBlockedListingsDatesForUser(
+            [listing.id],
             userId
           );
+
+        listing["blockedDates"] = blockedDates[listing.id];
       } else {
         listing["blockedDates"] = [];
       }
@@ -281,9 +283,22 @@ class MainController extends Controller {
       const resGetConflictOrders = await this.orderModel.getConflictOrders([
         order.id,
       ]);
+
+      order["extendOrders"] = await this.orderModel.getOrdersExtends([
+        order.id,
+      ]);
+
       const conflictOrders = resGetConflictOrders[order.id];
       order["blockedDates"] =
         this.orderModel.generateBlockedDatesByOrders(conflictOrders);
+
+      const blockedListingsDates =
+        await this.orderModel.getBlockedListingsDatesForUser(
+          [order.listingId],
+          userId
+        );
+
+      order["blockedForRentalDates"] = blockedListingsDates[order.listingId];
 
       if (userId == order.ownerId) {
         order["conflictOrders"] = conflictOrders;
@@ -362,13 +377,18 @@ class MainController extends Controller {
       this.orderModel.getFullByTenantListingToken(token);
 
     const getDopOrderOptions = async () => {
-      const tenantCancelFee =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
+      const {
+        ownerBaseCommissionPercent: ownerBaseFee,
+        tenantBaseCommissionPercent: tenantBaseFee,
+        tenantCancelFeePercent: tenantCancelFee,
+      } = await this.systemOptionModel.getCommissionInfo();
 
       return {
         canAcceptTenantListing: true,
         acceptListingTenantToken: token,
         tenantCancelFee,
+        ownerBaseFee,
+        tenantBaseFee,
       };
     };
 
@@ -393,14 +413,19 @@ class MainController extends Controller {
       this.orderModel.getFullByOwnerListingToken(token);
 
     const getDopOrderOptions = async (order) => {
-      const tenantCancelFee =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
+      const {
+        ownerBaseCommissionPercent: ownerBaseFee,
+        tenantBaseCommissionPercent: tenantBaseFee,
+        tenantCancelFeePercent: tenantCancelFee,
+      } = await this.systemOptionModel.getCommissionInfo();
 
       return {
         canAcceptOwnerListing: true,
         acceptListingOwnerToken: token,
         canFinalization: this.orderModel.canFinalizationOrder(order),
         tenantCancelFee,
+        ownerBaseFee,
+        tenantBaseFee,
       };
     };
 
@@ -576,8 +601,11 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
       const isForTenant = req.body.type !== "owner";
-      const tenantCancelFee =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
+      const {
+        ownerBaseCommissionPercent: ownerBaseFee,
+        tenantBaseCommissionPercent: tenantBaseFee,
+        tenantCancelFeePercent: tenantCancelFee,
+      } = await this.systemOptionModel.getCommissionInfo();
 
       const request = isForTenant
         ? orderController.baseTenantBookingList
@@ -612,6 +640,8 @@ class MainController extends Controller {
         tenantCancelFee,
         countForTenant,
         countForOwner,
+        ownerBaseFee,
+        tenantBaseFee,
       });
     });
 
@@ -630,8 +660,11 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
       const isForTenant = req.body.type !== "owner";
-      const tenantCancelFee =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
+      const {
+        ownerBaseCommissionPercent: ownerBaseFee,
+        tenantBaseCommissionPercent: tenantBaseFee,
+        tenantCancelFeePercent: tenantCancelFee,
+      } = await this.systemOptionModel.getCommissionInfo();
 
       const request = isForTenant
         ? orderController.baseTenantOrderList
@@ -663,6 +696,8 @@ class MainController extends Controller {
         ...result,
         categories,
         tenantCancelFee,
+        ownerBaseFee,
+        tenantBaseFee,
         countForTenant,
         countForOwner,
       });
