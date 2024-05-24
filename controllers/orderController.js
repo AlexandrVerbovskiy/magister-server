@@ -31,6 +31,8 @@ class OrderController extends Controller {
         );
       }
 
+      order["extendOrders"] = await this.orderModel.getOrdersExtends([id]);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
@@ -49,10 +51,13 @@ class OrderController extends Controller {
     const ownerFee =
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
-    const blockedDates = await this.orderModel.getBlockedListingDatesForUser(
-      listingId,
-      tenantId
-    );
+    const blockedDatesListings =
+      await this.orderModel.getBlockedListingsDatesForUser(
+        [listingId],
+        tenantId
+      );
+
+    const blockedDates = blockedDatesListings[listingId];
 
     const selectedDates = generateDatesBetween(startDate, endDate);
 
@@ -123,6 +128,14 @@ class OrderController extends Controller {
 
       const prevOrder = await this.orderModel.getById(parentOrderId);
 
+      if (
+        !prevOrder ||
+        prevOrder.tenantId != tenantId ||
+        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       const prevOrderEndDate = prevOrder.offerEndDate;
 
       const dataToCreate = {
@@ -151,16 +164,12 @@ class OrderController extends Controller {
       );
     });
 
-  baseRequestsList = async (
-    req,
-    totalCountCall,
-    listCall,
-    needConflictsInfo = false
-  ) => {
+  baseRequestsList = async (req, totalCountCall, listCall) => {
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
+    const userId = req.userData.userId;
 
     const type = req.body.type == "owner" ? "owner" : "tenant";
 
@@ -177,19 +186,44 @@ class OrderController extends Controller {
       "listingId"
     );
 
-    if (needConflictsInfo) {
-      const orderIds = requestsWithImages.map((request) => request.id);
-      const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
+    const orderIds = requestsWithImages.map((request) => request.id);
+    const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
 
-      requestsWithImages.forEach((request, index) => {
-        const currentOrderConflicts = conflictOrders[request.id];
+    const orderListingIds = Array.from(
+      new Set(requestsWithImages.map((request) => request.listingId))
+    );
 
-        requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
+    const blockedListingsDates =
+      await this.orderModel.getBlockedListingsDatesForUser(
+        orderListingIds,
+        userId
+      );
 
-        requestsWithImages[index]["blockedDates"] =
-          this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
-      });
-    }
+    requestsWithImages.forEach((request, index) => {
+      const currentOrderConflicts = conflictOrders[request.id];
+      requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
+
+      requestsWithImages[index]["blockedDates"] =
+        this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
+
+      requestsWithImages[index]["blockedForRentalDates"] =
+        blockedListingsDates[request.listingId];
+    });
+
+    const orderIdsNeedExtendInfoObj = {};
+
+    requestsWithImages.forEach((request) => {
+      if (request.parentId) {
+        orderIdsNeedExtendInfoObj[request.parentId] = true;
+      } else {
+        orderIdsNeedExtendInfoObj[request.id] = true;
+      }
+    });
+
+    const orderIdsNeedExtendInfo = Object.keys(orderIdsNeedExtendInfoObj);
+    const orderExtends = await this.orderModel.getOrdersExtends(
+      orderIdsNeedExtendInfo
+    );
 
     requestsWithImages.forEach((request, index) => {
       requestsWithImages[index]["canFastCancelPayed"] =
@@ -197,6 +231,13 @@ class OrderController extends Controller {
 
       requestsWithImages[index]["canFinalization"] =
         this.orderModel.canFinalizationOrder(request);
+
+      requestsWithImages[index]["extendOrders"] = [];
+      orderExtends.forEach((extendOrder) => {
+        if (extendOrder.orderParentId == request.id) {
+          requestsWithImages[index]["extendOrders"].push(extendOrder);
+        }
+      });
     });
 
     return {
@@ -217,7 +258,7 @@ class OrderController extends Controller {
       return this.orderModel.tenantBookingsList(options);
     };
 
-    return await this.baseRequestsList(req, totalCountCall, listCall, true);
+    return await this.baseRequestsList(req, totalCountCall, listCall);
   };
 
   baseListingOwnerBookingList = async (req) => {
@@ -231,7 +272,7 @@ class OrderController extends Controller {
       return this.orderModel.ownerBookingsList(options);
     };
 
-    return await this.baseRequestsList(req, totalCountCall, listCall, true);
+    return await this.baseRequestsList(req, totalCountCall, listCall);
   };
 
   bookingList = (req, res) =>
@@ -438,15 +479,6 @@ class OrderController extends Controller {
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-      if (
-        (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
-          order.tenantId != userId) ||
-        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.ownerId != userId)
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
       let newData = {};
 
       if (lastUpdateRequestInfo) {
@@ -506,10 +538,17 @@ class OrderController extends Controller {
         STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
-      await this.orderModel.orderTenantPayed(orderId, {
-        token,
-        qrCode: generatedImage,
-      });
+      if (order.parentId) {
+        await this.orderModel.orderTenantGotListing(orderId, {
+          token,
+          qrCode: generatedImage,
+        });
+      } else {
+        await this.orderModel.orderTenantPayed(orderId, {
+          token,
+          qrCode: generatedImage,
+        });
+      }
 
       await this.senderPaymentModel.createByPaypal({
         money: amount,
@@ -936,6 +975,32 @@ class OrderController extends Controller {
       await this.orderModel.orderFinished(token);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  generateInvoicePdf = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const userId = req.userData.userId;
+      const order = await this.orderModel.getFullById(id);
+
+      if (!order || order.tenantId != userId) {
+        return res.send(404);
+      }
+
+      const buffer = await this.baseInvoicePdfGeneration({
+        orderOfferStartDate: order.offerStartDate,
+        orderOfferEndDate: order.offerEndDate,
+        orderOfferPricePerDay: order.offerPricePerDay,
+        tenantFee: order.tenantFee,
+        listingAddress: order.listingAddress,
+        listingCity: order.listingCity,
+        orderId: order.id,
+        listingName: order.listingName,
+        adminApproved: false,
+        dueAt: null,
+      });
+      res.contentType("application/pdf");
+      res.send(buffer);
     });
 }
 

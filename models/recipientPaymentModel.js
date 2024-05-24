@@ -120,8 +120,6 @@ class RecipientPayment extends Model {
     status,
     failedDescription = null,
   }) => {
-    console.log(type, data);
-
     await db(RECIPIENT_PAYMENTS_TABLE)
       .where({
         id,

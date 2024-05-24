@@ -6,12 +6,9 @@ const STATIC = require("../static");
  */
 exports.up = function (knex) {
   return knex.schema.alterTable(
-    STATIC.TABLES.RECIPIENT_PAYMENTS,
+    STATIC.TABLES.SENDER_PAYMENTS,
     function (table) {
-      table.dropColumn("paypal_id");
-      table.string("type");
-      table.json("data").nullable().defaultTo(null);
-      table.text("failed_description");
+      table.timestamp("due_at").nullable().defaultTo(null);
     }
   );
 };
@@ -22,12 +19,9 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return knex.schema.alterTable(
-    STATIC.TABLES.RECIPIENT_PAYMENTS,
+    STATIC.TABLES.SENDER_PAYMENTS,
     function (table) {
-      table.string("paypal_id");
-      table.dropColumn("type");
-      table.dropColumn("data");
-      table.dropColumn("failed_description");
+      table.dropColumns("due_at");
     }
   );
 };
