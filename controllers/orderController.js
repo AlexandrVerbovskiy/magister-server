@@ -44,7 +44,7 @@ class OrderController extends Controller {
     feeActive,
     message,
     tenantId,
-    parentOrderId = null,
+    orderParentId = null,
   }) => {
     const tenantFee =
       await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -83,7 +83,7 @@ class OrderController extends Controller {
       tenantFee: tenantFee,
       feeActive,
       message,
-      parentOrderId,
+      orderParentId,
     });
   };
 
@@ -149,11 +149,9 @@ class OrderController extends Controller {
       };
 
       if (getDaysDifference(prevOrderEndDate, startDate) == 2) {
-        dataToCreate["parentOrderId"] = prevOrder.orderParentId
+        dataToCreate["orderParentId"] = prevOrder.orderParentId
           ? prevOrder.orderParentId
           : parentOrderId;
-
-          console.log(prevOrder.orderParentId, prevOrder.orderParentId, parentOrderId);
       }
 
       const createdOrderId = await this.baseCreate(dataToCreate);
