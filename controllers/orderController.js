@@ -430,6 +430,8 @@ class OrderController extends Controller {
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
+      console.log(id, lastUpdateRequestInfo)
+
       if (
         (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
           order.tenantId != userId) ||
@@ -445,7 +447,7 @@ class OrderController extends Controller {
         const parentOrder = await this.orderModel.getById(order.orderParentId);
         const dateDiff = getDaysDifference(
           parentOrder.offerEndDate,
-          lastUpdateRequestInfo.newStartDate
+          order.offerStartDate
         );
 
         if (dateDiff != 2) {
