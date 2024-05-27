@@ -671,11 +671,11 @@ class OrderModel extends Model {
       let startDate = new Date(order["startDate"]);
       let endDate = new Date(order["endDate"]);
 
-      if(order["newStartDate"] && order["newEndDate"]){
+      if (order["newStartDate"] && order["newEndDate"]) {
         startDate = new Date(order["newStartDate"]);
         endDate = new Date(order["newEndDate"]);
       }
-      
+
       const datesBetween = generateDatesBetween(startDate, endDate);
       datesBetween.forEach((date) => (blockedDatesObj[date] = true));
     });
@@ -1150,7 +1150,7 @@ class OrderModel extends Model {
         STATIC.ORDER_STATUSES.FINISHED,
       ])
       .first();
-    return resultSelect.count;
+    return resultSelect.count ?? 0;
   };
 }
 
