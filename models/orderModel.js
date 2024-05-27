@@ -668,8 +668,14 @@ class OrderModel extends Model {
     const blockedDatesObj = {};
 
     orders.forEach((order) => {
-      const startDate = new Date(order["startDate"]);
-      const endDate = new Date(order["endDate"]);
+      let startDate = new Date(order["startDate"]);
+      let endDate = new Date(order["endDate"]);
+
+      if(order["newStartDate"] && order["newEndDate"]){
+        startDate = new Date(order["newStartDate"]);
+        endDate = new Date(order["newEndDate"]);
+      }
+      
       const datesBetween = generateDatesBetween(startDate, endDate);
       datesBetween.forEach((date) => (blockedDatesObj[date] = true));
     });
@@ -706,6 +712,8 @@ class OrderModel extends Model {
         "end_date as endDate",
         "start_date as startDate",
         "listing_id as listingId",
+        "new_end_date as newEndDate",
+        "new_start_date as newStartDate",
       ]);
 
     const listingBlockedDates = {};
@@ -931,7 +939,12 @@ class OrderModel extends Model {
         `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
       )
       .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
-      .select(["end_date as endDate", "start_date as startDate"]);
+      .select([
+        "end_date as endDate",
+        "start_date as startDate",
+        "new_end_date as newEndDate",
+        "new_start_date as newStartDate",
+      ]);
 
     return this.generateBlockedDatesByOrders(orders);
   };
