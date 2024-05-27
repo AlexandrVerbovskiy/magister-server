@@ -652,7 +652,7 @@ class OrderController extends Controller {
         qrCode: generatedImage,
       });
 
-      await this.recipientPaymentModel.paymentPlanGeneration({
+      await this.recipientPaymentModel.paypalPaymentPlanGeneration({
         startDate: orderInfo.offerStartDate,
         endDate: orderInfo.offerEndDate,
         pricePerDay: orderInfo.offerPricePerDay,
