@@ -91,11 +91,37 @@ class SenderPayment extends Model {
       data: JSON.stringify({ paypalSenderId, paypalCaptureId, paypalOrderId }),
       adminApproved: true,
       type: "paypal",
-      dueAt: db.raw("CURRENT_TIMESTAMP")
+      dueAt: db.raw("CURRENT_TIMESTAMP"),
     });
 
+  getInfoAboutOrdersPayments = async (orderIds) => {
+    const payments = await db(SENDER_PAYMENTS_TABLE)
+      .select([
+        `${SENDER_PAYMENTS_TABLE}.id`,
+        `${SENDER_PAYMENTS_TABLE}.money`,
+        `${SENDER_PAYMENTS_TABLE}.user_id as payerId`,
+        `${SENDER_PAYMENTS_TABLE}.order_id as orderId`,
+        `${SENDER_PAYMENTS_TABLE}.admin_approved as adminApproved`,
+        `${SENDER_PAYMENTS_TABLE}.payed_proof as payedProof`,
+        `${SENDER_PAYMENTS_TABLE}.data`,
+        `${SENDER_PAYMENTS_TABLE}.type`,
+        `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
+        `${SENDER_PAYMENTS_TABLE}.waiting_approved as waitingApproved`,
+        `${SENDER_PAYMENTS_TABLE}.failed_description as failedDescription`,
+        `${SENDER_PAYMENTS_TABLE}.due_at as dueAt`,
+      ])
+      .whereIn("order_id", orderIds);
+
+    const res = {};
+    orderIds.forEach((orderId) => (res[orderId] = null));
+    payments.forEach((payment) => (res[payment.orderId] = payment));
+
+    return res;
+  };
+
   getInfoAboutOrderPayment = async (orderId) => {
-    return await db(SENDER_PAYMENTS_TABLE).where("order_id", orderId).first();
+    const ordersInfo = await this.getInfoAboutOrdersPayments([orderId]);
+    return ordersInfo[orderId];
   };
 
   createByCreditCard = ({ money, userId, orderId, proofUrl }) =>
@@ -133,12 +159,14 @@ class SenderPayment extends Model {
   };
 
   approveTransaction = async (orderId) => {
-    await db(SENDER_PAYMENTS_TABLE).where({ order_id: orderId }).update({
-      admin_approved: true,
-      waiting_approved: false,
-      failed_description: null,
-      due_at: db.raw("CURRENT_TIMESTAMP")
-    });
+    await db(SENDER_PAYMENTS_TABLE)
+      .where({ order_id: orderId })
+      .update({
+        admin_approved: true,
+        waiting_approved: false,
+        failed_description: null,
+        due_at: db.raw("CURRENT_TIMESTAMP"),
+      });
   };
 
   rejectTransaction = async (orderId, description) => {
