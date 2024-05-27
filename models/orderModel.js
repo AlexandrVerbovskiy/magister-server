@@ -988,8 +988,6 @@ class OrderModel extends Model {
       updateProps["status"] = status;
     }
 
-    console.log(updateProps);
-
     await db(ORDERS_TABLE).where("id", orderId).update(updateProps);
   };
 
@@ -1155,6 +1153,17 @@ class OrderModel extends Model {
       ])
       .first();
     return resultSelect.count ?? 0;
+  };
+
+  updateExtendedFinished = async () => {
+    return await db(ORDERS_TABLE)
+      .whereIn("id", function () {
+        this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
+      })
+      .whereNull("cancel_status")
+      .where("status", STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER)
+      .whereRaw(`end_date < TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')`)
+      .update({ status: STATIC.ORDER_STATUSES.FINISHED });
   };
 }
 

@@ -3,12 +3,9 @@ const STATIC = require("../static");
 const { sendMoneyToPaypalByPaypalID } = require("../utils");
 
 const main = async () => {
-  const maxCountCheck = 10;
   let needCheckMore = true;
-  let currentCheckCount = 0;
 
-  while (needCheckMore && maxCountCheck > currentCheckCount) {
-    currentCheckCount++;
+  while (needCheckMore) {
     const paymentInfos = await recipientPaymentModel.getToPaymentsPay();
 
     for (let i = 0; i < paymentInfos.length; i++) {
