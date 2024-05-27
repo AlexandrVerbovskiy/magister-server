@@ -130,6 +130,7 @@ class UserVerifyRequestModel extends Model {
     return await db(USER_VERIFY_REQUESTS_TABLE)
       .select("failed_description as failedDescription")
       .where({ user_id: userId, has_response: true })
+      .orderBy("created_at", "DESC")
       .first();
   };
 
