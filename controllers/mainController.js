@@ -274,12 +274,6 @@ class MainController extends Controller {
         );
       }
 
-      if (order.status === STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) {
-        order["payedInfo"] = await this.senderPaymentModel.getInfoByOrderId(
-          order.id
-        );
-      }
-
       const resGetConflictOrders = await this.orderModel.getConflictOrders([
         order.id,
       ]);
@@ -343,8 +337,13 @@ class MainController extends Controller {
     const getOrderByRequest = () => this.orderModel.getFullById(id);
 
     const getDopOrderOptions = async (order) => {
+      const paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
+        order.id
+      );
+
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
+        paymentInfo,
       };
     };
 

@@ -189,6 +189,9 @@ class OrderController extends Controller {
     const orderIds = requestsWithImages.map((request) => request.id);
     const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
 
+    const paymentInfos =
+      await this.senderPaymentModel.getInfoAboutOrdersPayments(orderIds);
+
     const orderListingIds = Array.from(
       new Set(requestsWithImages.map((request) => request.listingId))
     );
@@ -208,6 +211,8 @@ class OrderController extends Controller {
 
       requestsWithImages[index]["blockedForRentalDates"] =
         blockedListingsDates[request.listingId];
+
+      requestsWithImages[index]["paymentInfo"] = paymentInfos[request.id];
     });
 
     const orderIdsNeedExtendInfoObj = {};
