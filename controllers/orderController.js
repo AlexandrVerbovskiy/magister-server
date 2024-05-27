@@ -539,7 +539,7 @@ class OrderController extends Controller {
 
       const amount = paypalOrderInfo.purchase_units[0].amount.value;
 
-      const { token, image: generatedImage } = this.generateQrCodeInfo(
+      const { token, image: generatedImage } = await this.generateQrCodeInfo(
         STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
@@ -640,7 +640,7 @@ class OrderController extends Controller {
       }
 
       const { token: ownerToken, image: generatedImage } =
-        this.generateQrCodeInfo(STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL);
+        await this.generateQrCodeInfo(STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL);
 
       await this.orderModel.generateDefectFromTenantQuestionList(
         questions,

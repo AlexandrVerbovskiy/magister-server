@@ -141,11 +141,11 @@ class SenderPaymentController extends Controller {
       const order = await this.orderModel.getById(orderId);
 
       const { token: ownerToken, image: generatedImage } =
-        this.generateQrCodeInfo(STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL);
+        await this.generateQrCodeInfo(STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL);
 
       if (order.parentId) {
         await this.orderModel.orderTenantGotListing(orderId, {
-          token,
+          token: ownerToken,
           qrCode: generatedImage,
         });
       } else {
