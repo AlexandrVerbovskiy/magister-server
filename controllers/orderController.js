@@ -148,9 +148,12 @@ class OrderController extends Controller {
         tenantId,
       };
 
+      console.log(prevOrderEndDate, startDate)
+
       if (getDaysDifference(prevOrderEndDate, startDate) == 1) {
         dataToCreate["parentOrderId"] = parentOrderId;
       }
+      throw new Error("test");
 
       const createdOrderId = await this.baseCreate(dataToCreate);
 
