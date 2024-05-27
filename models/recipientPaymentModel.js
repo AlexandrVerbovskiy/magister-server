@@ -415,7 +415,7 @@ class RecipientPayment extends Model {
       .select(db.raw("SUM(money) as sum"))
       .where({ user_id: userId, status: STATIC.RECIPIENT_STATUSES.COMPLETED })
       .first();
-    return resultSelect.sum;
+    return resultSelect.sum ?? 0;
   };
 
   markRentalAsCancelledByOrderId = async (orderId) => {

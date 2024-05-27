@@ -316,7 +316,7 @@ class SenderPayment extends Model {
       .select(db.raw("SUM(money) as sum"))
       .where({ user_id: userId, admin_approved: true })
       .first();
-    return resultSelect.sum;
+    return resultSelect.sum ?? 0;
   };
 
   getInfoByOrderId = async (orderId) => {
