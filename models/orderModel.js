@@ -572,7 +572,7 @@ class OrderModel extends Model {
     tenantFee,
     feeActive,
     message,
-    parentOrderId = null,
+    orderParentId = null,
   }) => {
     const res = await db(ORDERS_TABLE)
       .insert({
@@ -588,7 +588,7 @@ class OrderModel extends Model {
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
         message,
-        parent_id: parentOrderId,
+        parent_id: orderParentId,
       })
       .returning("id");
 
@@ -970,6 +970,7 @@ class OrderModel extends Model {
       prevPricePerDay,
       prevStartDate,
       prevEndDate,
+      orderParentId,
       status = null,
     }
   ) => {
@@ -980,11 +981,14 @@ class OrderModel extends Model {
       prev_price_per_day: prevPricePerDay,
       prev_start_date: prevStartDate,
       prev_end_date: prevEndDate,
+      parent_id: orderParentId,
     };
 
     if (status) {
       updateProps["status"] = status;
     }
+
+    console.log(updateProps);
 
     await db(ORDERS_TABLE).where("id", orderId).update(updateProps);
   };

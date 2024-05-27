@@ -148,14 +148,9 @@ class OrderController extends Controller {
         tenantId,
       };
 
-      console.log(
-        prevOrderEndDate,
-        startDate,
-        getDaysDifference(prevOrderEndDate, startDate)
-      );
-
       if (getDaysDifference(prevOrderEndDate, startDate) == 2) {
-        dataToCreate["parentOrderId"] = parentOrderId;
+        dataToCreate["parentOrderId"] =
+          prevOrder.orderParentId ?? parentOrderId;
       }
 
       const createdOrderId = await this.baseCreate(dataToCreate);
@@ -244,6 +239,7 @@ class OrderController extends Controller {
         this.orderModel.canFinalizationOrder(request);
 
       requestsWithImages[index]["extendOrders"] = [];
+
       orderExtends.forEach((extendOrder) => {
         if (extendOrder.orderParentId == request.id) {
           requestsWithImages[index]["extendOrders"].push(extendOrder);
@@ -442,6 +438,20 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
+      let resetParentId = false;
+
+      if (order.orderParentId) {
+        const parentOrder = await this.orderModel.getById(order.orderParentId);
+        const dateDiff = getDaysDifference(
+          parentOrder.offerEndDate,
+          lastUpdateRequestInfo.newStartDate
+        );
+
+        if (dateDiff != 2) {
+          resetParentId = true;
+        }
+      }
+
       if (lastUpdateRequestInfo) {
         await this.orderModel.acceptUpdateRequest(id, {
           newStartDate: lastUpdateRequestInfo.newStartDate,
@@ -450,6 +460,7 @@ class OrderController extends Controller {
           prevPricePerDay: order.offerPricePerDay,
           prevStartDate: order.offerStartDate,
           prevEndDate: order.offerEndDate,
+          orderParentId: resetParentId ? null : undefined,
         });
         await this.orderUpdateRequestModel.closeLast(id);
       } else {
@@ -549,7 +560,7 @@ class OrderController extends Controller {
         STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
-      if (order.parentId) {
+      if (order.orderParentId) {
         await this.orderModel.orderTenantGotListing(orderId, {
           token,
           qrCode: generatedImage,
