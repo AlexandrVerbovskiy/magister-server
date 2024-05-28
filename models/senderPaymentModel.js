@@ -58,6 +58,7 @@ class SenderPayment extends Model {
     adminApproved,
     type,
     dueAt = null,
+    waitingApproved,
   }) => {
     const res = await db(SENDER_PAYMENTS_TABLE)
       .insert({
@@ -69,6 +70,7 @@ class SenderPayment extends Model {
         payed_proof: payedProof,
         admin_approved: adminApproved,
         due_at: dueAt,
+        waiting_approved: waitingApproved,
       })
       .returning("id");
 
@@ -92,6 +94,7 @@ class SenderPayment extends Model {
       adminApproved: true,
       type: "paypal",
       dueAt: db.raw("CURRENT_TIMESTAMP"),
+      waitingApproved: false,
     });
 
   getInfoAboutOrdersPayments = async (orderIds) => {
@@ -133,6 +136,7 @@ class SenderPayment extends Model {
       data: JSON.stringify({}),
       adminApproved: false,
       type: "credit-card",
+      waitingApproved: true,
     });
 
   checkCanCreditCardProofAppend = async (orderId) => {
