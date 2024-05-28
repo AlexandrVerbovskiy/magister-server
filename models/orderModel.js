@@ -633,6 +633,30 @@ class OrderModel extends Model {
 
   getById = (id) => this.getByWhere(`${ORDERS_TABLE}.id`, id);
 
+  getLastActive = async (id) => {
+    let lastOrderQuery = db(ORDERS_TABLE);
+    lastOrderQuery = this.fullOrdersJoin(lastOrderQuery);
+
+    const lastOrder = await lastOrderQuery
+      .select(this.fullVisibleFields)
+      .where(`${ORDERS_TABLE}.parent_id`, id)
+      .whereIn("status", [
+        STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+        STATIC.ORDER_STATUSES.FINISHED,
+      ])
+      .whereNull("cancel_status")
+      .orderBy(`${ORDERS_TABLE}.end_date`, "desc")
+      .first();
+
+    if (lastOrder) {
+      return lastOrder;
+    }
+
+    return await this.getById(id);
+  };
+
   getFullByBaseRequest = async (request) => {
     const order = await request();
 
