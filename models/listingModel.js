@@ -899,6 +899,18 @@ class ListingsModel extends Model {
 
     return await this.getDefects(listingId);
   };
+
+  priceLimits = async () => {
+    const result = await db(LISTINGS_TABLE)
+      .min("price_per_day as minLimitPrice")
+      .max("price_per_day as maxLimitPrice")
+      .first();
+
+    return {
+      minPrice: result["minLimitPrice"] ?? 0,
+      maxPrice: result["maxLimitPrice"] ?? 0,
+    };
+  };
 }
 
 module.exports = new ListingsModel();

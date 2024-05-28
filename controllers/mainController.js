@@ -198,11 +198,14 @@ class MainController extends Controller {
 
     const result = await listingController.baseListingList(req, ownerId);
 
+    const priceLimits = await this.listingModel.priceLimits();
+
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
       categories,
       needSubscriptionNewCategory,
       hasListings,
       ...result,
+      priceLimits,
     });
   };
 
@@ -337,9 +340,8 @@ class MainController extends Controller {
     const getOrderByRequest = () => this.orderModel.getFullById(id);
 
     const getDopOrderOptions = async (order) => {
-      const paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
-        order.id
-      );
+      const paymentInfo =
+        await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
 
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
