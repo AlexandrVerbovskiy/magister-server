@@ -14,7 +14,13 @@ const senderPaymentController = require("./senderPaymentController");
 const recipientPaymentController = require("./recipientPaymentController");
 
 const coordsByIp = require("../utils/coordsByIp");
-const { cloneObject, separateDate } = require("../utils");
+const {
+  cloneObject,
+  generateDatesByTypeBetween,
+  shortTimeConverter,
+  checkDateInDuration,
+  getDaysDifference,
+} = require("../utils");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -928,6 +934,185 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         recipient,
         refundCommission,
+      });
+    });
+
+  getAdminIndexPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const {
+        timeFilterType,
+        clientFromTime,
+        serverFromTime,
+        clientToTime,
+        serverToTime,
+        clientServerHoursDiff,
+      } = await this.listTimeNameOption(req);
+
+      let stepType = "days";
+
+      if (timeFilterType === "last-year") {
+        stepType = "months";
+      }
+
+      if (timeFilterType === "last-day") {
+        stepType = "hours";
+      }
+
+      const generatedDates = generateDatesByTypeBetween(
+        clientFromTime,
+        clientToTime,
+        stepType
+      );
+
+      const rentListingCounts = cloneObject(generatedDates);
+
+      const rentListingInfos = await this.orderModel.getInUseListings(
+        clientFromTime,
+        clientToTime
+      );
+
+      rentListingInfos.forEach((info) => {
+        Object.keys(rentListingCounts).forEach((key) => {
+          const startInfo = info["startDate"];
+          const endInfo = info["endDate"];
+
+          if (checkDateInDuration(key, startInfo, endInfo, stepType)) {
+            rentListingCounts[key]++;
+          }
+        });
+      });
+
+      const transactionDatesCount = cloneObject(generatedDates);
+      const transactionDatesSum = cloneObject(generatedDates);
+
+      const transactionInfos =
+        await this.senderPaymentModel.getSendersByDuration(
+          serverFromTime,
+          serverToTime
+        );
+
+      const transactionsDetailInfo = {
+        paypal: { amount: 0, count: 0 },
+        bankTransfer: { amount: 0, count: 0 },
+      };
+
+      transactionInfos.forEach((info) => {
+        Object.keys(transactionDatesCount).forEach((key) => {
+          if (
+            checkDateInDuration(
+              key,
+              info["createdAt"],
+              info["createdAt"],
+              stepType,
+              clientServerHoursDiff
+            )
+          ) {
+            transactionDatesCount[key]++;
+          }
+        });
+
+        Object.keys(transactionDatesSum).forEach((key) => {
+          if (
+            checkDateInDuration(
+              key,
+              info["createdAt"],
+              info["createdAt"],
+              stepType,
+              clientServerHoursDiff
+            )
+          ) {
+            const sum =
+              getDaysDifference(info["startDate"], info["endDate"]) *
+              info["pricePerDay"];
+            transactionDatesSum[key] += sum;
+
+            const payType =
+              info["type"] == "paypal" ? "paypal" : "bankTransfer";
+
+            transactionsDetailInfo[payType]["amount"] += sum;
+            transactionsDetailInfo[payType]["count"] += 1;
+          }
+        });
+      });
+
+      const userRegisterDatesCount = cloneObject(generatedDates);
+      const userInactiveRegisterDatesCount = cloneObject(generatedDates);
+      const userTotalDatesCount = cloneObject(generatedDates);
+
+      const totalUsersAtStart = await this.userModel.getTotalCountBeforeDate(
+        serverFromTime
+      );
+
+      Object.keys(userTotalDatesCount).forEach(
+        (date) => (userTotalDatesCount[date] = totalUsersAtStart)
+      );
+
+      const userRegisterInfos = await this.userModel.getRegisteredByDuration(
+        serverFromTime,
+        serverToTime
+      );
+
+      const userInactiveInfos =
+        await this.userModel.getInactiveRegisteredByDuration(
+          serverFromTime,
+          serverToTime
+        );
+
+      userInactiveInfos.forEach((info) => {
+        Object.keys(userInactiveRegisterDatesCount).forEach((key) => {
+          if (
+            checkDateInDuration(
+              key,
+              info["createdAt"],
+              info["createdAt"],
+              stepType,
+              clientServerHoursDiff
+            )
+          ) {
+            userInactiveRegisterDatesCount[key] += 1;
+          }
+        });
+      });
+
+      userRegisterInfos.forEach((info) => {
+        Object.keys(userRegisterDatesCount).forEach((key) => {
+          if (
+            checkDateInDuration(
+              key,
+              info["createdAt"],
+              info["createdAt"],
+              stepType,
+              clientServerHoursDiff
+            )
+          ) {
+            userRegisterDatesCount[key] += 1;
+          }
+        });
+
+        Object.keys(userTotalDatesCount).forEach((key) => {
+          if (
+            checkDateInDuration(
+              key,
+              info["createdAt"],
+              info["createdAt"],
+              stepType,
+              clientServerHoursDiff
+            )
+          ) {
+            userTotalDatesCount[key] += 1;
+          }
+        });
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        timeFilterType,
+        userRegisterDatesCount,
+        userInactiveRegisterDatesCount,
+        userTotalDatesCount,
+        transactionDatesCount,
+        transactionDatesSum,
+        rentListingCounts,
+        transactionsDetailInfo,
       });
     });
 }

@@ -122,6 +122,171 @@ const listingListDateConverter = (date) => {
   return `${y}-${m}-${d}`;
 };
 
+const baseGetStartEndInfo = (startDate, endDate) => {
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+
+  const startOfLastDate = timeConverter(startDate);
+  const endOfLastDate = timeConverter(endDate);
+
+  return {
+    startDate: startOfLastDate,
+    endDate: endOfLastDate,
+  };
+};
+
+const getStartAndEndOfLastWeek = (clientTime) => {
+  const currentDate = new Date(clientTime);
+  const currentDay = currentDate.getDay();
+  const startOfWeek = new Date(currentDate);
+  startOfWeek.setDate(startOfWeek.getDate() - currentDay - 6);
+
+  const startOfLastWeek = new Date(startOfWeek);
+  const endOfLastWeek = new Date(startOfWeek);
+
+  endOfLastWeek.setDate(endOfLastWeek.getDate() + 6);
+
+  return baseGetStartEndInfo(startOfLastWeek, endOfLastWeek);
+};
+
+const getStartAndEndOfLastMonth = (clientTime) => {
+  const currentDate = new Date(clientTime);
+  const startOfMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+
+  const endOfLastMonth = new Date(startOfMonth);
+  endOfLastMonth.setDate(0);
+
+  const startOfLastMonth = new Date(
+    endOfLastMonth.getFullYear(),
+    endOfLastMonth.getMonth(),
+    1
+  );
+
+  return baseGetStartEndInfo(startOfLastMonth, endOfLastMonth);
+};
+
+const getStartAndEndOfLastYear = (clientTime) => {
+  const currentDate = new Date(clientTime);
+  const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+
+  const startOfLastYear = new Date(startOfYear.getFullYear() - 1, 0, 1);
+  const endOfLastYear = new Date(startOfYear);
+  endOfLastYear.setDate(endOfLastYear.getDate() - 1);
+
+  return baseGetStartEndInfo(startOfLastYear, endOfLastYear);
+};
+
+const getStartAndEndOfYesterday = (clientTime) => {
+  const currentDate = new Date(clientTime);
+  const startOfToday = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    currentDate.getDate()
+  );
+
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfToday.getDate() - 1);
+
+  const endOfYesterday = new Date(startOfToday);
+  endOfYesterday.setHours(0, 0, 0, 0);
+  endOfYesterday.setSeconds(endOfYesterday.getSeconds() - 1);
+
+  return baseGetStartEndInfo(startOfYesterday, endOfYesterday);
+};
+
+const generateDatesByTypeBetween = (startDate, endDate, type = "hours") => {
+  const dateMap = {};
+  let currentDate = new Date(startDate);
+
+  let step = 1;
+
+  if (type == "days") {
+    step = 24;
+  }
+
+  while (
+    new Date(timeConverter(currentDate)) <= new Date(timeConverter(endDate))
+  ) {
+    if (type == "months") {
+      const formattedDate = timeConverter(currentDate);
+      const splittedMonth = formattedDate.split(" ")[0].split("/");
+      const formattedMonth = splittedMonth[0] + "/" + splittedMonth[2];
+      dateMap[formattedMonth] = 0;
+      currentDate.setMonth(currentDate.getMonth() + step);
+    } else {
+      const formattedDate = timeConverter(currentDate);
+
+      if (type == "days") {
+        const formattedDateDays = formattedDate.split(" ")[0];
+        dateMap[formattedDateDays] = 0;
+      } else {
+        dateMap[formattedDate] = 0;
+      }
+
+      currentDate.setTime(currentDate.getTime() + step * 60 * 60 * 1000);
+    }
+  }
+  return dateMap;
+};
+
+const checkDateInDuration = (
+  key,
+  startInfo,
+  endInfo,
+  stepType,
+  durationHours = 0
+) => {
+  const durationMilliseconds = durationHours * 60 * 60 * 1000;
+
+  const startInfoDate = new Date(startInfo);
+  const endInfoDate = new Date(endInfo);
+
+  startInfoDate.setTime(startInfoDate.getTime() + durationMilliseconds);
+  endInfoDate.setTime(endInfoDate.getTime() + durationMilliseconds);
+
+  if (stepType == "hours") {
+    startInfoDate.setMinutes(0, 0);
+    endInfoDate.setMinutes(59, 59);
+    
+    startInfo = timeConverter(startInfoDate);
+    endInfo = timeConverter(endInfoDate);
+
+    return timeConverter(key) >= startInfo && timeConverter(key) <= endInfo;
+  } else if (stepType == "days") {
+    startInfo = shortTimeConverter(startInfoDate);
+    endInfo = shortTimeConverter(endInfoDate);
+
+    return (
+      shortTimeConverter(key) >= startInfo && shortTimeConverter(key) <= endInfo
+    );
+  } else {
+    startInfo = shortTimeConverter(startInfoDate);
+    endInfo = shortTimeConverter(endInfoDate);
+
+    const splittedStartInfo = startInfo.split("/");
+    const startInfoMonth = splittedStartInfo[0];
+    const startInfoYear = splittedStartInfo[2];
+
+    const splittedEndInfo = endInfo.split("/");
+    const endInfoMonth = splittedEndInfo[0];
+    const endInfoYear = splittedEndInfo[2];
+
+    const splittedKeyInfo = key.split("/");
+    const keyInfoMonth = splittedKeyInfo[0];
+    const keyInfoYear = splittedKeyInfo[1];
+
+    const startDate = new Date(startInfoYear, startInfoMonth - 1, 1);
+    const endDate = new Date(endInfoYear, endInfoMonth - 1, 1);
+    const checkDate = new Date(keyInfoYear, keyInfoMonth - 1, 1);
+
+    return checkDate >= startDate && checkDate <= endDate;
+  }
+};
+
 module.exports = {
   timeConverter,
   getOneHourAgo,
@@ -135,5 +300,11 @@ module.exports = {
   separateDate,
   generateDatesBetween,
   listingListDateConverter,
-  shortTimeConverter
+  shortTimeConverter,
+  getStartAndEndOfLastWeek,
+  getStartAndEndOfLastMonth,
+  getStartAndEndOfLastYear,
+  getStartAndEndOfYesterday,
+  generateDatesByTypeBetween,
+  checkDateInDuration,
 };

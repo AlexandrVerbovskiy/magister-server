@@ -362,4 +362,11 @@ router.get(
   mainController.getWaitingRefundById
 );
 
+router.post(
+  "/get-admin-index-page-option",
+  isAuth,
+  isAdmin,
+  mainController.getAdminIndexPageOptions
+);
+
 module.exports = router;

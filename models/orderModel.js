@@ -1189,6 +1189,28 @@ class OrderModel extends Model {
       .whereRaw(`end_date < TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')`)
       .update({ status: STATIC.ORDER_STATUSES.FINISHED });
   };
+
+  getInUseListings = async (dateStart, dateEnd) => {
+    return await db(ORDERS_TABLE)
+      .join(
+        LISTINGS_TABLE,
+        `${LISTINGS_TABLE}.id`,
+        "=",
+        `${ORDERS_TABLE}.listing_id`
+      )
+      .whereIn("status", [
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+        STATIC.ORDER_STATUSES.FINISHED,
+      ])
+      .whereNull("cancel_status")
+      .where("start_date", ">=", formatDateToSQLFormat(dateStart))
+      .where("end_date", "<=", formatDateToSQLFormat(dateEnd))
+      .select([
+        `${LISTINGS_TABLE}.id as listingId`,
+        "start_date as startDate",
+        "end_date as endDate",
+      ]);
+  };
 }
 
 module.exports = new OrderModel();
