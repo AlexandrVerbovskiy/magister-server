@@ -15,6 +15,10 @@ const {
   shortTimeConverter,
   tenantPaymentCalculate,
   getDaysDifference,
+  getStartAndEndOfLastWeek,
+  getStartAndEndOfLastMonth,
+  getStartAndEndOfLastYear,
+  getStartAndEndOfYesterday,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -472,6 +476,63 @@ class Controller {
     }
 
     return { fromTime, serverFromTime, toTime, serverToTime };
+  };
+
+  listTimeNameOption = async (req) => {
+    const { clientTime, timeFilterType = "last-month" } = req.body;
+    const clientServerHoursDiff = clientServerHoursDifference(clientTime);
+
+    let fromTime = null;
+    let toTime = null;
+
+    if (timeFilterType === "last-week") {
+      const { startDate, endDate } = getStartAndEndOfLastWeek(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    } else if (timeFilterType === "last-month") {
+      const { startDate, endDate } = getStartAndEndOfLastMonth(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    } else if (timeFilterType === "last-year") {
+      const { startDate, endDate } = getStartAndEndOfLastYear(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    } else {
+      const { startDate, endDate } = getStartAndEndOfYesterday(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    }
+
+    const serverFromTime = adaptClientTimeToServer(
+      fromTime,
+      clientServerHoursDiff,
+      {
+        h: 0,
+        m: 0,
+        s: 0,
+        ms: 0,
+      }
+    );
+
+    const serverToTime = adaptClientTimeToServer(
+      toTime,
+      clientServerHoursDiff,
+      {
+        h: 23,
+        m: 59,
+        s: 59,
+        ms: 999,
+      }
+    );
+
+    return {
+      timeFilterType,
+      clientFromTime: fromTime,
+      serverFromTime,
+      clientToTime: toTime,
+      serverToTime,
+      clientServerHoursDiff,
+    };
   };
 
   saveUserAction = async (req, event_name) => {

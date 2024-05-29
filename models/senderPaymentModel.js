@@ -2,6 +2,7 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
+const { formatDateToSQLFormat } = require("../utils");
 
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
@@ -371,6 +372,40 @@ class SenderPayment extends Model {
       ]);
 
     return result[0];
+  };
+
+  getSendersByDuration = async (dateStart, dateEnd) => {
+    return await db(SENDER_PAYMENTS_TABLE)
+      .join(
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
+        "=",
+        `${SENDER_PAYMENTS_TABLE}.order_id`
+      )
+      .whereIn("status", [
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+        STATIC.ORDER_STATUSES.FINISHED,
+      ])
+      .where("admin_approved", true)
+      .where(
+        `${SENDER_PAYMENTS_TABLE}.created_at`,
+        ">=",
+        formatDateToSQLFormat(dateStart)
+      )
+      .where(
+        `${SENDER_PAYMENTS_TABLE}.created_at`,
+        "<=",
+        formatDateToSQLFormat(dateEnd)
+      )
+      .select([
+        `${ORDERS_TABLE}.id as orderId`,
+        `${ORDERS_TABLE}.end_date as endDate`,
+        `${SENDER_PAYMENTS_TABLE}.type as type`,
+        `${ORDERS_TABLE}.start_date as startDate`,
+        `${ORDERS_TABLE}.price_per_day as pricePerDay`,
+        `${SENDER_PAYMENTS_TABLE}.type as transactionId`,
+        `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
+      ]);
   };
 }
 

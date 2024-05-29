@@ -6,6 +6,7 @@ const {
   generateOtp,
   getOneHourAgo,
   generateRandomString,
+  formatDateToSQLFormat,
 } = require("../utils");
 const Model = require("./Model");
 
@@ -14,6 +15,8 @@ const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
 const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
+const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 
 class UserModel extends Model {
   visibleFields = [
@@ -537,6 +540,55 @@ class UserModel extends Model {
       .limit(count)
       .offset(start);
     return res;
+  };
+
+  getTotalCountBeforeDate = async (dateStart) => {
+    const result = await db(USERS_TABLE)
+      .where(`${USERS_TABLE}.created_at`, "<", formatDateToSQLFormat(dateStart))
+      .count();
+
+    return +result[0].count;
+  };
+
+  getInactiveRegisteredByDuration = async (dateStart, dateEnd) => {
+    return await db(USERS_TABLE)
+      .joinRaw(
+        `LEFT JOIN ${ORDERS_TABLE} ON
+        ${USERS_TABLE}.id = ${ORDERS_TABLE}.tenant_id AND ${ORDERS_TABLE}.start_date <= ?`,
+        [formatDateToSQLFormat(dateEnd)]
+      )
+      .joinRaw(
+        `LEFT JOIN ${LISTINGS_TABLE} ON
+        ${USERS_TABLE}.id = ${LISTINGS_TABLE}.owner_id AND ${LISTINGS_TABLE}.created_at <= ?`,
+        [formatDateToSQLFormat(dateEnd)]
+      )
+      .where(function () {
+        this.whereNull(`${ORDERS_TABLE}.id`).whereNull(`${LISTINGS_TABLE}.id`);
+      })
+      .where(
+        `${USERS_TABLE}.created_at`,
+        ">=",
+        formatDateToSQLFormat(dateStart)
+      )
+      .where(`${USERS_TABLE}.created_at`, "<=", formatDateToSQLFormat(dateEnd))
+      .select([
+        `${USERS_TABLE}.id as orderId`,
+        `${USERS_TABLE}.created_at as createdAt`,
+      ]);
+  };
+
+  getRegisteredByDuration = async (dateStart, dateEnd) => {
+    return await db(USERS_TABLE)
+      .where(
+        `${USERS_TABLE}.created_at`,
+        ">=",
+        formatDateToSQLFormat(dateStart)
+      )
+      .where(`${USERS_TABLE}.created_at`, "<=", formatDateToSQLFormat(dateEnd))
+      .select([
+        `${USERS_TABLE}.id as orderId`,
+        `${USERS_TABLE}.created_at as createdAt`,
+      ]);
   };
 }
 
