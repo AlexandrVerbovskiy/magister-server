@@ -681,9 +681,9 @@ class Controller {
   };
 
   generatePngByHtml = async (req, res) => {
-    const pdfBuffer = await this.generatePdf("/pdfs/paypalPayment", {
+    /*const pdfBuffer = await this.generatePdf("/pdfs/paypalPayment", {
       paypalLogoLink: process.env.SERVER_URL + "/public/static/paypalLogo.png",
-    });
+    });*/
 
     const destinationDir = path.join(
       STATIC.MAIN_DIRECTORY,
@@ -698,7 +698,7 @@ class Controller {
     const pdfPath = path.join(destinationDir, "output-test.pdf");
     const imagePath = path.join(destinationDir, "output.png");
 
-    fs.writeFileSync(pdfPath, pdfBuffer);
+    /*fs.writeFileSync(pdfPath, pdfBuffer);
 
     const document = await pdf(pdfPath, {
       scale: 5,
@@ -709,9 +709,9 @@ class Controller {
       break;
     }
 
-    await cropImageByColor(imagePath, imagePath, "red");
+    await cropImageByColor(imagePath, imagePath, "red");*/
 
-    return res.send(200);
+    return res.sendFile(imagePath);
   };
 }
 
