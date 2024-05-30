@@ -12,11 +12,13 @@ class RecipientPaymentController extends Controller {
 
   defaultItemsPerPage = 10;
 
-  baseRecipientPaymentList = async ({ req, totalCount, list }) => {
-    const timeInfos = await this.listTimeOption({
-      req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
+  baseRecipientPaymentList = async ({
+    req,
+    totalCount,
+    list,
+    timeFilterType,
+  }) => {
+    const timeInfos = await this.getListTimeAutoOption(req, timeFilterType);
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       totalCount(filter, timeInfos)
@@ -33,7 +35,11 @@ class RecipientPaymentController extends Controller {
     };
   };
 
-  baseAllRecipientPaymentList = async (req, userId = null) => {
+  baseAllRecipientPaymentList = async (
+    req,
+    userId = null,
+    timeFilterType = STATIC.TIME_FILTER_TYPES.DURATION
+  ) => {
     const totalCount = async (filter, timeInfos) =>
       this.recipientPaymentModel.totalCount(filter, timeInfos, {
         userId,
@@ -49,7 +55,12 @@ class RecipientPaymentController extends Controller {
       return this.recipientPaymentModel.list(options);
     };
 
-    return await this.baseRecipientPaymentList({ req, totalCount, list });
+    return await this.baseRecipientPaymentList({
+      req,
+      totalCount,
+      list,
+      timeFilterType,
+    });
   };
 
   baseFailedRecipientPaymentList = async (req) => {
@@ -65,27 +76,40 @@ class RecipientPaymentController extends Controller {
       return this.recipientPaymentModel.list(options);
     };
 
-    return await this.baseRecipientPaymentList({ req, totalCount, list });
+    return await this.baseRecipientPaymentList({
+      req,
+      totalCount,
+      list,
+      timeFilterType: STATIC.TIME_FILTER_TYPES.TYPE,
+    });
   };
 
   userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const result = await this.baseAllRecipientPaymentList(req, userId);
+      const result = await this.baseAllRecipientPaymentList(
+        req,
+        userId,
+        STATIC.TIME_FILTER_TYPES.DURATION
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseAllRecipientPaymentList(req);
+      const result = await this.baseAllRecipientPaymentList(
+        req,
+        null,
+        STATIC.TIME_FILTER_TYPES.TYPE
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   baseWaitingRefundsList = async (req) => {
-    const timeInfos = await this.listTimeOption({
+    const timeInfos = await this.getListTimeAutoOption(
       req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
+      STATIC.TIME_FILTER_TYPES.TYPE
+    );
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       this.recipientPaymentModel.totalCountWaitingRefunds(filter, timeInfos)

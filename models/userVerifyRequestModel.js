@@ -71,7 +71,9 @@ class UserVerifyRequestModel extends Model {
     query = this.baseListJoin(query);
     query = query
       .where("has_response", false)
-      .whereRaw(...this.baseStrFilter(filter));
+      .whereRaw(
+        this.filterIdLikeString(filter, `${USER_VERIFY_REQUESTS_TABLE}.id`)
+      );
     query = this.baseListTimeFilter(
       timeInfos,
       query,
@@ -89,7 +91,9 @@ class UserVerifyRequestModel extends Model {
     query = this.baseListJoin(query);
     query = query
       .where("has_response", false)
-      .whereRaw(...this.baseStrFilter(filter));
+      .whereRaw(
+        this.filterIdLikeString(filter, `${USER_VERIFY_REQUESTS_TABLE}.id`)
+      );
 
     query = this.baseListTimeFilter(
       props.timeInfos,

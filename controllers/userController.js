@@ -497,10 +497,16 @@ class UserController extends Controller {
     });
 
   baseUserList = async (req) => {
-    const { options, countItems } = await this.baseList(
+    const timeInfos = await this.getListTimeAutoOption(
       req,
-      ({ filter = "" }) => this.userModel.totalCount(filter)
+      STATIC.TIME_FILTER_TYPES.DURATION
     );
+
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.userModel.totalCount(filter, timeInfos)
+    );
+
+    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const users = await this.userModel.list(options);
 

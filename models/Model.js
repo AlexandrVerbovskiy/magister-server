@@ -67,6 +67,10 @@ class Model {
 
   baseStringEndFilterDateWrap = (fieldName) =>
     db.raw(`CONCAT(DATE(${fieldName}), ' 23:59:59')`);
+
+  filterIdLikeString = (value, field = "id") => {
+   return db.raw(`${field}::text LIKE ?`, `%${value}%`);
+  };
 }
 
 module.exports = Model;
