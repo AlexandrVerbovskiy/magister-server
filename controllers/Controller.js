@@ -6,7 +6,8 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
-const nodeHtmlToImage = require("node-html-to-image");
+const { fromPath } = require("pdf2pic");
+const { pdf } = require("pdf-to-img");
 
 const {
   timeConverter,
@@ -583,7 +584,12 @@ class Controller {
     return options;
   };
 
-  async generatePdf(templatePath, params = {}) {
+  async generatePdf(
+    templatePath,
+    params = {},
+    width = "210mm",
+    height = "297mm"
+  ) {
     const htmlContent = this.generateHtmlByHandlebars(templatePath, params);
 
     const pdf = await new Promise((resolve, reject) => {
@@ -591,8 +597,8 @@ class Controller {
         .create(htmlContent, {
           format: "A4",
           orientation: "portrait",
-          width: "210mm",
-          height: "297mm",
+          width,
+          height,
           childProcessOptions: {
             env: {
               OPENSSL_CONF: "/dev/null",
@@ -675,12 +681,12 @@ class Controller {
   };
 
   generatePngByHtml = async (req, res) => {
-    const htmlContent = this.generateHtmlByHandlebars(
+    const pdfBuffer = await this.generatePdf(
       "/imageTemplates/paypalPayment",
       {
         paypalLogoLink:
           process.env.SERVER_URL + "/public/static/paypalLogo.png",
-      }
+      }, "350px"
     );
 
     const destinationDir = path.join(
@@ -693,11 +699,19 @@ class Controller {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
 
-    await nodeHtmlToImage({
-      output: path.join(destinationDir, "output.png"),
-      html: htmlContent,
-      content: { width: 350, height: "auto" },
-    });
+    fs.writeFileSync(path.join(destinationDir, "output.pdf"), pdfBuffer);
+
+    const document = await pdf(path.join(destinationDir, "output.pdf"), {scale: 5});
+
+    let counter = 0;
+
+    for await (const image of document) {
+      fs.writeFileSync(
+        path.join(destinationDir, `output_${counter}.png`),
+        image
+      );
+      counter++;
+    }
 
     return res.send(200);
   };
