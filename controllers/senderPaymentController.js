@@ -36,11 +36,13 @@ class SenderPaymentController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  baseSenderPaymentList = async ({ req, totalCount, list }) => {
-    const timeInfos = await this.listTimeOption({
-      req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
+  baseSenderPaymentList = async ({
+    req,
+    totalCount,
+    list,
+    timeFilterType = STATIC.TIME_FILTER_TYPES.DURATION,
+  }) => {
+    const timeInfos = await this.getListTimeAutoOption(req, timeFilterType);
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       totalCount(filter, timeInfos)
@@ -57,7 +59,11 @@ class SenderPaymentController extends Controller {
     };
   };
 
-  baseAllSenderPaymentList = async (req, userId = null) => {
+  baseAllSenderPaymentList = async (
+    req,
+    userId = null,
+    timeFilterType = STATIC.TIME_FILTER_TYPES.DURATION
+  ) => {
     const totalCount = (filter, timeInfos) =>
       this.senderPaymentModel.totalCount(filter, timeInfos, userId);
 
@@ -66,7 +72,12 @@ class SenderPaymentController extends Controller {
       return this.senderPaymentModel.list(options);
     };
 
-    return await this.baseSenderPaymentList({ req, totalCount, list });
+    return await this.baseSenderPaymentList({
+      req,
+      totalCount,
+      list,
+      timeFilterType,
+    });
   };
 
   waitingAdminApprovalSenderPaymentList = async (req) => {
@@ -79,19 +90,32 @@ class SenderPaymentController extends Controller {
     const list = (options) =>
       this.senderPaymentModel.waitingAdminApprovalTransactionList(options);
 
-    return await this.baseSenderPaymentList({ req, totalCount, list });
+    return await this.baseSenderPaymentList({
+      req,
+      totalCount,
+      list,
+      timeFilterType: STATIC.TIME_FILTER_TYPES.TYPE,
+    });
   };
 
   userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const result = await this.baseAllSenderPaymentList(req, userId);
+      const result = await this.baseAllSenderPaymentList(
+        req,
+        userId,
+        STATIC.TIME_FILTER_TYPES.DURATION
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseAllSenderPaymentList(req);
+      const result = await this.baseAllSenderPaymentList(
+        req,
+        null,
+        STATIC.TIME_FILTER_TYPES.TYPE
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

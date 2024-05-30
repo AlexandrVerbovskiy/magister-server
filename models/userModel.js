@@ -336,12 +336,10 @@ class UserModel extends Model {
       .update({ password: hashedPassword, has_password_access: true });
   };
 
-  totalCount = async (filter) => {
-    const { count } = await db(USERS_TABLE)
-      .whereRaw(...this.baseStrFilter(filter))
-      .count("* as count")
-      .first();
-
+  totalCount = async (filter, timeInfos) => {
+    let query = db(USERS_TABLE).whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListTimeFilter(timeInfos, query);
+    const { count } = await query.count("* as count").first();
     return count;
   };
 
@@ -349,7 +347,11 @@ class UserModel extends Model {
     const { filter, start, count } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    return await db(USERS_TABLE)
+    let query = db(USERS_TABLE).whereRaw(...this.baseStrFilter(filter));
+
+    query = this.baseListTimeFilter(props.timeInfos, query);
+
+    return await query
       .select([
         ...this.visibleFields,
         "active",
@@ -357,7 +359,6 @@ class UserModel extends Model {
         "email_verified as emailVerified",
         "phone_verified as phoneVerified",
       ])
-      .whereRaw(...this.baseStrFilter(filter))
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);

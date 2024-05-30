@@ -233,10 +233,7 @@ class RecipientPayment extends Model {
   ) => {
     let query = db(RECIPIENT_PAYMENTS_TABLE);
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(
-        filter,
-        userId ? this.strFilterFields : this.strFullFilterFields
-      )
+      this.baseListTimeFilter(filter, `${RECIPIENT_PAYMENTS_TABLE}.id`)
     );
 
     query = this.timeFilterWrap(query, timeInfos);
@@ -267,10 +264,7 @@ class RecipientPayment extends Model {
 
     let query = db(RECIPIENT_PAYMENTS_TABLE).select(this.visibleFields);
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(
-        filter,
-        props.userId ? this.strFilterFields : this.strFullFilterFields
-      )
+      ...this.filterIdLikeString(filter, `${RECIPIENT_PAYMENTS_TABLE}.id`)
     );
 
     query = this.timeFilterWrap(query, props.timeInfos);
@@ -461,7 +455,7 @@ class RecipientPayment extends Model {
   totalCountWaitingRefunds = async (filter, timeInfos) => {
     let query = db(RECIPIENT_PAYMENTS_TABLE);
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(filter, this.strFullFilterFields)
+      this.baseListTimeFilter(filter, `${RECIPIENT_PAYMENTS_TABLE}.id`)
     );
 
     query = this.baseWaitingRefund(query);
@@ -482,10 +476,7 @@ class RecipientPayment extends Model {
 
     let query = db(RECIPIENT_PAYMENTS_TABLE).select(this.visibleFields);
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(
-        filter,
-        props.userId ? this.strFilterFields : this.strFullFilterFields
-      )
+      this.baseListTimeFilter(filter, `${RECIPIENT_PAYMENTS_TABLE}.id`)
     );
 
     query = this.baseWaitingRefund(query);

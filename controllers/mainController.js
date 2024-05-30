@@ -119,7 +119,9 @@ class MainController extends Controller {
 
   getAdminUserListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await userController.baseUserList(req);
+      const result = await userController.baseUserList(
+        req
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -758,7 +760,9 @@ class MainController extends Controller {
   getAdminSenderPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await senderPaymentController.baseAllSenderPaymentList(
-        req
+        req,
+        null,
+        STATIC.TIME_FILTER_TYPES.TYPE
       );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
@@ -803,7 +807,11 @@ class MainController extends Controller {
   getAdminRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result =
-        await recipientPaymentController.baseAllRecipientPaymentList(req);
+        await recipientPaymentController.baseAllRecipientPaymentList(
+          req,
+          null,
+          STATIC.TIME_FILTER_TYPES.TYPE
+        );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -875,7 +883,8 @@ class MainController extends Controller {
       const recipientPaymentInfo =
         await recipientPaymentController.baseAllRecipientPaymentList(
           req,
-          userId
+          userId,
+          STATIC.TIME_FILTER_TYPES.DURATION
         );
 
       const totalPayed = await this.senderPaymentModel.getTotalPayed(userId);

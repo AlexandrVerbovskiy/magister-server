@@ -137,65 +137,35 @@ const baseGetStartEndInfo = (startDate, endDate) => {
 
 const getStartAndEndOfLastWeek = (clientTime) => {
   const currentDate = new Date(clientTime);
-  const currentDay = currentDate.getDay();
-  const startOfWeek = new Date(currentDate);
-  startOfWeek.setDate(startOfWeek.getDate() - currentDay - 6);
-
-  const startOfLastWeek = new Date(startOfWeek);
-  const endOfLastWeek = new Date(startOfWeek);
-
-  endOfLastWeek.setDate(endOfLastWeek.getDate() + 6);
+  const endOfLastWeek = new Date(currentDate);
+  const startOfLastWeek = new Date(currentDate);
+  startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
 
   return baseGetStartEndInfo(startOfLastWeek, endOfLastWeek);
 };
 
 const getStartAndEndOfLastMonth = (clientTime) => {
   const currentDate = new Date(clientTime);
-  const startOfMonth = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    1
-  );
-
-  const endOfLastMonth = new Date(startOfMonth);
-  endOfLastMonth.setDate(0);
-
-  const startOfLastMonth = new Date(
-    endOfLastMonth.getFullYear(),
-    endOfLastMonth.getMonth(),
-    1
-  );
-
+  const endOfLastMonth = new Date(currentDate);
+  const startOfLastMonth = new Date(currentDate);
+  startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
   return baseGetStartEndInfo(startOfLastMonth, endOfLastMonth);
 };
 
 const getStartAndEndOfLastYear = (clientTime) => {
   const currentDate = new Date(clientTime);
-  const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
-
-  const startOfLastYear = new Date(startOfYear.getFullYear() - 1, 0, 1);
-  const endOfLastYear = new Date(startOfYear);
-  endOfLastYear.setDate(endOfLastYear.getDate() - 1);
-
+  const endOfLastYear = new Date(currentDate);
+  const startOfLastYear = new Date(currentDate);
+  startOfLastYear.setFullYear(startOfLastYear.getFullYear() - 1);
   return baseGetStartEndInfo(startOfLastYear, endOfLastYear);
 };
 
 const getStartAndEndOfYesterday = (clientTime) => {
   const currentDate = new Date(clientTime);
-  const startOfToday = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    currentDate.getDate()
-  );
-
-  const startOfYesterday = new Date(startOfToday);
-  startOfYesterday.setDate(startOfToday.getDate() - 1);
-
-  const endOfYesterday = new Date(startOfToday);
-  endOfYesterday.setHours(0, 0, 0, 0);
-  endOfYesterday.setSeconds(endOfYesterday.getSeconds() - 1);
-
-  return baseGetStartEndInfo(startOfYesterday, endOfYesterday);
+  const endOfLastDay = new Date(currentDate);
+  const startOfLastDay = new Date(currentDate);
+  startOfLastDay.setDate(startOfLastDay.getDate() - 1);
+  return baseGetStartEndInfo(startOfLastDay, endOfLastDay);
 };
 
 const generateDatesByTypeBetween = (startDate, endDate, type = "hours") => {
@@ -251,7 +221,7 @@ const checkDateInDuration = (
   if (stepType == "hours") {
     startInfoDate.setMinutes(0, 0);
     endInfoDate.setMinutes(59, 59);
-    
+
     startInfo = timeConverter(startInfoDate);
     endInfo = timeConverter(endInfoDate);
 

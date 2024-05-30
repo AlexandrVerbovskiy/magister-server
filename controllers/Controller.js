@@ -538,6 +538,25 @@ class Controller {
     };
   };
 
+  getListTimeAutoOption = async (
+    req,
+    timeFilterType,
+    defaultValue = STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL
+  ) => {
+    let timeInfos = {};
+
+    if (timeFilterType == STATIC.TIME_FILTER_TYPES.TYPE) {
+      timeInfos = await this.listTimeNameOption(req);
+    } else {
+      timeInfos = await this.listTimeOption({
+        req,
+        type: defaultValue,
+      });
+    }
+
+    return timeInfos;
+  };
+
   saveUserAction = async (req, event_name) => {
     const { userId } = req.userData;
     const active = await this.systemOptionModel.getUserLogActive();

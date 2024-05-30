@@ -3,17 +3,15 @@ const Controller = require("./Controller");
 
 class ListingApprovalRequestController extends Controller {
   baseRequestsList = async (req, userId = null) => {
-    const timeInfos = await this.listTimeOption({
+    const timeInfos = await this.getListTimeAutoOption(
       req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
+      STATIC.TIME_FILTER_TYPES.TYPE
+    );
 
     let status = req.body.status;
 
-    let { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) =>
-        this.listingApprovalRequestModel.totalCount(filter, timeInfos, userId)
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.listingApprovalRequestModel.totalCount(filter, timeInfos, userId)
     );
 
     options["userId"] = userId;

@@ -37,9 +37,12 @@ class UserEventLogModel extends Model {
 
   totalCount = async (filter, timeInfos) => {
     let query = db(USER_EVENT_LOGS_TABLE).whereRaw(
-      ...this.baseStrFilter(filter)
+      this.filterIdLikeString(filter, `${USER_EVENT_LOGS_TABLE}.id`)
     );
     query = this.baseListTimeFilter(timeInfos, query);
+
+    console.log(query.toQuery());
+
     const { count } = await query.count("* as count").first();
     return count;
   };
@@ -49,7 +52,7 @@ class UserEventLogModel extends Model {
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(USER_EVENT_LOGS_TABLE).whereRaw(
-      ...this.baseStrFilter(filter)
+      this.filterIdLikeString(filter, `${USER_EVENT_LOGS_TABLE}.id`)
     );
 
     query = this.baseListTimeFilter(props.timeInfos, query);

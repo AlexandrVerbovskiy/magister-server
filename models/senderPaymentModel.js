@@ -221,7 +221,7 @@ class SenderPayment extends Model {
 
     let query = db(SENDER_PAYMENTS_TABLE);
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(filter, select)
+      this.filterIdLikeString(filter, `${SENDER_PAYMENTS_TABLE}.id`)
     );
 
     query = this.baseListTimeFilter(
@@ -247,8 +247,9 @@ class SenderPayment extends Model {
     }
 
     let query = db(SENDER_PAYMENTS_TABLE).select(this.visibleFields);
+
     query = this.baseListJoin(query).whereRaw(
-      ...this.baseStrFilter(filter, select)
+      this.filterIdLikeString(filter, `${SENDER_PAYMENTS_TABLE}.id`)
     );
 
     query = this.baseListTimeFilter(

@@ -297,10 +297,7 @@ class OrderController extends Controller {
     });
 
   baseAdminBookingList = async (req) => {
-    const timeInfos = await this.listTimeOption({
-      req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
+    const timeInfos = await this.listTimeNameOption(req);
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       this.orderModel.allBookingsTotalCount(filter, timeInfos)
@@ -365,10 +362,7 @@ class OrderController extends Controller {
     });
 
   baseAdminOrderList = async (req) => {
-    const timeInfos = await this.listTimeOption({
-      req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
+    const timeInfos = await this.listTimeNameOption(req);
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       this.orderModel.allOrdersTotalCount(filter, timeInfos)
@@ -444,7 +438,9 @@ class OrderController extends Controller {
       let resetParentId = false;
 
       if (order.orderParentId) {
-        const parentOrder = await this.orderModel.getLastActive(order.orderParentId);
+        const parentOrder = await this.orderModel.getLastActive(
+          order.orderParentId
+        );
         const dateDiff = getDaysDifference(
           parentOrder.offerEndDate,
           order.offerStartDate
