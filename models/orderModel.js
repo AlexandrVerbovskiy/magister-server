@@ -187,7 +187,7 @@ class OrderModel extends Model {
         "=",
         `${ORDERS_TABLE}.tenant_id`
       )
-      .whereRaw(...this.baseStrFilter(filter));
+      .whereRaw(this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`));
 
     return query;
   };
@@ -306,7 +306,7 @@ class OrderModel extends Model {
 
   fullTotalCount = async (filter, timeInfos) => {
     let query = db(ORDERS_TABLE).whereRaw(
-      ...this.baseStrFilter(filter, this.strFilterFields)
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
     query = this.fullBaseGetQuery(filter);
@@ -332,7 +332,7 @@ class OrderModel extends Model {
 
   baseTenantTotalCount = async (filter, timeInfos, tenantId, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
-      ...this.baseStrFilter(filter, this.strFilterFields)
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
     query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
@@ -345,7 +345,7 @@ class OrderModel extends Model {
 
   baseOwnerTotalCount = async (filter, timeInfos, ownerId, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
-      ...this.baseStrFilter(filter, this.strFilterFields)
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
     query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
@@ -358,7 +358,7 @@ class OrderModel extends Model {
 
   baseWithRequestInfoTotalCount = async (filter, timeInfos, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
-      ...this.baseStrFilter(filter, this.strFilterFields)
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
     query = this.fullBaseGetQueryWithRequestInfo(filter);
@@ -372,7 +372,7 @@ class OrderModel extends Model {
 
   baseAllTotalCount = async (filter, timeInfos, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
-      ...this.baseStrFilter(filter, this.strFilterFields)
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
     query = this.fullBaseGetQuery(filter);

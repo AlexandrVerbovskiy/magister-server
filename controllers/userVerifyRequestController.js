@@ -7,15 +7,13 @@ class UserVerifyRequestController extends Controller {
   }
 
   baseUserVerifyRequestList = async (req) => {
-    const timeInfos = await this.listTimeOption({
+    const timeInfos = await this.getListTimeAutoOption(
       req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
+      STATIC.TIME_FILTER_TYPES.TYPE
+    );
 
-    let { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) =>
-        this.userVerifyRequestModel.totalCount(filter, timeInfos)
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.userVerifyRequestModel.totalCount(filter, timeInfos)
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
