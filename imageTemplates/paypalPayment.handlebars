@@ -1,0 +1,139 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PayPal Receipt</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 0; display:
+      flex; width: 350px; justify-content: center; background-color: #f7f7f7; font-size: 12px;
+      } .receipt-container { background-color: #fff; width: 350px; border: 1px
+      solid #ddd; /*padding: 20px;*/ box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center; } .paypal-logo { width: 100px; } .receipt-body h1 {
+      font-size: 18px; color: #333; margin: 0; } .amount { font-weight: bold; }
+      .details-link { color: #0070ba; cursor: pointer; } .confirmation {
+      margin-bottom: 20px; } .checkmark { width: 50px; } .payment-info,
+      .purchase-details, .merchant-details { text-align: left; margin-bottom:
+      20px; } .item-details, .summary{ text-align: left; } .item-details .row,
+      .summary .row:first-child{ text-align: left; border-bottom: 1px solid
+      #e1e4e4; padding: 10px 0; margin: 0; } .item-details .row:first-child{
+      border-bottom: 0; padding-bottom: 0; } .item-id{ font-size: 10px;
+      font-weight: 600; } .summary .row:last-child{ margin-bottom: 0;
+      padding-top: 10px; } .payment-info .row, .purchase-details .row,
+      .merchant-details .row { margin: 5px 0; } .return-btn { width: 100%;
+      padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; cursor:
+      pointer; margin-top: 20px; } .return-btn:hover { background-color:
+      #e0e0e0; } .top-section{ background-color: #f6f8f9; padding: 10px 20px
+      20px; border-bottom: 1px solid #f1f1f1; } .header{ display: flex;
+      border-bottom: 1px solid #f1f1f1; padding: 20px; } .bottom-section{
+      padding: 20px 40px; } .top-section h1{ font-weight: 400; margin-bottom:
+      12px; } .top-section>p{ margin: 0; } .details-link{ margin-bottom:
+      42px!important; } .item-id .amount{ font-weight: 400; } .summary .total{
+      font-weight: 600; } .currency{ font-weight: 400; font-size:8px; } .row{
+      display: flex; justify-content: space-between; }
+    </style>
+  </head>
+  <body>
+    <div class="receipt-container">
+      <div class="header">
+        <img src={{paypalLogoLink}} alt="PayPal Logo" class="paypal-logo" />
+      </div>
+      <div class="receipt-body">
+        <div class="top-section">
+          <div class="confirmation">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="80"
+              height="80"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#00BFA5"
+                stroke-width="1"
+                fill="none"
+              />
+              <path
+                d="M8 10l4 4 7-7"
+                stroke="#00BFA5"
+                stroke-width="1"
+                fill="none"
+              />
+              <path
+                d="M12.3 13.5l11-11"
+                stroke="#f6f8f9"
+                stroke-width="3"
+                fill="none"
+              />
+              <path
+                d="M12 14l11-11"
+                stroke="#00BFA5"
+                stroke-width="1"
+                fill="none"
+              />
+            </svg>
+          </div>
+          <h1>You paid <span class="amount">$60.00 USD</span></h1>
+          <p>to Demo Portal's Test Store</p>
+          <p class="details-link">Details</p>
+          <div class="item-details">
+            <div class="row">
+              <div class="title">1 x VANILLA WHITE AMBER PERFUME</div>
+              <div class="price">
+                <span class="amount">$60.00</span>
+                <span class="currency">USD</span>
+              </div>
+            </div>
+            <div class="row item-id">
+              <div class="title">
+                Item #:
+                <span class="amount">123456789</span>
+              </div>
+            </div>
+          </div>
+          <div class="summary">
+            <div class="row">
+              <div class="title">Subtotal:</div>
+              <div class="price">
+                <span class="amount">$60.00</span>
+                <span class="currency">USD</span>
+              </div>
+            </div>
+            <div class="row total">
+              <div class="title">Total:</div>
+              <div class="price">
+                <span class="amount">$60.00</span>
+                <span class="currency">USD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-section">
+          <div class="payment-info">
+            <p><strong>Paid with</strong></p>
+            <div class="row">
+              <div class="title">Visa x-4244</div>
+              <div class="price">
+                <span class="amount">$60.00</span>
+                <span class="currency">USD</span>
+              </div>
+            </div>
+          </div>
+          <div class="purchase-details">
+            <p><strong>Purchase details</strong></p>
+            <p>Receipt number: 9JQ052684F3684634</p>
+            <p>We'll send confirmation to:</p>
+            <p>dp_buyer_ja.s.1524083083@paypal.com</p>
+          </div>
+          <div class="merchant-details">
+            <p><strong>Merchant details</strong></p>
+            <p>Demo Portal's Test Store</p>
+            <p>dp_us_api1.expertself.com</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

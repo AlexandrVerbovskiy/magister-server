@@ -362,4 +362,16 @@ router.get(
   mainController.getWaitingRefundById
 );
 
+router.post(
+  "/get-admin-index-page-option",
+  isAuth,
+  isAdmin,
+  mainController.getAdminIndexPageOptions
+);
+
+router.get(
+  "/test",
+  mainController.generatePngByHtml
+);
+
 module.exports = router;

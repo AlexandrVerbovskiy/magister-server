@@ -6,6 +6,8 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
+const nodeHtmlToImage = require("node-html-to-image");
+
 const {
   timeConverter,
   getDateByCurrentAdd,
@@ -15,6 +17,10 @@ const {
   shortTimeConverter,
   tenantPaymentCalculate,
   getDaysDifference,
+  getStartAndEndOfLastWeek,
+  getStartAndEndOfLastMonth,
+  getStartAndEndOfLastYear,
+  getStartAndEndOfYesterday,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -474,6 +480,63 @@ class Controller {
     return { fromTime, serverFromTime, toTime, serverToTime };
   };
 
+  listTimeNameOption = async (req) => {
+    const { clientTime, timeFilterType = "last-month" } = req.body;
+    const clientServerHoursDiff = clientServerHoursDifference(clientTime);
+
+    let fromTime = null;
+    let toTime = null;
+
+    if (timeFilterType === "last-week") {
+      const { startDate, endDate } = getStartAndEndOfLastWeek(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    } else if (timeFilterType === "last-month") {
+      const { startDate, endDate } = getStartAndEndOfLastMonth(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    } else if (timeFilterType === "last-year") {
+      const { startDate, endDate } = getStartAndEndOfLastYear(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    } else {
+      const { startDate, endDate } = getStartAndEndOfYesterday(clientTime);
+      fromTime = startDate;
+      toTime = endDate;
+    }
+
+    const serverFromTime = adaptClientTimeToServer(
+      fromTime,
+      clientServerHoursDiff,
+      {
+        h: 0,
+        m: 0,
+        s: 0,
+        ms: 0,
+      }
+    );
+
+    const serverToTime = adaptClientTimeToServer(
+      toTime,
+      clientServerHoursDiff,
+      {
+        h: 23,
+        m: 59,
+        s: 59,
+        ms: 999,
+      }
+    );
+
+    return {
+      timeFilterType,
+      clientFromTime: fromTime,
+      serverFromTime,
+      clientToTime: toTime,
+      serverToTime,
+      clientServerHoursDiff,
+    };
+  };
+
   saveUserAction = async (req, event_name) => {
     const { userId } = req.userData;
     const active = await this.systemOptionModel.getUserLogActive();
@@ -609,6 +672,34 @@ class Controller {
     };
 
     return await this.generatePdf("/pdfs/invoice", params);
+  };
+
+  generatePngByHtml = async (req, res) => {
+    const htmlContent = this.generateHtmlByHandlebars(
+      "/imageTemplates/paypalPayment",
+      {
+        paypalLogoLink:
+          process.env.SERVER_URL + "/public/static/paypalLogo.png",
+      }
+    );
+
+    const destinationDir = path.join(
+      STATIC.MAIN_DIRECTORY,
+      "public",
+      "paypalPaymentProofs"
+    );
+
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir, { recursive: true });
+    }
+
+    await nodeHtmlToImage({
+      output: path.join(destinationDir, "output.png"),
+      html: htmlContent,
+      content: { width: 350, height: "auto" },
+    });
+
+    return res.send(200);
   };
 }
 
