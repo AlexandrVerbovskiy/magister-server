@@ -369,9 +369,4 @@ router.post(
   mainController.getAdminIndexPageOptions
 );
 
-router.get(
-  "/test",
-  mainController.generatePngByHtml
-);
-
 module.exports = router;
