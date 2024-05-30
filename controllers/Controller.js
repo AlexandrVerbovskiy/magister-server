@@ -6,6 +6,8 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
+const nodeHtmlToImage = require("node-html-to-image");
+
 const {
   timeConverter,
   getDateByCurrentAdd,
@@ -670,6 +672,34 @@ class Controller {
     };
 
     return await this.generatePdf("/pdfs/invoice", params);
+  };
+
+  generatePngByHtml = async (req, res) => {
+    const htmlContent = this.generateHtmlByHandlebars(
+      "/imageTemplates/paypalPayment",
+      {
+        paypalLogoLink:
+          process.env.SERVER_URL + "/public/static/paypalLogo.png",
+      }
+    );
+
+    const destinationDir = path.join(
+      STATIC.MAIN_DIRECTORY,
+      "public",
+      "paypalPaymentProofs"
+    );
+
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir, { recursive: true });
+    }
+
+    await nodeHtmlToImage({
+      output: path.join(destinationDir, "output.png"),
+      html: htmlContent,
+      content: { width: 350, height: "auto" },
+    });
+
+    return res.send(200);
   };
 }
 
