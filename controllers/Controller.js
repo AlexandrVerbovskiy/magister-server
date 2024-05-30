@@ -6,7 +6,6 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
-const { fromPath } = require("pdf2pic");
 const { pdf } = require("pdf-to-img");
 
 const {
@@ -22,6 +21,7 @@ const {
   getStartAndEndOfLastMonth,
   getStartAndEndOfLastYear,
   getStartAndEndOfYesterday,
+  cropImageByColor,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -681,13 +681,9 @@ class Controller {
   };
 
   generatePngByHtml = async (req, res) => {
-    const pdfBuffer = await this.generatePdf(
-      "/imageTemplates/paypalPayment",
-      {
-        paypalLogoLink:
-          process.env.SERVER_URL + "/public/static/paypalLogo.png",
-      }, "350px"
-    );
+    const pdfBuffer = await this.generatePdf("/pdfs/paypalPayment", {
+      paypalLogoLink: process.env.SERVER_URL + "/public/static/paypalLogo.png",
+    });
 
     const destinationDir = path.join(
       STATIC.MAIN_DIRECTORY,
@@ -699,19 +695,21 @@ class Controller {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
 
-    fs.writeFileSync(path.join(destinationDir, "output.pdf"), pdfBuffer);
+    const pdfPath = path.join(destinationDir, "output-test.pdf");
+    const imagePath = path.join(destinationDir, "output.png");
 
-    const document = await pdf(path.join(destinationDir, "output.pdf"), {scale: 5});
+    fs.writeFileSync(pdfPath, pdfBuffer);
 
-    let counter = 0;
+    const document = await pdf(pdfPath, {
+      scale: 5,
+    });
 
     for await (const image of document) {
-      fs.writeFileSync(
-        path.join(destinationDir, `output_${counter}.png`),
-        image
-      );
-      counter++;
+      fs.writeFileSync(imagePath, image);
+      break;
     }
+
+    await cropImageByColor(imagePath, imagePath, "red");
 
     return res.send(200);
   };
