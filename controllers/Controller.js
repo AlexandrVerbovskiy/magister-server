@@ -575,7 +575,6 @@ class Controller {
   baseGetById = (req, res, model, method = ["getById"]) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-
       const entity = await model[method](id);
 
       if (!entity) {

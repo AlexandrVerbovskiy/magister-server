@@ -6,6 +6,7 @@ async function isSupport(request, response, next) {
 
   try {
     const isSupport = await userModel.checkIsSupport(userId);
+
     if (!isSupport)
       return response.status(STATIC.ERRORS.FORBIDDEN.STATUS).json({
         isError: true,

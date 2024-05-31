@@ -25,6 +25,8 @@ class SenderPayment extends Model {
     `${SENDER_PAYMENTS_TABLE}.due_at as dueAt`,
     `${USERS_TABLE}.name as payerName`,
     `${USERS_TABLE}.email as payerEmail`,
+    `${USERS_TABLE}.phone as payerPhone`,
+    `${USERS_TABLE}.photo as payerPhoto`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
@@ -165,6 +167,7 @@ class SenderPayment extends Model {
       .update({
         payed_proof: proof,
         waiting_approved: true,
+        created_at: db.raw("CURRENT_TIMESTAMP"),
       });
   };
 

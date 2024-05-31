@@ -90,6 +90,13 @@ class OrderModel extends Model {
     `tenants.instagram_url as tenantInstagramUrl`,
   ];
 
+  selectPartPayedInfo = [
+    `${SENDER_PAYMENTS_TABLE}.failed_description as payedFailedDescription`,
+    `${SENDER_PAYMENTS_TABLE}.waiting_approved as payedWaitingApproved`,
+    `${SENDER_PAYMENTS_TABLE}.admin_approved as payedAdminApproved`,
+    `${SENDER_PAYMENTS_TABLE}.type as payedType`,
+  ];
+
   strFilterFields = [
     `tenants.name`,
     `tenants.email`,
@@ -461,12 +468,7 @@ class OrderModel extends Model {
 
     const visibleFields =
       type == "booking"
-        ? [
-            ...this.lightRequestVisibleFields,
-            `${SENDER_PAYMENTS_TABLE}.failed_description as payedFailedDescription`,
-            `${SENDER_PAYMENTS_TABLE}.waiting_approved as payedWaitingApproved`,
-            `${SENDER_PAYMENTS_TABLE}.admin_approved as payedAdminApproved`,
-          ]
+        ? [...this.lightRequestVisibleFields, ...this.selectPartPayedInfo]
         : this.lightVisibleFields;
 
     if (type == "order") {
@@ -514,6 +516,7 @@ class OrderModel extends Model {
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.fullBaseGetQuery(filter);
+    query = this.payedInfoJoin(query);
     query = this.orderTimeFilterWrap(query, timeInfos);
 
     query = dopWhereCall(query);
@@ -521,7 +524,7 @@ class OrderModel extends Model {
     query = this.baseQueryListByType(query, type);
 
     return await query
-      .select(this.lightVisibleFields)
+      .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
