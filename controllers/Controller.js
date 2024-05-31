@@ -699,10 +699,8 @@ class Controller {
     return await this.generatePdf("/pdfs/invoice", params);
   };
 
-  generatePngByHtml = async () => {
-    const pdfBuffer = await this.generatePdf("/pdfs/paypalPayment", {
-      paypalLogoLink: process.env.SERVER_URL + "/public/static/paypalLogo.png",
-    });
+  generatePngByHtml = async (templateUrl, data) => {
+    const pdfBuffer = await this.generatePdf(templateUrl, data);
 
     const destinationDir = path.join(
       STATIC.MAIN_DIRECTORY,
@@ -714,8 +712,9 @@ class Controller {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
 
-    const pdfPath = path.join(destinationDir, "output-test.pdf");
-    const imagePath = path.join(destinationDir, "output.png");
+    const fileName = generateRandomString();
+    const pdfPath = path.join(destinationDir, fileName + ".pdf");
+    const imagePath = path.join(destinationDir, fileName + ".png");
 
     fs.writeFileSync(pdfPath, pdfBuffer);
 
@@ -729,6 +728,10 @@ class Controller {
     }
 
     await cropImageByColor(imagePath, imagePath, "red");
+
+    fs.unlinkSync(pdfPath);
+
+    return "public/paypalPaymentProofs/" + fileName + ".png";
   };
 }
 
