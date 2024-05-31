@@ -8,6 +8,7 @@ const {
   getDaysDifference,
 } = require("../utils");
 const Controller = require("./Controller");
+const fs = require("fs");
 
 class OrderController extends Controller {
   constructor() {
@@ -298,19 +299,27 @@ class OrderController extends Controller {
 
   baseAdminBookingList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
+    const type = req.body.type ?? "all";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.orderModel.allBookingsTotalCount(filter, timeInfos)
+      this.orderModel.allBookingsTotalCount(filter, type, timeInfos)
     );
+
+    options["type"] = type;
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
     const orders = await this.orderModel.allBookingsList(options);
 
+    const statusCount = await this.orderModel.getBookingStatusesCount(
+      timeInfos
+    );
+
     return {
       items: orders,
       options,
       countItems,
+      statusCount,
     };
   };
 
@@ -363,19 +372,25 @@ class OrderController extends Controller {
 
   baseAdminOrderList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
+    const type = req.body.type ?? "all";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.orderModel.allOrdersTotalCount(filter, timeInfos)
+      this.orderModel.allOrdersTotalCount(filter, type, timeInfos)
     );
+
+    options["type"] = type;
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
     const orders = await this.orderModel.allOrderList(options);
 
+    const statusCount = await this.orderModel.getOrderStatusesCount(timeInfos);
+
     return {
       items: orders,
       options,
       countItems,
+      statusCount,
     };
   };
 
@@ -423,8 +438,6 @@ class OrderController extends Controller {
 
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
-
-      console.log(id, lastUpdateRequestInfo);
 
       if (
         (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
@@ -550,6 +563,20 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
+      /*const proofUrl = await this.generatePngByHtml("/pdfs/paypalPayment", {
+        paypalLogoLink:
+          process.env.SERVER_URL + "/public/static/paypalLogo.png",
+        listingName: order.listingName,
+        listingId: order.listingId,
+        rentalPrice:
+          getDaysDifference(order.offerStartDate, order.offerEndDate) *
+          order.offerPricePerDay,
+        payerLastName: paypalOrderId.payer?.name?.surname ?? "-",
+        payerFirstName: paypalOrderId.payer?.name?.given_name ?? "-",
+        payerId: paypalOrderId.payer?.payer_id ?? "-",
+        payerEmail: paypalOrderId.payer?.email_address ?? "-",
+      });*/
+
       const paypalCaptureId =
         paypalOrderInfo.purchase_units[0].payments.captures[0].id;
 
@@ -578,6 +605,7 @@ class OrderController extends Controller {
         paypalSenderId: paypalSenderId,
         paypalOrderId: paypalOrderId,
         paypalCaptureId: paypalCaptureId,
+        proofUrl: "",
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);

@@ -62,39 +62,74 @@ class SenderPaymentController extends Controller {
   baseAllSenderPaymentList = async (
     req,
     userId = null,
-    timeFilterType = STATIC.TIME_FILTER_TYPES.DURATION
+    timeFilterType = STATIC.TIME_FILTER_TYPES.DURATION,
+    needPaymentTypeCount = false
   ) => {
+    const type = req.body.type ?? null;
+
     const totalCount = (filter, timeInfos) =>
-      this.senderPaymentModel.totalCount(filter, timeInfos, userId);
+      this.senderPaymentModel.totalCount(filter, type, timeInfos, userId);
 
     const list = (options) => {
       options["userId"] = userId;
+      options["type"] = type;
       return this.senderPaymentModel.list(options);
     };
 
-    return await this.baseSenderPaymentList({
+    const result = await this.baseSenderPaymentList({
       req,
       totalCount,
       list,
       timeFilterType,
     });
+
+    if (needPaymentTypeCount) {
+      const statusCount =
+        await this.senderPaymentModel.getStatusCountByTransferType(
+          result.options.timeInfos
+        );
+      result["statusCount"] = statusCount;
+    }
+    return result;
   };
 
-  waitingAdminApprovalSenderPaymentList = async (req) => {
+  baseWaitingAdminApprovalSenderPaymentList = async (req) => {
+    const type = req.body.type ?? null;
+
     const totalCount = (filter, timeInfos) =>
       this.senderPaymentModel.waitingAdminApprovalTransactionTotalCount(
         filter,
+        type,
         timeInfos
       );
 
-    const list = (options) =>
-      this.senderPaymentModel.waitingAdminApprovalTransactionList(options);
+    const list = (options) => {
+      options["type"] = type;
+      return this.senderPaymentModel.waitingAdminApprovalTransactionList(
+        options
+      );
+    };
 
-    return await this.baseSenderPaymentList({
+    const result = await this.baseSenderPaymentList({
       req,
       totalCount,
       list,
       timeFilterType: STATIC.TIME_FILTER_TYPES.TYPE,
+    });
+
+    const statusCount =
+      await this.senderPaymentModel.getStatusCountByStatusType(
+        result.options.timeInfos
+      );
+
+    return { ...result, statusCount };
+  };
+
+  waitingAdminApprovalSenderPaymentList = async (req, res) => {
+    const result = await this.baseWaitingAdminApprovalSenderPaymentList(req);
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      ...result,
     });
   };
 
@@ -114,8 +149,10 @@ class SenderPaymentController extends Controller {
       const result = await this.baseAllSenderPaymentList(
         req,
         null,
-        STATIC.TIME_FILTER_TYPES.TYPE
+        STATIC.TIME_FILTER_TYPES.TYPE,
+        true
       );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

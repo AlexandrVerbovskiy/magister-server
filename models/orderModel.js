@@ -304,6 +304,53 @@ class OrderModel extends Model {
     return query.whereRaw("owners.id = ?", ownerId);
   };
 
+  baseQueryListByType = (query, type) => {
+    if (type == "finished") {
+      query = query
+        .where(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+        .whereNull(`${ORDERS_TABLE}.cancel_status`);
+    }
+
+    if (type == "rejected") {
+      query = query
+        .where(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED)
+        .whereNull(`${ORDERS_TABLE}.cancel_status`);
+    }
+
+    if (type == "canceled") {
+      query = query.where(
+        `${ORDERS_TABLE}.cancel_status`,
+        STATIC.ORDER_CANCELATION_STATUSES.CANCELLED
+      );
+    }
+
+    if (type == "in-dispute") {
+      query = query
+        .whereNotNull(`${ORDERS_TABLE}.cancel_status`)
+        .whereNot(
+          `${ORDERS_TABLE}.cancel_status`,
+          STATIC.ORDER_CANCELATION_STATUSES.CANCELLED
+        );
+    }
+
+    if (type == "accepted") {
+      query = query
+        .where(
+          `${ORDERS_TABLE}.status`,
+          STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT
+        )
+        .whereNull(`${ORDERS_TABLE}.cancel_status`);
+    }
+
+    if (type == "active") {
+      query = query
+        .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+        .whereNull(`${ORDERS_TABLE}.cancel_status`);
+    }
+
+    return query;
+  };
+
   fullTotalCount = async (filter, timeInfos) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
@@ -356,7 +403,12 @@ class OrderModel extends Model {
     return count;
   };
 
-  baseWithRequestInfoTotalCount = async (filter, timeInfos, dopWhereCall) => {
+  baseWithRequestInfoTotalCount = async (
+    filter,
+    type,
+    timeInfos,
+    dopWhereCall
+  ) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
@@ -366,11 +418,13 @@ class OrderModel extends Model {
 
     query = dopWhereCall(query);
 
+    query = this.baseQueryListByType(query, type);
+
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  baseAllTotalCount = async (filter, timeInfos, dopWhereCall) => {
+  baseAllTotalCount = async (filter, type, timeInfos, dopWhereCall) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
@@ -379,6 +433,8 @@ class OrderModel extends Model {
     query = this.orderTimeFilterWrap(query, timeInfos);
 
     query = dopWhereCall(query);
+
+    query = this.baseQueryListByType(query, type);
 
     const { count } = await query.count("* as count").first();
     return count;
@@ -454,13 +510,15 @@ class OrderModel extends Model {
   };
 
   baseAllList = async (props, dopWhereCall) => {
-    const { filter, start, count, timeInfos } = props;
+    const { filter, start, count, timeInfos, type = null } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.fullBaseGetQuery(filter);
     query = this.orderTimeFilterWrap(query, timeInfos);
 
     query = dopWhereCall(query);
+
+    query = this.baseQueryListByType(query, type);
 
     return await query
       .select(this.lightVisibleFields)
@@ -470,7 +528,7 @@ class OrderModel extends Model {
   };
 
   baseWithRequestInfoList = async (props, dopWhereCall) => {
-    const { filter, start, count, timeInfos } = props;
+    const { filter, start, count, timeInfos, type = null } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.fullBaseGetQueryWithRequestInfo(filter);
@@ -480,6 +538,8 @@ class OrderModel extends Model {
     query = dopWhereCall(query);
     query = query.select(this.lightRequestVisibleFields);
     query = query.orderBy(order, orderType);
+
+    query = this.baseQueryListByType(query, type);
 
     return await query.limit(count).offset(start);
   };
@@ -542,16 +602,22 @@ class OrderModel extends Model {
     return await this.baseOwnerList(props, "order");
   };
 
-  allBookingsTotalCount = async (filter, timeInfos) => {
+  allBookingsTotalCount = async (filter, type, timeInfos) => {
     return await this.baseWithRequestInfoTotalCount(
       filter,
+      type,
       timeInfos,
       this.dopWhereBooking
     );
   };
 
-  allOrdersTotalCount = async (filter, timeInfos) => {
-    return await this.baseAllTotalCount(filter, timeInfos, this.dopWhereOrder);
+  allOrdersTotalCount = async (filter, type, timeInfos) => {
+    return await this.baseAllTotalCount(
+      filter,
+      type,
+      timeInfos,
+      this.dopWhereOrder
+    );
   };
 
   allBookingsList = async (props) => {
@@ -1210,6 +1276,93 @@ class OrderModel extends Model {
         "start_date as startDate",
         "end_date as endDate",
       ]);
+  };
+
+  getBookingStatusesCount = async (timeInfos) => {
+    let query = db(ORDERS_TABLE);
+    query = query.joinRaw(
+      `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+       ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
+        AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
+    );
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    const result = await query
+      .whereIn("status", this.bookingStatuses)
+      .select(
+        db.raw(`COUNT(*) AS "allCount"`),
+        db.raw(
+          `SUM(CASE 
+            WHEN ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}' 
+            AND ${ORDERS_TABLE}.cancel_status IS NULL
+            THEN 1 ELSE 0 END) AS "rejectedCount"`
+        ),
+        db.raw(
+          `SUM(CASE 
+            WHEN ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' 
+            THEN 1 ELSE 0 END) AS "canceledCount"`
+        ),
+        db.raw(
+          `SUM(CASE 
+            WHEN ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT}' 
+            AND ${ORDERS_TABLE}.cancel_status IS NULL
+            THEN 1 ELSE 0 END) AS "acceptedCount"`
+        )
+      )
+      .first();
+
+    return {
+      allCount: result["allCount"] ?? 0,
+      rejectedCount: result["rejectedCount"] ?? 0,
+      canceledCount: result["canceledCount"] ?? 0,
+      acceptedCount: result["acceptedCount"] ?? 0,
+    };
+  };
+
+  getOrderStatusesCount = async (timeInfos) => {
+    let query = db(ORDERS_TABLE);
+    query = query.joinRaw(
+      `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+       ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
+        AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
+    );
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    const result = await query
+      .whereNotIn("status", this.bookingStatuses)
+      .select(
+        db.raw(`COUNT(*) AS "allCount"`),
+        db.raw(
+          `SUM(CASE 
+            WHEN ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.FINISHED}' 
+            AND ${ORDERS_TABLE}.cancel_status IS NULL
+            THEN 1 ELSE 0 END) AS "finishedCount"`
+        ),
+        db.raw(
+          `SUM(CASE 
+            WHEN ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' 
+            THEN 1 ELSE 0 END) AS "canceledCount"`
+        ),
+        db.raw(
+          `SUM(CASE 
+            WHEN ${ORDERS_TABLE}.cancel_status IS NOT NULL
+            AND ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' 
+            THEN 1 ELSE 0 END) AS "disputeCount"`
+        ),
+        db.raw(
+          `SUM(CASE 
+            WHEN ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.FINISHED}' 
+            AND ${ORDERS_TABLE}.cancel_status IS NULL
+            THEN 1 ELSE 0 END) AS "activeCount"`
+        )
+      )
+      .first();
+
+    return {
+      allCount: result["allCount"] ?? 0,
+      finishedCount: result["finishedCount"] ?? 0,
+      canceledCount: result["canceledCount"] ?? 0,
+      disputeCount: result["disputeCount"] ?? 0,
+      activeCount: result["activeCount"] ?? 0,
+    };
   };
 }
 

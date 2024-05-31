@@ -76,15 +76,15 @@
               />
             </svg>
           </div>
-          <h1>You paid <span class="amount">$60.00 USD</span></h1>
-          <p>to Demo Portal's Test Store</p>
+          <h1>You paid <span class="amount">${{rentalPrice}} USD</span></h1>
+          <p>to RentAbout</p>
           <p class="details-link">Details</p>
           <div class="item-details">
             <table>
               <tr class="row">
-                <td class="title">1 x VANILLA WHITE AMBER PERFUME</td>
+                <td class="title">Rent x {{listingName}}</td>
                 <td class="price">
-                  <span class="amount">$60.00</span>
+                  <span class="amount">${{rentalPrice}}</span>
                   <span class="currency">USD</span>
                 </td>
               </tr>
@@ -94,7 +94,7 @@
               <tr class="row item-id">
                 <td class="title">
                   Item #:
-                  <span class="amount">123456789</span>
+                  <span class="amount">{{listingId}}</span>
                 </td>
               </tr>
             </table>
@@ -104,7 +104,7 @@
               <tr class="row">
                 <td class="title">Subtotal:</td>
                 <td class="price">
-                  <span class="amount">$60.00</span>
+                  <span class="amount">${{rentalPrice}}</span>
                   <span class="currency">USD</span>
                 </td>
               </tr>
@@ -114,7 +114,7 @@
               <tr class="row total">
                 <td class="title">Total:</td>
                 <td class="price">
-                  <span class="amount">$60.00</span>
+                  <span class="amount">${{rentalPrice}}</span>
                   <span class="currency">USD</span>
                 </td>
               </tr>
@@ -128,24 +128,23 @@
 
             <table>
               <tr class="row total">
-                <td class="title">Visa x-4244</td>
+                <td class="title">{{listingName}}</td>
                 <td class="price">
-                  <span class="amount">$60.00</span>
+                  <span class="amount">${{rentalPrice}}</span>
                   <span class="currency">USD</span>
                 </td>
               </tr>
             </table>
           </div>
-          <div class="purchase-details">
-            <p><strong>Purchase details</strong></p>
-            <p>Receipt number: 9JQ052684F3684634</p>
-            <p>We'll send confirmation to:</p>
-            <p>dp_buyer_ja.s.1524083083@paypal.com</p>
-          </div>
           <div class="merchant-details">
             <p><strong>Merchant details</strong></p>
-            <p>Demo Portal's Test Store</p>
-            <p>dp_us_api1.expertself.com</p>
+            <p>RentAbout</p>
+          </div>
+          <div class="merchant-details">
+            <p><strong>Payer details</strong></p>
+            <p>{{payerId}}</p>
+            <p>{{payerLastName}} {{payerFirstName}}</p>
+            <p>{{payerEmail}}</p>
           </div>
         </div>
       </div>

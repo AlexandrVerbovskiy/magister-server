@@ -85,13 +85,18 @@ class SenderPayment extends Model {
     paypalSenderId,
     paypalOrderId,
     paypalCaptureId,
+    proofUrl,
   }) =>
     this.create({
       money,
       userId,
       orderId,
-      payedProof: paypalOrderId,
-      data: JSON.stringify({ paypalSenderId, paypalCaptureId, paypalOrderId }),
+      payedProof: proofUrl,
+      data: JSON.stringify({
+        paypalSenderId,
+        paypalCaptureId,
+        paypalOrderId,
+      }),
       adminApproved: true,
       type: "paypal",
       dueAt: db.raw("CURRENT_TIMESTAMP"),
@@ -209,11 +214,42 @@ class SenderPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       );
 
+  baseTypeWhere = (query, type) => {
+    if (type == "paypal") {
+      query = query.where("type", "paypal");
+    }
+
+    if (type == "bank-transfer") {
+      query = query.where("type", "credit-card");
+    }
+
+    if (type == "waiting") {
+      query = query
+        .where("admin_approved", false)
+        .where("waiting_approved", true);
+    }
+
+    if (type == "approved") {
+      query = query
+        .where("admin_approved", true)
+        .where("waiting_approved", false);
+    }
+
+    if (type == "rejected") {
+      query = query
+        .where("admin_approved", false)
+        .where("waiting_approved", false);
+    }
+
+    return query;
+  };
+
   baseSenderTotalCount = async ({
     filter,
     timeInfos,
     dopWhere = null,
     select = null,
+    type = null,
   }) => {
     if (!select) {
       select = this.strFilterFields;
@@ -234,12 +270,14 @@ class SenderPayment extends Model {
       query = dopWhere(query);
     }
 
+    query = this.baseTypeWhere(query, type);
+
     const { count } = await query.count("* as count").first();
     return count;
   };
 
   baseSenderList = async ({ props, dopWhere = null, select = null }) => {
-    const { filter, start, count } = props;
+    const { filter, start, count, type = null } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     if (!select) {
@@ -262,14 +300,18 @@ class SenderPayment extends Model {
       query = dopWhere(query);
     }
 
+    query = this.baseTypeWhere(query, type);
+
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };
 
-  totalCount = async (filter, timeInfos, userId = null) => {
+  totalCount = async (filter, type, timeInfos, userId = null) => {
     const select = userId ? this.strFilterFields : this.strFullFilterFields;
     const dopWhere = (query) => {
       if (userId) {
         query = query.where({ user_id: userId });
+      } else {
+        query = query.where({ admin_approved: true });
       }
 
       return query;
@@ -280,18 +322,25 @@ class SenderPayment extends Model {
       timeInfos,
       dopWhere,
       select,
+      type,
     });
   };
 
-  waitingAdminApprovalTransactionTotalCount = async (filter, timeInfos) => {
+  waitingAdminApprovalTransactionTotalCount = async (
+    filter,
+    type,
+    timeInfos
+  ) => {
     const select = this.strFullFilterFields;
-    const dopWhere = (query) => query.where({ waiting_approved: true });
+
+    const dopWhere = (query) => query.where("type", "credit-card");
 
     return await this.baseSenderTotalCount({
       filter,
       timeInfos,
-      dopWhere,
       select,
+      dopWhere,
+      type,
     });
   };
 
@@ -303,6 +352,8 @@ class SenderPayment extends Model {
     const dopWhere = (query) => {
       if (props.userId) {
         query = query.where({ user_id: props.userId });
+      } else {
+        query = query.where({ admin_approved: true });
       }
 
       return query;
@@ -313,7 +364,7 @@ class SenderPayment extends Model {
 
   waitingAdminApprovalTransactionList = async (props) => {
     const select = this.strFullFilterFields;
-    const dopWhere = (query) => query.where({ waiting_approved: true });
+    const dopWhere = (query) => query.where("type", "credit-card");
     return await this.baseSenderList({ props, select, dopWhere });
   };
 
@@ -407,6 +458,69 @@ class SenderPayment extends Model {
         `${SENDER_PAYMENTS_TABLE}.type as transactionId`,
         `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
       ]);
+  };
+
+  getStatusCountByTransferType = async (timeInfos) => {
+    let query = db(SENDER_PAYMENTS_TABLE);
+
+    query = this.baseListTimeFilter(
+      timeInfos,
+      query,
+      `${SENDER_PAYMENTS_TABLE}.created_at`
+    );
+
+    const result = await query
+      .where({ admin_approved: true })
+      .select(
+        db.raw(`COUNT(*) AS "allCount"`),
+        db.raw(
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'paypal' THEN 1 ELSE 0 END) AS "paypalCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'credit-card' THEN 1 ELSE 0 END) AS "bankTransferCount"`
+        )
+      )
+      .first();
+
+    return {
+      allCount: result["allCount"] ?? 0,
+      paypalCount: result["paypalCount"] ?? 0,
+      bankTransferCount: result["bankTransferCount"] ?? 0,
+    };
+  };
+
+  getStatusCountByStatusType = async (timeInfos) => {
+    let query = db(SENDER_PAYMENTS_TABLE);
+
+    query = this.baseListJoin(query).where("type", "credit-card");
+
+    query = this.baseListTimeFilter(
+      timeInfos,
+      query,
+      `${SENDER_PAYMENTS_TABLE}.created_at`
+    );
+
+    const result = await query
+      .select(
+        db.raw(`COUNT(*) AS "allCount"`),
+        db.raw(
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.waiting_approved IS TRUE THEN 1 ELSE 0 END) AS "waitingCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.waiting_approved IS FALSE AND ${SENDER_PAYMENTS_TABLE}.admin_approved IS FALSE THEN 1 ELSE 0 END) AS "rejectedCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.waiting_approved IS FALSE AND ${SENDER_PAYMENTS_TABLE}.admin_approved IS TRUE THEN 1 ELSE 0 END) AS "approvedCount"`
+        )
+      )
+      .first();
+
+    return {
+      allCount: result["allCount"] ?? 0,
+      waitingCount: result["waitingCount"] ?? 0,
+      rejectedCount: result["rejectedCount"] ?? 0,
+      approvedCount: result["approvedCount"] ?? 0,
+    };
   };
 }
 
