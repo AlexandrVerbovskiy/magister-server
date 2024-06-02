@@ -6,7 +6,6 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
-const { pdf } = require("pdf-to-img");
 
 const {
   timeConverter,
@@ -21,7 +20,6 @@ const {
   getStartAndEndOfLastMonth,
   getStartAndEndOfLastYear,
   getStartAndEndOfYesterday,
-  cropImageByColor,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -696,41 +694,6 @@ class Controller {
     };
 
     return await this.generatePdf("/pdfs/invoice", params);
-  };
-
-  generatePngByHtml = async (templateUrl, data) => {
-    const pdfBuffer = await this.generatePdf(templateUrl, data);
-
-    const destinationDir = path.join(
-      STATIC.MAIN_DIRECTORY,
-      "public",
-      "paypalPaymentProofs"
-    );
-
-    if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir, { recursive: true });
-    }
-
-    const fileName = generateRandomString();
-    const pdfPath = path.join(destinationDir, fileName + ".pdf");
-    const imagePath = path.join(destinationDir, fileName + ".png");
-
-    fs.writeFileSync(pdfPath, pdfBuffer);
-
-    const document = await pdf(pdfPath, {
-      scale: 5,
-    });
-
-    for await (const image of document) {
-      fs.writeFileSync(imagePath, image);
-      break;
-    }
-
-    await cropImageByColor(imagePath, imagePath, "red");
-
-    fs.unlinkSync(pdfPath);
-
-    return "public/paypalPaymentProofs/" + fileName + ".png";
   };
 }
 
