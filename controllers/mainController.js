@@ -1124,21 +1124,6 @@ class MainController extends Controller {
         transactionsDetailInfo,
       });
     });
-
-  test = async (req, res) => {
-    const proofUrl = await this.generatePngByHtml("/pdfs/paypalPayment", {
-      paypalLogoLink: process.env.SERVER_URL + "/public/static/paypalLogo.png",
-      listingName: "test",
-      listingId: "test",
-      rentalPrice: 123,
-      payerLastName: "test",
-      payerFirstName: "test",
-      payerId: "test",
-      payerEmail: "test",
-    });
-
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-  };
 }
 
 module.exports = new MainController();

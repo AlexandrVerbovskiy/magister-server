@@ -563,20 +563,6 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      /*const proofUrl = await this.generatePngByHtml("/pdfs/paypalPayment", {
-        paypalLogoLink:
-          process.env.SERVER_URL + "/public/static/paypalLogo.png",
-        listingName: order.listingName,
-        listingId: order.listingId,
-        rentalPrice:
-          getDaysDifference(order.offerStartDate, order.offerEndDate) *
-          order.offerPricePerDay,
-        payerLastName: paypalOrderId.payer?.name?.surname ?? "-",
-        payerFirstName: paypalOrderId.payer?.name?.given_name ?? "-",
-        payerId: paypalOrderId.payer?.payer_id ?? "-",
-        payerEmail: paypalOrderId.payer?.email_address ?? "-",
-      });*/
-
       const paypalCaptureId =
         paypalOrderInfo.purchase_units[0].payments.captures[0].id;
 
