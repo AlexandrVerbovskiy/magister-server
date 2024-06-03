@@ -297,6 +297,23 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
+  baseAdminOptionsAdd = async (orders) => {
+    const listingIds = orders.map((order) => order.listingId);
+
+    const listingCounts = await this.listingModel.timeRentedByIds(listingIds);
+
+    const orderIds = orders.map((order) => order.id);
+
+    const orderCheckLists = await this.orderModel.orderCheckListByIds(orderIds);
+
+    orders.forEach((order, index) => {
+      orders[index]["listingRentalCount"] = listingCounts[order.listingId];
+      orders[index]["orderCheckLists"] = orderCheckLists[order.id];
+    });
+    
+    return orders;
+  };
+
   baseAdminBookingList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
     const type = req.body.type ?? "all";
@@ -309,11 +326,13 @@ class OrderController extends Controller {
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
-    const orders = await this.orderModel.allBookingsList(options);
-
     const statusCount = await this.orderModel.getBookingStatusesCount(
       timeInfos
     );
+
+    let orders = await this.orderModel.allBookingsList(options);
+
+    orders = await this.baseAdminOptionsAdd(orders);
 
     return {
       items: orders,
@@ -382,9 +401,11 @@ class OrderController extends Controller {
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
-    const orders = await this.orderModel.allOrderList(options);
-
     const statusCount = await this.orderModel.getOrderStatusesCount(timeInfos);
+
+    let orders = await this.orderModel.allOrderList(options);
+
+    orders = await this.baseAdminOptionsAdd(orders);
 
     return {
       items: orders,
@@ -562,20 +583,6 @@ class OrderController extends Controller {
       if (order.tenantId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
-
-      /*const proofUrl = await this.generatePngByHtml("/pdfs/paypalPayment", {
-        paypalLogoLink:
-          process.env.SERVER_URL + "/public/static/paypalLogo.png",
-        listingName: order.listingName,
-        listingId: order.listingId,
-        rentalPrice:
-          getDaysDifference(order.offerStartDate, order.offerEndDate) *
-          order.offerPricePerDay,
-        payerLastName: paypalOrderId.payer?.name?.surname ?? "-",
-        payerFirstName: paypalOrderId.payer?.name?.given_name ?? "-",
-        payerId: paypalOrderId.payer?.payer_id ?? "-",
-        payerEmail: paypalOrderId.payer?.email_address ?? "-",
-      });*/
 
       const paypalCaptureId =
         paypalOrderInfo.purchase_units[0].payments.captures[0].id;

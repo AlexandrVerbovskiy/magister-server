@@ -1367,6 +1367,23 @@ class OrderModel extends Model {
       activeCount: result["activeCount"] ?? 0,
     };
   };
+
+  orderCheckListByIds = async (ids) => {
+    const checkLists = {};
+    ids.forEach((id) => (checkLists[id] = []));
+
+    const requestResult = await db(LISTING_DEFECT_QUESTION_RELATIONS_TABLE)
+      .where("type", "tenant")
+      .whereIn("order_id", ids)
+      .where("answer", true)
+      .select("question", `order_id as orderId`);
+
+    requestResult.forEach((request) =>
+      checkLists[request.orderId].push(request.question)
+    );
+
+    return checkLists;
+  };
 }
 
 module.exports = new OrderModel();

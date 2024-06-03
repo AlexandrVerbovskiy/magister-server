@@ -288,35 +288,11 @@ router.get(
 );
 
 router.post(
-  "/waiting-admin-approval-sender-payment-list-options",
-  isAuth,
-  isAdmin,
-  adminOrderListOptionsValidation,
-  mainController.getWaitingAdminApprovalSenderPaymentListOptions
-);
-
-router.post(
   "/admin-recipient-payment-list-options",
   isAuth,
   isAdmin,
   adminOrderListOptionsValidation,
   mainController.getAdminRecipientPaymentListOptions
-);
-
-router.post(
-  "/admin-failed-recipient-payment-list-options",
-  isAuth,
-  isAdmin,
-  adminOrderListOptionsValidation,
-  mainController.getAdminFailedRecipientPaymentListOptions
-);
-
-router.post(
-  "/admin-waiting-refunds-recipient-payment-list-options",
-  isAuth,
-  isAdmin,
-  adminOrderListOptionsValidation,
-  mainController.getAdminWaitingRefundsRecipientPaymentListOptions
 );
 
 router.get(
@@ -367,11 +343,6 @@ router.post(
   isAuth,
   isAdmin,
   mainController.getAdminIndexPageOptions
-);
-
-router.get(
-  "/test",
-  mainController.test
 );
 
 module.exports = router;

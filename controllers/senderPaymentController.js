@@ -66,6 +66,7 @@ class SenderPaymentController extends Controller {
     needPaymentTypeCount = false
   ) => {
     const type = req.body.type ?? null;
+    const status = req.body.status ?? null;
 
     const totalCount = (filter, timeInfos) =>
       this.senderPaymentModel.totalCount(filter, type, timeInfos, userId);
@@ -73,6 +74,7 @@ class SenderPaymentController extends Controller {
     const list = (options) => {
       options["userId"] = userId;
       options["type"] = type;
+      options["status"] = status;
       return this.senderPaymentModel.list(options);
     };
 
@@ -84,53 +86,12 @@ class SenderPaymentController extends Controller {
     });
 
     if (needPaymentTypeCount) {
-      const statusCount =
-        await this.senderPaymentModel.getStatusCountByTransferType(
-          result.options.timeInfos
-        );
-      result["statusCount"] = statusCount;
-    }
-    return result;
-  };
-
-  baseWaitingAdminApprovalSenderPaymentList = async (req) => {
-    const type = req.body.type ?? null;
-
-    const totalCount = (filter, timeInfos) =>
-      this.senderPaymentModel.waitingAdminApprovalTransactionTotalCount(
-        filter,
-        type,
-        timeInfos
-      );
-
-    const list = (options) => {
-      options["type"] = type;
-      return this.senderPaymentModel.waitingAdminApprovalTransactionList(
-        options
-      );
-    };
-
-    const result = await this.baseSenderPaymentList({
-      req,
-      totalCount,
-      list,
-      timeFilterType: STATIC.TIME_FILTER_TYPES.TYPE,
-    });
-
-    const statusCount =
-      await this.senderPaymentModel.getStatusCountByStatusType(
+      const typesCount = await this.senderPaymentModel.getTransferTypesCount(
         result.options.timeInfos
       );
-
-    return { ...result, statusCount };
-  };
-
-  waitingAdminApprovalSenderPaymentList = async (req, res) => {
-    const result = await this.baseWaitingAdminApprovalSenderPaymentList(req);
-
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-      ...result,
-    });
+      result["typesCount"] = typesCount;
+    }
+    return result;
   };
 
   userList = (req, res) =>

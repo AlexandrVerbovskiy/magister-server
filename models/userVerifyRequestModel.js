@@ -13,7 +13,17 @@ class UserVerifyRequestModel extends Model {
     `${USER_VERIFY_REQUESTS_TABLE}.created_at as createdAt`,
     `${USERS_TABLE}.name as userName`,
     `${USERS_TABLE}.email as userEmail`,
+    `${USERS_TABLE}.phone as userPhone`,
+    `${USERS_TABLE}.photo as userPhoto`,
+    `${USERS_TABLE}.place_work as userPlaceWork`,
+    `${USERS_TABLE}.contact_details as userContactDetails`,
+    `${USERS_TABLE}.twitter_url as userTwitterUrl`,
+    `${USERS_TABLE}.facebook_url as userFacebookUrl`,
+    `${USERS_TABLE}.linkedin_url as userLinkedinUrl`,
+    `${USERS_TABLE}.instagram_url as userInstagramUrl`,
     `${USERS_TABLE}.id as userId`,
+    `${USER_VERIFY_REQUESTS_TABLE}.has_response as hasResponse`,
+    `${USER_VERIFY_REQUESTS_TABLE}.failed_description as failedDescription`,
   ];
 
   strFilterFields = [`${USERS_TABLE}.name`, `${USERS_TABLE}.email`];
@@ -89,11 +99,9 @@ class UserVerifyRequestModel extends Model {
 
     let query = db(USER_VERIFY_REQUESTS_TABLE);
     query = this.baseListJoin(query);
-    query = query
-      .where("has_response", false)
-      .whereRaw(
-        this.filterIdLikeString(filter, `${USER_VERIFY_REQUESTS_TABLE}.id`)
-      );
+    query = query.whereRaw(
+      this.filterIdLikeString(filter, `${USER_VERIFY_REQUESTS_TABLE}.id`)
+    );
 
     query = this.baseListTimeFilter(
       props.timeInfos,

@@ -753,7 +753,10 @@ class ListingsModel extends Model {
       .select([
         ...this.visibleFields,
         `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
-        `${USERS_TABLE}.name as userName`,
+        `${USERS_TABLE}.name as ownerName`,
+        `${USERS_TABLE}.email as ownerEmail`,
+        `${USERS_TABLE}.phone as ownerPhone`,
+        `${USERS_TABLE}.photo as ownerPhoto`,
         `${LISTING_APPROVAL_REQUESTS_TABLE}.id as requestId`,
         `${LISTING_APPROVAL_REQUESTS_TABLE}.approved as requestApproved`,
         db.raw(`COUNT(${ORDERS_TABLE}.id) as "ordersCount"`),
@@ -815,6 +818,9 @@ class ListingsModel extends Model {
         ...this.baseGroupedFields,
         `${LISTING_CATEGORIES_TABLE}.name`,
         `${USERS_TABLE}.name`,
+        `${USERS_TABLE}.email`,
+        `${USERS_TABLE}.phone`,
+        `${USERS_TABLE}.photo`,
         `${LISTING_APPROVAL_REQUESTS_TABLE}.id`,
         `${LISTING_APPROVAL_REQUESTS_TABLE}.approved`,
       ])
@@ -910,6 +916,21 @@ class ListingsModel extends Model {
       minPrice: result["minLimitPrice"] ?? 0,
       maxPrice: result["maxLimitPrice"] ?? 0,
     };
+  };
+
+  timeRentedByIds = async (ids) => {
+    const requestResult = await db(ORDERS_TABLE)
+      .whereIn("listing_id", ids)
+      .where(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+      .groupBy("listing_id")
+      .count("* as count")
+      .select(`listing_id as listingId`);
+
+    const obj = {};
+    ids.forEach((id) => (obj[id] = 0));
+    requestResult.forEach((info) => (obj[info["listingId"]] = +info["count"]));
+
+    return obj;
   };
 }
 
