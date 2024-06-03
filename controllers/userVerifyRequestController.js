@@ -12,11 +12,14 @@ class UserVerifyRequestController extends Controller {
       STATIC.TIME_FILTER_TYPES.TYPE
     );
 
+    const status = req.body.status ?? "suspended";
+
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.userVerifyRequestModel.totalCount(filter, timeInfos)
+      this.userVerifyRequestModel.totalCount(filter, timeInfos, status)
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
+    options["status"] = status;
 
     const requests = await this.userVerifyRequestModel.list(options);
 

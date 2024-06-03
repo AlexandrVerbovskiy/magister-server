@@ -492,6 +492,30 @@ class ListingsModel extends Model {
     return query;
   };
 
+  queryByActive = (query, active) => {
+    if (active == "active") {
+      query = query.where(`${LISTINGS_TABLE}.active`, true);
+    }
+
+    if (active == "inactive") {
+      query = query.where(`${LISTINGS_TABLE}.active`, false);
+    }
+
+    return query;
+  };
+
+  queryByApproved = (query, approved) => {
+    if (approved == "approved") {
+      query = query.where(`${LISTINGS_TABLE}.approved`, true);
+    }
+
+    if (approved == "unapproved") {
+      query = query.where(`${LISTINGS_TABLE}.approved`, false);
+    }
+
+    return query;
+  };
+
   totalCount = async ({
     timeInfos,
     cities = [],
@@ -571,7 +595,7 @@ class ListingsModel extends Model {
   totalCountWithLastRequests = async (
     filter,
     userId = null,
-    status = "all"
+    { active = null, approved = null }
   ) => {
     const subquery = db
       .select("id")
@@ -596,28 +620,12 @@ class ListingsModel extends Model {
         )
       );
 
-    const statusWhere = (isData) =>
-      `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
-
-    if (status == "approved") {
-      query = query.whereRaw(statusWhere("TRUE"));
-    }
-
-    if (status == "unapproved") {
-      query = query.whereRaw(
-        `(${statusWhere(
-          "FALSE"
-        )} OR ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL)`
-      );
-    }
-
-    if (status == "not_processed") {
-      query = query.whereRaw(statusWhere("NULL"));
-    }
-
     if (userId) {
       query = query.where({ owner_id: userId });
     }
+
+    query = this.queryByActive(query, active);
+    query = this.queryByApproved(query, approved);
 
     const { count } = await query.count("* as count").first();
     return count;
@@ -746,7 +754,13 @@ class ListingsModel extends Model {
   };
 
   listWithLastRequests = async (props) => {
-    const { filter, start, count, status } = props;
+    const {
+      filter,
+      start,
+      count,
+      active = null,
+      approved = null,
+    } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(LISTINGS_TABLE)
@@ -790,28 +804,12 @@ class ListingsModel extends Model {
         )
       );
 
-    const statusWhere = (isData) =>
-      `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
-
-    if (status == "approved") {
-      query = query.whereRaw(statusWhere("TRUE"));
-    }
-
-    if (status == "unapproved") {
-      query = query.whereRaw(
-        `(${statusWhere(
-          "FALSE"
-        )} OR ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL)`
-      );
-    }
-
-    if (status == "not_processed") {
-      query = query.whereRaw(statusWhere("NULL"));
-    }
-
     if (props.userId) {
       query = query.where({ owner_id: props.userId });
     }
+
+    query = this.queryByActive(query, active);
+    query = this.queryByApproved(query, approved);
 
     return await query
       .groupBy([
