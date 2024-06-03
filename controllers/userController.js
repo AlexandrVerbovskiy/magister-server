@@ -507,6 +507,8 @@ class UserController extends Controller {
 
     const users = await this.userModel.list(options);
 
+    console.log(users);
+
     return {
       items: users,
       options,

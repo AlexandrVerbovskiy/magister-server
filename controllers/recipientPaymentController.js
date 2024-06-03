@@ -63,27 +63,6 @@ class RecipientPaymentController extends Controller {
     });
   };
 
-  baseFailedRecipientPaymentList = async (req) => {
-    const totalCount = async (filter, timeInfos) =>
-      this.recipientPaymentModel.totalCount(filter, timeInfos, {
-        type: "paypal",
-        status: STATIC.RECIPIENT_STATUSES.FAILED,
-      });
-
-    const list = (options) => {
-      options["type"] = req.body.paypal;
-      options["status"] = STATIC.RECIPIENT_STATUSES.FAILED;
-      return this.recipientPaymentModel.list(options);
-    };
-
-    return await this.baseRecipientPaymentList({
-      req,
-      totalCount,
-      list,
-      timeFilterType: STATIC.TIME_FILTER_TYPES.TYPE,
-    });
-  };
-
   userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
@@ -102,35 +81,6 @@ class RecipientPaymentController extends Controller {
         null,
         STATIC.TIME_FILTER_TYPES.TYPE
       );
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
-  baseWaitingRefundsList = async (req) => {
-    const timeInfos = await this.getListTimeAutoOption(
-      req,
-      STATIC.TIME_FILTER_TYPES.TYPE
-    );
-
-    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.recipientPaymentModel.totalCountWaitingRefunds(filter, timeInfos)
-    );
-
-    options = this.addTimeInfoToOptions(options, timeInfos);
-
-    const requests = await this.recipientPaymentModel.listWaitingRefunds(
-      options
-    );
-
-    return {
-      items: requests,
-      options,
-      countItems,
-    };
-  };
-
-  waitingRefundsList = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result = await this.baseWaitingRefundsList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

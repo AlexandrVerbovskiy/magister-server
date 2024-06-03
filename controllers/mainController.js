@@ -792,18 +792,6 @@ class MainController extends Controller {
       });
     });
 
-  getWaitingAdminApprovalSenderPaymentListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result =
-        await senderPaymentController.baseWaitingAdminApprovalSenderPaymentList(
-          req
-        );
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-      });
-    });
-
   getAdminRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result =
@@ -812,25 +800,6 @@ class MainController extends Controller {
           null,
           STATIC.TIME_FILTER_TYPES.TYPE
         );
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-      });
-    });
-
-  getAdminFailedRecipientPaymentListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result =
-        await recipientPaymentController.baseFailedRecipientPaymentList(req);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-      });
-    });
-
-  getAdminWaitingRefundsRecipientPaymentListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result = await recipientPaymentController.baseWaitingRefundsList(
-        req
-      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
