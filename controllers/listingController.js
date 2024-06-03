@@ -148,16 +148,22 @@ class ListingController extends Controller {
   };
 
   baseListingWithStatusesList = async (req, userId = null) => {
-    const status = req.body.status ?? "all";
+    const active = req.body.active ?? "all";
+    const approved = req.body.approved ?? "all";
 
     const { options, countItems } = await this.baseList(
       req,
       ({ filter = "" }) =>
-        this.listingModel.totalCountWithLastRequests(filter, userId, status)
+        this.listingModel.totalCountWithLastRequests(filter, userId, {
+          active,
+          approved,
+        })
     );
 
     options["userId"] = userId;
-    options["status"] = status;
+    options["active"] = active;
+    options["approved"] = approved;
+
     const listings = await this.listingModel.listWithLastRequests(options);
 
     const listingsWithImages = await this.listingModel.listingsBindImages(
