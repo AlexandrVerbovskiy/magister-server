@@ -76,25 +76,54 @@ class UserVerifyRequestModel extends Model {
       `${USER_VERIFY_REQUESTS_TABLE}.user_id`
     );
 
-  totalCount = async (filter, timeInfos) => {
+  queryByStatus = (query, status) => {
+    if (status == "approved") {
+      query = query
+        .where(`${USER_VERIFY_REQUESTS_TABLE}.has_response`, true)
+        .where(`${USER_VERIFY_REQUESTS_TABLE}.failed_description`, "");
+    }
+
+    if (status == "rejected") {
+      query = query
+        .where(`${USER_VERIFY_REQUESTS_TABLE}.has_response`, true)
+        .whereNot(`${USER_VERIFY_REQUESTS_TABLE}.failed_description`, "");
+    }
+
+    if (status == "suspended") {
+      query.where((builder) => {
+        builder
+          .where(`${USER_VERIFY_REQUESTS_TABLE}.has_response`, false)
+          .orWhereNull(`${USER_VERIFY_REQUESTS_TABLE}.has_response`);
+      });
+    }
+
+    return query;
+  };
+
+  totalCount = async (filter, timeInfos, status = null) => {
     let query = db(USER_VERIFY_REQUESTS_TABLE);
     query = this.baseListJoin(query);
+
     query = query
       .where("has_response", false)
       .whereRaw(
         this.filterIdLikeString(filter, `${USER_VERIFY_REQUESTS_TABLE}.id`)
       );
+
     query = this.baseListTimeFilter(
       timeInfos,
       query,
       `${USER_VERIFY_REQUESTS_TABLE}.created_at`
     );
+
+    query = this.queryByStatus(query, status);
+
     const { count } = await query.count("* as count").first();
     return count;
   };
 
   list = async (props) => {
-    const { filter, start, count } = props;
+    const { filter, start, count, status = null } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(USER_VERIFY_REQUESTS_TABLE);
@@ -108,6 +137,8 @@ class UserVerifyRequestModel extends Model {
       query,
       `${USER_VERIFY_REQUESTS_TABLE}.created_at`
     );
+
+    query = this.queryByStatus(query, status);
 
     return await query
       .select(this.visibleFields)

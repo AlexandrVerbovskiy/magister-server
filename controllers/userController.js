@@ -499,15 +499,19 @@ class UserController extends Controller {
   baseUserList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
 
+    const { active = "all", role = "all", verified = "all" } = req.body;
+
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.userModel.totalCount(filter, timeInfos)
+      this.userModel.totalCount(filter, timeInfos, { active, role, verified })
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
-    const users = await this.userModel.list(options);
+    options["active"] = active;
+    options["role"] = role;
+    options["verified"] = verified;
 
-    console.log(users);
+    const users = await this.userModel.list(options);
 
     return {
       items: users,

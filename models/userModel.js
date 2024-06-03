@@ -337,15 +337,71 @@ class UserModel extends Model {
       .update({ password: hashedPassword, has_password_access: true });
   };
 
-  totalCount = async (filter, timeInfos) => {
+  queryByRole = (query, role) => {
+    if (role == "admin") {
+      query = query.where(`${USERS_TABLE}.role`, STATIC.ROLES.ADMIN);
+    }
+
+    if (role == "support") {
+      query = query.where(`${USERS_TABLE}.role`, STATIC.ROLES.SUPPORT);
+    }
+
+    if (role == "user") {
+      query = query.where(`${USERS_TABLE}.role`, STATIC.ROLES.USER);
+    }
+
+    return query;
+  };
+
+  queryByActive = (query, active) => {
+    if (active == "active") {
+      query = query.where(`${USERS_TABLE}.active`, true);
+    }
+
+    if (active == "inactive") {
+      query = query.where(`${USERS_TABLE}.active`, false);
+    }
+
+    return query;
+  };
+
+  queryByVerified = (query, verified) => {
+    if (verified == "verified") {
+      query = query.where(`${USERS_TABLE}.verified`, true);
+    }
+
+    if (verified == "unverified") {
+      query = query.where(`${USERS_TABLE}.verified`, false);
+    }
+
+    return query;
+  };
+
+  totalCount = async (
+    filter,
+    timeInfos,
+    { active = null, role = null, verified = null }
+  ) => {
     let query = db(USERS_TABLE).whereRaw(...this.baseStrFilter(filter));
     query = this.baseListTimeFilter(timeInfos, query);
+
+    query = this.queryByActive(query, active);
+    query = this.queryByVerified(query, verified);
+    query = this.queryByRole(query, role);
+
     const { count } = await query.count("* as count").first();
     return count;
   };
 
   list = async (props) => {
-    const { filter, start, count } = props;
+    const {
+      filter,
+      start,
+      count,
+      active = null,
+      role = null,
+      verified = null,
+    } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(USERS_TABLE).whereRaw(...this.baseStrFilter(filter));
@@ -355,6 +411,10 @@ class UserModel extends Model {
       query,
       `${USERS_TABLE}.created_at`
     );
+
+    query = this.queryByActive(query, active);
+    query = this.queryByVerified(query, verified);
+    query = this.queryByRole(query, role);
 
     return await query
       .leftJoin(
