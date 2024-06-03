@@ -226,19 +226,23 @@ class SenderPayment extends Model {
       query = query.where("type", "credit-card");
     }
 
-    if (type == "waiting") {
+    return query;
+  };
+
+  baseStatusWhere = (query, status) => {
+    if (status == "waiting") {
       query = query
         .where("admin_approved", false)
         .where("waiting_approved", true);
     }
 
-    if (type == "approved") {
+    if (status == "approved") {
       query = query
         .where("admin_approved", true)
         .where("waiting_approved", false);
     }
 
-    if (type == "rejected") {
+    if (status == "rejected") {
       query = query
         .where("admin_approved", false)
         .where("waiting_approved", false);
@@ -253,6 +257,7 @@ class SenderPayment extends Model {
     dopWhere = null,
     select = null,
     type = null,
+    status = null,
   }) => {
     if (!select) {
       select = this.strFilterFields;
@@ -275,12 +280,14 @@ class SenderPayment extends Model {
 
     query = this.baseTypeWhere(query, type);
 
+    query = this.baseStatusWhere(query, status);
+
     const { count } = await query.count("* as count").first();
     return count;
   };
 
   baseSenderList = async ({ props, dopWhere = null, select = null }) => {
-    const { filter, start, count, type = null } = props;
+    const { filter, start, count, type = null, status = null } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     if (!select) {
@@ -304,6 +311,8 @@ class SenderPayment extends Model {
     }
 
     query = this.baseTypeWhere(query, type);
+
+    query = this.baseStatusWhere(query, status);
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };
@@ -329,24 +338,6 @@ class SenderPayment extends Model {
     });
   };
 
-  waitingAdminApprovalTransactionTotalCount = async (
-    filter,
-    type,
-    timeInfos
-  ) => {
-    const select = this.strFullFilterFields;
-
-    const dopWhere = (query) => query.where("type", "credit-card");
-
-    return await this.baseSenderTotalCount({
-      filter,
-      timeInfos,
-      select,
-      dopWhere,
-      type,
-    });
-  };
-
   list = async (props) => {
     const select = props.userId
       ? this.strFilterFields
@@ -362,12 +353,6 @@ class SenderPayment extends Model {
       return query;
     };
 
-    return await this.baseSenderList({ props, select, dopWhere });
-  };
-
-  waitingAdminApprovalTransactionList = async (props) => {
-    const select = this.strFullFilterFields;
-    const dopWhere = (query) => query.where("type", "credit-card");
     return await this.baseSenderList({ props, select, dopWhere });
   };
 
@@ -463,7 +448,7 @@ class SenderPayment extends Model {
       ]);
   };
 
-  getStatusCountByTransferType = async (timeInfos) => {
+  getTransferTypesCount= async (timeInfos) => {
     let query = db(SENDER_PAYMENTS_TABLE);
 
     query = this.baseListTimeFilter(

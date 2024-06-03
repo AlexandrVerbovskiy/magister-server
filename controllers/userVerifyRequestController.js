@@ -20,6 +20,17 @@ class UserVerifyRequestController extends Controller {
 
     const requests = await this.userVerifyRequestModel.list(options);
 
+    const requestUserIds = requests.map((request) => request.userId);
+
+    const documents = await this.userModel.getDocumentsByUserIds(
+      requestUserIds
+    );
+
+    requests.forEach(
+      (request, index) =>
+        (requests[index]["documents"] = documents[request.userId])
+    );
+
     return {
       items: requests,
       options,

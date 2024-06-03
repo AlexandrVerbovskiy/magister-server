@@ -8,10 +8,15 @@ class ListingApprovalRequestController extends Controller {
       STATIC.TIME_FILTER_TYPES.TYPE
     );
 
-    let status = req.body.status;
+    const status = req.body.status ?? "waiting";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.listingApprovalRequestModel.totalCount(filter, timeInfos, userId)
+      this.listingApprovalRequestModel.totalCount(
+        filter,
+        timeInfos,
+        userId,
+        status
+      )
     );
 
     options["userId"] = userId;
@@ -20,8 +25,11 @@ class ListingApprovalRequestController extends Controller {
 
     const requests = await this.listingApprovalRequestModel.list(options);
 
+    const requestsWithListingImages =
+      await this.listingModel.listingsBindImages(requests, "listingId");
+
     return {
-      items: requests,
+      items: requestsWithListingImages,
       options,
       countItems,
     };

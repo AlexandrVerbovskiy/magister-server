@@ -33,12 +33,25 @@ class RecipientPayment extends Model {
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
     `${USERS_TABLE}.name as recipientName`,
     `${USERS_TABLE}.email as recipientEmail`,
+    `${USERS_TABLE}.phone as recipientPhone`,
+    `${USERS_TABLE}.photo as recipientPhoto`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
-    `owners.name as ownerName`,
+    `${LISTINGS_TABLE}.address as listingAddress`,
+    `${LISTINGS_TABLE}.city as listingCity`,
+    `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
+    `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
+    `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `owners.id as ownerId`,
-    `tenants.name as tenantName`,
+    `owners.name as ownerName`,
+    `owners.email as ownerEmail`,
+    `owners.phone as ownerPhone`,
+    `owners.photo as ownerPhoto`,
     `tenants.id as tenantId`,
+    `tenants.name as tenantName`,
+    `tenants.email as tenantEmail`,
+    `tenants.phone as tenantPhone`,
+    `tenants.photo as tenantPhoto`,
     `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
     `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
     `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -236,7 +249,7 @@ class RecipientPayment extends Model {
       this.filterIdLikeString(filter, `${RECIPIENT_PAYMENTS_TABLE}.id`)
     );
 
-    query = this.baseListTimeFilter(timeInfos, query, `${RECIPIENT_PAYMENTS_TABLE}.created_at`);
+    query = this.timeFilterWrap(query, timeInfos);
 
     if (userId) {
       query = query.where({ user_id: userId });
@@ -451,44 +464,6 @@ class RecipientPayment extends Model {
     );
     query = query.where(`${RECIPIENT_PAYMENTS_TABLE}.type`, "card");
     return query;
-  };
-
-  totalCountWaitingRefunds = async (filter, timeInfos) => {
-    let query = db(RECIPIENT_PAYMENTS_TABLE);
-    query = this.baseListJoin(query).whereRaw(
-      this.filterIdLikeString(filter, `${RECIPIENT_PAYMENTS_TABLE}.id`)
-    );
-
-    query = this.baseWaitingRefund(query);
-
-    query = this.baseListTimeFilter(
-      timeInfos,
-      query,
-      `${RECIPIENT_PAYMENTS_TABLE}.created_at`
-    );
-
-    const { count } = await query.count("* as count").first();
-    return count;
-  };
-
-  listWaitingRefunds = async (props) => {
-    const { filter, start, count } = props;
-    const { order, orderType } = this.getOrderInfo(props);
-
-    let query = db(RECIPIENT_PAYMENTS_TABLE).select(this.visibleFields);
-    query = this.baseListJoin(query).whereRaw(
-      this.filterIdLikeString(filter, `${RECIPIENT_PAYMENTS_TABLE}.id`)
-    );
-
-    query = this.baseWaitingRefund(query);
-
-    query = this.baseListTimeFilter(
-      props.timeInfos,
-      query,
-      `${RECIPIENT_PAYMENTS_TABLE}.created_at`
-    );
-
-    return await query.orderBy(order, orderType).limit(count).offset(start);
   };
 
   complete = async (id) => {

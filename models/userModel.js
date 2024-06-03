@@ -17,24 +17,25 @@ const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
+const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 
 class UserModel extends Model {
   visibleFields = [
-    "id",
-    "name",
-    "email",
-    "role",
-    "contact_details as contactDetails",
-    "brief_bio as briefBio",
-    "photo",
-    "phone",
-    "suspicious",
-    "place_work as placeWork",
-    "facebook_url as facebookUrl",
-    "instagram_url as instagramUrl",
-    "linkedin_url as linkedinUrl",
-    "twitter_url as twitterUrl",
-    "paypal_id as paypalId",
+    `${USERS_TABLE}.id`,
+    `${USERS_TABLE}.name`,
+    `${USERS_TABLE}.email`,
+    `${USERS_TABLE}.role`,
+    `${USERS_TABLE}.contact_details as contactDetails`,
+    `${USERS_TABLE}.brief_bio as briefBio`,
+    `${USERS_TABLE}.photo`,
+    `${USERS_TABLE}.phone`,
+    `${USERS_TABLE}.suspicious`,
+    `${USERS_TABLE}.place_work as placeWork`,
+    `${USERS_TABLE}.facebook_url as facebookUrl`,
+    `${USERS_TABLE}.instagram_url as instagramUrl`,
+    `${USERS_TABLE}.linkedin_url as linkedinUrl`,
+    `${USERS_TABLE}.twitter_url as twitterUrl`,
+    `${USERS_TABLE}.paypal_id as paypalId`,
   ];
 
   allFields = [
@@ -349,16 +350,32 @@ class UserModel extends Model {
 
     let query = db(USERS_TABLE).whereRaw(...this.baseStrFilter(filter));
 
-    query = this.baseListTimeFilter(props.timeInfos, query);
+    query = this.baseListTimeFilter(
+      props.timeInfos,
+      query,
+      `${USERS_TABLE}.created_at`
+    );
 
     return await query
+      .leftJoin(
+        SENDER_PAYMENTS_TABLE,
+        `${SENDER_PAYMENTS_TABLE}.user_id`,
+        "=",
+        `${USERS_TABLE}.id`
+      )
+      .leftJoin(ORDERS_TABLE, `${ORDERS_TABLE}.tenant_id`, `${USERS_TABLE}.id`)
       .select([
         ...this.visibleFields,
-        "active",
-        "verified",
-        "email_verified as emailVerified",
-        "phone_verified as phoneVerified",
+        `${USERS_TABLE}.active`,
+        `${USERS_TABLE}.verified`,
+        `${USERS_TABLE}.email_verified as emailVerified`,
+        `${USERS_TABLE}.phone_verified as phoneVerified`,
+        `${USERS_TABLE}.created_at as createdAt`,
+        db.raw(`COUNT(${SENDER_PAYMENTS_TABLE}.id) as "totalRents"`),
+        db.raw(`SUM(${SENDER_PAYMENTS_TABLE}.money) as "totalSpent"`),
+        db.raw(`MAX(${ORDERS_TABLE}.start_date) as "lastRenterDate"`),
       ])
+      .groupBy(`${USERS_TABLE}.id`)
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
@@ -454,12 +471,38 @@ class UserModel extends Model {
       .delete();
   };
 
-  getDocumentsByUserId = async (id) => {
+  getDocumentsByUserIds = async (ids) => {
+    const documentsByUserId = {};
+
+    ids.forEach(
+      (id) =>
+        (documentsByUserId[id] = {
+          proofOfAddressLink: null,
+          reputableBankIdLink: null,
+          utilityLink: null,
+          hmrcLink: null,
+          councilTaxBillLink: null,
+          passportOrDrivingIdLink: null,
+          confirmMoneyLaunderingChecksAndComplianceLink: null,
+        })
+    );
+
     const documents = await db(USER_DOCUMENTS_TABLE)
       .select(this.documentFields)
-      .where({ user_id: id })
-      .first();
-    return documents ?? {};
+      .whereIn("user_id", ids);
+
+    documents.forEach((document) => {
+      const cloned = { ...document };
+      delete cloned["userId"];
+      documentsByUserId[document.userId] = cloned;
+    });
+
+    return documentsByUserId;
+  };
+
+  getDocumentsByUserId = async (id) => {
+    const documents = await this.getDocumentsByUserIds([id]);
+    return documents[id];
   };
 
   checkUserPasswordEmpty = async (id) => {

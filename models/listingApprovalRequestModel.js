@@ -11,9 +11,17 @@ const USERS_TABLE = STATIC.TABLES.USERS;
 class ListingApprovalRequestModel extends Model {
   visibleFields = [
     `${LISTING_APPROVAL_REQUESTS_TABLE}.id`,
+    `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name`,
     `${LISTINGS_TABLE}.city`,
+    `${LISTINGS_TABLE}.address`,
+    `${LISTINGS_TABLE}.price_per_day as pricePerDay`,
+    `${LISTINGS_TABLE}.count_stored_items as countStoredItems`,
+    `${LISTINGS_TABLE}.min_rental_days as minRentalDays`,
     `${USERS_TABLE}.name as userName`,
+    `${USERS_TABLE}.email as userEmail`,
+    `${USERS_TABLE}.phone as userPhone`,
+    `${USERS_TABLE}.photo as userPhoto`,
     `${USERS_TABLE}.id as userId`,
     `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
     `${LISTING_CATEGORIES_TABLE}.id as categoryId`,
@@ -77,11 +85,11 @@ class ListingApprovalRequestModel extends Model {
       query = query.where(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`, true);
     }
 
-    if (status == "unapproved") {
+    if (status == "rejected") {
       query = query.where(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`, false);
     }
 
-    if (status == "not_processed") {
+    if (status == "waiting") {
       query = query.whereNull(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`);
     }
 
@@ -104,7 +112,7 @@ class ListingApprovalRequestModel extends Model {
         `${LISTINGS_TABLE}.category_id`
       );
 
-  totalCount = async (filter, timeInfos, userId = null, status = "all") => {
+  totalCount = async (filter, timeInfos, userId = null, status) => {
     let query = db(LISTING_APPROVAL_REQUESTS_TABLE);
     query = this.baseListJoin(query).whereRaw(
       this.filterIdLikeString(filter, `${LISTING_APPROVAL_REQUESTS_TABLE}.id`)
@@ -116,8 +124,7 @@ class ListingApprovalRequestModel extends Model {
       `${LISTING_APPROVAL_REQUESTS_TABLE}.created_at`
     );
 
-    query = query.where(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`, null);
-    //query = this.queryByStatus(query, status);
+    query = this.queryByStatus(query, status);
 
     if (userId) {
       query = query.where({ owner_id: userId });
@@ -128,18 +135,15 @@ class ListingApprovalRequestModel extends Model {
   };
 
   list = async (props) => {
-    const { filter, start, count } = props;
+    const { filter, start, count, status } = props;
     const { order, orderType } = this.getOrderInfo(props);
-
-    //const { status = "all" } = props;
 
     let query = db(LISTING_APPROVAL_REQUESTS_TABLE).select(this.visibleFields);
     query = this.baseListJoin(query).whereRaw(
       this.filterIdLikeString(filter, `${LISTING_APPROVAL_REQUESTS_TABLE}.id`)
     );
 
-    query = query.where(`${LISTING_APPROVAL_REQUESTS_TABLE}.approved`, null);
-    //query = this.queryByStatus(query, status);
+    query = this.queryByStatus(query, status);
 
     query = this.baseListTimeFilter(
       props.timeInfos,

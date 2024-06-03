@@ -42,14 +42,6 @@ router.post(
   senderPaymentController.adminList
 );
 
-router.post(
-  "/waiting-approval-list",
-  isAuth,
-  isAdmin,
-  listValidation,
-  senderPaymentController.waitingAdminApprovalSenderPaymentList
-);
-
 router.get(
   "/invoice-pdf/:id",
   isAuth,

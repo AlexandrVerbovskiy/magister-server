@@ -24,14 +24,6 @@ router.post(
 );
 
 router.post(
-  "/get-waiting-refunds-list",
-  isAuth,
-  isAdmin,
-  waitingRefundsListValidation,
-  recipientPaymentController.waitingRefundsList
-);
-
-router.post(
   "/completed",
   isAuth,
   isAdmin,
@@ -51,12 +43,6 @@ router.post(
   "/failed-recipient-mark-done",
   isAuth,
   recipientPaymentController.markFailedRecipientDone
-);
-
-router.post(
-  "/admin-failed-recipient-payment-list",
-  isAuth,
-  recipientPaymentController.baseFailedRecipientPaymentList
 );
 
 module.exports = router;
