@@ -1281,14 +1281,19 @@ class OrderModel extends Model {
       ]);
   };
 
-  getBookingStatusesCount = async (timeInfos) => {
+  getBookingStatusesCount = async ({timeInfos, filter}) => {
     let query = db(ORDERS_TABLE);
     query = query.joinRaw(
       `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
        ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
+
     query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    query = query.whereRaw(
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    );
+
     const result = await query
       .whereIn("status", this.bookingStatuses)
       .select(
@@ -1321,14 +1326,19 @@ class OrderModel extends Model {
     };
   };
 
-  getOrderStatusesCount = async (timeInfos) => {
+  getOrderStatusesCount = async ({timeInfos, filter}) => {
     let query = db(ORDERS_TABLE);
     query = query.joinRaw(
       `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
        ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
+
     query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    query = query.whereRaw(
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    );
+
     const result = await query
       .whereNotIn("status", this.bookingStatuses)
       .select(
