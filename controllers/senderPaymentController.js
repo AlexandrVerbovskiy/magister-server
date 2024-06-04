@@ -1,10 +1,5 @@
 const STATIC = require("../static");
-const {
-  createPaypalOrder,
-  getDaysDifference,
-  shortTimeConverter,
-  tenantPaymentCalculate,
-} = require("../utils");
+const { createPaypalOrder } = require("../utils");
 
 const Controller = require("./Controller");
 
@@ -65,11 +60,18 @@ class SenderPaymentController extends Controller {
     timeFilterType = STATIC.TIME_FILTER_TYPES.DURATION,
     needPaymentTypeCount = false
   ) => {
-    const type = req.body.type ?? null;
-    const status = req.body.status ?? null;
+    const type = req.body.type ?? "all";
+    const status = req.body.status ?? "all";
+    const filter = req.body.filter ?? "";
 
     const totalCount = (filter, timeInfos) =>
-      this.senderPaymentModel.totalCount(filter, type, timeInfos, userId);
+      this.senderPaymentModel.totalCount({
+        filter,
+        status,
+        type,
+        timeInfos,
+        userId,
+      });
 
     const list = (options) => {
       options["userId"] = userId;
@@ -86,9 +88,11 @@ class SenderPaymentController extends Controller {
     });
 
     if (needPaymentTypeCount) {
-      const typesCount = await this.senderPaymentModel.getTransferTypesCount(
-        result.options.timeInfos
-      );
+      const typesCount = await this.senderPaymentModel.getTransferTypesCount({
+        filter,
+        timeInfos: result.options.timeInfos,
+        status,
+      });
       result["typesCount"] = typesCount;
     }
     return result;

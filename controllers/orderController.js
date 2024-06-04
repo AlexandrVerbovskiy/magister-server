@@ -310,13 +310,14 @@ class OrderController extends Controller {
       orders[index]["listingRentalCount"] = listingCounts[order.listingId];
       orders[index]["orderCheckLists"] = orderCheckLists[order.id];
     });
-    
+
     return orders;
   };
 
   baseAdminBookingList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
     const type = req.body.type ?? "all";
+    const filter = req.body.filter ?? "";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       this.orderModel.allBookingsTotalCount(filter, type, timeInfos)
@@ -326,9 +327,10 @@ class OrderController extends Controller {
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
-    const statusCount = await this.orderModel.getBookingStatusesCount(
-      timeInfos
-    );
+    const statusCount = await this.orderModel.getBookingStatusesCount({
+      timeInfos,
+      filter,
+    });
 
     let orders = await this.orderModel.allBookingsList(options);
 
@@ -392,6 +394,7 @@ class OrderController extends Controller {
   baseAdminOrderList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
     const type = req.body.type ?? "all";
+    const filter = req.body.filter ?? "";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       this.orderModel.allOrdersTotalCount(filter, type, timeInfos)
@@ -401,7 +404,10 @@ class OrderController extends Controller {
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
-    const statusCount = await this.orderModel.getOrderStatusesCount(timeInfos);
+    const statusCount = await this.orderModel.getOrderStatusesCount({
+      filter,
+      timeInfos,
+    });
 
     let orders = await this.orderModel.allOrderList(options);
 

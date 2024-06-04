@@ -485,12 +485,10 @@ class RecipientPayment extends Model {
   };
 
   markFailedAsDone = async (id, paymentNumber) => {
-    await db(RECIPIENT_PAYMENTS_TABLE)
-      .where({ id: id, status: STATIC.RECIPIENT_STATUSES.FAILED })
-      .update({
-        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-        data: JSON.stringify({ paypalId: paymentNumber }),
-      });
+    await db(RECIPIENT_PAYMENTS_TABLE).update({
+      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+      data: JSON.stringify({ paypalId: paymentNumber }),
+    });
   };
 
   getById = async (id) => {

@@ -232,7 +232,6 @@ class SenderPayment extends Model {
   baseStatusWhere = (query, status) => {
     if (status == "waiting") {
       query = query
-        .where("admin_approved", false)
         .where("waiting_approved", true);
     }
 
@@ -281,7 +280,6 @@ class SenderPayment extends Model {
     query = this.baseTypeWhere(query, type);
 
     query = this.baseStatusWhere(query, status);
-
     const { count } = await query.count("* as count").first();
     return count;
   };
@@ -317,13 +315,17 @@ class SenderPayment extends Model {
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };
 
-  totalCount = async (filter, type, timeInfos, userId = null) => {
+  totalCount = async ({
+    filter,
+    type,
+    timeInfos,
+    userId = null,
+    status = null,
+  }) => {
     const select = userId ? this.strFilterFields : this.strFullFilterFields;
     const dopWhere = (query) => {
       if (userId) {
         query = query.where({ user_id: userId });
-      } else {
-        query = query.where({ admin_approved: true });
       }
 
       return query;
@@ -335,6 +337,7 @@ class SenderPayment extends Model {
       dopWhere,
       select,
       type,
+      status,
     });
   };
 
@@ -346,8 +349,6 @@ class SenderPayment extends Model {
     const dopWhere = (query) => {
       if (props.userId) {
         query = query.where({ user_id: props.userId });
-      } else {
-        query = query.where({ admin_approved: true });
       }
 
       return query;
@@ -448,7 +449,7 @@ class SenderPayment extends Model {
       ]);
   };
 
-  getTransferTypesCount= async (timeInfos) => {
+  getTransferTypesCount = async ({ filter, timeInfos, status }) => {
     let query = db(SENDER_PAYMENTS_TABLE);
 
     query = this.baseListTimeFilter(
@@ -457,8 +458,12 @@ class SenderPayment extends Model {
       `${SENDER_PAYMENTS_TABLE}.created_at`
     );
 
+    query = this.baseStatusWhere(query, status);
+    query = this.baseListJoin(query).whereRaw(
+      this.filterIdLikeString(filter, `${SENDER_PAYMENTS_TABLE}.id`)
+    );
+
     const result = await query
-      .where({ admin_approved: true })
       .select(
         db.raw(`COUNT(*) AS "allCount"`),
         db.raw(
@@ -474,40 +479,6 @@ class SenderPayment extends Model {
       allCount: result["allCount"] ?? 0,
       paypalCount: result["paypalCount"] ?? 0,
       bankTransferCount: result["bankTransferCount"] ?? 0,
-    };
-  };
-
-  getStatusCountByStatusType = async (timeInfos) => {
-    let query = db(SENDER_PAYMENTS_TABLE);
-
-    query = this.baseListJoin(query).where("type", "credit-card");
-
-    query = this.baseListTimeFilter(
-      timeInfos,
-      query,
-      `${SENDER_PAYMENTS_TABLE}.created_at`
-    );
-
-    const result = await query
-      .select(
-        db.raw(`COUNT(*) AS "allCount"`),
-        db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.waiting_approved IS TRUE THEN 1 ELSE 0 END) AS "waitingCount"`
-        ),
-        db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.waiting_approved IS FALSE AND ${SENDER_PAYMENTS_TABLE}.admin_approved IS FALSE THEN 1 ELSE 0 END) AS "rejectedCount"`
-        ),
-        db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.waiting_approved IS FALSE AND ${SENDER_PAYMENTS_TABLE}.admin_approved IS TRUE THEN 1 ELSE 0 END) AS "approvedCount"`
-        )
-      )
-      .first();
-
-    return {
-      allCount: result["allCount"] ?? 0,
-      waitingCount: result["waitingCount"] ?? 0,
-      rejectedCount: result["rejectedCount"] ?? 0,
-      approvedCount: result["approvedCount"] ?? 0,
     };
   };
 }

@@ -103,12 +103,9 @@ class UserVerifyRequestModel extends Model {
   totalCount = async (filter, timeInfos, status = null) => {
     let query = db(USER_VERIFY_REQUESTS_TABLE);
     query = this.baseListJoin(query);
-
-    query = query
-      .where("has_response", false)
-      .whereRaw(
-        this.filterIdLikeString(filter, `${USER_VERIFY_REQUESTS_TABLE}.id`)
-      );
+    query = query.whereRaw(
+      this.filterIdLikeString(filter, `${USER_VERIFY_REQUESTS_TABLE}.id`)
+    );
 
     query = this.baseListTimeFilter(
       timeInfos,
