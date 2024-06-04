@@ -17,7 +17,8 @@
     "create-migration": "npx knex migrate:make",
     "create-seed": "npx knex seed:make",
     "command-pay-rent": "node commands/pay-rent.js",
-    "command-auto-extended-finish": "node commands/auto-extended-finish.js"
+    "command-auto-extended-finish": "node commands/auto-extended-finish.js",
+    "test-start": "concurrently \"npm run migrate\" \"node index.js\"",
   },
   "author": "",
   "license": "ISC",
