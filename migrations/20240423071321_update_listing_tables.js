@@ -7,6 +7,12 @@ const STATIC = require("../static");
 exports.up = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.LISTINGS, function (table) {
     table.boolean("active").defaultTo(true);
+
+    table
+      .integer("category_id")
+      .unsigned()
+      .references(STATIC.TABLES.LISTING_CATEGORIES + ".id")
+      .alter();
   });
 };
 
@@ -17,5 +23,6 @@ exports.up = function (knex) {
 exports.down = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.LISTINGS, function (table) {
     table.dropColumn("active");
+    table.dropForeign("category_id");
   });
 };

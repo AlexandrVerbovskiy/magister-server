@@ -33,8 +33,7 @@ exports.up = function (knex) {
 
     table
       .integer("category_id")
-      .unsigned()
-      .references(STATIC.TABLES.LISTING_CATEGORIES + ".id");
+      .unsigned();
 
     table
       .integer("owner_id")
