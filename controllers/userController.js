@@ -813,7 +813,15 @@ class UserController extends Controller {
           userId
         );
 
-        if (Object.keys(currentUserDocuments).length > 0) {
+        let hasRealPhoto = false;
+
+        Object.keys(currentUserDocuments).forEach((documentKey) => {
+          if (currentUserDocuments[documentKey]) {
+            hasRealPhoto = true;
+          }
+        });
+
+        if (hasRealPhoto) {
           await this.userModel.updateUserDocuments(userId, dataToSave);
 
           Object.keys(dataToSave).forEach((key) => {
