@@ -15,7 +15,6 @@ exports.up = function (knex) {
       table.boolean("waiting_approved").defaultTo(true);
       table.text("failed_description");
       table.dropColumn("paypal_sender_id");
-      table.dropColumn("paypal_order_id");
       table.dropColumn("paypal_capture_id");
     }
   );
@@ -36,7 +35,6 @@ exports.down = function (knex) {
       table.dropColumn("waiting_approved");
       table.dropColumn("failed_description");
       table.string("paypal_sender_id").nullable().defaultTo(null);
-      table.string("paypal_order_id").nullable().defaultTo(null);
       table.string("paypal_capture_id").nullable().defaultTo(null);
     }
   );
