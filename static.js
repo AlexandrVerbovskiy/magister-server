@@ -17,6 +17,11 @@ module.exports = {
       STATUS: 400,
       DEFAULT_MESSAGE: "Bad request",
     },
+    SIZE_LIMIT: {
+      KEY: "size_limit",
+      STATUS: 413,
+      DEFAULT_MESSAGE: "Out of data size",
+    },
     DATA_CONFLICT: {
       KEY: "data_conflict",
       STATUS: 409,

@@ -7,6 +7,7 @@ const {
   isFileLimit,
   isVerified,
   authId,
+  isSummaryFileLimit,
 } = require("../../middlewares");
 const { upload } = require("../../utils");
 const {
@@ -62,6 +63,7 @@ router.post(
   isAuth,
   isVerified,
   upload.any(),
+  isSummaryFileLimit,
   isFileLimit,
   createValidation,
   listingController.create
@@ -72,6 +74,7 @@ router.post(
   isAuth,
   isVerified,
   upload.any(),
+  isSummaryFileLimit,
   isFileLimit,
   updateValidation,
   listingController.update
@@ -82,6 +85,7 @@ router.post(
   isAuth,
   isAdmin,
   upload.any(),
+  isSummaryFileLimit,
   isFileLimit,
   createByAdminValidation,
   listingController.createByAdmin
@@ -92,6 +96,7 @@ router.post(
   isAuth,
   isAdmin,
   upload.any(),
+  isSummaryFileLimit,
   isFileLimit,
   updateByAdminValidation,
   listingController.updateByAdmin
