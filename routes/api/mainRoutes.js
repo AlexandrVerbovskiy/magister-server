@@ -341,7 +341,7 @@ router.get(
 router.post(
   "/get-admin-index-page-option",
   isAuth,
-  isAdmin,
+  isSupport,
   mainController.getAdminIndexPageOptions
 );
 
