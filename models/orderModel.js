@@ -202,7 +202,7 @@ class OrderModel extends Model {
   orderTimeFilterWrap = (query, timeInfos) => {
     if (timeInfos.serverFromTime) {
       query = query.where(
-        this.baseStringStartFilterDateWrap("start_date"),
+        this.baseStringStartFilterDateWrap(`${ORDERS_TABLE}.created_at`),
         ">=",
         formatDateToSQLFormat(timeInfos.serverFromTime)
       );
@@ -210,7 +210,7 @@ class OrderModel extends Model {
 
     if (timeInfos.serverToTime) {
       query = query.where(
-        this.baseStringEndFilterDateWrap("end_date"),
+        this.baseStringEndFilterDateWrap(`${ORDERS_TABLE}.created_at`),
         "<=",
         formatDateToSQLFormat(timeInfos.serverToTime)
       );
