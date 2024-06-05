@@ -5,6 +5,7 @@ const {
   isNotAuth,
   isFileLimit,
   isUnverified,
+  isSummaryFileLimit,
 } = require("../../middlewares");
 const { userController } = require("../../controllers");
 const {
@@ -57,6 +58,7 @@ router.post(
   "/save-my-documents",
   isAuth,
   upload.any(),
+  isSummaryFileLimit,
   isFileLimit,
   userController.updateMyDocuments
 );

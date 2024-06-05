@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const { listingCategoriesController } = require("../../controllers");
-const { isAuth, isAdmin, isSmallFileLimit } = require("../../middlewares");
+const { isAuth, isAdmin, isSmallFileLimit, isSummaryFileLimit } = require("../../middlewares");
 const { smallUpload } = require("../../utils");
 const { saveValidation } = require("../../validations/listingCategory");
 
@@ -12,6 +12,7 @@ router.post(
   isAuth,
   isAdmin,
   smallUpload.any(),
+  isSummaryFileLimit,
   isSmallFileLimit,
   saveValidation,
   listingCategoriesController.saveList
