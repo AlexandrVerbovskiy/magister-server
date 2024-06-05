@@ -1338,7 +1338,7 @@ class OrderModel extends Model {
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
 
-    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    query = this.orderTimeFilterWrap(query, timeInfos);
     query = query.whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
