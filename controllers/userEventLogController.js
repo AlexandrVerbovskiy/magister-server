@@ -8,19 +8,28 @@ class UserEventLogController extends Controller {
 
   baseUserEventLogList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
+    const type = req.body.type ?? "all";
+    const filter = req.body.filter ?? "";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.userEventLogModel.totalCount(filter, timeInfos)
+      this.userEventLogModel.totalCount({ filter, timeInfos, type })
     );
 
     options = this.addTimeInfoToOptions(options, timeInfos);
+    options["type"] = type;
 
     const logs = await this.userEventLogModel.list(options);
+
+    const typeCount = await this.userEventLogModel.getTypesCount({
+      filter,
+      timeInfos,
+    });
 
     return {
       items: logs,
       options,
       countItems,
+      typeCount
     };
   };
 

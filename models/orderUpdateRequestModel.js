@@ -26,6 +26,15 @@ class OrderUpdateRequestModel extends Model {
     senderId,
     fee,
   }) => {
+    console.log({
+      order_id: orderId,
+      new_start_date: newStartDate,
+      new_end_date: newEndDate,
+      new_price_per_day: newPricePerDay,
+      sender_id: senderId,
+      fee,
+    });
+
     const res = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .insert({
         order_id: orderId,
