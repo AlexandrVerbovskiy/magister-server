@@ -1,7 +1,8 @@
+const { userModel } = require("../models");
 const STATIC = require("../static");
 const { validateToken } = require("../utils");
 
-function isAuth(request, response, next) {
+async function isAuth(request, response, next) {
   const authorization = request.headers.authorization;
 
   if (!authorization)
@@ -26,8 +27,16 @@ function isAuth(request, response, next) {
     });
   }
 
+  const user = await userModel.checkIsActive(resValidate.userId);
+
+  if (!user || !user.id)
+    return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
+      isError: true,
+      message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
+    });
+
   request.userData = {
-    userId: resValidate.userId,
+    userId: user.id,
   };
 
   return next();
