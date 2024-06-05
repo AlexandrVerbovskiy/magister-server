@@ -1126,6 +1126,7 @@ class OrderModel extends Model {
   getUnfinishedTenantCount = async (tenantId) => {
     const { count } = await db(ORDERS_TABLE)
       .whereIn("status", this.processStatuses)
+      .whereNull("cancel_status")
       .where("tenant_id", tenantId)
       .count("* as count")
       .first();
@@ -1136,6 +1137,7 @@ class OrderModel extends Model {
   getUnfinishedOwnerCount = async (ownerId) => {
     const { count } = await db(ORDERS_TABLE)
       .whereIn("status", this.processStatuses)
+      .whereNull("cancel_status")
       .leftJoin(
         LISTINGS_TABLE,
         LISTINGS_TABLE + ".id",
@@ -1170,6 +1172,8 @@ class OrderModel extends Model {
   };
 
   delete = async (orderId) => {
+    await db(STATIC.RECIPIENT_STATUSES).where("order_id", orderId).delete();
+    await db(SENDER_PAYMENTS_TABLE).where("order_id", orderId).delete();
     await db(ORDER_UPDATE_REQUESTS_TABLE).where("order_id", orderId).delete();
     await db(ORDERS_TABLE).where("id", orderId).delete();
   };
@@ -1281,7 +1285,7 @@ class OrderModel extends Model {
       ]);
   };
 
-  getBookingStatusesCount = async ({timeInfos, filter}) => {
+  getBookingStatusesCount = async ({ timeInfos, filter }) => {
     let query = db(ORDERS_TABLE);
     query = query.joinRaw(
       `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
@@ -1326,7 +1330,7 @@ class OrderModel extends Model {
     };
   };
 
-  getOrderStatusesCount = async ({timeInfos, filter}) => {
+  getOrderStatusesCount = async ({ timeInfos, filter }) => {
     let query = db(ORDERS_TABLE);
     query = query.joinRaw(
       `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
