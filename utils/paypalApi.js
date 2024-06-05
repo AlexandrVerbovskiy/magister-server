@@ -39,6 +39,10 @@ const createPaypalOrder = async (amount, orderId, listingName) => {
   const accessToken = await getToken();
   const url = `${base}/v2/checkout/orders`;
 
+  if (listingName.length > 127) {
+    return listingName.substring(0, 123) + "...";
+  }
+
   const payload = {
     intent: "CAPTURE",
     purchase_units: [
