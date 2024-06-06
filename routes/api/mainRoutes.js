@@ -345,4 +345,16 @@ router.post(
   mainController.getAdminIndexPageOptions
 );
 
+router.get(
+  "/get-order-review-by-tenant/:id",
+  isAuth,
+  mainController.getOrderReviewByTenantOptions
+);
+
+router.get(
+  "/get-order-review-by-owner/:id",
+  isAuth,
+  mainController.getOrderReviewByOwnerOptions
+);
+
 module.exports = router;
