@@ -42,6 +42,9 @@ const {
   recipientPaymentModel,
   listingDefectModel,
   listingDefectQuestionModel,
+  listingCommentModel,
+  ownerCommentModel,
+  tenantCommentModel
 } = require("../models");
 
 const STATIC = require("../static");
@@ -68,6 +71,10 @@ class Controller {
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
     this.listingDefectQuestionModel = listingDefectQuestionModel;
+
+   this.listingCommentModel = listingCommentModel;
+   this.ownerCommentModel = ownerCommentModel;
+   this.tenantCommentModel = tenantCommentModel;
 
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
