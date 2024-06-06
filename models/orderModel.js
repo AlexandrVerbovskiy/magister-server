@@ -1243,8 +1243,12 @@ class OrderModel extends Model {
 
   updateExtendedFinished = async () => {
     return await db(ORDERS_TABLE)
-      .whereIn("id", function () {
-        this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
+      .where(function () {
+        this.whereIn("id", function () {
+          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
+        }).orWhereIn("parent_id", function () {
+          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
+        });
       })
       .whereNull("cancel_status")
       .where("status", STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER)
