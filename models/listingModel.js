@@ -506,15 +506,15 @@ class ListingsModel extends Model {
 
   queryByStatus = (query, status) => {
     if (status == "approved") {
-      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS TRUE)`);
+      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS TRUE AND (${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL OR ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL))`);
     }
 
     if (status == "unapproved") {
-      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS FALSE)`);
+      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS FALSE AND (${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL OR ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL))`);
     }
 
     if (status == "not-processed") {
-      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS NULL AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`);
+      query = query.whereRaw(`(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS NULL AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`);
     }
 
     return query;
