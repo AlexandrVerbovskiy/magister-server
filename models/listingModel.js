@@ -505,23 +505,16 @@ class ListingsModel extends Model {
   };
 
   queryByStatus = (query, status) => {
-    const statusWhere = (isData) =>
-      `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS ${isData} AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`;
-
     if (status == "approved") {
-      query = query.whereRaw(statusWhere("TRUE"));
+      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS TRUE)`);
     }
 
     if (status == "unapproved") {
-      query = query.whereRaw(
-        `(${statusWhere(
-          "FALSE"
-        )} OR ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL)`
-      );
+      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS FALSE)`);
     }
 
     if (status == "not-processed") {
-      query = query.whereRaw(statusWhere("NULL"));
+      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS NULL AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`);
     }
 
     return query;
