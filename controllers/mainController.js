@@ -1093,6 +1093,58 @@ class MainController extends Controller {
         transactionsDetailInfo,
       });
     });
+
+  getOrderReviewByTenantOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const { userId } = req.userData;
+
+      const categories = await this.getNavigationCategories();
+      const order = await this.orderModel.getFullById(id);
+
+      order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(
+        order.ownerId
+      );
+
+      if (
+        order.tenantId != userId ||
+        order.status != STATIC.ORDER_STATUSES.FINISHED ||
+        order.cancelStatus
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        order,
+      });
+    });
+
+  getOrderReviewByOwnerOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const { userId } = req.userData;
+
+      const categories = await this.getNavigationCategories();
+      const order = await this.orderModel.getFullById(id);
+
+      order["tenantCountItems"] = await this.listingModel.getOwnerCountListings(
+        order.tenantId
+      );
+
+      if (
+        order.ownerId != userId ||
+        order.status != STATIC.ORDER_STATUSES.FINISHED ||
+        order.cancelStatus
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        order,
+      });
+    });
 }
 
 module.exports = new MainController();
