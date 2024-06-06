@@ -4,7 +4,6 @@ const db = require("../database");
 const Model = require("./Model");
 const listingCategoryModel = require("./listingCategoryModel");
 const { listingListDateConverter } = require("../utils");
-const listingCommentModel = require("./listingCommentModel");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -61,40 +60,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_terms as rentalTerms`,
     `${LISTINGS_TABLE}.key_words as keyWords`,
     `${LISTINGS_TABLE}.dop_defect as dopDefect`,
-  ];
-
-  fullVisibleFields = [
-    ...this.visibleFields,
-    `${USERS_TABLE}.id as userId`,
-    `${USERS_TABLE}.name as userName`,
-    `${USERS_TABLE}.email as userEmail`,
-    `${USERS_TABLE}.phone as userPhone`,
-    `${USERS_TABLE}.photo as userPhoto`,
-    `${USERS_TABLE}.instagram_url as userInstagramUrl`,
-    `${USERS_TABLE}.linkedin_url as userLinkedinUrl`,
-    `${USERS_TABLE}.facebook_url as userFacebookUrl`,
-    `${USERS_TABLE}.twitter_url as userTwitterUrl`,
-    `${USERS_TABLE}.place_work as userPlaceWork`,
-    `${USERS_TABLE}.verified as userVerified`,
-    `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
-    `${LISTING_CATEGORIES_TABLE}.level as categoryLevel`,
-  ];
-
-  fullGroupedFields = [
-    ...this.baseGroupedFields,
-    `${USERS_TABLE}.id`,
-    `${USERS_TABLE}.name`,
-    `${USERS_TABLE}.email`,
-    `${USERS_TABLE}.phone`,
-    `${USERS_TABLE}.photo`,
-    `${USERS_TABLE}.instagram_url`,
-    `${USERS_TABLE}.linkedin_url`,
-    `${USERS_TABLE}.facebook_url`,
-    `${USERS_TABLE}.twitter_url`,
-    `${USERS_TABLE}.place_work`,
-    `${USERS_TABLE}.verified`,
-    `${LISTING_CATEGORIES_TABLE}.name`,
-    `${LISTING_CATEGORIES_TABLE}.level`,
   ];
 
   listingImageVisibleFields = ["id", "listing_id as listingId", "type", "link"];
@@ -237,38 +202,6 @@ class ListingsModel extends Model {
     return { ...listing, listingImages, defects };
   };
 
-  getListByIds = async (ids) => {
-    const listings = await db(LISTINGS_TABLE)
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
-        LISTING_CATEGORIES_TABLE,
-        `${LISTING_CATEGORIES_TABLE}.id`,
-        "=",
-        `${LISTINGS_TABLE}.category_id`
-      )
-      .whereIn(`${LISTINGS_TABLE}.id`, ids)
-      .select(this.fullVisibleFields);
-
-    return await this.listingsBindImages(listings);
-  };
-
-  getDopForTop = async (ignoreIds, count) => {
-    const listings = await db(LISTINGS_TABLE)
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
-        LISTING_CATEGORIES_TABLE,
-        `${LISTING_CATEGORIES_TABLE}.id`,
-        "=",
-        `${LISTINGS_TABLE}.category_id`
-      )
-      .whereNotIn(`${LISTINGS_TABLE}.id`, ignoreIds)
-      .orderBy(`${LISTINGS_TABLE}.created_at`, "desc")
-      .select(this.fullVisibleFields)
-      .limit(count);
-
-    return await this.listingsBindImages(listings);
-  };
-
   getFullById = async (id) => {
     const listing = await db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
@@ -279,7 +212,22 @@ class ListingsModel extends Model {
         `${LISTINGS_TABLE}.category_id`
       )
       .where(`${LISTINGS_TABLE}.id`, id)
-      .select(this.fullVisibleFields)
+      .select([
+        ...this.visibleFields,
+        `${USERS_TABLE}.id as userId`,
+        `${USERS_TABLE}.name as userName`,
+        `${USERS_TABLE}.email as userEmail`,
+        `${USERS_TABLE}.phone as userPhone`,
+        `${USERS_TABLE}.photo as userPhoto`,
+        `${USERS_TABLE}.instagram_url as userInstagramUrl`,
+        `${USERS_TABLE}.linkedin_url as userLinkedinUrl`,
+        `${USERS_TABLE}.facebook_url as userFacebookUrl`,
+        `${USERS_TABLE}.twitter_url as userTwitterUrl`,
+        `${USERS_TABLE}.place_work as userPlaceWork`,
+        `${USERS_TABLE}.verified as userVerified`,
+        `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
+        `${LISTING_CATEGORIES_TABLE}.level as categoryLevel`,
+      ])
       .first();
 
     if (!listing) return null;
@@ -363,13 +311,16 @@ class ListingsModel extends Model {
       .filter((image) => currentImageLinks.includes(image.link))
       .map((image) => image.link);
 
-    const imagesToUpdateIds = listingImagesToUpdate.map((image) => image.id);
-    
-    await db(LISTING_IMAGES_TABLE)
+    const toDeleteImagesQuery = db(LISTING_IMAGES_TABLE)
       .where("listing_id", id)
-      .whereNotIn("link", actualListingImageLinks)
-      .whereNotIn("id", imagesToUpdateIds)
-      .delete();
+      .whereNotIn("link", actualListingImageLinks);
+
+    const deletedImagesInfos = await toDeleteImagesQuery.select(
+      this.listingImageVisibleFields
+    );
+
+    const imagesToUpdateIds = listingImagesToUpdate.map((image) => image.id);
+    await toDeleteImagesQuery.whereNotIn("id", imagesToUpdateIds).delete();
 
     listingImagesToUpdate.forEach(
       async (image) =>
@@ -393,6 +344,7 @@ class ListingsModel extends Model {
     const createdDefects = await this.saveDefects(defects, id);
     const currentListingImages = await this.getListingImages(id);
     return {
+      deletedImagesInfos,
       listingImages: currentListingImages,
       defects: createdDefects,
     };
@@ -414,13 +366,18 @@ class ListingsModel extends Model {
   };
 
   deleteById = async (listingId) => {
-    await db(LISTING_IMAGES_TABLE)
-      .where({
-        listing_id: listingId,
-      })
-      .delete();
+    const toDeleteImagesQuery = db(LISTING_IMAGES_TABLE).where({
+      listing_id: listingId,
+    });
 
+    const deletedImagesInfos = await toDeleteImagesQuery.select(
+      this.listingImageVisibleFields
+    );
+
+    await toDeleteImagesQuery.delete();
     await db(LISTINGS_TABLE).where({ id: listingId }).delete();
+
+    return { deletedImagesInfos };
   };
 
   changeActiveByUser = async (listingId, userId) => {
@@ -547,26 +504,6 @@ class ListingsModel extends Model {
     return query;
   };
 
-  queryByStatus = (query, status) => {
-    if (status == "approved") {
-      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS TRUE)`);
-    }
-
-    if (status == "unapproved") {
-      query = query.whereRaw(
-        `(${LISTINGS_TABLE}.approved IS FALSE AND (${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NULL OR ${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS NOT NULL))`
-      );
-    }
-
-    if (status == "not-processed") {
-      query = query.whereRaw(
-        `(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS NULL AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`
-      );
-    }
-
-    return query;
-  };
-
   queryByApproved = (query, approved) => {
     if (approved == "approved") {
       query = query.where(`${LISTINGS_TABLE}.approved`, true);
@@ -647,32 +584,6 @@ class ListingsModel extends Model {
     return count;
   };
 
-  bindOwnerListCountListings = async (
-    entities,
-    key = "id",
-    resultKey = "ownerCountItems"
-  ) => {
-    const userIds = entities.map((entity) => entity[key]);
-
-    const countInfos = await db(LISTINGS_TABLE)
-      .select("owner_id as ownerId")
-      .count(`${LISTINGS_TABLE}.id as count`)
-      .whereIn("owner_id", userIds)
-      .groupBy("owner_id");
-
-    entities.forEach((entity, index) => {
-      entities[index][resultKey] = 0;
-
-      countInfos.forEach((countInfo) => {
-        if (entities[index] === countInfo["ownerId"]) {
-          entities[index][resultKey] = countInfo["count"];
-        }
-      });
-    });
-
-    return entities;
-  };
-
   getOwnerCountListings = async (userId) => {
     const { count } = await db(LISTINGS_TABLE)
       .where({ owner_id: userId })
@@ -681,44 +592,10 @@ class ListingsModel extends Model {
     return count;
   };
 
-  bindTenantListCountListings = async (
-    entities,
-    key = "id",
-    resultKey = "tenantCountItems"
-  ) => {
-    const userIds = entities.map((entity) => entity[key]);
-
-    const countInfos = await db(ORDERS_TABLE)
-      .select("tenant_id as tenantId")
-      .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
-      .whereIn("tenant_id", userIds)
-      .groupBy("tenant_id");
-
-    entities.forEach((entity, index) => {
-      entities[index][resultKey] = 0;
-
-      countInfos.forEach((countInfo) => {
-        if (entities[index] === countInfo["tenantId"]) {
-          entities[index][resultKey] = countInfo["count"];
-        }
-      });
-    });
-
-    return entities;
-  };
-
-  getTenantCountListings = async (userId) => {
-    const { count } = await db(ORDERS_TABLE)
-      .where({ tenant_id: userId })
-      .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
-      .first();
-    return count;
-  };
-
   totalCountWithLastRequests = async (
     filter,
     userId = null,
-    { active = null, approved = null, status = null }
+    { active = null, approved = null }
   ) => {
     const subquery = db
       .select("id")
@@ -749,7 +626,6 @@ class ListingsModel extends Model {
 
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
-    query = this.queryByStatus(query, status);
 
     const { count } = await query.count("* as count").first();
     return count;
@@ -774,8 +650,21 @@ class ListingsModel extends Model {
 
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
 
-    const selectParams = this.fullVisibleFields;
-    const groupedParams = this.fullGroupedFields;
+    const selectParams = [
+      ...this.visibleFields,
+      `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
+      `${USERS_TABLE}.name as userName`,
+      `${USERS_TABLE}.photo as userPhoto`,
+      `${USERS_TABLE}.id as userId`,
+    ];
+
+    const groupedParams = [
+      ...this.baseGroupedFields,
+      `${LISTING_CATEGORIES_TABLE}.name`,
+      `${USERS_TABLE}.name`,
+      `${USERS_TABLE}.photo`,
+      `${USERS_TABLE}.id`,
+    ];
 
     let canUseDefaultCoordsOrder = false;
 
@@ -871,7 +760,6 @@ class ListingsModel extends Model {
       count,
       active = null,
       approved = null,
-      status = null,
     } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
@@ -922,7 +810,6 @@ class ListingsModel extends Model {
 
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
-    query = this.queryByStatus(query, status);
 
     return await query
       .groupBy([
@@ -958,40 +845,7 @@ class ListingsModel extends Model {
     }
   };
 
-  getTopListings = async (count = 4) => {
-    const topListingRatingInfos = await listingCommentModel.topListingsByRating(
-      count
-    );
-
-    const ids = topListingRatingInfos.map((listing) => listing.id);
-
-    const topListings = await this.getListByIds(ids);
-    topListings.forEach((listing, index) => {
-      topListings[index]["commentCount"] = 0;
-      topListings[index]["averageRating"] = 0;
-
-      topListingRatingInfos.forEach((listingRatingInfo) => {
-        if (listing["id"] === listingRatingInfo["id"]) {
-          topListings[index]["commentCount"] = Number(
-            listingRatingInfo["commentCount"]
-          );
-          topListings[index]["averageRating"] = Number(
-            Number(listingRatingInfo["averageRating"]).toFixed(2)
-          );
-        }
-      });
-    });
-
-    const dopCount = count - topListingRatingInfos.length;
-    const dopListings = await this.getDopForTop(ids, dopCount);
-
-    dopListings.forEach((listing, index) => {
-      dopListings[index]["commentCount"] = 0;
-      dopListings[index]["averageRating"] = 0;
-    });
-
-    return [...topListings, ...dopListings];
-  };
+  getTopListings = () => this.list({ start: 0, count: 4, order: "latest" });
 
   listingsBindImages = async (listings, key = "id") => {
     const ids = listings.map((listing) => listing[key]);

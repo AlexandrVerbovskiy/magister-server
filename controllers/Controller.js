@@ -42,17 +42,6 @@ const {
   recipientPaymentModel,
   listingDefectModel,
   listingDefectQuestionModel,
-  listingCommentModel,
-  ownerCommentModel,
-  tenantCommentModel,
-  userListingFavoriteModel,
-  disputeModel,
-  chatMessageContentModel,
-  chatMessageModel,
-  chatModel,
-  chatRelationModel,
-  socketModel,
-  activeActionModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -62,46 +51,26 @@ const axios = require("axios");
 
 class Controller {
   mailTransporter = null;
-  io = null;
 
   constructor() {
     this.userModel = userModel;
-
     this.logModel = logModel;
     this.userVerifyRequestModel = userVerifyRequestModel;
     this.systemOptionModel = systemOptionModel;
     this.userEventLogModel = userEventLogModel;
-    this.activeActionModel = activeActionModel;
-
     this.listingCategoryModel = listingCategoryModel;
     this.searchedWordModel = searchedWordModel;
-
     this.listingModel = listingModel;
     this.listingDefectModel = listingDefectModel;
-
     this.orderModel = orderModel;
     this.orderUpdateRequestModel = orderUpdateRequestModel;
-    this.disputeModel = disputeModel;
-
     this.listingApprovalRequestModel = listingApprovalRequestModel;
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
     this.listingDefectQuestionModel = listingDefectQuestionModel;
 
-    this.listingCommentModel = listingCommentModel;
-    this.ownerCommentModel = ownerCommentModel;
-    this.tenantCommentModel = tenantCommentModel;
-
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
-    this.userListingFavoriteModel = userListingFavoriteModel;
-
-    this.chatMessageContentModel = chatMessageContentModel;
-    this.chatMessageModel = chatMessageModel;
-    this.chatModel = chatModel;
-    this.chatRelationModel = chatRelationModel;
-
-    this.socketModel = socketModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -123,30 +92,6 @@ class Controller {
     );
   }
 
-  bindIo(io) {
-    this.io = io;
-  }
-
-  sendSocketIoMessage = (socket, messageKey, message) => {
-    this.io.to(socket).emit(messageKey, message);
-  };
-
-  sendSocketMessageToUsers = async (userIds, message, data) => {
-    const sockets = await this.socketModel.findUserSockets(userIds);
-
-    sockets.forEach((socket) =>
-      this.sendSocketIoMessage(socket, message, data)
-    );
-  };
-
-  sendSocketMessageToUser = async (userId, message, data) => {
-    await this.sendSocketMessageToUsers([userId], message, data);
-  };
-
-  sendError = async (userId, error) => {
-    await this.sendSocketMessageToUser(userId, "error", error);
-  };
-
   sendResponse = (response, baseInfo, message, body, isError) => {
     return response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
@@ -161,10 +106,7 @@ class Controller {
     message = null,
     body = {}
   ) => {
-    if (!baseInfo) {
-      baseInfo = STATIC.SUCCESS.OK;
-    }
-
+    if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
     return this.sendResponse(response, baseInfo, message, body, false);
   };
 
@@ -247,7 +189,6 @@ class Controller {
     });
   };
 
-  //???
   sendAssetPickupMail = async (email, orderId) => {
     const title = "Asset Pickup Confirmation";
     //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
@@ -258,8 +199,7 @@ class Controller {
     });
   };
 
-  //???
-  sendAssetDropOffMail = async (email, invoiceId) => {
+  sendAssetPickupMail = async (email, invoiceId) => {
     const title = "Asset Drop Off Confirmation";
     //const link = CLIENT_URL + "/dashboard/invoices/" + invoiceId;
     const link = CLIENT_URL + "/";
@@ -269,7 +209,6 @@ class Controller {
     });
   };
 
-  //???
   sendLateReturnNotificationMail = async (email, orderId) => {
     const title = "Late Return Notification";
     //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
@@ -280,7 +219,6 @@ class Controller {
     });
   };
 
-  //???
   sendEarlyReturnOfAssetMail = async (email, orderId) => {
     const title = "Early Return of Asset";
     //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
@@ -399,22 +337,19 @@ class Controller {
     });
   };
 
-  createFolderIfNotExists = (folderPath) => {
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-  };
-
   moveUploadsFileToFolder = (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
 
     const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public", folder);
-    this.createFolderIfNotExists(destinationDir);
+
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir, { recursive: true });
+    }
+
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
-    
     return folder + "/" + name + "." + type;
   };
 
@@ -735,9 +670,7 @@ class Controller {
       ? shortTimeConverter(payment.createdAt)
       : "-";
 
-    const dueInfo = payment.createdAt
-      ? shortTimeConverter(payment.createdAt)
-      : "-";
+    const dueInfo = payment.dueAt ? shortTimeConverter(payment.dueAt) : "-";
 
     const params = {
       billTo: payment.listingAddress ?? payment.listingCity,

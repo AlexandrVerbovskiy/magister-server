@@ -261,13 +261,6 @@ class UserModel extends Model {
     return await this.checkRole(id, STATIC.ROLES.ADMIN);
   };
 
-  checkIsActive = async (id) => {
-    return await db(USERS_TABLE)
-      .select("id")
-      .where({ id, active: true })
-      .first();
-  };
-
   checkIsVerified = async (id) => {
     return await db(USERS_TABLE)
       .select("email")
