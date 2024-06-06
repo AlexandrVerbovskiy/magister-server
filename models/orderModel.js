@@ -199,7 +199,7 @@ class OrderModel extends Model {
     return query;
   };
 
-  orderCreatedTimeFilterWrap = (query, timeInfos) => {
+  orderTimeFilterWrap = (query, timeInfos) => {
     if (timeInfos.serverFromTime) {
       query = query.where(
         this.baseStringStartFilterDateWrap(`${ORDERS_TABLE}.created_at`),
@@ -211,26 +211,6 @@ class OrderModel extends Model {
     if (timeInfos.serverToTime) {
       query = query.where(
         this.baseStringEndFilterDateWrap(`${ORDERS_TABLE}.created_at`),
-        "<=",
-        formatDateToSQLFormat(timeInfos.serverToTime)
-      );
-    }
-
-    return query;
-  };
-
-  orderTimeFilterWrap = (query, timeInfos) => {
-    if (timeInfos.serverFromTime) {
-      query = query.where(
-        this.baseStringStartFilterDateWrap("start_date"),
-        ">=",
-        formatDateToSQLFormat(timeInfos.serverFromTime)
-      );
-    }
-
-    if (timeInfos.serverToTime) {
-      query = query.where(
-        this.baseStringEndFilterDateWrap("end_date"),
         "<=",
         formatDateToSQLFormat(timeInfos.serverToTime)
       );
@@ -430,6 +410,43 @@ class OrderModel extends Model {
     return count;
   };
 
+  baseWithRequestInfoTotalCount = async (
+    filter,
+    type,
+    timeInfos,
+    dopWhereCall
+  ) => {
+    let query = db(ORDERS_TABLE).whereRaw(
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    );
+
+    query = this.fullBaseGetQueryWithRequestInfo(filter);
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+
+    query = dopWhereCall(query);
+
+    query = this.baseQueryListByType(query, type);
+
+    const { count } = await query.count("* as count").first();
+    return count;
+  };
+
+  baseAllTotalCount = async (filter, type, timeInfos, dopWhereCall) => {
+    let query = db(ORDERS_TABLE).whereRaw(
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    );
+
+    query = this.fullBaseGetQuery(filter);
+    query = this.orderTimeFilterWrap(query, timeInfos);
+
+    query = dopWhereCall(query);
+
+    query = this.baseQueryListByType(query, type);
+
+    const { count } = await query.count("* as count").first();
+    return count;
+  };
+
   baseTenantList = async (props, type) => {
     const { filter, start, count, timeInfos, tenantId } = props;
 
@@ -494,6 +511,42 @@ class OrderModel extends Model {
       .offset(start);
   };
 
+  baseAllList = async (props, dopWhereCall) => {
+    const { filter, start, count, timeInfos, type = null } = props;
+    const { order, orderType } = this.getOrderInfo(props);
+
+    let query = this.fullBaseGetQuery(filter);
+    query = this.payedInfoJoin(query);
+    query = this.orderTimeFilterWrap(query, timeInfos);
+
+    query = dopWhereCall(query);
+
+    query = this.baseQueryListByType(query, type);
+
+    return await query
+      .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
+  };
+
+  baseWithRequestInfoList = async (props, dopWhereCall) => {
+    const { filter, start, count, timeInfos, type = null } = props;
+    const { order, orderType } = this.getOrderInfo(props);
+
+    let query = this.fullBaseGetQueryWithRequestInfo(filter);
+
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+
+    query = dopWhereCall(query);
+    query = query.select(this.lightRequestVisibleFields);
+    query = query.orderBy(order, orderType);
+
+    query = this.baseQueryListByType(query, type);
+
+    return await query.limit(count).offset(start);
+  };
+
   dopWhereBooking = (query) =>
     query.whereIn(`${ORDERS_TABLE}.status`, this.bookingStatuses);
 
@@ -553,71 +606,29 @@ class OrderModel extends Model {
   };
 
   allBookingsTotalCount = async (filter, type, timeInfos) => {
-    let query = db(ORDERS_TABLE).whereRaw(
-      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    return await this.baseWithRequestInfoTotalCount(
+      filter,
+      type,
+      timeInfos,
+      this.dopWhereBooking
     );
-
-    query = this.fullBaseGetQueryWithRequestInfo(filter);
-    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
-
-    query = this.dopWhereBooking(query);
-
-    query = this.baseQueryListByType(query, type);
-
-    const { count } = await query.count("* as count").first();
-    return count;
   };
 
   allOrdersTotalCount = async (filter, type, timeInfos) => {
-    let query = db(ORDERS_TABLE).whereRaw(
-      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    return await this.baseAllTotalCount(
+      filter,
+      type,
+      timeInfos,
+      this.dopWhereOrder
     );
-
-    query = this.fullBaseGetQuery(filter);
-    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
-
-    query = this.dopWhereOrder(query);
-
-    query = this.baseQueryListByType(query, type);
-
-    const { count } = await query.count("* as count").first();
-    return count;
   };
 
   allBookingsList = async (props) => {
-    const { filter, start, count, timeInfos, type = null } = props;
-    const { order, orderType } = this.getOrderInfo(props);
-
-    let query = this.fullBaseGetQueryWithRequestInfo(filter);
-
-    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
-
-    query = this.dopWhereBooking(query);
-    query = query.select(this.lightRequestVisibleFields);
-    query = query.orderBy(order, orderType);
-
-    query = this.baseQueryListByType(query, type);
-
-    return await query.limit(count).offset(start);
+    return await this.baseWithRequestInfoList(props, this.dopWhereBooking);
   };
 
   allOrderList = async (props) => {
-    const { filter, start, count, timeInfos, type = null } = props;
-    const { order, orderType } = this.getOrderInfo(props);
-
-    let query = this.fullBaseGetQuery(filter);
-    query = this.payedInfoJoin(query);
-    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
-
-    query = this.dopWhereOrder(query);
-
-    query = this.baseQueryListByType(query, type);
-
-    return await query
-      .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
-      .orderBy(order, orderType)
-      .limit(count)
-      .offset(start);
+    return await this.baseAllList(props, this.dopWhereOrder);
   };
 
   create = async ({
@@ -1243,12 +1254,8 @@ class OrderModel extends Model {
 
   updateExtendedFinished = async () => {
     return await db(ORDERS_TABLE)
-      .where(function () {
-        this.whereIn("id", function () {
-          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
-        }).orWhereIn("parent_id", function () {
-          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
-        });
+      .whereIn("id", function () {
+        this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
       })
       .whereNull("cancel_status")
       .where("status", STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER)
@@ -1286,7 +1293,7 @@ class OrderModel extends Model {
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
 
-    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
     query = query.whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
@@ -1331,7 +1338,7 @@ class OrderModel extends Model {
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
 
-    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
     query = query.whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );

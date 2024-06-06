@@ -504,22 +504,6 @@ class ListingsModel extends Model {
     return query;
   };
 
-  queryByStatus = (query, status) => {
-    if (status == "approved") {
-      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS TRUE)`);
-    }
-
-    if (status == "unapproved") {
-      query = query.whereRaw(`(${LISTINGS_TABLE}.approved IS FALSE AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`);
-    }
-
-    if (status == "not-processed") {
-      query = query.whereRaw(`(${LISTING_APPROVAL_REQUESTS_TABLE}.approved IS NULL AND ${LISTING_APPROVAL_REQUESTS_TABLE}.id IS NOT NULL)`);
-    }
-
-    return query;
-  };
-
   queryByApproved = (query, approved) => {
     if (approved == "approved") {
       query = query.where(`${LISTINGS_TABLE}.approved`, true);
@@ -611,7 +595,7 @@ class ListingsModel extends Model {
   totalCountWithLastRequests = async (
     filter,
     userId = null,
-    { active = null, approved = null, status = null }
+    { active = null, approved = null }
   ) => {
     const subquery = db
       .select("id")
@@ -642,7 +626,6 @@ class ListingsModel extends Model {
 
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
-    query = this.queryByStatus(query, status);
 
     const { count } = await query.count("* as count").first();
     return count;
@@ -777,7 +760,6 @@ class ListingsModel extends Model {
       count,
       active = null,
       approved = null,
-      status = null,
     } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
@@ -828,7 +810,6 @@ class ListingsModel extends Model {
 
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
-    query = this.queryByStatus(query, status);
 
     return await query
       .groupBy([
