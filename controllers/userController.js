@@ -380,9 +380,16 @@ class UserController extends Controller {
         await this.userVerifyRequestModel.updateUserVerifyById(id);
       }
 
-      const message = verified
-        ? "User verified successfully"
-        : "User unverified successfully";
+      let message = "User unverified successfully";
+
+      if (verified) {
+        message = "User verified successfully";
+        const user = await this.userModel.getById(id);
+
+        if (user) {
+          this.sendProfileVerificationMail(user.email);
+        }
+      }
 
       this.saveUserAction(
         req,
