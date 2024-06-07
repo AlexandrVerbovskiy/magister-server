@@ -1,8 +1,13 @@
 require("dotenv").config();
-const userCommentModel = require("./userCommentModel");
+const BaseUserCommentModel = require("./BaseUserCommentModel");
+const STATIC = require("../static");
+const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
+const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 
-class OwnerCommentModel extends userCommentModel {
+class OwnerCommentModel extends BaseUserCommentModel {
   type = "owner";
+  keyField = `${LISTINGS_TABLE}.owner_id`;
+  reviewerIdField = `${ORDERS_TABLE}.tenant_id`;
 }
 
 module.exports = new OwnerCommentModel();

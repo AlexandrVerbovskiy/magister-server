@@ -10,6 +10,7 @@ const {
 } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
+const { query } = require("express");
 
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -19,6 +20,8 @@ const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 const LISTING_DEFECT_QUESTION_RELATIONS_TABLE =
   STATIC.TABLES.LISTING_DEFECT_QUESTION_RELATIONS;
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
+const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
+const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -293,6 +296,29 @@ class OrderModel extends Model {
     );
   };
 
+  commentsInfoJoin = (query) => {
+    query = query.leftJoin(
+      LISTING_COMMENTS_TABLE,
+      `${LISTING_COMMENTS_TABLE}.order_id`,
+      "=",
+      `${ORDERS_TABLE}.id`
+    );
+
+    query = query.joinRaw(
+      `LEFT JOIN ${USER_COMMENTS_TABLE} as "tenant_comments" 
+      ON tenant_comments.order_id = ${ORDERS_TABLE}.id AND 
+      tenant_comments.type = 'tenant'`
+    );
+
+    query = query.joinRaw(
+      `LEFT JOIN ${USER_COMMENTS_TABLE} as "owner_comments" 
+      ON owner_comments.order_id = ${ORDERS_TABLE}.id AND 
+      owner_comments.type = 'owner'`
+    );
+
+    return query;
+  };
+
   tenantBaseGetQuery = (
     filter,
     timeInfos,
@@ -449,10 +475,28 @@ class OrderModel extends Model {
       query = this.dopWhereOrder(query);
     }
 
-    const visibleFields =
+    query = this.commentsInfoJoin(query);
+
+    let visibleFields =
       type == "booking"
         ? [...this.lightRequestVisibleFields, ...this.selectPartPayedInfo]
         : this.lightVisibleFields;
+
+    visibleFields = [
+      ...visibleFields,
+
+      `tenant_comments.id as tenantCommentId`,
+      `owner_comments.id as ownerCommentId`,
+      `${LISTING_COMMENTS_TABLE}.id as listingCommentId`,
+
+      `tenant_comments.waiting_admin as tenantCommentWaitingAdmin`,
+      `owner_comments.waiting_admin as ownerCommentWaitingAdmin`,
+      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentWaitingAdmin`,
+
+      `tenant_comments.waiting_admin as tenantCommentApproved`,
+      `owner_comments.waiting_admin as ownerCommentApproved`,
+      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentApproved`,
+    ];
 
     if (type == "order") {
       query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
@@ -481,6 +525,8 @@ class OrderModel extends Model {
     } else {
       query = this.dopWhereOrder(query);
     }
+
+    query = this.commentsInfoJoin(query);
 
     const visibleFields =
       type == "booking"
@@ -1246,9 +1292,9 @@ class OrderModel extends Model {
       .where(function () {
         this.whereIn("id", function () {
           this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
-        }).orWhereIn("parent_id", function () {
+        }) /*.orWhereIn("parent_id", function () {
           this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
-        });
+        })*/;
       })
       .whereNull("cancel_status")
       .where("status", STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER)

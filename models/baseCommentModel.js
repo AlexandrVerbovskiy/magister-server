@@ -2,85 +2,99 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
+const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const USERS_TABLE = STATIC.TABLES.USERS;
 
 class BaseCommentModel extends Model {
   approve = async (commentId) => {
-    await db(this.table)
-      .where({ id: commentId })
-      .update({
-        approved: true,
-        waiting_admin: false,
-      })
-      .returning("id");
+    await db(this.table).where({ id: commentId }).update({
+      approved: true,
+      waiting_admin: false,
+    });
   };
 
   reject = async (commentId, description) => {
-    await db(this.table)
-      .where({ id: commentId })
-      .update({
-        approved: true,
-        waiting_admin: false,
-        rejected_description: description,
-      })
-      .returning("id");
+    await db(this.table).where({ id: commentId }).update({
+      approved: true,
+      waiting_admin: false,
+      rejected_description: description,
+    });
   };
 
-  queryByStatus = (query, status) => {
-    if (status == "approved") {
-      query = query.where(`${this.table}.approved = TRUE`);
+  queryByType = (query, type) => {
+    if (type == "approved") {
+      query = query.whereRaw(`${this.table}.approved = TRUE`);
     }
 
-    if (status == "rejected") {
-      query = query.where(
+    if (type == "rejected") {
+      query = query.whereRaw(
         `${this.table}.approved = FALSE AND ${this.table}.waiting_admin = FALSE`
       );
     }
-
-    if (status == "suspended") {
-      query = query.where(`${this.table}.waiting_admin = TRUE`);
+    if (type == "suspended") {
+      query = query.whereRaw(`${this.table}.waiting_admin = TRUE`);
     }
 
     return query;
   };
 
-  totalCount = async (filter, timeInfos, status = null) => {
+  totalCount = async ({ filter, timeInfos, type = null }) => {
     let query = this.baseSelect().whereRaw(...this.baseStrFilter(filter));
-    query = this.baseListTimeFilter(timeInfos, query);
+    query = this.baseListTimeFilter(
+      timeInfos,
+      query,
+      `${this.table}.created_at`
+    );
 
-    query = this.queryByStatus(query, status);
+    query = this.queryByType(query, type);
 
     const { count } = await query.count("* as count").first();
     return count;
   };
 
   list = async (props) => {
-    const { filter, start, count } = props;
+    const { filter, start, count, type = null } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.baseListTimeFilter
+    let query = this.baseSelect()
       .select(this.visibleFields)
       .whereRaw(...this.baseStrFilter(filter));
 
-    query = this.baseListTimeFilter(props.timeInfos, query);
+    query = this.baseListTimeFilter(
+      props.timeInfos,
+      query,
+      `${this.table}.created_at`
+    );
 
-    query = this.queryByStatus(query, status);
+    query = this.queryByType(query, type);
 
     return await query.orderBy(order, orderType).limit(count).offset(start);
   };
 
-  listForEntity = async (entityId, count, start) => {
-    return await this.baseSelect()
-      .where(`${this.table}.${this.keyField}`, entityId)
+  listForEntity = async (entityId, count = 20, start = 0) => {
+    const subquery = db(this.table)
+      .select(db.raw(`MAX(${this.table}.id) AS latest_comment_id`))
+      .innerJoin(ORDERS_TABLE, `${ORDERS_TABLE}.id`, `${this.table}.order_id`)
+      .where(this.keyField, entityId)
+      .groupBy([this.reviewerIdField, this.keyField]);
+
+    let query = db(this.table);
+    query = this.baseJoin(query);
+    query = query
+      .select(this.visibleFields)
+      .whereIn(`${this.table}.id`, subquery)
+      .orderBy(`${this.table}.created_at`, "desc")
       .limit(count)
-      .groupBy([`${this.table}.reviewer_id`, `${this.table}.${this.keyField}`])
       .offset(start);
+
+    return await query;
   };
 
   averageForListings = async (entityIds) => {
     const data = this.baseSelect()
       .whereIn(`${this.table}.${this.keyField}`, entityIds)
       .where({ approved: true, waiting_admin: false })
-      .groupBy([`${this.table}.reviewer_id`, `${this.table}.${this.keyField}`]);
+      .groupBy([this.reviewerIdField, `${this.keyField}`]);
 
     const res = {};
 
@@ -104,6 +118,45 @@ class BaseCommentModel extends Model {
 
     return res;
   };
+
+  checkOrderHasComment = async (orderId) => {
+    const result = await this.baseSelect()
+      .where(`${this.table}.order_id`, orderId)
+      .first();
+
+    return !!result;
+  };
+
+  getCommentTypesCount = async ({ timeInfos, filter }) => {
+    let query = this.baseSelect().whereRaw(...this.baseStrFilter(filter));
+    query = this.baseListTimeFilter(
+      timeInfos,
+      query,
+      `${this.table}.created_at`
+    );
+
+    const result = await query
+      .select(
+        db.raw(`COUNT(*) AS "allCount"`),
+        db.raw(
+          `SUM(CASE WHEN ${this.table}.approved = TRUE THEN 1 ELSE 0 END) AS "approvedCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${this.table}.approved = FALSE AND ${this.table}.waiting_admin = FALSE THEN 1 ELSE 0 END) AS "rejectedCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${this.table}.waiting_admin = TRUE THEN 1 ELSE 0 END) AS "suspendedCount"`
+        )
+      )
+      .first();
+
+    return {
+      allCount: result["allCount"] ?? 0,
+      approvedCount: result["approvedCount"] ?? 0,
+      rejectedCount: result["rejectedCount"] ?? 0,
+      suspendedCount: result["suspendedCount"] ?? 0,
+    };
+  };
 }
 
-module.exports = new BaseCommentModel();
+module.exports = BaseCommentModel;

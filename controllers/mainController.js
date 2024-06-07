@@ -21,6 +21,9 @@ const {
   checkDateInDuration,
   getDaysDifference,
 } = require("../utils");
+const tenantCommentController = require("./tenantCommentController");
+const ownerCommentController = require("./ownerCommentController");
+const listingCommentController = require("./listingCommentController");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -257,10 +260,14 @@ class MainController extends Controller {
         await this.systemOptionModel.getTenantBaseCommissionPercent();
 
       const categories = await this.getNavigationCategories();
+
+      const comments = await this.listingCommentModel.listForEntity(listing.id);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
         categories,
         tenantBaseCommissionPercent,
+        comments,
       });
     });
 
@@ -1106,10 +1113,13 @@ class MainController extends Controller {
         order.ownerId
       );
 
+      const hasComment = await this.ownerCommentModel.checkOrderHasComment(id);
+
       if (
         order.tenantId != userId ||
         order.status != STATIC.ORDER_STATUSES.FINISHED ||
-        order.cancelStatus
+        order.cancelStatus ||
+        hasComment
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -1132,10 +1142,13 @@ class MainController extends Controller {
         order.tenantId
       );
 
+      const hasComment = await this.tenantCommentModel.checkOrderHasComment(id);
+
       if (
         order.ownerId != userId ||
         order.status != STATIC.ORDER_STATUSES.FINISHED ||
-        order.cancelStatus
+        order.cancelStatus ||
+        hasComment
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -1145,6 +1158,92 @@ class MainController extends Controller {
         order,
       });
     });
+
+  getAdminTenantCommentsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await tenantCommentController.baseCommentList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminOwnerCommentsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await ownerCommentController.baseCommentList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminListingCommentsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await listingCommentController.baseCommentList(req);
+
+      const items = result.items;
+
+      const commentsWithImages = await this.listingModel.listingsBindImages(
+        items,
+        "listingId"
+      );
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+        items: commentsWithImages,
+      });
+    });
+
+  createOwnerComment = async (req, res) => {
+    const { ownerCommentInfo, listingCommentInfo, orderId } = req.body;
+
+    const orderHasOwnerComment =
+      await this.ownerCommentModel.checkOrderHasComment(orderId);
+
+    if (orderHasOwnerComment) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const orderHasListingComment =
+      await this.listingCommentModel.checkOrderHasComment(orderId);
+
+    if (orderHasListingComment) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const ownerCommentId = await this.ownerCommentModel.create({
+      ...ownerCommentInfo,
+      orderId,
+    });
+
+    const listingCommentId = await this.listingCommentModel.create({
+      ...listingCommentInfo,
+      orderId,
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      ownerCommentId,
+      listingCommentId,
+    });
+  };
+
+  createTenantComment = async (req, res) => {
+    const { tenantCommentInfo, orderId } = req.body;
+
+    const orderHasTenantComment =
+      await this.tenantCommentModel.checkOrderHasComment(orderId);
+
+    if (orderHasTenantComment) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const tenantCommentId = await this.tenantCommentModel.create({
+      ...tenantCommentInfo,
+      orderId,
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      tenantCommentId,
+    });
+  };
 }
 
 module.exports = new MainController();

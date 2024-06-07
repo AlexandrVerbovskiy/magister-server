@@ -18,21 +18,16 @@ exports.up = function (knex) {
       table.integer("kindness");
       table.integer("general_experience");
 
-      table
-        .integer("listing_id")
-        .unsigned()
-        .references(STATIC.TABLES.LISTINGS + ".id");
-
-      table
-        .integer("reviewer_id")
-        .unsigned()
-        .references(STATIC.TABLES.USERS + ".id");
-
       table.boolean("approved").defaultTo(false);
       table.boolean("waiting_admin").defaultTo(true);
       table.text("rejected_description");
 
       table.timestamps(true, true);
+
+      table
+        .integer("order_id")
+        .unsigned()
+        .references(STATIC.TABLES.ORDERS + ".id");
     }
   );
 };

@@ -1,18 +1,20 @@
 require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
-const baseCommentModel = require("./baseCommentModel");
+const BaseCommentModel = require("./BaseCommentModel");
 
 const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
+const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 
-class ListingCommentModel extends baseCommentModel {
+class ListingCommentModel extends BaseCommentModel {
   table = LISTING_COMMENTS_TABLE;
 
-  keyField = `listing_id`;
+  keyField = `${ORDERS_TABLE}.listing_id`;
   keyFieldName = `listingId`;
+  reviewerIdField = `${ORDERS_TABLE}.tenant_id`;
 
   pointFields = [
     `punctuality`,
@@ -36,8 +38,8 @@ class ListingCommentModel extends baseCommentModel {
     `${LISTING_COMMENTS_TABLE}.waiting_admin as waitingAdmin`,
     `${LISTING_COMMENTS_TABLE}.rejected_description as rejectedDescription`,
     `${LISTING_COMMENTS_TABLE}.created_at as createdAt`,
-    `${LISTING_COMMENTS_TABLE}.listing_id as listingId`,
-    `${LISTING_COMMENTS_TABLE}.reviewer_id as reviewerId`,
+    `${LISTING_COMMENTS_TABLE}.order_id as orderId`,
+    `reviewers.id as reviewerId`,
     `reviewers.name as reviewerName`,
     `reviewers.email as reviewerEmail`,
     `reviewers.phone as reviewerPhone`,
@@ -61,53 +63,62 @@ class ListingCommentModel extends baseCommentModel {
     `reviewers.name`,
   ];
 
-  baseSelect = () => {
-    const query = db(USER_COMMENTS_TABLE)
+  baseJoin = (query) => {
+    return query
       .join(
-        `${USERS_TABLE} as renters`,
-        `${USERS_TABLE}.id`,
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
         "=",
-        `${USER_COMMENTS_TABLE}.reviewer_id`
+        `${LISTING_COMMENTS_TABLE}.order_id`
+      )
+      .join(
+        `${USERS_TABLE} as reviewers`,
+        `reviewers.id`,
+        "=",
+        `${ORDERS_TABLE}.tenant_id`
       )
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
         "=",
-        `${USER_COMMENTS_TABLE}.listing_id`
+        `${ORDERS_TABLE}.listing_id`
       )
       .join(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
         `${LISTINGS_TABLE}.category_id`
-      )
-      .orderBy(`${LISTING_COMMENTS_TABLE}.created_at`, "DESC");
+      );
+  };
 
+  baseSelect = () => {
+    let query = db(LISTING_COMMENTS_TABLE);
+    query = this.baseJoin(query);
     return query;
   };
 
   create = async ({
     description,
-    listingId,
-    reviewerId,
     punctuality,
     communication,
     flexibility,
     reliability,
     kindness,
     generalExperience,
+    orderId,
   }) => {
     const res = await db(LISTING_COMMENTS_TABLE)
       .insert({
         description,
-        listing_id: listingId,
-        reviewer_id: reviewerId,
+
         punctuality,
         communication,
         flexibility,
         reliability,
         kindness,
         general_experience: generalExperience,
+
+        order_id: orderId,
         rejected_description: "",
       })
       .returning("id");
