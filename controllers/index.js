@@ -16,4 +16,7 @@ module.exports = {
   senderPaymentController: require("./senderPaymentController"),
   recipientPaymentController: require("./recipientPaymentController"),
   listingDefectQuestionController: require("./listingDefectQuestionController"),
+  listingCommentController: require("./listingCommentController"),
+  ownerCommentModel: require("./ownerCommentController"),
+  tenantCommentModel: require("./tenantCommentController"),
 };

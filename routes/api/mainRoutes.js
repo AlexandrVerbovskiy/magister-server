@@ -357,4 +357,36 @@ router.get(
   mainController.getOrderReviewByOwnerOptions
 );
 
+router.post(
+  "/admin-tenant-comment-list-options",
+  isAuth,
+  isSupport,
+  mainController.getAdminTenantCommentsPageOptions
+);
+
+router.post(
+  "/admin-owner-comment-list-options",
+  isAuth,
+  isSupport,
+  mainController.getAdminOwnerCommentsPageOptions
+);
+
+router.post(
+  "/admin-listing-comment-list-options",
+  isAuth,
+  isSupport,
+  mainController.getAdminListingCommentsPageOptions
+);
+
+router.post(
+  "/admin-owner-comment-list-options",
+  isAuth,
+  isSupport,
+  mainController.getAdminOwnerCommentsPageOptions
+);
+
+router.post("/create-owner-review", isAuth, mainController.createOwnerComment);
+
+router.post("/create-tenant-review", isAuth, mainController.createTenantComment);
+
 module.exports = router;
