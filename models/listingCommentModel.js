@@ -125,6 +125,86 @@ class ListingCommentModel extends BaseCommentModel {
 
     return res[0]["id"];
   };
+
+  getBaseListingStatisticQuery = () => {
+    return db(LISTING_COMMENTS_TABLE)
+      .select([
+        `${LISTINGS_TABLE}.id`,
+        db.raw(`COUNT(${LISTING_COMMENTS_TABLE}.id) AS "commentCount"`),
+
+        db.raw(
+          `COUNT(${LISTING_COMMENTS_TABLE}.punctuality) AS "averagePunctuality"`
+        ),
+        db.raw(
+          `COUNT(${LISTING_COMMENTS_TABLE}.general_experience) AS "averageGeneralExperience"`
+        ),
+        db.raw(
+          `COUNT(${LISTING_COMMENTS_TABLE}.communication) AS "averageCommunication"`
+        ),
+        db.raw(
+          `COUNT(${LISTING_COMMENTS_TABLE}.reliability) AS "averageReliability"`
+        ),
+        db.raw(
+          `COUNT(${LISTING_COMMENTS_TABLE}.kindness) AS "averageKindness"`
+        ),
+        db.raw(
+          `COUNT(${LISTING_COMMENTS_TABLE}.flexibility) AS "averageFlexibility"`
+        ),
+
+        db.raw(`(
+            AVG(${LISTING_COMMENTS_TABLE}.punctuality) + AVG(${LISTING_COMMENTS_TABLE}.general_experience)
+            + AVG(${LISTING_COMMENTS_TABLE}.communication) + AVG(${LISTING_COMMENTS_TABLE}.reliability)
+            + AVG(${LISTING_COMMENTS_TABLE}.kindness) + AVG(${LISTING_COMMENTS_TABLE}.flexibility)
+           ) / 6 AS "averageRating"`),
+      ])
+      .where(`${LISTINGS_TABLE}.approved`, true)
+      .where(`${USERS_TABLE}.verified`, true)
+      .where(`${USERS_TABLE}.active`, true)
+      .where(`${LISTINGS_TABLE}.active`, true)
+      .where(`${LISTING_COMMENTS_TABLE}.approved`, true)
+      .where(`${LISTING_COMMENTS_TABLE}.waiting_admin`, false)
+      .join(
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
+        "=",
+        `${LISTING_COMMENTS_TABLE}.order_id`
+      )
+      .join(
+        LISTINGS_TABLE,
+        `${LISTINGS_TABLE}.id`,
+        "=",
+        `${ORDERS_TABLE}.listing_id`
+      )
+      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
+      .groupBy([`${LISTINGS_TABLE}.id`]);
+  };
+
+  getListingDetailInfo = async (id) => {
+    let listingDetails = await this.getBaseListingStatisticQuery()
+      .where(`${LISTINGS_TABLE}.id`, id)
+      .first();
+
+    if (!listingDetails) {
+      listingDetails = {
+        id,
+        commentCount: 0,
+        averagePunctuality: 0,
+        averageGeneralExperience: 0,
+        averageCommunication: 0,
+        averageReliability: 0,
+        averageKindness: 0,
+        averageFlexibility: 0,
+        averageRating: 0,
+      };
+    }
+
+    return listingDetails;
+  };
+
+  topListingsByRating = async (count) =>
+    await this.getBaseListingStatisticQuery()
+      .orderBy([`commentCount`, `averageRating`])
+      .limit(count);
 }
 
 module.exports = new ListingCommentModel();

@@ -117,6 +117,64 @@ class BaseUserCommentModel extends BaseCommentModel {
 
     return res[0]["id"];
   };
+
+  getBaseUserStatisticQuery = () => {
+    return db(USER_COMMENTS_TABLE)
+      .select([
+        `${USERS_TABLE}.id`,
+        db.raw(`COUNT(${USER_COMMENTS_TABLE}.id) AS "commentCount"`),
+
+        db.raw(`COUNT(${USER_COMMENTS_TABLE}.quality) AS "averageQuality`),
+        db.raw(
+          `COUNT(${USER_COMMENTS_TABLE}.listing_accuracy) AS "averageListingAccuracy"`
+        ),
+        db.raw(`COUNT(${USER_COMMENTS_TABLE}.utility) AS "averageUtility"`),
+        db.raw(`COUNT(${USER_COMMENTS_TABLE}.condition) AS "averageCondition"`),
+        db.raw(
+          `COUNT(${USER_COMMENTS_TABLE}.performance) AS "averagePerformance"`
+        ),
+        db.raw(`COUNT(${USER_COMMENTS_TABLE}.location) AS "averageLocation"`),
+
+        db.raw(`(
+            AVG(${USER_COMMENTS_TABLE}.quality) + AVG(${USER_COMMENTS_TABLE}.listing_accuracy)
+            + AVG(${USER_COMMENTS_TABLE}.utility) + AVG(${USER_COMMENTS_TABLE}.condition)
+            + AVG(${USER_COMMENTS_TABLE}.performance) + AVG(${USER_COMMENTS_TABLE}.location)
+           ) / 6 AS "averageRating"`),
+      ])
+      .where(`${USERS_TABLE}.verified`, true)
+      .where(`${USERS_TABLE}.active`, true)
+      .where(`${USER_COMMENTS_TABLE}.approved`, true)
+      .where(`${USER_COMMENTS_TABLE}.waiting_admin`, false)
+      .join(
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
+        "=",
+        `${LISTING_COMMENTS_TABLE}.order_id`
+      )
+      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${USERS_TABLE}.tenant_id`)
+      .groupBy([`${USERS_TABLE}.id`]);
+  };
+
+  getUserDetailInfo = async (id) => {
+    let userDetails = await this.getBaseUserStatisticQuery()
+      .where(`${USERS_TABLE}.id`, id)
+      .first();
+
+    if (!userDetails) {
+      userDetails = {
+        id,
+        averageRating: 0,
+        averageQuality: 0,
+        averageListingAccuracy: 0,
+        averageUtility: 0,
+        averageCondition: 0,
+        averagePerformance: 0,
+        averageLocation: 0,
+      };
+    }
+
+    return userDetails;
+  };
 }
 
 module.exports = BaseUserCommentModel;

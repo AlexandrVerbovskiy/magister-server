@@ -75,8 +75,7 @@ class BaseCommentModel extends Model {
     const subquery = db(this.table)
       .select(db.raw(`MAX(${this.table}.id) AS latest_comment_id`))
       .innerJoin(ORDERS_TABLE, `${ORDERS_TABLE}.id`, `${this.table}.order_id`)
-      .where(this.keyField, entityId)
-      .groupBy([this.reviewerIdField, this.keyField]);
+      .where(this.keyField, entityId);
 
     let query = db(this.table);
     query = this.baseJoin(query);
@@ -90,22 +89,34 @@ class BaseCommentModel extends Model {
     return await query;
   };
 
-  averageForListings = async (entityIds) => {
-    const data = this.baseSelect()
-      .whereIn(`${this.table}.${this.keyField}`, entityIds)
-      .where({ approved: true, waiting_admin: false })
-      .groupBy([this.reviewerIdField, `${this.keyField}`]);
+  bindAverageForKeyEntities = async (
+    entities,
+    entityKey = "id",
+    keyFieldNames = {
+      commentCountName: "commentCount",
+      averageRatingName: "averageRating",
+    }
+  ) => {
+    const entityIds = entities.map((entity) => entity[entityKey]);
 
-    const res = {};
+    const data = await this.baseSelect()
+      .whereIn(`${this.keyField}`, entityIds)
+      .where(`${this.table}.approved`, true)
+      .where(`${this.table}.waiting_admin`, false)
+      .select(this.visibleFields);
 
-    entityIds.forEach((id) => {
+    entities.forEach((entity, index) => {
       let count = 0;
       let average = 0;
 
       data.forEach((row) => {
-        if (row[this.keyFieldName] == id) {
+        if (row[this.keyFieldName] == entity[entityKey]) {
           count++;
-          this.pointFields((pointField) => (average += row[pointField]));
+          average +=
+            this.pointFields.reduce(
+              (prevValue, pointField) => (prevValue += row[pointField]),
+              0
+            ) / this.pointFields.length;
         }
       });
 
@@ -113,10 +124,11 @@ class BaseCommentModel extends Model {
         average /= count;
       }
 
-      res[id] = { count, average };
+      entities[index][keyFieldNames.commentCountName] = count;
+      entities[index][keyFieldNames.averageRatingName] = average;
     });
 
-    return res;
+    return entities;
   };
 
   checkOrderHasComment = async (orderId) => {

@@ -520,8 +520,24 @@ class UserController extends Controller {
 
     const users = await this.userModel.list(options);
 
+    const usersWithTenantsRatingInfo =
+      await this.tenantCommentModel.bindAverageForKeyEntities(users, "id", {
+        commentCountName: "tenantCommentCount",
+        averageRatingName: "tenantAverageRating",
+      });
+
+    const usersWithTenantsOwnersRatingInfo =
+      await this.ownerCommentModel.bindAverageForKeyEntities(
+        usersWithTenantsRatingInfo,
+        "id",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
+
     return {
-      items: users,
+      items: usersWithTenantsOwnersRatingInfo,
       options,
       countItems,
     };
