@@ -139,8 +139,14 @@ class ListingController extends Controller {
       this.searchedWordModel.updateSearchCount(categoriesToCheckHasNotify[0]);
     }
 
+    const ratingListingsWithImages =
+      await this.listingCommentModel.bindAverageForKeyEntities(
+        listingsWithImages,
+        "id"
+      );
+
     return {
-      items: listingsWithImages,
+      items: ratingListingsWithImages,
       options,
       countItems,
       canSendCreateNotifyRequest,
@@ -173,8 +179,24 @@ class ListingController extends Controller {
       listings
     );
 
+    const ratingListingsWithImages =
+      await this.listingCommentModel.bindAverageForKeyEntities(
+        listingsWithImages,
+        "id"
+      );
+
+    const ratingListingsOwnersWithImages =
+      await this.ownerCommentModel.bindAverageForKeyEntities(
+        ratingListingsWithImages,
+        "ownerId",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
+
     return {
-      items: listingsWithImages,
+      items: ratingListingsOwnersWithImages,
       options,
       countItems,
     };

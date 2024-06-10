@@ -39,12 +39,8 @@ class MainController extends Controller {
 
       const topListings = await this.listingModel.getTopListings();
 
-      const topListingsWithImages = await this.listingModel.listingsBindImages(
-        topListings
-      );
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        topListings: topListingsWithImages,
+        topListings,
         categories,
       });
     });
@@ -263,11 +259,18 @@ class MainController extends Controller {
 
       const comments = await this.listingCommentModel.listForEntity(listing.id);
 
+      const listingRatingInfo =
+        await this.listingCommentModel.getListingDetailInfo(listing.id);
+      const ownerRatingInfo =
+        await this.listingCommentModel.getListingDetailInfo(listing.ownerId);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
         categories,
         tenantBaseCommissionPercent,
         comments,
+        listingRatingInfo,
+        ownerRatingInfo
       });
     });
 
@@ -461,6 +464,7 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
         await listingController.baseListingWithStatusesList(req);
+        
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
       });

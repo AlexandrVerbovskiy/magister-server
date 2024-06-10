@@ -28,8 +28,18 @@ class ListingApprovalRequestController extends Controller {
     const requestsWithListingImages =
       await this.listingModel.listingsBindImages(requests, "listingId");
 
+    const requestsWithOwnerRatingsListingImages =
+      await this.ownerCommentModel.bindAverageForKeyEntities(
+        requestsWithListingImages,
+        "listingId",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
+
     return {
-      items: requestsWithListingImages,
+      items: requestsWithOwnerRatingsListingImages,
       options,
       countItems,
     };

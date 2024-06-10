@@ -322,6 +322,37 @@ class OrderController extends Controller {
     return orders;
   };
 
+  bindOrderRating = async (orders) => {
+    orders = await this.tenantCommentModel.bindAverageForKeyEntities(
+      orders,
+      "tenantId",
+      {
+        commentCountName: "tenantCommentCount",
+        averageRatingName: "tenantAverageRating",
+      }
+    );
+
+    orders = await this.ownerCommentModel.bindAverageForKeyEntities(
+      orders,
+      "ownerId",
+      {
+        commentCountName: "ownerCommentCount",
+        averageRatingName: "ownerAverageRating",
+      }
+    );
+
+    orders = await this.listingCommentModel.bindAverageForKeyEntities(
+      orders,
+      "listingId",
+      {
+        commentCountName: "listingCommentCount",
+        averageRatingName: "listingAverageRating",
+      }
+    );
+
+    return orders;
+  };
+
   baseAdminBookingList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
     const type = req.body.type ?? "all";
@@ -343,6 +374,8 @@ class OrderController extends Controller {
     let orders = await this.orderModel.allBookingsList(options);
 
     orders = await this.baseAdminOptionsAdd(orders);
+
+    orders = await this.bindOrderRating(orders);
 
     return {
       items: orders,
@@ -420,6 +453,8 @@ class OrderController extends Controller {
     let orders = await this.orderModel.allOrderList(options);
 
     orders = await this.baseAdminOptionsAdd(orders);
+
+    orders = await this.bindOrderRating(orders);
 
     return {
       items: orders,
