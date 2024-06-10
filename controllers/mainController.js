@@ -270,7 +270,7 @@ class MainController extends Controller {
         tenantBaseCommissionPercent,
         comments,
         listingRatingInfo,
-        ownerRatingInfo
+        ownerRatingInfo,
       });
     });
 
@@ -464,7 +464,7 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
         await listingController.baseListingWithStatusesList(req);
-        
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
       });

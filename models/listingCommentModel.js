@@ -198,6 +198,10 @@ class ListingCommentModel extends BaseCommentModel {
       };
     }
 
+    Object.keys(listingDetails).forEach(
+      (key) => (listingDetails[key] = Number(listingDetails[key]))
+    );
+
     return listingDetails;
   };
 
