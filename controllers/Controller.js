@@ -44,7 +44,8 @@ const {
   listingDefectQuestionModel,
   listingCommentModel,
   ownerCommentModel,
-  tenantCommentModel
+  tenantCommentModel,
+  userListingFavoriteModel
 } = require("../models");
 
 const STATIC = require("../static");
@@ -78,6 +79,7 @@ class Controller {
 
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
+    this.userListingFavoriteModel = userListingFavoriteModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,

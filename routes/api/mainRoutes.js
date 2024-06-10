@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { mainController } = require("../../controllers");
+const { mainController, listingController } = require("../../controllers");
 const {
   isAuth,
   isVerified,
@@ -35,7 +35,7 @@ const {
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
 
-router.get("/index-options", mainController.getIndexPageOptions);
+router.get("/index-options", authId, mainController.getIndexPageOptions);
 
 router.get(
   "/create-listing-options",
@@ -387,6 +387,10 @@ router.post(
 
 router.post("/create-owner-review", isAuth, mainController.createOwnerComment);
 
-router.post("/create-tenant-review", isAuth, mainController.createTenantComment);
+router.post(
+  "/create-tenant-review",
+  isAuth,
+  mainController.createTenantComment
+);
 
 module.exports = router;

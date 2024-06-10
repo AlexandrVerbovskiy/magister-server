@@ -35,12 +35,26 @@ class MainController extends Controller {
 
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
       const categories = await this.listingCategoryModel.getFullInfoList();
 
       const topListings = await this.listingModel.getTopListings();
 
+      if (!userId) {
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          topListings,
+          categories,
+        });
+      }
+
+      const ratingListingsWithImagesFavorites =
+        await this.userListingFavoriteModel.bindUserListingListFavorite(
+          topListings,
+          userId
+        );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        topListings,
+        topListings: ratingListingsWithImagesFavorites,
         categories,
       });
     });
@@ -231,6 +245,14 @@ class MainController extends Controller {
       const userId = req.userData?.userId;
 
       const listing = await this.listingModel.getFullById(id);
+
+      if (userId) {
+        listing["favorite"] =
+          await this.userListingFavoriteModel.checkUserListingHasRelation(
+            userId,
+            id
+          );
+      }
 
       if (!listing) {
         return this.sendErrorResponse(
