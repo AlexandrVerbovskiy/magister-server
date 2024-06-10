@@ -145,8 +145,14 @@ class ListingController extends Controller {
         "id"
       );
 
+    const ratingListingsWithImagesFavorites =
+      await this.userListingFavoriteModel.bindUserListingListFavorite(
+        ratingListingsWithImages,
+        sessionUserId
+      );
+
     return {
-      items: ratingListingsWithImages,
+      items: ratingListingsWithImagesFavorites,
       options,
       countItems,
       canSendCreateNotifyRequest,
@@ -555,6 +561,25 @@ class ListingController extends Controller {
       );
 
       return result;
+    });
+
+  changeFavorite = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { listingId } = req.body;
+      const { userId } = req.userData;
+
+      const isFavorite = await this.userListingFavoriteModel.changeUserFavorite(
+        userId,
+        listingId
+      );
+
+      console.log(isFavorite);
+
+      const message = isFavorite ? "Favorite mark added" : "Favorite removed";
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
+        isFavorite,
+      });
     });
 }
 

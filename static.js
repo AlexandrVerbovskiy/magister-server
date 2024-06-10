@@ -110,6 +110,7 @@ module.exports = {
     REFUND_PAYMENT_REQUESTS: "refund_payment_requests",
     USER_COMMENTS: "user_comments",
     LISTING_COMMENTS: "listing_comments",
+    USER_LISTING_FAVORITES: "user_listing_favorites",
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
