@@ -173,6 +173,10 @@ class BaseUserCommentModel extends BaseCommentModel {
       };
     }
 
+    Object.keys(listingDetails).forEach(
+      (key) => (listingDetails[key] = Number(listingDetails[key]))
+    );
+
     return userDetails;
   };
 }
