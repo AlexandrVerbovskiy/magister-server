@@ -10,7 +10,6 @@ const {
 } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
-const { query } = require("express");
 
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;

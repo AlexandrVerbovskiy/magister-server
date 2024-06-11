@@ -393,4 +393,11 @@ router.post(
   mainController.createTenantComment
 );
 
+router.post(
+  "/admin-dispute-list-options",
+  isAuth,
+  isSupport,
+  mainController.getAdminDisputesPageOptions
+);
+
 module.exports = router;

@@ -45,7 +45,8 @@ const {
   listingCommentModel,
   ownerCommentModel,
   tenantCommentModel,
-  userListingFavoriteModel
+  userListingFavoriteModel,
+  disputeModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -58,24 +59,30 @@ class Controller {
 
   constructor() {
     this.userModel = userModel;
+
     this.logModel = logModel;
     this.userVerifyRequestModel = userVerifyRequestModel;
     this.systemOptionModel = systemOptionModel;
     this.userEventLogModel = userEventLogModel;
+
     this.listingCategoryModel = listingCategoryModel;
     this.searchedWordModel = searchedWordModel;
+
     this.listingModel = listingModel;
     this.listingDefectModel = listingDefectModel;
+
     this.orderModel = orderModel;
     this.orderUpdateRequestModel = orderUpdateRequestModel;
+    this.disputeModel = disputeModel;
+
     this.listingApprovalRequestModel = listingApprovalRequestModel;
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
     this.listingDefectQuestionModel = listingDefectQuestionModel;
 
-   this.listingCommentModel = listingCommentModel;
-   this.ownerCommentModel = ownerCommentModel;
-   this.tenantCommentModel = tenantCommentModel;
+    this.listingCommentModel = listingCommentModel;
+    this.ownerCommentModel = ownerCommentModel;
+    this.tenantCommentModel = tenantCommentModel;
 
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
@@ -219,7 +226,7 @@ class Controller {
       link,
     });
   };
-  
+
   //???
   sendLateReturnNotificationMail = async (email, orderId) => {
     const title = "Late Return Notification";
@@ -230,7 +237,7 @@ class Controller {
       link,
     });
   };
-  
+
   //???
   sendEarlyReturnOfAssetMail = async (email, orderId) => {
     const title = "Early Return of Asset";

@@ -19,4 +19,5 @@ module.exports = {
   listingCommentController: require("./listingCommentController"),
   ownerCommentModel: require("./ownerCommentController"),
   tenantCommentModel: require("./tenantCommentController"),
+  disputeController: require("./disputeController"),
 };

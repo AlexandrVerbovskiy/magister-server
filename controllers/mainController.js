@@ -24,6 +24,7 @@ const {
 const tenantCommentController = require("./tenantCommentController");
 const ownerCommentController = require("./ownerCommentController");
 const listingCommentController = require("./listingCommentController");
+const disputeController = require("./disputeController");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -1204,18 +1205,7 @@ class MainController extends Controller {
   getAdminListingCommentsPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await listingCommentController.baseCommentList(req);
-
-      const items = result.items;
-
-      const commentsWithImages = await this.listingModel.listingsBindImages(
-        items,
-        "listingId"
-      );
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-        items: commentsWithImages,
-      });
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   createOwnerComment = async (req, res) => {
@@ -1270,6 +1260,12 @@ class MainController extends Controller {
       tenantCommentId,
     });
   };
+
+  getAdminDisputesPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await disputeController.baseDisputeList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
 }
 
 module.exports = new MainController();

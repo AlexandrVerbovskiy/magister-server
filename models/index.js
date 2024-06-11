@@ -19,4 +19,5 @@ module.exports = {
   tenantCommentModel: require("./tenantCommentModel"),
   ownerCommentModel: require("./ownerCommentModel"),
   userListingFavoriteModel: require("./userListingFavoriteModel"),
+  disputeModel: require("./disputeModel"),
 };

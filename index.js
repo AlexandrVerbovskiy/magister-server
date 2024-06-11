@@ -116,6 +116,8 @@ app.use("/api/recipient-payments", apiRoutes.recipientPaymentRoutes);
 
 app.use("/api/comments", apiRoutes.commentRoutes);
 
+app.use("/api/disputes", apiRoutes.disputeRoutes);
+
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") {

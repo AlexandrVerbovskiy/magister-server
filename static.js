@@ -111,6 +111,7 @@ module.exports = {
     USER_COMMENTS: "user_comments",
     LISTING_COMMENTS: "listing_comments",
     USER_LISTING_FAVORITES: "user_listing_favorites",
+    DISPUTES: "disputes",
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
@@ -156,5 +157,10 @@ module.exports = {
   TIME_FILTER_TYPES: {
     TYPE: "type",
     DURATION: "duration",
+  },
+  DISPUTE_STATUSES: {
+    SOLVED: "solved",
+    OPEN: "open",
+    UNSOLVED: "unsolved",
   },
 };
