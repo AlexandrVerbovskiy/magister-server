@@ -257,8 +257,12 @@ class OrderController extends Controller {
       });
     });
 
+    const requestsWithRatingImages = await this.bindOrderRating(
+      requestsWithImages
+    );
+
     return {
-      items: requestsWithImages,
+      items: requestsWithRatingImages,
       options: { ...options, type },
       countItems,
     };

@@ -9,6 +9,7 @@ class DisputeController extends Controller {
     );
 
     const type = req.body.type ?? "all";
+    const filter = req.body.filter ?? "";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       this.disputeModel.totalCount({ filter, timeInfos, type })
@@ -42,10 +43,16 @@ class DisputeController extends Controller {
       }
     );
 
+    const typesCount = await this.disputeModel.getTypesCount({
+      filter,
+      timeInfos,
+    });
+
     return {
       items: disputes,
       options,
       countItems,
+      typesCount,
     };
   };
 
@@ -56,7 +63,15 @@ class DisputeController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
-      if (order.ownerId != userId && order.tenantId != userId) {
+      if (
+        (order.ownerId != userId && order.tenantId != userId) ||
+        order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
+        [
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+          STATIC.ORDER_STATUSES.FINISHED,
+        ].includes(STATIC.ORDER_STATUSES)
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
