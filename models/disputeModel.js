@@ -51,7 +51,8 @@ class DisputeModel extends Model {
 
   orderFields = [
     `${DISPUTES_TABLE}.id`,
-    `${USERS_TABLE}.name`,
+    `owners.name`,
+    `tenants.name`,
     `${LISTINGS_TABLE}.name`,
     `${ORDERS_TABLE}.start_date`,
     `${ORDERS_TABLE}.end_date`,
@@ -197,6 +198,36 @@ class DisputeModel extends Model {
 
   bindListingsCounts = (entities, key = "listingId") =>
     this.bindEntitiesCounts(entities, key, `${LISTINGS_TABLE}.id`);
+
+  getTypesCount = async ({ filter, timeInfos }) => {
+    let query = db(DISPUTES_TABLE).whereRaw(
+      this.filterIdLikeString(filter, `${DISPUTES_TABLE}.id`)
+    );
+
+    query = this.baseListTimeFilter(timeInfos, query);
+
+    const result = await query
+      .select(
+        db.raw(`COUNT(*) AS "allCount"`),
+        db.raw(
+          `SUM(CASE WHEN ${DISPUTES_TABLE}.status = '${STATIC.DISPUTE_STATUSES.OPEN}' THEN 1 ELSE 0 END) AS "openCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${DISPUTES_TABLE}.status = '${STATIC.DISPUTE_STATUSES.SOLVED}' THEN 1 ELSE 0 END) AS "solvedCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${DISPUTES_TABLE}.status = '${STATIC.DISPUTE_STATUSES.UNSOLVED}' THEN 1 ELSE 0 END) AS "unsolvedCount"`
+        )
+      )
+      .first();
+
+    return {
+      allCount: result["allCount"] ?? 0,
+      openCount: result["openCount"] ?? 0,
+      solvedCount: result["solvedCount"] ?? 0,
+      unsolvedCount: result["unsolvedCount"] ?? 0,
+    };
+  };
 }
 
 module.exports = new DisputeModel();
