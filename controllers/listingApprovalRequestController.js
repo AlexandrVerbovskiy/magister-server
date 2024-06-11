@@ -31,7 +31,7 @@ class ListingApprovalRequestController extends Controller {
     const requestsWithOwnerRatingsListingImages =
       await this.ownerCommentModel.bindAverageForKeyEntities(
         requestsWithListingImages,
-        "listingId",
+        "ownerId",
         {
           commentCountName: "ownerCommentCount",
           averageRatingName: "ownerAverageRating",

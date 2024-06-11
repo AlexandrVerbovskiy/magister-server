@@ -24,8 +24,13 @@ class BaseCommentController extends Controller {
       filter,
     });
 
+    const commentsWithImages = await this.listingModel.listingsBindImages(
+      comments,
+      "listingId"
+    );
+
     return {
-      items: comments,
+      items: commentsWithImages,
       options,
       countItems,
       typesCount,
@@ -34,17 +39,7 @@ class BaseCommentController extends Controller {
 
   commentList = async (req, res) => {
     const result = await this.baseCommentList(req);
-    const items = result.items;
-
-    const commentsWithImages = await this.listingModel.listingsBindImages(
-      items,
-      "listingId"
-    );
-
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-      ...result,
-      items: commentsWithImages,
-    });
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
   };
 
   approve = async (req, res) => {
