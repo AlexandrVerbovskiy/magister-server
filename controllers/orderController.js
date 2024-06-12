@@ -136,7 +136,8 @@ class OrderController extends Controller {
       if (
         !prevOrder ||
         prevOrder.tenantId != tenantId ||
-        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER
+        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER ||
+        prevOrder.disputeStatus
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -257,9 +258,21 @@ class OrderController extends Controller {
       });
     });
 
-    const requestsWithRatingImages = await this.bindOrderRating(
+    let requestsWithRatingImages = await this.bindOrderRating(
       requestsWithImages
     );
+
+    requestsWithRatingImages =
+      await this.listingModel.bindTenantListCountListings(
+        requestsWithRatingImages,
+        "tenantId"
+      );
+
+    requestsWithRatingImages =
+      await this.listingModel.bindOwnerListCountListings(
+        requestsWithRatingImages,
+        "tenantId"
+      );
 
     return {
       items: requestsWithRatingImages,
@@ -498,7 +511,10 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.tenantId != userId && order.ownerId != userId) {
+      if (
+        (order.tenantId != userId && order.ownerId != userId) ||
+        order.disputeStatus
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -567,7 +583,10 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.tenantId != userId && order.ownerId != userId) {
+      if (
+        (order.tenantId != userId && order.ownerId != userId) ||
+        order.disputeStatus
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -633,7 +652,7 @@ class OrderController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.tenantId != userId) {
+      if (order.tenantId != userId || order.disputeStatus) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -679,7 +698,7 @@ class OrderController extends Controller {
 
     const order = await this.orderModel.getById(orderId);
 
-    if (order.tenantId != userId) {
+    if (order.tenantId != userId || order.disputeStatus) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
@@ -741,7 +760,11 @@ class OrderController extends Controller {
         );
       }
 
-      if (!orderInfo || orderInfo.tenantId != userId) {
+      if (
+        !orderInfo ||
+        orderInfo.tenantId != userId ||
+        orderInfo.disputeStatus
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
@@ -794,7 +817,7 @@ class OrderController extends Controller {
     const isCancelByTenant = isTenant && orderInfo.tenantId === userId;
     const isCancelByOwner = isOwner && orderInfo.ownerId === userId;
 
-    if (!isCancelByTenant && !isCancelByOwner) {
+    if ((!isCancelByTenant && !isCancelByOwner) || orderInfo.disputeStatus) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
@@ -828,9 +851,10 @@ class OrderController extends Controller {
     }
 
     if (
-      userType === "tenant" &&
-      orderInfo.cancelStatus !=
-        STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE
+      (userType === "tenant" &&
+        orderInfo.cancelStatus !=
+          STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE) ||
+      orderInfo.disputeStatus
     ) {
       return this.sendErrorResponse(
         res,
@@ -952,7 +976,7 @@ class OrderController extends Controller {
         offerPricePerDay,
       } = orderInfo;
 
-      if (tenantId != userId) {
+      if (tenantId != userId || orderInfo.disputeStatus) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -1067,8 +1091,12 @@ class OrderController extends Controller {
 
       const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
-      if (!orderInfo || orderInfo.ownerId !== userId) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      if (
+        !orderInfo ||
+        orderInfo.ownerId !== userId ||
+        orderInfo.disputeStatus
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       if (orderInfo.cancelStatus != null) {

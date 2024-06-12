@@ -518,26 +518,40 @@ class UserController extends Controller {
     options["role"] = role;
     options["verified"] = verified;
 
-    const users = await this.userModel.list(options);
+    let users = await this.userModel.list(options);
 
-    const usersWithTenantsRatingInfo =
-      await this.tenantCommentModel.bindAverageForKeyEntities(users, "id", {
+    users = await this.tenantCommentModel.bindAverageForKeyEntities(
+      users,
+      "id",
+      {
         commentCountName: "tenantCommentCount",
         averageRatingName: "tenantAverageRating",
-      });
+      }
+    );
 
-    const usersWithTenantsOwnersRatingInfo =
-      await this.ownerCommentModel.bindAverageForKeyEntities(
-        usersWithTenantsRatingInfo,
-        "id",
-        {
-          commentCountName: "ownerCommentCount",
-          averageRatingName: "ownerAverageRating",
-        }
-      );
+    users = await this.ownerCommentModel.bindAverageForKeyEntities(
+      users,
+      "id",
+      {
+        commentCountName: "ownerCommentCount",
+        averageRatingName: "ownerAverageRating",
+      }
+    );
+
+    users = await this.disputeModel.bindTenantsCounts(
+      users,
+      "id",
+      "tenantDisputesCount"
+    );
+
+    users = await this.disputeModel.bindTenantsCounts(
+      users,
+      "id",
+      "ownerDisputesCount"
+    );
 
     return {
-      items: usersWithTenantsOwnersRatingInfo,
+      items: users,
       options,
       countItems,
     };

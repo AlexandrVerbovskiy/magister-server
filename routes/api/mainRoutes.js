@@ -31,6 +31,7 @@ const {
   adminOrderListOptionsValidation,
   recipientPaymentListValidation,
   senderPaymentListValidation,
+  adminIndexPageOptionsValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
@@ -342,6 +343,7 @@ router.post(
   "/get-admin-index-page-option",
   isAuth,
   isSupport,
+  adminIndexPageOptionsValidation,
   mainController.getAdminIndexPageOptions
 );
 

@@ -657,10 +657,70 @@ class ListingsModel extends Model {
     return count;
   };
 
+  bindOwnerListCountListings = async (
+    entities,
+    key = "id",
+    resultKey = "ownerCountItems"
+  ) => {
+    const userIds = entities.map((entity) => entity[key]);
+
+    const countInfos = await db(LISTINGS_TABLE)
+      .select("owner_id as ownerId")
+      .count(`${LISTINGS_TABLE}.id as count`)
+      .whereIn("owner_id", userIds)
+      .groupBy("owner_id");
+
+    entities.forEach((entity, index) => {
+      entities[index][resultKey] = 0;
+
+      countInfos.forEach((countInfo) => {
+        if (entities[index] === countInfo["ownerId"]) {
+          entities[index][resultKey] = countInfo["count"];
+        }
+      });
+    });
+
+    return entities;
+  };
+
   getOwnerCountListings = async (userId) => {
     const { count } = await db(LISTINGS_TABLE)
       .where({ owner_id: userId })
       .count(`${LISTINGS_TABLE}.id as count`)
+      .first();
+    return count;
+  };
+
+  bindTenantListCountListings = async (
+    entities,
+    key = "id",
+    resultKey = "tenantCountItems"
+  ) => {
+    const userIds = entities.map((entity) => entity[key]);
+
+    const countInfos = await db(ORDERS_TABLE)
+      .select("tenant_id as tenantId")
+      .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
+      .whereIn("tenant_id", userIds)
+      .groupBy("tenant_id");
+
+    entities.forEach((entity, index) => {
+      entities[index][resultKey] = 0;
+
+      countInfos.forEach((countInfo) => {
+        if (entities[index] === countInfo["tenantId"]) {
+          entities[index][resultKey] = countInfo["count"];
+        }
+      });
+    });
+
+    return entities;
+  };
+
+  getTenantCountListings = async (userId) => {
+    const { count } = await db(ORDERS_TABLE)
+      .where({ tenant_id: userId })
+      .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
       .first();
     return count;
   };

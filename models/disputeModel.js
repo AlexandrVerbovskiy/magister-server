@@ -95,7 +95,7 @@ class DisputeModel extends Model {
       );
 
   create = async ({ description, type, senderId, orderId }) => {
-    const res = await db(LISTINGS_TABLE)
+    const res = await db(DISPUTES_TABLE)
       .insert({
         type,
         description,
@@ -110,7 +110,7 @@ class DisputeModel extends Model {
   };
 
   solve = async (solution, disputeId) => {
-    await db(LISTINGS_TABLE).where("dispute_id", disputeId).update({
+    await db(DISPUTES_TABLE).where("dispute_id", disputeId).update({
       solution,
       winner_id: winnerId,
       status: STATIC.DISPUTE_STATUSES.SOLVED,
@@ -118,7 +118,7 @@ class DisputeModel extends Model {
   };
 
   unsolve = async (disputeId) => {
-    await db(LISTINGS_TABLE).where("dispute_id", disputeId).update({
+    await db(DISPUTES_TABLE).where("dispute_id", disputeId).update({
       status: STATIC.DISPUTE_STATUSES.UNSOLVED,
     });
   };
@@ -174,9 +174,18 @@ class DisputeModel extends Model {
       .offset(start);
   };
 
-  bindEntitiesCounts = async (entities, key, searchField) => {
+  bindEntitiesCounts = async (
+    entities,
+    key,
+    searchField,
+    resField = "disputes"
+  ) => {
     const ids = entities.map((entity) => entity[key]);
-    const disputeCounts = await db(DISPUTES_TABLE)
+
+    let query = db(DISPUTES_TABLE);
+    query = this.baseListJoin(query);
+
+    const disputeCounts = await query
       .whereIn(searchField, ids)
       .select([db.raw("count(*) as count"), `${searchField} as keyId`])
       .groupBy(searchField);
@@ -185,19 +194,19 @@ class DisputeModel extends Model {
       const foundCount = disputeCounts.filter(
         (disputeCount) => disputeCount["keyId"] === entity[key]
       );
-      entity["disputes"] = foundCount?.count ?? 0;
+      entity[resField] = foundCount?.count ?? 0;
       return entity;
     });
   };
 
-  bindOwnersCounts = (entities, key = "ownerId") =>
-    this.bindEntitiesCounts(entities, key, `owners.id`);
+  bindOwnersCounts = (entities, key = "ownerId", resField = "disputes") =>
+    this.bindEntitiesCounts(entities, key, `owners.id`, resField);
 
-  bindTenantsCounts = (entities, key = "tenantId") =>
-    this.bindEntitiesCounts(entities, key, `tenants.id`);
+  bindTenantsCounts = (entities, key = "tenantId", resField = "disputes") =>
+    this.bindEntitiesCounts(entities, key, `tenants.id`, resField);
 
-  bindListingsCounts = (entities, key = "listingId") =>
-    this.bindEntitiesCounts(entities, key, `${LISTINGS_TABLE}.id`);
+  bindListingsCounts = (entities, key = "listingId", resField = "disputes") =>
+    this.bindEntitiesCounts(entities, key, `${LISTINGS_TABLE}.id`, resField);
 
   getTypesCount = async ({ filter, timeInfos }) => {
     let query = db(DISPUTES_TABLE).whereRaw(
