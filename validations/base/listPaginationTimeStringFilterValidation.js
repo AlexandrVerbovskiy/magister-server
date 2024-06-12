@@ -1,7 +1,7 @@
-const listTimeFilterValidation = require("./listTimeFilterValidation");
+const listTimeStringValidation = require("./listTimeStringValidation");
 const listPaginationStringFilterValidation = require("./listPaginationStringFilterValidation");
 
 module.exports = [
   ...listPaginationStringFilterValidation,
-  ...listTimeFilterValidation,
+  ...listTimeStringValidation,
 ];

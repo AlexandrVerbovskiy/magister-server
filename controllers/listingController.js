@@ -139,8 +139,20 @@ class ListingController extends Controller {
       this.searchedWordModel.updateSearchCount(categoriesToCheckHasNotify[0]);
     }
 
+    const ratingListingsWithImages =
+      await this.listingCommentModel.bindAverageForKeyEntities(
+        listingsWithImages,
+        "id"
+      );
+
+    const ratingListingsWithImagesFavorites =
+      await this.userListingFavoriteModel.bindUserListingListFavorite(
+        ratingListingsWithImages,
+        sessionUserId
+      );
+
     return {
-      items: listingsWithImages,
+      items: ratingListingsWithImagesFavorites,
       options,
       countItems,
       canSendCreateNotifyRequest,
@@ -173,8 +185,24 @@ class ListingController extends Controller {
       listings
     );
 
+    const ratingListingsWithImages =
+      await this.listingCommentModel.bindAverageForKeyEntities(
+        listingsWithImages,
+        "id"
+      );
+
+    const ratingListingsOwnersWithImages =
+      await this.ownerCommentModel.bindAverageForKeyEntities(
+        ratingListingsWithImages,
+        "ownerId",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
+
     return {
-      items: listingsWithImages,
+      items: ratingListingsOwnersWithImages,
       options,
       countItems,
     };
@@ -533,6 +561,25 @@ class ListingController extends Controller {
       );
 
       return result;
+    });
+
+  changeFavorite = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { listingId } = req.body;
+      const { userId } = req.userData;
+
+      const isFavorite = await this.userListingFavoriteModel.changeUserFavorite(
+        userId,
+        listingId
+      );
+
+      console.log(isFavorite);
+
+      const message = isFavorite ? "Favorite mark added" : "Favorite removed";
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
+        isFavorite,
+      });
     });
 }
 

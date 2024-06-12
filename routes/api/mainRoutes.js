@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { mainController } = require("../../controllers");
+const { mainController, listingController } = require("../../controllers");
 const {
   isAuth,
   isVerified,
@@ -31,11 +31,16 @@ const {
   adminOrderListOptionsValidation,
   recipientPaymentListValidation,
   senderPaymentListValidation,
+  adminIndexPageOptionsValidation,
+  adminCommentListOptionsValidation,
+  adminDisputeListOptionsValidation,
+  createOwnerCommentValidation,
+  createUserCommentValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
 
-router.get("/index-options", mainController.getIndexPageOptions);
+router.get("/index-options", authId, mainController.getIndexPageOptions);
 
 router.get(
   "/create-listing-options",
@@ -342,7 +347,68 @@ router.post(
   "/get-admin-index-page-option",
   isAuth,
   isSupport,
+  adminIndexPageOptionsValidation,
   mainController.getAdminIndexPageOptions
+);
+
+router.get(
+  "/get-order-review-by-tenant/:id",
+  isAuth,
+  validateIdParam(),
+  mainController.getOrderReviewByTenantOptions
+);
+
+router.get(
+  "/get-order-review-by-owner/:id",
+  isAuth,
+  validateIdParam(),
+  mainController.getOrderReviewByOwnerOptions
+);
+
+router.post(
+  "/admin-tenant-comment-list-options",
+  isAuth,
+  isSupport,
+  adminCommentListOptionsValidation,
+  mainController.getAdminTenantCommentsPageOptions
+);
+
+router.post(
+  "/admin-owner-comment-list-options",
+  isAuth,
+  isSupport,
+  adminCommentListOptionsValidation,
+  mainController.getAdminOwnerCommentsPageOptions
+);
+
+router.post(
+  "/admin-listing-comment-list-options",
+  isAuth,
+  isSupport,
+  adminCommentListOptionsValidation,
+  mainController.getAdminListingCommentsPageOptions
+);
+
+router.post(
+  "/create-owner-review",
+  isAuth,
+  createOwnerCommentValidation,
+  mainController.createOwnerComment
+);
+
+router.post(
+  "/create-tenant-review",
+  isAuth,
+  ...createUserCommentValidation,
+  mainController.createTenantComment
+);
+
+router.post(
+  "/admin-dispute-list-options",
+  isAuth,
+  isSupport,
+  adminDisputeListOptionsValidation,
+  mainController.getAdminDisputesPageOptions
 );
 
 module.exports = router;

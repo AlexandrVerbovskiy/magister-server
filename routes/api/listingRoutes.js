@@ -127,4 +127,6 @@ router.post(
   listingController.changeActiveByAdmin
 );
 
+router.post("/change-favorite", isAuth, listingController.changeFavorite);
+
 module.exports = router;
