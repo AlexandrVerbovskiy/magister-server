@@ -6,12 +6,6 @@ const STATIC = require("../static");
  */
 exports.up = function (knex) {
   return Promise.all([
-    knex.schema.alterTable(STATIC.TABLES.LISTING_IMAGES, function (table) {
-      table
-        .foreign("listing_id")
-        .references("id")
-        .inTable(STATIC.TABLES.LISTINGS);
-    }),
     knex.schema.alterTable(
       STATIC.TABLES.LISTING_CATEGORY_CREATE_NOTIFICATIONS,
       function (table) {
@@ -85,9 +79,6 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return Promise.all([
-    knex.schema.alterTable(STATIC.TABLES.LISTING_IMAGES, function (table) {
-      table.dropForeign("listing_id");
-    }),
     knex.schema.alterTable(
       STATIC.TABLES.LISTING_CATEGORY_CREATE_NOTIFICATIONS,
       function (table) {
