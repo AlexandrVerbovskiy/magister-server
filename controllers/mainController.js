@@ -21,6 +21,10 @@ const {
   checkDateInDuration,
   getDaysDifference,
 } = require("../utils");
+const tenantCommentController = require("./tenantCommentController");
+const ownerCommentController = require("./ownerCommentController");
+const listingCommentController = require("./listingCommentController");
+const disputeController = require("./disputeController");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -32,16 +36,26 @@ class MainController extends Controller {
 
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const userId = req.userData.userId;
       const categories = await this.listingCategoryModel.getFullInfoList();
 
       const topListings = await this.listingModel.getTopListings();
 
-      const topListingsWithImages = await this.listingModel.listingsBindImages(
-        topListings
-      );
+      if (!userId) {
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          topListings,
+          categories,
+        });
+      }
+
+      const ratingListingsWithImagesFavorites =
+        await this.userListingFavoriteModel.bindUserListingListFavorite(
+          topListings,
+          userId
+        );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        topListings: topListingsWithImages,
+        topListings: ratingListingsWithImagesFavorites,
         categories,
       });
     });
@@ -233,6 +247,14 @@ class MainController extends Controller {
 
       const listing = await this.listingModel.getFullById(id);
 
+      if (userId) {
+        listing["favorite"] =
+          await this.userListingFavoriteModel.checkUserListingHasRelation(
+            userId,
+            id
+          );
+      }
+
       if (!listing) {
         return this.sendErrorResponse(
           res,
@@ -257,10 +279,21 @@ class MainController extends Controller {
         await this.systemOptionModel.getTenantBaseCommissionPercent();
 
       const categories = await this.getNavigationCategories();
+
+      const comments = await this.listingCommentModel.listForEntity(listing.id);
+
+      const listingRatingInfo =
+        await this.listingCommentModel.getListingDetailInfo(listing.id);
+      const ownerRatingInfo =
+        await this.listingCommentModel.getListingDetailInfo(listing.ownerId);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
         categories,
         tenantBaseCommissionPercent,
+        comments,
+        listingRatingInfo,
+        ownerRatingInfo,
       });
     });
 
@@ -315,6 +348,13 @@ class MainController extends Controller {
 
       order["previousUpdateRequest"] =
         await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
+
+      order["tenantCountItems"] =
+        await this.listingModel.getTenantCountListings(order.tenantId);
+
+      order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(
+        order.ownerId
+      );
 
       const categories = await this.getNavigationCategories();
 
@@ -454,6 +494,7 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
         await listingController.baseListingWithStatusesList(req);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
       });
@@ -1092,6 +1133,145 @@ class MainController extends Controller {
         rentListingCounts,
         transactionsDetailInfo,
       });
+    });
+
+  getOrderReviewByTenantOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const { userId } = req.userData;
+
+      const categories = await this.getNavigationCategories();
+      const order = await this.orderModel.getFullById(id);
+
+      order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(
+        order.ownerId
+      );
+
+      const hasComment = await this.ownerCommentModel.checkOrderHasComment(id);
+
+      if (
+        order.tenantId != userId ||
+        order.status != STATIC.ORDER_STATUSES.FINISHED ||
+        order.cancelStatus ||
+        hasComment
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        order,
+      });
+    });
+
+  getOrderReviewByOwnerOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const { userId } = req.userData;
+
+      const categories = await this.getNavigationCategories();
+      const order = await this.orderModel.getFullById(id);
+
+      order["tenantCountItems"] = await this.listingModel.getOwnerCountListings(
+        order.tenantId
+      );
+
+      const hasComment = await this.tenantCommentModel.checkOrderHasComment(id);
+
+      if (
+        order.ownerId != userId ||
+        order.status != STATIC.ORDER_STATUSES.FINISHED ||
+        order.cancelStatus ||
+        hasComment
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        order,
+      });
+    });
+
+  getAdminTenantCommentsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await tenantCommentController.baseCommentList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminOwnerCommentsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await ownerCommentController.baseCommentList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...result,
+      });
+    });
+
+  getAdminListingCommentsPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await listingCommentController.baseCommentList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  createOwnerComment = async (req, res) => {
+    const { ownerCommentInfo, listingCommentInfo, orderId } = req.body;
+
+    const orderHasOwnerComment =
+      await this.ownerCommentModel.checkOrderHasComment(orderId);
+
+    if (orderHasOwnerComment) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const orderHasListingComment =
+      await this.listingCommentModel.checkOrderHasComment(orderId);
+
+    if (orderHasListingComment) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const ownerCommentId = await this.ownerCommentModel.create({
+      ...ownerCommentInfo,
+      orderId,
+    });
+
+    const listingCommentId = await this.listingCommentModel.create({
+      ...listingCommentInfo,
+      orderId,
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      ownerCommentId,
+      listingCommentId,
+    });
+  };
+
+  createTenantComment = async (req, res) => {
+    const { tenantCommentInfo, orderId } = req.body;
+
+    const orderHasTenantComment =
+      await this.tenantCommentModel.checkOrderHasComment(orderId);
+
+    if (orderHasTenantComment) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const tenantCommentId = await this.tenantCommentModel.create({
+      ...tenantCommentInfo,
+      orderId,
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      tenantCommentId,
+    });
+  };
+
+  getAdminDisputesPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await disputeController.baseDisputeList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 }
 
