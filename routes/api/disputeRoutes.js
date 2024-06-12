@@ -2,13 +2,42 @@ const { Router } = require("express");
 const router = Router();
 const { disputeController } = require("../../controllers");
 const { isAuth, isSupport } = require("../../middlewares");
+const {
+  adminDisputeListValidation,
+  createDisputeValidation,
+  solveDisputeValidation,
+  unsolveDisputeValidation,
+} = require("../../validations/disputes");
 
-router.post("/list", isAuth, isSupport, disputeController.list);
+router.post(
+  "/list",
+  isAuth,
+  isSupport,
+  adminDisputeListValidation,
+  disputeController.list
+);
 
-router.post("/create", isAuth, disputeController.create);
+router.post(
+  "/create",
+  isAuth,
+  createDisputeValidation,
+  disputeController.create
+);
 
-router.post("/solve", isAuth, isSupport, disputeController.solve);
+router.post(
+  "/solve",
+  isAuth,
+  isSupport,
+  solveDisputeValidation,
+  disputeController.solve
+);
 
-router.post("/unsolve", isAuth, isSupport, disputeController.unsolve);
+router.post(
+  "/unsolve",
+  isAuth,
+  isSupport,
+  unsolveDisputeValidation,
+  disputeController.unsolve
+);
 
 module.exports = router;

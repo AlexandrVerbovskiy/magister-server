@@ -32,6 +32,10 @@ const {
   recipientPaymentListValidation,
   senderPaymentListValidation,
   adminIndexPageOptionsValidation,
+  adminCommentListOptionsValidation,
+  adminDisputeListOptionsValidation,
+  createOwnerCommentValidation,
+  createUserCommentValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
@@ -350,12 +354,14 @@ router.post(
 router.get(
   "/get-order-review-by-tenant/:id",
   isAuth,
+  validateIdParam(),
   mainController.getOrderReviewByTenantOptions
 );
 
 router.get(
   "/get-order-review-by-owner/:id",
   isAuth,
+  validateIdParam(),
   mainController.getOrderReviewByOwnerOptions
 );
 
@@ -363,6 +369,7 @@ router.post(
   "/admin-tenant-comment-list-options",
   isAuth,
   isSupport,
+  adminCommentListOptionsValidation,
   mainController.getAdminTenantCommentsPageOptions
 );
 
@@ -370,6 +377,7 @@ router.post(
   "/admin-owner-comment-list-options",
   isAuth,
   isSupport,
+  adminCommentListOptionsValidation,
   mainController.getAdminOwnerCommentsPageOptions
 );
 
@@ -377,21 +385,21 @@ router.post(
   "/admin-listing-comment-list-options",
   isAuth,
   isSupport,
+  adminCommentListOptionsValidation,
   mainController.getAdminListingCommentsPageOptions
 );
 
 router.post(
-  "/admin-owner-comment-list-options",
+  "/create-owner-review",
   isAuth,
-  isSupport,
-  mainController.getAdminOwnerCommentsPageOptions
+  createOwnerCommentValidation,
+  mainController.createOwnerComment
 );
-
-router.post("/create-owner-review", isAuth, mainController.createOwnerComment);
 
 router.post(
   "/create-tenant-review",
   isAuth,
+  ...createUserCommentValidation,
   mainController.createTenantComment
 );
 
@@ -399,6 +407,7 @@ router.post(
   "/admin-dispute-list-options",
   isAuth,
   isSupport,
+  adminDisputeListOptionsValidation,
   mainController.getAdminDisputesPageOptions
 );
 
