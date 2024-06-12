@@ -4,7 +4,11 @@ const { listTimeStringValidation } = require("../base");
 module.exports = [
   ...listTimeStringValidation,
   body("type")
-    .optional()
-    .isString()
-    .withMessage("Field 'Type' must be a string"),
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || typeof value === "string") {
+        return true;
+      }
+      throw new Error("Field 'Type' must be a string or null");
+    }),
 ];
