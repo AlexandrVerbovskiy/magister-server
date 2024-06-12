@@ -125,15 +125,24 @@ class DisputeModel extends Model {
 
   baseTypeWhere = (type, query) => {
     if (type === STATIC.DISPUTE_STATUSES.OPEN) {
-      query = query.where("status", STATIC.DISPUTE_STATUSES.OPEN);
+      query = query.where(
+        `${DISPUTES_TABLE}.status`,
+        STATIC.DISPUTE_STATUSES.OPEN
+      );
     }
 
     if (type === STATIC.DISPUTE_STATUSES.UNSOLVED) {
-      query = query.where("status", STATIC.DISPUTE_STATUSES.UNSOLVED);
+      query = query.where(
+        `${DISPUTES_TABLE}.status`,
+        STATIC.DISPUTE_STATUSES.UNSOLVED
+      );
     }
 
     if (type === STATIC.DISPUTE_STATUSES.SOLVED) {
-      query = query.where("status", STATIC.DISPUTE_STATUSES.SOLVED);
+      query = query.where(
+        `${DISPUTES_TABLE}.status`,
+        STATIC.DISPUTE_STATUSES.SOLVED
+      );
     }
 
     return query;
