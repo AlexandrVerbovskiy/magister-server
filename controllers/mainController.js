@@ -349,6 +349,13 @@ class MainController extends Controller {
       order["previousUpdateRequest"] =
         await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
 
+      order["tenantCountItems"] =
+        await this.listingModel.getTenantCountListings(order.tenantId);
+
+      order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(
+        order.ownerId
+      );
+
       const categories = await this.getNavigationCategories();
 
       const dopOrderOptions = getDopOrderOptions

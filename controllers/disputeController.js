@@ -70,7 +70,8 @@ class DisputeController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
           STATIC.ORDER_STATUSES.FINISHED,
-        ].includes(STATIC.ORDER_STATUSES)
+        ].includes(STATIC.ORDER_STATUSES) /*||
+        order.disputeId*/
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }

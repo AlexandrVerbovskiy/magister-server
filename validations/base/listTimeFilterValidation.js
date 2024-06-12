@@ -5,14 +5,10 @@ module.exports = [
   body("clientTime")
     .isNumeric()
     .withMessage("Body field 'Client Time' must be a number"),
-  ...validateDate({
-    field: "fromTime",
-    fieldName: "From Time",
-    required: false,
-  }),
-  ...validateDate({
-    field: "toTime",
-    fieldName: "To Time",
-    required: false,
-  }),
+  body("timeFilterType")
+    .optional()
+    .isIn(["last-month", "last-year", "last-week", "last-day"])
+    .withMessage(
+      "Time filter type can be a 'last-month', 'last-year', 'last-week' or 'last-day'."
+    ),
 ];

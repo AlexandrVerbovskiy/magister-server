@@ -21,6 +21,7 @@ const LISTING_DEFECT_QUESTION_RELATIONS_TABLE =
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
+const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -55,6 +56,10 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
+    `${DISPUTES_TABLE}.id as disputeId`,
+    `${DISPUTES_TABLE}.status as disputeStatus`,
+    `${DISPUTES_TABLE}.type as disputeType`,
+    `${DISPUTES_TABLE}.description as disputeDescription`,
   ];
 
   lightRequestVisibleFields = [
@@ -98,6 +103,68 @@ class OrderModel extends Model {
     `${SENDER_PAYMENTS_TABLE}.admin_approved as payedAdminApproved`,
     `${SENDER_PAYMENTS_TABLE}.type as payedType`,
   ];
+
+  fullGroupBy = [
+    `${ORDERS_TABLE}.id`,
+    `${ORDERS_TABLE}.status`,
+    `${ORDERS_TABLE}.cancel_status`,
+    `${ORDERS_TABLE}.price_per_day`,
+    `${ORDERS_TABLE}.start_date`,
+    `${ORDERS_TABLE}.end_date`,
+    `${ORDERS_TABLE}.tenant_fee`,
+    `${ORDERS_TABLE}.owner_fee`,
+    `${ORDERS_TABLE}.prev_price_per_day`,
+    `${ORDERS_TABLE}.prev_start_date`,
+    `${ORDERS_TABLE}.prev_end_date`,
+    `searching_order.id`,
+    `tenants.id`,
+    `tenants.name`,
+    `tenants.email`,
+    `tenants.photo`,
+    `tenants.phone`,
+    `owners.id`,
+    `owners.name`,
+    `owners.email`,
+    `owners.photo`,
+    `owners.phone`,
+    `${LISTINGS_TABLE}.id`,
+    `${LISTINGS_TABLE}.name`,
+    `${LISTINGS_TABLE}.city`,
+    `${LISTINGS_TABLE}.price_per_day`,
+    `${LISTINGS_TABLE}.min_rental_days`,
+    `${LISTINGS_TABLE}.category_id`,
+    `${LISTING_CATEGORIES_TABLE}.name`,
+    `${LISTINGS_TABLE}.description`,
+    `${LISTINGS_TABLE}.rental_terms`,
+    `${LISTINGS_TABLE}.address`,
+    `${LISTINGS_TABLE}.postcode`,
+    `${LISTINGS_TABLE}.rental_lat`,
+    `${LISTINGS_TABLE}.rental_lng`,
+    `${LISTINGS_TABLE}.rental_radius`,
+    `${LISTINGS_TABLE}.compensation_cost`,
+    `${LISTINGS_TABLE}.count_stored_items`,
+    `${ORDERS_TABLE}.tenant_accept_listing_qrcode`,
+    `${ORDERS_TABLE}.owner_accept_listing_qrcode`,
+    `tenants.phone`,
+    `owners.phone`,
+    `tenants.place_work`,
+    `owners.place_work`,
+    `owners.twitter_url`,
+    `owners.facebook_url`,
+    `owners.linkedin_url`,
+    `owners.instagram_url`,
+    `tenants.twitter_url`,
+    `tenants.facebook_url`,
+    `tenants.linkedin_url`,
+    `tenants.instagram_url`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
+    `${DISPUTES_TABLE}.id`,
+    `${DISPUTES_TABLE}.status`,
+    `${DISPUTES_TABLE}.type`,
+    `${DISPUTES_TABLE}.description`,
+  ]
 
   strFilterFields = [
     `tenants.name`,
@@ -170,8 +237,8 @@ class OrderModel extends Model {
     return today > quickCancelLastPossible;
   };
 
-  fullBaseGetQuery = (filter) => {
-    let query = db(ORDERS_TABLE)
+  fullOrdersJoin = (query) => {
+    return query
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
@@ -196,9 +263,20 @@ class OrderModel extends Model {
         "=",
         `${ORDERS_TABLE}.tenant_id`
       )
-      .whereRaw(this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`));
+      .leftJoin(
+        `${DISPUTES_TABLE} as disputes`,
+        `${DISPUTES_TABLE}.order_id`,
+        "=",
+        `${ORDERS_TABLE}.id`
+      );
+  };
 
-    return query;
+  fullBaseGetQuery = (filter) => {
+    let query = db(ORDERS_TABLE);
+    query = this.fullOrdersJoin(query);
+    return query.whereRaw(
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    );
   };
 
   orderCreatedTimeFilterWrap = (query, timeInfos) => {
@@ -698,34 +776,6 @@ class OrderModel extends Model {
     return res[0]["id"];
   };
 
-  fullOrdersJoin = (db) => {
-    return db
-      .join(
-        LISTINGS_TABLE,
-        `${LISTINGS_TABLE}.id`,
-        "=",
-        `${ORDERS_TABLE}.listing_id`
-      )
-      .join(
-        LISTING_CATEGORIES_TABLE,
-        `${LISTING_CATEGORIES_TABLE}.id`,
-        "=",
-        `${LISTINGS_TABLE}.category_id`
-      )
-      .join(
-        `${USERS_TABLE} as owners`,
-        `owners.id`,
-        "=",
-        `${LISTINGS_TABLE}.owner_id`
-      )
-      .join(
-        `${USERS_TABLE} as tenants`,
-        `tenants.id`,
-        "=",
-        `${ORDERS_TABLE}.tenant_id`
-      );
-  };
-
   getByWhere = async (key, value) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
@@ -966,63 +1016,7 @@ class OrderModel extends Model {
       .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
 
     const conflictOrders = await query
-      .groupBy([
-        `${ORDERS_TABLE}.id`,
-        `${ORDERS_TABLE}.status`,
-        `${ORDERS_TABLE}.cancel_status`,
-        `${ORDERS_TABLE}.price_per_day`,
-        `${ORDERS_TABLE}.start_date`,
-        `${ORDERS_TABLE}.end_date`,
-        `${ORDERS_TABLE}.tenant_fee`,
-        `${ORDERS_TABLE}.owner_fee`,
-        `${ORDERS_TABLE}.prev_price_per_day`,
-        `${ORDERS_TABLE}.prev_start_date`,
-        `${ORDERS_TABLE}.prev_end_date`,
-        `searching_order.id`,
-        `tenants.id`,
-        `tenants.name`,
-        `tenants.email`,
-        `tenants.photo`,
-        `tenants.phone`,
-        `owners.id`,
-        `owners.name`,
-        `owners.email`,
-        `owners.photo`,
-        `owners.phone`,
-        `${LISTINGS_TABLE}.id`,
-        `${LISTINGS_TABLE}.name`,
-        `${LISTINGS_TABLE}.city`,
-        `${LISTINGS_TABLE}.price_per_day`,
-        `${LISTINGS_TABLE}.min_rental_days`,
-        `${LISTINGS_TABLE}.category_id`,
-        `${LISTING_CATEGORIES_TABLE}.name`,
-        `${LISTINGS_TABLE}.description`,
-        `${LISTINGS_TABLE}.rental_terms`,
-        `${LISTINGS_TABLE}.address`,
-        `${LISTINGS_TABLE}.postcode`,
-        `${LISTINGS_TABLE}.rental_lat`,
-        `${LISTINGS_TABLE}.rental_lng`,
-        `${LISTINGS_TABLE}.rental_radius`,
-        `${LISTINGS_TABLE}.compensation_cost`,
-        `${LISTINGS_TABLE}.count_stored_items`,
-        `${ORDERS_TABLE}.tenant_accept_listing_qrcode`,
-        `${ORDERS_TABLE}.owner_accept_listing_qrcode`,
-        `tenants.phone`,
-        `owners.phone`,
-        `tenants.place_work`,
-        `owners.place_work`,
-        `owners.twitter_url`,
-        `owners.facebook_url`,
-        `owners.linkedin_url`,
-        `owners.instagram_url`,
-        `tenants.twitter_url`,
-        `tenants.facebook_url`,
-        `tenants.linkedin_url`,
-        `tenants.instagram_url`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
-      ])
+      .groupBy(this.fullGroupBy)
       .select([
         ...this.fullVisibleFields,
         `searching_order.id as searchingOrderId`,
