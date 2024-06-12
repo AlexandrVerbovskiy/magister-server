@@ -1,3 +1,3 @@
-const { listTimeFilterValidation } = require("../base");
+const { listTimeStringValidation } = require("../base");
 
-module.exports = listTimeFilterValidation;
+module.exports = listTimeStringValidation;

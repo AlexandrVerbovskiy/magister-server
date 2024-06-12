@@ -9,8 +9,10 @@ module.exports = {
   userRoleValidation: require("./userRoleValidation"),
   emailValidation: require("./emailValidation"),
   validatePassword: require("./validatePassword"),
-  listTimeFilterValidation: require("./listTimeFilterValidation"),
+  listTimeStringValidation: require("./listTimeStringValidation"),
   listPaginationStringFilterValidation: require("./listPaginationStringFilterValidation"),
   listPaginationFilterValidation: require("./listPaginationFilterValidation"),
   listPaginationTimeStringFilterValidation: require("./listPaginationTimeStringFilterValidation"),
+  baseListTimeStringFilterPagination: require("./baseListTimeStringFilterPagination"),
+  baseListTimeStringPagination: require("./baseListTimeStringPagination"),
 };
