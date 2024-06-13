@@ -6,9 +6,9 @@ module.exports = [
     field: "disputeId",
     fieldName: "Dispute Id",
   }),
-  body("description")
+  body("solution")
     .isString()
-    .withMessage("Description must be a string")
+    .withMessage("Solution must be a string")
     .notEmpty()
-    .withMessage("Description cannot be empty"),
+    .withMessage("Solution cannot be empty"),
 ];

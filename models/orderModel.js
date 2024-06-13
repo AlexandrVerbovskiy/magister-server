@@ -164,7 +164,7 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.status`,
     `${DISPUTES_TABLE}.type`,
     `${DISPUTES_TABLE}.description`,
-  ]
+  ];
 
   strFilterFields = [
     `tenants.name`,
@@ -396,6 +396,24 @@ class OrderModel extends Model {
     return query;
   };
 
+  commentsVisibleFields = (visibleFields) => {
+    return [
+      ...visibleFields,
+
+      `tenant_comments.id as tenantCommentId`,
+      `owner_comments.id as ownerCommentId`,
+      `${LISTING_COMMENTS_TABLE}.id as listingCommentId`,
+
+      `tenant_comments.waiting_admin as tenantCommentWaitingAdmin`,
+      `owner_comments.waiting_admin as ownerCommentWaitingAdmin`,
+      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentWaitingAdmin`,
+
+      `tenant_comments.waiting_admin as tenantCommentApproved`,
+      `owner_comments.waiting_admin as ownerCommentApproved`,
+      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentApproved`,
+    ];
+  };
+
   tenantBaseGetQuery = (
     filter,
     timeInfos,
@@ -559,21 +577,7 @@ class OrderModel extends Model {
         ? [...this.lightRequestVisibleFields, ...this.selectPartPayedInfo]
         : this.lightVisibleFields;
 
-    visibleFields = [
-      ...visibleFields,
-
-      `tenant_comments.id as tenantCommentId`,
-      `owner_comments.id as ownerCommentId`,
-      `${LISTING_COMMENTS_TABLE}.id as listingCommentId`,
-
-      `tenant_comments.waiting_admin as tenantCommentWaitingAdmin`,
-      `owner_comments.waiting_admin as ownerCommentWaitingAdmin`,
-      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentWaitingAdmin`,
-
-      `tenant_comments.waiting_admin as tenantCommentApproved`,
-      `owner_comments.waiting_admin as ownerCommentApproved`,
-      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentApproved`,
-    ];
+    visibleFields = this.commentsVisibleFields(visibleFields);
 
     if (type == "order") {
       query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
@@ -605,10 +609,16 @@ class OrderModel extends Model {
 
     query = this.commentsInfoJoin(query);
 
-    const visibleFields =
+    let visibleFields =
       type == "booking"
         ? this.lightRequestVisibleFields
         : this.lightVisibleFields;
+
+    visibleFields = this.commentsVisibleFields(visibleFields);
+
+    if (type == "order") {
+      query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
+    }
 
     return await query
       .select(visibleFields)
@@ -793,13 +803,13 @@ class OrderModel extends Model {
     const lastOrder = await lastOrderQuery
       .select(this.fullVisibleFields)
       .where(`${ORDERS_TABLE}.parent_id`, id)
-      .whereIn("status", [
+      .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
       ])
-      .whereNull("cancel_status")
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .orderBy(`${ORDERS_TABLE}.end_date`, "desc")
       .first();
 
@@ -1153,8 +1163,8 @@ class OrderModel extends Model {
 
   getUnfinishedTenantCount = async (tenantId) => {
     const { count } = await db(ORDERS_TABLE)
-      .whereIn("status", this.processStatuses)
-      .whereNull("cancel_status")
+      .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .where("tenant_id", tenantId)
       .count("* as count")
       .first();
@@ -1164,8 +1174,8 @@ class OrderModel extends Model {
 
   getUnfinishedOwnerCount = async (ownerId) => {
     const { count } = await db(ORDERS_TABLE)
-      .whereIn("status", this.processStatuses)
-      .whereNull("cancel_status")
+      .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .leftJoin(
         LISTINGS_TABLE,
         LISTINGS_TABLE + ".id",
@@ -1191,7 +1201,7 @@ class OrderModel extends Model {
 
   getUnfinishedListingCount = async (listingId) => {
     const { count } = await db(ORDERS_TABLE)
-      .whereIn("status", this.processStatuses)
+      .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
       .where("listing_id", listingId)
       .count("* as count")
       .first();
@@ -1271,7 +1281,7 @@ class OrderModel extends Model {
           userId
         );*/
       })
-      .whereIn("status", [
+      .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
@@ -1303,7 +1313,7 @@ class OrderModel extends Model {
         "=",
         `${ORDERS_TABLE}.listing_id`
       )
-      .whereIn("status", [
+      .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
       ])
@@ -1331,7 +1341,7 @@ class OrderModel extends Model {
     );
 
     const result = await query
-      .whereIn("status", this.bookingStatuses)
+      .whereIn(`${ORDERS_TABLE}.status`, this.bookingStatuses)
       .select(
         db.raw(`COUNT(*) AS "allCount"`),
         db.raw(
@@ -1419,7 +1429,7 @@ class OrderModel extends Model {
     ids.forEach((id) => (checkLists[id] = []));
 
     const requestResult = await db(LISTING_DEFECT_QUESTION_RELATIONS_TABLE)
-      .where("type", "tenant")
+      .where(`${ORDERS_TABLE}.type`, "tenant")
       .whereIn("order_id", ids)
       .where("answer", true)
       .select("question", `order_id as orderId`);

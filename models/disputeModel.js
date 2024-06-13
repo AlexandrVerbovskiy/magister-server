@@ -110,15 +110,14 @@ class DisputeModel extends Model {
   };
 
   solve = async (solution, disputeId) => {
-    await db(DISPUTES_TABLE).where("dispute_id", disputeId).update({
+    await db(DISPUTES_TABLE).where("id", disputeId).update({
       solution,
-      winner_id: winnerId,
       status: STATIC.DISPUTE_STATUSES.SOLVED,
     });
   };
 
   unsolve = async (disputeId) => {
-    await db(DISPUTES_TABLE).where("dispute_id", disputeId).update({
+    await db(DISPUTES_TABLE).where("id", disputeId).update({
       status: STATIC.DISPUTE_STATUSES.UNSOLVED,
     });
   };

@@ -257,6 +257,39 @@ const checkDateInDuration = (
   }
 };
 
+const isDateAfterStartDate = (key, startInfo, stepType, durationHours) => {
+  const durationMilliseconds = durationHours * 60 * 60 * 1000;
+
+  const startInfoDate = new Date(startInfo);
+  startInfoDate.setTime(startInfoDate.getTime() + durationMilliseconds);
+
+  if (stepType == "hours") {
+    startInfoDate.setMinutes(0, 0);
+    startInfo = timeConverter(startInfoDate);
+    return timeConverter(key) >= startInfo;
+  } else if (stepType == "days") {
+    startInfo = shortTimeConverter(startInfoDate);
+    return (
+      shortTimeConverter(key) >= startInfo
+    );
+  } else {
+    startInfo = shortTimeConverter(startInfoDate);
+
+    const splittedStartInfo = startInfo.split("/");
+    const startInfoMonth = splittedStartInfo[0];
+    const startInfoYear = splittedStartInfo[2];
+
+    const splittedKeyInfo = key.split("/");
+    const keyInfoMonth = splittedKeyInfo[0];
+    const keyInfoYear = splittedKeyInfo[1];
+
+    const startDate = new Date(startInfoYear, startInfoMonth - 1, 1);
+    const checkDate = new Date(keyInfoYear, keyInfoMonth - 1, 1);
+
+    return checkDate >= startDate;
+  }
+};
+
 module.exports = {
   timeConverter,
   getOneHourAgo,
@@ -277,4 +310,5 @@ module.exports = {
   getStartAndEndOfYesterday,
   generateDatesByTypeBetween,
   checkDateInDuration,
+  isDateAfterStartDate,
 };

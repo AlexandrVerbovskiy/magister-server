@@ -2,6 +2,8 @@ const STATIC = require("../static");
 const Controller = require("./Controller");
 
 class BaseCommentController extends Controller {
+  needListingImages = false;
+
   baseCommentList = async (req) => {
     const timeInfos = await this.getListTimeAutoOption(
       req,
@@ -18,19 +20,21 @@ class BaseCommentController extends Controller {
     options["type"] = type;
     options = this.addTimeInfoToOptions(options, timeInfos);
 
-    const comments = await this.model.list(options);
+    let comments = await this.model.list(options);
     const typesCount = await this.model.getCommentTypesCount({
       timeInfos,
       filter,
     });
 
-    const commentsWithImages = await this.listingModel.listingsBindImages(
-      comments,
-      "listingId"
-    );
+    if (this.needListingImages) {
+      comments = await this.listingModel.listingsBindImages(
+        comments,
+        "listingId"
+      );
+    }
 
     return {
-      items: commentsWithImages,
+      items: comments,
       options,
       countItems,
       typesCount,
