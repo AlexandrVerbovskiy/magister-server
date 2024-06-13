@@ -39,7 +39,7 @@ class MainController extends Controller {
       const userId = req.userData.userId;
       const categories = await this.listingCategoryModel.getFullInfoList();
 
-      const topListings = await this.listingModel.getTopListings();
+      /* const topListings = await this.listingModel.getTopListings();
 
       if (!userId) {
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -52,10 +52,9 @@ class MainController extends Controller {
         await this.userListingFavoriteModel.bindUserListingListFavorite(
           topListings,
           userId
-        );
+        );*/
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        topListings: ratingListingsWithImagesFavorites,
         categories,
       });
     });
