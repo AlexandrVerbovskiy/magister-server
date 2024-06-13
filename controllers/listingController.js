@@ -573,8 +573,6 @@ class ListingController extends Controller {
         listingId
       );
 
-      console.log(isFavorite);
-
       const message = isFavorite ? "Favorite mark added" : "Favorite removed";
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
