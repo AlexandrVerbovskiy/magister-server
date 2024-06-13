@@ -122,7 +122,10 @@ class Controller {
     message = null,
     body = {}
   ) => {
-    if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
+    if (!baseInfo) {
+      baseInfo = STATIC.SUCCESS.OK;
+    }
+
     return this.sendResponse(response, baseInfo, message, body, false);
   };
 

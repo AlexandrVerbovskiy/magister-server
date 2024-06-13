@@ -160,6 +160,7 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const userVerifyRequestListOptions =
         await userVerifyRequestController.baseUserVerifyRequestList(req);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...userVerifyRequestListOptions,
       });
