@@ -1429,7 +1429,7 @@ class OrderModel extends Model {
     ids.forEach((id) => (checkLists[id] = []));
 
     const requestResult = await db(LISTING_DEFECT_QUESTION_RELATIONS_TABLE)
-      .where(`${ORDERS_TABLE}.type`, "tenant")
+      .where(`type`, "tenant")
       .whereIn("order_id", ids)
       .where("answer", true)
       .select("question", `order_id as orderId`);
