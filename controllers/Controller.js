@@ -693,7 +693,7 @@ class Controller {
       ? shortTimeConverter(payment.createdAt)
       : "-";
 
-    const dueInfo = payment.dueAt ? shortTimeConverter(payment.dueAt) : "-";
+    const dueInfo = payment.createdAt ? shortTimeConverter(payment.createdAt) : "-";
 
     const params = {
       billTo: payment.listingAddress ?? payment.listingCity,
