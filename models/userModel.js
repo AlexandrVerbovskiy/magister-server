@@ -133,7 +133,7 @@ class UserModel extends Model {
       phone = null,
       briefBio,
       contactDetails,
-      twoFactorAuthentication = true,
+      twoFactorAuthentication = null,
       emailVerified,
       phoneVerified,
       active,
@@ -156,13 +156,16 @@ class UserModel extends Model {
       phone,
       contact_details: contactDetails,
       brief_bio: briefBio,
-      two_factor_authentication: twoFactorAuthentication,
       place_work: placeWork,
       facebook_url: facebookUrl,
       instagram_url: instagramUrl,
       linkedin_url: linkedinUrl,
       twitter_url: twitterUrl,
     };
+
+    if (twoFactorAuthentication !== null) {
+      updateData["two_factor_authentication"] = twoFactorAuthentication;
+    }
 
     if (email !== null) {
       updateData.email = email;
@@ -212,6 +215,7 @@ class UserModel extends Model {
   };
 
   createFull = async (userData) => {
+    userData["twoFactorAuthentication"] = true;
     const dataToSave = this.convertFullUserDataToSave(userData);
     const res = await db(USERS_TABLE).insert(dataToSave).returning("id");
     return res[0].id;

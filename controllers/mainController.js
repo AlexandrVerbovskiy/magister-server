@@ -17,9 +17,9 @@ const coordsByIp = require("../utils/coordsByIp");
 const {
   cloneObject,
   generateDatesByTypeBetween,
-  shortTimeConverter,
   checkDateInDuration,
   getDaysDifference,
+  isDateAfterStartDate,
 } = require("../utils");
 const tenantCommentController = require("./tenantCommentController");
 const ownerCommentController = require("./ownerCommentController");
@@ -1081,9 +1081,8 @@ class MainController extends Controller {
       userInactiveInfos.forEach((info) => {
         Object.keys(userInactiveRegisterDatesCount).forEach((key) => {
           if (
-            checkDateInDuration(
+            isDateAfterStartDate(
               key,
-              info["createdAt"],
               info["createdAt"],
               stepType,
               clientServerHoursDiff
@@ -1097,9 +1096,8 @@ class MainController extends Controller {
       userRegisterInfos.forEach((info) => {
         Object.keys(userRegisterDatesCount).forEach((key) => {
           if (
-            checkDateInDuration(
+            isDateAfterStartDate(
               key,
-              info["createdAt"],
               info["createdAt"],
               stepType,
               clientServerHoursDiff
@@ -1111,9 +1109,8 @@ class MainController extends Controller {
 
         Object.keys(userTotalDatesCount).forEach((key) => {
           if (
-            checkDateInDuration(
+            isDateAfterStartDate(
               key,
-              info["createdAt"],
               info["createdAt"],
               stepType,
               clientServerHoursDiff
