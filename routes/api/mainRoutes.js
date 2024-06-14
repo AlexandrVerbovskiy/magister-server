@@ -145,10 +145,10 @@ router.get(
 );
 
 router.get(
-  "/get-booking-for-card-pay-options/:id",
+  "/get-order-for-card-pay-options/:id",
   isAuth,
   orderFullByIdOptionsValidation,
-  mainController.getBookingFullForCardPay
+  mainController.getOrderFullForCardPay
 );
 
 router.get(
@@ -217,14 +217,6 @@ router.get(
 );
 
 router.get(
-  "/admin-full-booking-info-options/:id",
-  isAuth,
-  isSupport,
-  validateIdParam(),
-  mainController.getFullOrderByIdWithRequestsToUpdatePageOption
-);
-
-router.get(
   "/user-profile-edit-options",
   isAuth,
   mainController.getUserProfileEditPageOptions
@@ -233,27 +225,11 @@ router.get(
 router.get("/settings-options", isAuth, mainController.getSettingsPageOptions);
 
 router.post(
-  "/booking-list-options",
-  isAuth,
-  isVerified,
-  orderListOptionsValidation,
-  mainController.getBookingListOptions
-);
-
-router.post(
   "/order-list-options",
   isAuth,
   isVerified,
   orderListOptionsValidation,
   mainController.getOrderListOptions
-);
-
-router.post(
-  "/admin-booking-list-options",
-  isAuth,
-  isSupport,
-  adminOrderListOptionsValidation,
-  mainController.getAdminBookingListOptions
 );
 
 router.post(
