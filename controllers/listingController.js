@@ -399,8 +399,9 @@ class ListingController extends Controller {
 
       if (!hasNotViewedByAdminRequest) {
         await this.listingApprovalRequestModel.create(listingId);
-        createdVerifiedRequest = true;
       }
+
+      createdVerifiedRequest = true;
     }
 
     return this.sendSuccessResponse(

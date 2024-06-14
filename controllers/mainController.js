@@ -393,9 +393,22 @@ class MainController extends Controller {
       const paymentInfo =
         await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
 
+      const {
+        bankAccountIban,
+        bankAccountSwiftBic,
+        bankAccountBeneficiary,
+        bankAccountReferenceConceptCode,
+      } = await this.systemOptionModel.getBankAccountInfo();
+
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
         paymentInfo,
+        bankInfo: {
+          bankAccountIban,
+          bankAccountSwiftBic,
+          bankAccountBeneficiary,
+          bankAccountReferenceConceptCode,
+        },
       };
     };
 
@@ -657,7 +670,11 @@ class MainController extends Controller {
         ownerBaseCommissionPercent: ownerBaseFee,
         tenantBaseCommissionPercent: tenantBaseFee,
         tenantCancelFeePercent: tenantCancelFee,
-      } = await this.systemOptionModel.getCommissionInfo();
+        bankAccountIban,
+        bankAccountSwiftBic,
+        bankAccountBeneficiary,
+        bankAccountReferenceConceptCode,
+      } = await this.systemOptionModel.getOptions();
 
       const request = isForTenant
         ? orderController.baseTenantBookingList
@@ -694,6 +711,12 @@ class MainController extends Controller {
         countForOwner,
         ownerBaseFee,
         tenantBaseFee,
+        bankInfo: {
+          bankAccountIban,
+          bankAccountSwiftBic,
+          bankAccountBeneficiary,
+          bankAccountReferenceConceptCode,
+        },
       });
     });
 
