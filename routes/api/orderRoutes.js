@@ -3,12 +3,9 @@ const router = Router();
 const { orderController } = require("../../controllers");
 const {
   isAuth,
-  isAdmin,
   isVerified,
-  authId,
   isSupport,
   isFileLimit,
-  isVerifiedAndHasPaypalId
 } = require("../../middlewares");
 
 const { upload } = require("../../utils");
@@ -29,7 +26,7 @@ const { validateIdParam } = require("../../validations/base");
 router.post(
   "/create",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   createValidation,
   orderController.create
 );
@@ -37,7 +34,7 @@ router.post(
 router.post(
   "/extend",
   isAuth,
-  isVerifiedAndHasPaypalId,
+  isVerified,
   extendValidation,
   orderController.extend
 );
