@@ -65,22 +65,6 @@ router.post(
 );
 
 router.post(
-  "/booking-list",
-  isAuth,
-  isVerified,
-  listValidation,
-  orderController.bookingList
-);
-
-router.post(
-  "/admin-booking-list",
-  isAuth,
-  isSupport,
-  listValidation,
-  orderController.adminBookingList
-);
-
-router.post(
   "/order-list",
   isAuth,
   isVerified,

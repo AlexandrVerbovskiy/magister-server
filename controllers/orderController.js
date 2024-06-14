@@ -281,47 +281,6 @@ class OrderController extends Controller {
     };
   };
 
-  baseTenantBookingList = async (req) => {
-    const tenantId = req.userData.userId;
-
-    const totalCountCall = (filter, timeInfos) =>
-      this.orderModel.tenantBookingsTotalCount(filter, timeInfos, tenantId);
-
-    const listCall = (options) => {
-      options["tenantId"] = tenantId;
-      return this.orderModel.tenantBookingsList(options);
-    };
-
-    return await this.baseRequestsList(req, totalCountCall, listCall);
-  };
-
-  baseListingOwnerBookingList = async (req) => {
-    const ownerId = req.userData.userId;
-
-    const totalCountCall = (filter, timeInfos) =>
-      this.orderModel.ownerBookingsTotalCount(filter, timeInfos, ownerId);
-
-    const listCall = (options) => {
-      options["ownerId"] = ownerId;
-      return this.orderModel.ownerBookingsList(options);
-    };
-
-    return await this.baseRequestsList(req, totalCountCall, listCall);
-  };
-
-  bookingList = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const isForTenant = req.body.type !== "owner";
-
-      const request = isForTenant
-        ? this.baseTenantBookingList
-        : this.baseListingOwnerBookingList;
-
-      const result = await request(req);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
   baseAdminOptionsAdd = async (orders) => {
     const listingIds = orders.map((order) => order.listingId);
 
@@ -369,44 +328,6 @@ class OrderController extends Controller {
 
     return orders;
   };
-
-  baseAdminBookingList = async (req) => {
-    const timeInfos = await this.listTimeNameOption(req);
-    const type = req.body.type ?? "all";
-    const filter = req.body.filter ?? "";
-
-    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.orderModel.allBookingsTotalCount(filter, type, timeInfos)
-    );
-
-    options["type"] = type;
-
-    options = this.addTimeInfoToOptions(options, timeInfos);
-
-    const statusCount = await this.orderModel.getBookingStatusesCount({
-      timeInfos,
-      filter,
-    });
-
-    let orders = await this.orderModel.allBookingsList(options);
-
-    orders = await this.baseAdminOptionsAdd(orders);
-
-    orders = await this.bindOrderRating(orders);
-
-    return {
-      items: orders,
-      options,
-      countItems,
-      statusCount,
-    };
-  };
-
-  adminBookingList = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result = await this.baseAdminBookingList(req);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
 
   baseTenantOrderList = async (req) => {
     const tenantId = req.userData.userId;
@@ -538,6 +459,16 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
+      const conflictOrders = await this.orderModel.getConflictOrders([id]);
+
+      if (conflictOrders[`${id}`].length > 0) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.FORBIDDEN,
+          "Order has conflict orders"
+        );
+      }
+
       let resetParentId = false;
 
       if (order.orderParentId) {
@@ -647,6 +578,10 @@ class OrderController extends Controller {
 
       const paypalOrderInfo = await getPaypalOrderInfo(paypalOrderId);
 
+      const payerCardLastDigits =
+        paypalOrderInfo.payment_source?.card.last_digits;
+      const payerCardLastBrand = paypalOrderInfo.payment_source?.card.brand;
+
       const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
       const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
 
@@ -684,6 +619,8 @@ class OrderController extends Controller {
         paypalSenderId: paypalSenderId,
         paypalOrderId: paypalOrderId,
         paypalCaptureId: paypalCaptureId,
+        payerCardLastDigits,
+        payerCardLastBrand,
         proofUrl: "",
       });
 
