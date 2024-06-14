@@ -55,10 +55,10 @@ class SystemOptionModel extends Model {
     );
 
     const result = {
-      bankAccountIban: bankAccountIban ?? "",
-      bankAccountSwiftBic: bankAccountSwiftBic ?? "",
-      bankAccountBeneficiary: bankAccountBeneficiary ?? "",
-      bankAccountReferenceConceptCode: bankAccountReferenceConceptCode ?? "",
+      bankAccountIban: bankAccountIban?.value?? "",
+      bankAccountSwiftBic: bankAccountSwiftBic?.value?? "",
+      bankAccountBeneficiary: bankAccountBeneficiary?.value?? "",
+      bankAccountReferenceConceptCode: bankAccountReferenceConceptCode?.value?? "",
     };
 
     return result;

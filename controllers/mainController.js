@@ -374,6 +374,13 @@ class MainController extends Controller {
         tenantCancelFeePercent: tenantCancelFee,
       } = await this.systemOptionModel.getCommissionInfo();
 
+      const {
+        bankAccountIban,
+        bankAccountSwiftBic,
+        bankAccountBeneficiary,
+        bankAccountReferenceConceptCode,
+      } = await this.systemOptionModel.getBankAccountInfo();
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order: { ...order, ...dopOrderOptions },
         categories,
@@ -381,6 +388,12 @@ class MainController extends Controller {
         ownerBaseCommission,
         tenantBaseCommission,
         tenantCancelFee,
+        bankInfo: {
+          bankAccountIban,
+          bankAccountSwiftBic,
+          bankAccountBeneficiary,
+          bankAccountReferenceConceptCode,
+        },
       });
     });
 
@@ -393,22 +406,9 @@ class MainController extends Controller {
       const paymentInfo =
         await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
 
-      const {
-        bankAccountIban,
-        bankAccountSwiftBic,
-        bankAccountBeneficiary,
-        bankAccountReferenceConceptCode,
-      } = await this.systemOptionModel.getBankAccountInfo();
-
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
         paymentInfo,
-        bankInfo: {
-          bankAccountIban,
-          bankAccountSwiftBic,
-          bankAccountBeneficiary,
-          bankAccountReferenceConceptCode,
-        },
       };
     };
 
@@ -420,15 +420,15 @@ class MainController extends Controller {
     );
   };
 
-  getBookingFullForCardPay = (req, res) =>
+  getOrderFullForCardPay = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      const booking = await this.orderModel.getFullById(id);
+      const order = await this.orderModel.getFullById(id);
       const bankAccount = await this.systemOptionModel.getBankAccountInfo();
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        booking,
+        order,
         bankAccount,
         categories,
       });
@@ -662,7 +662,7 @@ class MainController extends Controller {
       });
     });
 
-  getBookingListOptions = (req, res) =>
+  getOrderListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
       const isForTenant = req.body.type !== "owner";
@@ -675,71 +675,6 @@ class MainController extends Controller {
         bankAccountBeneficiary,
         bankAccountReferenceConceptCode,
       } = await this.systemOptionModel.getOptions();
-
-      const request = isForTenant
-        ? orderController.baseTenantBookingList
-        : orderController.baseListingOwnerBookingList;
-
-      const result = await request(req);
-
-      const categories = await this.getNavigationCategories();
-
-      let countForTenant = 0;
-      let countForOwner = 0;
-
-      if (isForTenant) {
-        countForOwner = await this.orderModel.ownerBookingsTotalCount(
-          "",
-          {},
-          userId
-        );
-        countForTenant = result.countItems;
-      } else {
-        countForTenant = await this.orderModel.tenantBookingsTotalCount(
-          "",
-          {},
-          userId
-        );
-        countForOwner = result.countItems;
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-        categories,
-        tenantCancelFee,
-        countForTenant,
-        countForOwner,
-        ownerBaseFee,
-        tenantBaseFee,
-        bankInfo: {
-          bankAccountIban,
-          bankAccountSwiftBic,
-          bankAccountBeneficiary,
-          bankAccountReferenceConceptCode,
-        },
-      });
-    });
-
-  getAdminBookingListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result = await orderController.baseAdminBookingList(req);
-      const categories = await this.getNavigationCategories();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        ...result,
-        categories,
-      });
-    });
-
-  getOrderListOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const userId = req.userData.userId;
-      const isForTenant = req.body.type !== "owner";
-      const {
-        ownerBaseCommissionPercent: ownerBaseFee,
-        tenantBaseCommissionPercent: tenantBaseFee,
-        tenantCancelFeePercent: tenantCancelFee,
-      } = await this.systemOptionModel.getCommissionInfo();
 
       const request = isForTenant
         ? orderController.baseTenantOrderList
@@ -775,6 +710,12 @@ class MainController extends Controller {
         tenantBaseFee,
         countForTenant,
         countForOwner,
+        bankInfo: {
+          bankAccountIban,
+          bankAccountSwiftBic,
+          bankAccountBeneficiary,
+          bankAccountReferenceConceptCode,
+        },
       });
     });
 
@@ -790,22 +731,6 @@ class MainController extends Controller {
     });
 
   getFullOrderByIdPageOption = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-      const order = await this.orderModel.getFullById(id);
-
-      if (!order) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.NOT_FOUND,
-          "Order wasn't found"
-        );
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
-    });
-
-  getFullOrderByIdWithRequestsToUpdatePageOption = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const order = await this.orderModel.getFullById(id);

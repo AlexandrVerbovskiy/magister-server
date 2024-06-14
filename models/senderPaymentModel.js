@@ -87,6 +87,8 @@ class SenderPayment extends Model {
     paypalSenderId,
     paypalOrderId,
     paypalCaptureId,
+    payerCardLastDigits,
+    payerCardLastBrand,
     proofUrl,
   }) =>
     this.create({
@@ -98,6 +100,8 @@ class SenderPayment extends Model {
         paypalSenderId,
         paypalCaptureId,
         paypalOrderId,
+        payerCardLastDigits,
+        payerCardLastBrand,
       }),
       adminApproved: true,
       type: "paypal",
@@ -231,8 +235,7 @@ class SenderPayment extends Model {
 
   baseStatusWhere = (query, status) => {
     if (status == "waiting") {
-      query = query
-        .where("waiting_approved", true);
+      query = query.where("waiting_approved", true);
     }
 
     if (status == "approved") {
