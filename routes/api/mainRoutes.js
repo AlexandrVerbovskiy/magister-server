@@ -45,15 +45,12 @@ router.get("/index-options", authId, mainController.getIndexPageOptions);
 router.get(
   "/create-listing-options",
   isAuth,
-  isVerified,
-  isVerified,
   mainController.getCreateListingPageOptions
 );
 
 router.get(
   "/update-listing-options/:id",
   isAuth,
-  isVerified,
   updateListingOptionsValidation,
   mainController.getUpdateListingPageOptions
 );
@@ -171,7 +168,6 @@ router.get(
 router.post(
   "/user-listing-list-options",
   isAuth,
-  isVerified,
   userListingListOptionsValidation,
   mainController.getUserListingListPageOptions
 );
@@ -410,5 +406,7 @@ router.post(
   adminDisputeListOptionsValidation,
   mainController.getAdminDisputesPageOptions
 );
+
+router.get("/test", mainController.test);
 
 module.exports = router;
