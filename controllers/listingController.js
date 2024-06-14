@@ -291,7 +291,7 @@ class ListingController extends Controller {
     return [...filesToSave, ...listingImages];
   };
 
-  baseCreate = async (req, res) => {
+  baseCreate = async (req, res, needSendRequest = false) => {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
 
@@ -304,16 +304,26 @@ class ListingController extends Controller {
 
     dataToSave["userVerified"] = true;
 
+    let createdVerifiedRequest = false;
+
+    if (needSendRequest) {
+      await this.listingApprovalRequestModel.create(listingId);
+      createdVerifiedRequest = true;
+    }
+
     return this.sendSuccessResponse(
       res,
       STATIC.SUCCESS.OK,
       "Created successfully",
       {
-        ...dataToSave,
-        id: listingId,
-        listingId,
-        listingImages,
-        defects,
+        listing: {
+          ...dataToSave,
+          id: listingId,
+          listingId,
+          listingImages,
+          defects,
+        },
+        createdVerifiedRequest,
       }
     );
   };
@@ -323,7 +333,7 @@ class ListingController extends Controller {
       const { userId } = req.userData;
       req.body.ownerId = userId;
 
-      const result = await this.baseCreate(req, res);
+      const result = await this.baseCreate(req, res, true);
 
       this.saveUserAction(
         req,
@@ -352,7 +362,12 @@ class ListingController extends Controller {
     toRemovePaths.forEach((path) => this.removeFile(path));
   };
 
-  baseUpdate = async (req, res, canApprove = false) => {
+  baseUpdate = async (
+    req,
+    res,
+    canApprove = false,
+    needSendRequest = false
+  ) => {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
     dataToSave["defects"] = dataToSave["defects"]
@@ -374,11 +389,28 @@ class ListingController extends Controller {
       await this.listingApprovalRequestModel.approve(listingId);
     }
 
+    let createdVerifiedRequest = false;
+
+    if (needSendRequest) {
+      const hasNotViewedByAdminRequest =
+        await this.listingApprovalRequestModel.hasNotViewedByAdminRequest(
+          listingId
+        );
+
+      if (!hasNotViewedByAdminRequest) {
+        await this.listingApprovalRequestModel.create(listingId);
+        createdVerifiedRequest = true;
+      }
+    }
+
     return this.sendSuccessResponse(
       res,
       STATIC.SUCCESS.OK,
       "Updated successfully",
-      { ...dataToSave, listingId, listingImagesToRes, defects }
+      {
+        listing: { ...dataToSave, listingId, listingImagesToRes, defects },
+        createdVerifiedRequest,
+      }
     );
   };
 
@@ -405,24 +437,7 @@ class ListingController extends Controller {
 
       const listing = await this.listingModel.getById(listingId);
 
-      if (listing.approved) {
-        const hasNotViewedByAdminRequest =
-          await this.listingApprovalRequestModel.hasNotViewedByAdminRequest(
-            listingId
-          );
-
-        if (hasNotViewedByAdminRequest) {
-          return this.sendErrorResponse(
-            res,
-            STATIC.ERRORS.BAD_REQUEST,
-            "The request was sent earlier. Wait for the administrator's response"
-          );
-        }
-
-        await this.listingApprovalRequestModel.create(listingId);
-      }
-
-      const result = await this.baseUpdate(req, res);
+      const result = await this.baseUpdate(req, res, false, true);
 
       this.saveUserAction(
         req,

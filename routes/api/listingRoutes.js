@@ -5,7 +5,6 @@ const {
   isAuth,
   isAdmin,
   isFileLimit,
-  isVerified,
   authId,
   isSummaryFileLimit,
 } = require("../../middlewares");
@@ -42,7 +41,6 @@ router.post(
 router.post(
   "/user-list",
   isAuth,
-  isVerified,
   listStatusValidation,
   listingController.getCurrentUserList
 );
@@ -61,7 +59,6 @@ router.get(
 router.post(
   "/create",
   isAuth,
-  isVerified,
   upload.any(),
   isSummaryFileLimit,
   isFileLimit,
@@ -72,7 +69,6 @@ router.post(
 router.post(
   "/update",
   isAuth,
-  isVerified,
   upload.any(),
   isSummaryFileLimit,
   isFileLimit,
