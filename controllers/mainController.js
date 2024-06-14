@@ -247,20 +247,24 @@ class MainController extends Controller {
 
       const listing = await this.listingModel.getFullById(id);
 
+      if (
+        !listing ||
+        ((!listing.userVerified || !listing.approved) &&
+          listing.ownerId != userId)
+      ) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Listing wasn't found"
+        );
+      }
+
       if (userId) {
         listing["favorite"] =
           await this.userListingFavoriteModel.checkUserListingHasRelation(
             userId,
             id
           );
-      }
-
-      if (!listing) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.NOT_FOUND,
-          "Listing wasn't found"
-        );
       }
 
       if (userId) {
@@ -1269,6 +1273,11 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const result = await disputeController.baseDisputeList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  test = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, req.params);
     });
 }
 
