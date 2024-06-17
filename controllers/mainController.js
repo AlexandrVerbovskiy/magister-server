@@ -289,9 +289,8 @@ class MainController extends Controller {
 
       const listingRatingInfo =
         await this.listingCommentModel.getListingDetailInfo(listing.id);
-      const ownerRatingInfo = await this.ownerCommentModel.getUserDetailInfo(
-        listing.ownerId
-      );
+      const ownerRatingInfo =
+        await this.ownerCommentModel.getUserDetailInfo(listing.ownerId);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
