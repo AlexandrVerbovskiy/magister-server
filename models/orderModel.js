@@ -98,6 +98,7 @@ class OrderModel extends Model {
   ];
 
   selectPartPayedInfo = [
+    `${SENDER_PAYMENTS_TABLE}.id as payedId`,
     `${SENDER_PAYMENTS_TABLE}.failed_description as payedFailedDescription`,
     `${SENDER_PAYMENTS_TABLE}.waiting_approved as payedWaitingApproved`,
     `${SENDER_PAYMENTS_TABLE}.admin_approved as payedAdminApproved`,

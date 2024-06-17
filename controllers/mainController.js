@@ -293,8 +293,6 @@ class MainController extends Controller {
         listing.ownerId
       );
 
-      console.log(ownerRatingInfo);
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
         categories,
