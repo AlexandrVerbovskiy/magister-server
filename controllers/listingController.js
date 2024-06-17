@@ -116,11 +116,9 @@ class ListingController extends Controller {
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
-    const listings = await this.listingModel.list(options);
+    let listings = await this.listingModel.list(options);
 
-    const listingsWithImages = await this.listingModel.listingsBindImages(
-      listings
-    );
+    listings = await this.listingModel.listingsBindImages(listings);
 
     const dbCategories = await this.listingCategoryModel.listGroupedByLevel();
 
@@ -139,20 +137,21 @@ class ListingController extends Controller {
       this.searchedWordModel.updateSearchCount(categoriesToCheckHasNotify[0]);
     }
 
-    const ratingListingsWithImages =
-      await this.listingCommentModel.bindAverageForKeyEntities(
-        listingsWithImages,
-        "id"
-      );
+    listings = await this.listingCommentModel.bindAverageForKeyEntities(
+      listings,
+      "id"
+    );
 
-    const ratingListingsWithImagesFavorites =
-      await this.userListingFavoriteModel.bindUserListingListFavorite(
-        ratingListingsWithImages,
-        sessionUserId
-      );
+    if (sessionUserId) {
+      listings =
+        await this.userListingFavoriteModel.bindUserListingListFavorite(
+          listings,
+          sessionUserId
+        );
+    }
 
     return {
-      items: ratingListingsWithImagesFavorites,
+      items: listings,
       options,
       countItems,
       canSendCreateNotifyRequest,

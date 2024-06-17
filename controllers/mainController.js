@@ -178,6 +178,7 @@ class MainController extends Controller {
     const searchCategories = cloneObject(req.body.categories) ?? [];
     let needSubscriptionNewCategory = false;
     let hasListings = false;
+    const userId = req.userData.userId;
 
     if (req.body.searchCategory) {
       searchCategories.push(req.body.searchCategory);
@@ -189,10 +190,10 @@ class MainController extends Controller {
       );
 
       if (!foundCategory) {
-        if (req.userData.userId) {
+        if (userId) {
           const hasNotify =
             await this.listingCategoryCreateNotificationModel.checkUserHasCategoryNotify(
-              req.userData.userId,
+              userId,
               searchCategories[0]
             );
           needSubscriptionNewCategory = !hasNotify;
@@ -288,8 +289,11 @@ class MainController extends Controller {
 
       const listingRatingInfo =
         await this.listingCommentModel.getListingDetailInfo(listing.id);
-      const ownerRatingInfo =
-        await this.listingCommentModel.getListingDetailInfo(listing.ownerId);
+      const ownerRatingInfo = await this.ownerCommentModel.getUserDetailInfo(
+        listing.ownerId
+      );
+
+      console.log(ownerRatingInfo);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
@@ -400,7 +404,7 @@ class MainController extends Controller {
   getOrderFullByIdOptions = (req, res) => {
     const { id } = req.params;
 
-    const getOrderByRequest = () => this.orderModel.getFullById(id);
+    const getOrderByRequest = () => this.orderModel.getFullWithCommentsById(id);
 
     const getDopOrderOptions = async (order) => {
       const paymentInfo =
