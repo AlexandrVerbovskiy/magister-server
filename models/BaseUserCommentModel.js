@@ -7,6 +7,7 @@ const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
+const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 
 class BaseUserCommentModel extends BaseCommentModel {
   table = USER_COMMENTS_TABLE;
@@ -119,12 +120,12 @@ class BaseUserCommentModel extends BaseCommentModel {
   };
 
   getBaseUserStatisticQuery = () => {
-    return db(USER_COMMENTS_TABLE)
+    let query = db(USER_COMMENTS_TABLE)
       .select([
         `${USERS_TABLE}.id`,
         db.raw(`COUNT(${USER_COMMENTS_TABLE}.id) AS "commentCount"`),
 
-        db.raw(`COUNT(${USER_COMMENTS_TABLE}.quality) AS "averageQuality`),
+        db.raw(`COUNT(${USER_COMMENTS_TABLE}.quality) AS "averageQuality"`),
         db.raw(
           `COUNT(${USER_COMMENTS_TABLE}.listing_accuracy) AS "averageListingAccuracy"`
         ),
@@ -141,21 +142,29 @@ class BaseUserCommentModel extends BaseCommentModel {
             + AVG(${USER_COMMENTS_TABLE}.performance) + AVG(${USER_COMMENTS_TABLE}.location)
            ) / 6 AS "averageRating"`),
       ])
-      .where(`${USERS_TABLE}.verified`, true)
-      .where(`${USERS_TABLE}.active`, true)
-      .where(`${USER_COMMENTS_TABLE}.approved`, true)
-      .where(`${USER_COMMENTS_TABLE}.waiting_admin`, false)
       .join(
         ORDERS_TABLE,
         `${ORDERS_TABLE}.id`,
         "=",
-        `${LISTING_COMMENTS_TABLE}.order_id`
-      )
-      .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${USERS_TABLE}.tenant_id`)
+        `${USER_COMMENTS_TABLE}.order_id`
+      );
+
+    query = this.getBaseUserStatisticQueryJoin(query);
+
+    return query
+      .where(`${USERS_TABLE}.verified`, true)
+      .where(`${USERS_TABLE}.active`, true)
+      .where(`${USER_COMMENTS_TABLE}.approved`, true)
+      .where(`${USER_COMMENTS_TABLE}.waiting_admin`, false)
+      .where(`${USER_COMMENTS_TABLE}.type`, this.type)
       .groupBy([`${USERS_TABLE}.id`]);
   };
 
   getUserDetailInfo = async (id) => {
+    console.log(
+      this.getBaseUserStatisticQuery().where(`${USERS_TABLE}.id`, id).toQuery()
+    );
+
     let userDetails = await this.getBaseUserStatisticQuery()
       .where(`${USERS_TABLE}.id`, id)
       .first();
@@ -173,8 +182,8 @@ class BaseUserCommentModel extends BaseCommentModel {
       };
     }
 
-    Object.keys(listingDetails).forEach(
-      (key) => (listingDetails[key] = Number(listingDetails[key]))
+    Object.keys(userDetails).forEach(
+      (key) => (userDetails[key] = Number(userDetails[key]))
     );
 
     return userDetails;

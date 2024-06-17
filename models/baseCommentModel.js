@@ -75,6 +75,7 @@ class BaseCommentModel extends Model {
     const subquery = db(this.table)
       .select(db.raw(`MAX(${this.table}.id) AS latest_comment_id`))
       .innerJoin(ORDERS_TABLE, `${ORDERS_TABLE}.id`, `${this.table}.order_id`)
+      .where(`${this.table}.approved`, true)
       .where(this.keyField, entityId);
 
     let query = db(this.table);

@@ -21,6 +21,7 @@ class BaseCommentController extends Controller {
     options = this.addTimeInfoToOptions(options, timeInfos);
 
     let comments = await this.model.list(options);
+
     const typesCount = await this.model.getCommentTypesCount({
       timeInfos,
       filter,
@@ -32,6 +33,8 @@ class BaseCommentController extends Controller {
         "listingId"
       );
     }
+
+    comments = await this.ratingJoin(comments);
 
     return {
       items: comments,

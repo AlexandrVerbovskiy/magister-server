@@ -703,6 +703,18 @@ class OrderModel extends Model {
 
   getFullById = (id) => this.getFullByBaseRequest(() => this.getById(id));
 
+  getFullWithCommentsById = (id) =>
+    this.getFullByBaseRequest(async () => {
+      const visibleFields = this.commentsVisibleFields(this.fullVisibleFields);
+
+      let query = db(ORDERS_TABLE);
+      query = this.fullOrdersJoin(query);
+      query = this.commentsInfoJoin(query);
+      query = query.select(visibleFields).where(`${ORDERS_TABLE}.id`, id);
+      
+      return await query.first();
+    });
+
   getFullByTenantListingToken = (token) =>
     this.getFullByBaseRequest(() =>
       this.getByWhere(`${ORDERS_TABLE}.tenant_accept_listing_token`, token)
