@@ -591,9 +591,11 @@ class OrderController extends Controller {
 
       const paypalOrderInfo = await getPaypalOrderInfo(paypalOrderId);
 
+      console.log(paypalOrderInfo.payment_source);
+
       const payerCardLastDigits =
-        paypalOrderInfo.payment_source?.card.last_digits;
-      const payerCardLastBrand = paypalOrderInfo.payment_source?.card.brand;
+        paypalOrderInfo.payment_source?.card?.last_digits;
+      const payerCardLastBrand = paypalOrderInfo.payment_source?.card?.brand;
 
       const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
       const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
