@@ -5,13 +5,16 @@ const Model = require("./Model");
 const USER_LISTING_FAVORITES_TABLE = STATIC.TABLES.USER_LISTING_FAVORITES;
 
 class UserListingFavoriteModel extends Model {
-  checkUserListingHasRelation = async (userId, listingId) =>
-    await db(USER_LISTING_FAVORITES_TABLE)
+  checkUserListingHasRelation = async (userId, listingId) => {
+    const relation = await db(USER_LISTING_FAVORITES_TABLE)
       .where({
         listing_id: listingId,
         user_id: userId,
       })
       .first();
+
+    return !!relation;
+  };
 
   changeUserFavorite = async (userId, listingId) => {
     const hasRelation = await this.checkUserListingHasRelation(
