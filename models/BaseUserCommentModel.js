@@ -161,10 +161,6 @@ class BaseUserCommentModel extends BaseCommentModel {
   };
 
   getUserDetailInfo = async (id) => {
-    console.log(
-      this.getBaseUserStatisticQuery().where(`${USERS_TABLE}.id`, id).toQuery()
-    );
-
     let userDetails = await this.getBaseUserStatisticQuery()
       .where(`${USERS_TABLE}.id`, id)
       .first();
