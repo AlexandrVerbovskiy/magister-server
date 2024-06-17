@@ -608,7 +608,7 @@ class OrderModel extends Model {
     query = this.orderCreatedTimeFilterWrap(query, timeInfos);
 
     query = this.baseQueryListByType(query, type);
-
+    
     return await query
       .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
       .orderBy(order, orderType)

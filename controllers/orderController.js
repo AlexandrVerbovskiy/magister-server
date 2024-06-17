@@ -590,9 +590,7 @@ class OrderController extends Controller {
       await capturePaypalOrder(paypalOrderId);
 
       const paypalOrderInfo = await getPaypalOrderInfo(paypalOrderId);
-
-      console.log(paypalOrderInfo.payment_source);
-
+      
       const payerCardLastDigits =
         paypalOrderInfo.payment_source?.card?.last_digits;
       const payerCardLastBrand = paypalOrderInfo.payment_source?.card?.brand;
@@ -612,7 +610,7 @@ class OrderController extends Controller {
       const amount = paypalOrderInfo.purchase_units[0].amount.value;
 
       const { token, image: generatedImage } = await this.generateQrCodeInfo(
-        STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
+          order.orderParentId ? STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
       if (order.orderParentId) {
