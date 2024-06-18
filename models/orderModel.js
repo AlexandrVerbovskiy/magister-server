@@ -194,6 +194,8 @@ class OrderModel extends Model {
     `tenants.email`,
     `owners.name`,
     `owners.email`,
+    `orders.start_date`,
+    `orders.end_date`,
     `${LISTINGS_TABLE}.name`,
   ];
 
@@ -712,7 +714,7 @@ class OrderModel extends Model {
       query = this.fullOrdersJoin(query);
       query = this.commentsInfoJoin(query);
       query = query.select(visibleFields).where(`${ORDERS_TABLE}.id`, id);
-      
+
       return await query.first();
     });
 
