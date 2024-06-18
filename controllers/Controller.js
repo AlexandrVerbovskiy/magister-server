@@ -47,6 +47,10 @@ const {
   tenantCommentModel,
   userListingFavoriteModel,
   disputeModel,
+  chatMessageContentModel,
+  chatMessageModel,
+  chatModel,
+  chatRelationModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -87,6 +91,11 @@ class Controller {
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
     this.userListingFavoriteModel = userListingFavoriteModel;
+
+    this.chatMessageContentModel = chatMessageContentModel;
+    this.chatMessageModel = chatMessageModel;
+    this.chatModel = chatModel;
+    this.chatRelationModel = chatRelationModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -693,7 +702,9 @@ class Controller {
       ? shortTimeConverter(payment.createdAt)
       : "-";
 
-    const dueInfo = payment.createdAt ? shortTimeConverter(payment.createdAt) : "-";
+    const dueInfo = payment.createdAt
+      ? shortTimeConverter(payment.createdAt)
+      : "-";
 
     const params = {
       billTo: payment.listingAddress ?? payment.listingCity,

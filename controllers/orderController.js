@@ -67,11 +67,7 @@ class OrderController extends Controller {
     );
 
     if (hasBlockedDate) {
-      return this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "The selected date is not available for booking"
-      );
+      throw new Error("The selected date is not available for booking");
     }
 
     return await this.orderModel.create({
@@ -107,6 +103,23 @@ class OrderController extends Controller {
       const listing = await this.listingModel.getFullById(listingId);
 
       this.sendBookingApprovalRequestMail(listing.userEmail);
+
+      const firstImage = listing.listingImages[0];
+
+      const createdMessages = await this.chatModel.createForOrder({
+        ownerId: listing.ownerId,
+        tenantId,
+        orderInfo: {
+          orderId: createdOrderId,
+          listingName: listing.name,
+          offerPrice: pricePerDay,
+          listingPhotoPath: firstImage?.type,
+          listingPhotoType: firstImage?.link,
+          offerDateStart: startDate,
+          offerDateEnd: endDate,
+          description: message,
+        },
+      });
 
       return this.sendSuccessResponse(
         res,

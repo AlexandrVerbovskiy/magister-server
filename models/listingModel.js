@@ -363,16 +363,13 @@ class ListingsModel extends Model {
       .filter((image) => currentImageLinks.includes(image.link))
       .map((image) => image.link);
 
-    const toDeleteImagesQuery = db(LISTING_IMAGES_TABLE)
-      .where("listing_id", id)
-      .whereNotIn("link", actualListingImageLinks);
-
-    const deletedImagesInfos = await toDeleteImagesQuery.select(
-      this.listingImageVisibleFields
-    );
-
     const imagesToUpdateIds = listingImagesToUpdate.map((image) => image.id);
-    await toDeleteImagesQuery.whereNotIn("id", imagesToUpdateIds).delete();
+    
+    await db(LISTING_IMAGES_TABLE)
+      .where("listing_id", id)
+      .whereNotIn("link", actualListingImageLinks)
+      .whereNotIn("id", imagesToUpdateIds)
+      .delete();
 
     listingImagesToUpdate.forEach(
       async (image) =>
@@ -396,7 +393,6 @@ class ListingsModel extends Model {
     const createdDefects = await this.saveDefects(defects, id);
     const currentListingImages = await this.getListingImages(id);
     return {
-      deletedImagesInfos,
       listingImages: currentListingImages,
       defects: createdDefects,
     };
@@ -418,18 +414,13 @@ class ListingsModel extends Model {
   };
 
   deleteById = async (listingId) => {
-    const toDeleteImagesQuery = db(LISTING_IMAGES_TABLE).where({
-      listing_id: listingId,
-    });
+    await db(LISTING_IMAGES_TABLE)
+      .where({
+        listing_id: listingId,
+      })
+      .delete();
 
-    const deletedImagesInfos = await toDeleteImagesQuery.select(
-      this.listingImageVisibleFields
-    );
-
-    await toDeleteImagesQuery.delete();
     await db(LISTINGS_TABLE).where({ id: listingId }).delete();
-
-    return { deletedImagesInfos };
   };
 
   changeActiveByUser = async (listingId, userId) => {

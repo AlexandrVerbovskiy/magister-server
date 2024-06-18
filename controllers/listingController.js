@@ -353,14 +353,6 @@ class ListingController extends Controller {
     }
   };
 
-  removeListingImages = (deletedImagesInfos) => {
-    const toRemovePaths = deletedImagesInfos
-      .filter((info) => info.type == "storage")
-      .map((info) => info.link);
-
-    toRemovePaths.forEach((path) => this.removeFile(path));
-  };
-
   baseUpdate = async (
     req,
     res,
@@ -378,11 +370,8 @@ class ListingController extends Controller {
 
     const {
       defects,
-      deletedImagesInfos,
       listingImages: listingImagesToRes,
     } = await this.listingModel.updateById(dataToSave);
-
-    this.removeListingImages(deletedImagesInfos);
 
     if (canApprove && dataToSave["approved"] === "true") {
       await this.listingApprovalRequestModel.approve(listingId);
@@ -498,8 +487,7 @@ class ListingController extends Controller {
     }
 
     await this.listingApprovalRequestModel.deleteByListing(id);
-    const { deletedImagesInfos } = await this.listingModel.deleteById(id);
-    this.removeListingImages(deletedImagesInfos);
+    await this.listingModel.deleteById(id);
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
   };

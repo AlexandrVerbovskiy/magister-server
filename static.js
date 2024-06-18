@@ -116,6 +116,7 @@ module.exports = {
     CHAT_RELATIONS: "chat_relations",
     CHAT_MESSAGES: "chat_messages",
     CHAT_MESSAGE_CONTENTS: "chat_messages_contents",
+    SOCKETS: "sockets",
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
@@ -167,10 +168,16 @@ module.exports = {
     OPEN: "open",
     UNSOLVED: "unsolved",
   },
-  MESSAGE_TYPES:{
-    TEXT:"text",
-    VIDEO:"video",
-    AUDIO:"audio",
-    PHOTO:"photo",
-  }
+  MESSAGE_TYPES: {
+    TEXT: "text",
+    FILE: "file",
+    VIDEO: "video",
+    AUDIO: "audio",
+    PHOTO: "photo",
+    NEW_ORDER: "new-order",
+    UPDATE_ORDER: "update-order",
+    LISTING_REVIEW: "listing-review",
+    USER_REVIEW: "user-review",
+    STARTED_DISPUTE: "started-dispute",
+  },
 };
