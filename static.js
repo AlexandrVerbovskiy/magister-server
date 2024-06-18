@@ -112,6 +112,10 @@ module.exports = {
     LISTING_COMMENTS: "listing_comments",
     USER_LISTING_FAVORITES: "user_listing_favorites",
     DISPUTES: "disputes",
+    CHATS: "chats",
+    CHAT_RELATIONS: "chat_relations",
+    CHAT_MESSAGES: "chat_messages",
+    CHAT_MESSAGE_CONTENTS: "chat_messages_contents",
   },
   LATITUDE_LONGITUDE_TO_KILOMETERS: 111.045,
   DEGREES_TO_RADIANS: 57.3,
@@ -163,4 +167,10 @@ module.exports = {
     OPEN: "open",
     UNSOLVED: "unsolved",
   },
+  MESSAGE_TYPES:{
+    TEXT:"text",
+    VIDEO:"video",
+    AUDIO:"audio",
+    PHOTO:"photo",
+  }
 };
