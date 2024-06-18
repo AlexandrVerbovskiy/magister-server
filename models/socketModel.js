@@ -20,7 +20,7 @@ class Socket extends Model {
     return result;
   };
 
-  create = async (socket, userId) => {
+  connect = async (socket, userId) => {
     const res = await db(SOCKET_TABLE)
       .insert({
         socket,
@@ -31,7 +31,7 @@ class Socket extends Model {
     return res[0]["id"];
   };
 
-  delete = async (socket) => {
+  disconnect = async (socket) => {
     await db(SOCKET_TABLE).where("socket", socket).delete();
   };
 }
