@@ -11,7 +11,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const { isAuth, isAdmin } = require("./middlewares");
-const { apiRoutes } = require("./routes");
+const { apiRoutes, socketsRoutes } = require("./routes");
 const STATIC = require("./static");
 const isNotAuth = require("./middlewares/isNotAuth");
 
@@ -137,8 +137,10 @@ const server = app.listen(PORT, () => {
   console.log("Server started on port " + PORT);
 });
 
-/*const io = socketIo(server, {
+const io = socketIo(server, {
   cors: {
     credentials: true,
   },
-});*/
+});
+
+socketsRoutes.chatRoutes(io);

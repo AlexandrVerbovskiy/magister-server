@@ -289,8 +289,9 @@ class MainController extends Controller {
 
       const listingRatingInfo =
         await this.listingCommentModel.getListingDetailInfo(listing.id);
-      const ownerRatingInfo =
-        await this.ownerCommentModel.getUserDetailInfo(listing.ownerId);
+      const ownerRatingInfo = await this.ownerCommentModel.getUserDetailInfo(
+        listing.ownerId
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
@@ -1222,6 +1223,25 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const result = await disputeController.baseDisputeList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  getUserChatOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const categories = await this.getNavigationCategories();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+      });
+    });
+
+  getAdminOrderChatOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
+    });
+
+  getAdminChatOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
     });
 
   test = (req, res) =>

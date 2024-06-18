@@ -20,4 +20,5 @@ module.exports = {
   ownerCommentModel: require("./ownerCommentController"),
   tenantCommentModel: require("./tenantCommentController"),
   disputeController: require("./disputeController"),
+  chatController: require("./chatController"),
 };

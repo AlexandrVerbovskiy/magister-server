@@ -51,6 +51,7 @@ const {
   chatMessageModel,
   chatModel,
   chatRelationModel,
+  socketModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -96,6 +97,8 @@ class Controller {
     this.chatMessageModel = chatMessageModel;
     this.chatModel = chatModel;
     this.chatRelationModel = chatRelationModel;
+
+    this.socketModel = socketModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
