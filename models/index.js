@@ -20,4 +20,8 @@ module.exports = {
   ownerCommentModel: require("./ownerCommentModel"),
   userListingFavoriteModel: require("./userListingFavoriteModel"),
   disputeModel: require("./disputeModel"),
+  chatModel: require("./chatModel"),
+  chatRelationModel: require("./chatRelationModel"),
+  chatMessageModel: require("./chatMessageModel"),
+  chatMessageContentModel: require("./chatMessageContentModel"),
 };
