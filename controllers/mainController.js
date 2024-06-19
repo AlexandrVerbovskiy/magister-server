@@ -25,6 +25,7 @@ const tenantCommentController = require("./tenantCommentController");
 const ownerCommentController = require("./ownerCommentController");
 const listingCommentController = require("./listingCommentController");
 const disputeController = require("./disputeController");
+const chatController = require("./chatController");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -1227,10 +1228,19 @@ class MainController extends Controller {
 
   getUserChatOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const chatRes = await chatController.baseGetChatList(req, res);
+
+      if (chatRes.error) {
+        return this.sendErrorResponse(res, chatRes.error);
+      }
+
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
+        chats: chatRes.list,
+        chatsCanShowMore: chatRes.canShowMore,
+        options: chatRes.options,
       });
     });
 

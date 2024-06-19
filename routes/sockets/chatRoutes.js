@@ -9,9 +9,9 @@ module.exports = (io) => {
 
     const token = socket.handshake.query.token;
     const resValidate = validateToken(token);
-    const userId = resValidate.userId;
+    const userId = resValidate?.userId;
 
-    if (!userId) {
+    if (!resValidate || !userId) {
       return sendError("Authentication failed");
     }
 
