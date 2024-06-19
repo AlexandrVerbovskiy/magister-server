@@ -19,4 +19,5 @@ module.exports = {
   listingDefectQuestionRoutes: require("./listingDefectQuestionRoutes"),
   commentRoutes: require("./commentRoutes"),
   disputeRoutes: require("./disputeRoutes"),
+  chatRoutes: require("./chatRoutes"),
 };

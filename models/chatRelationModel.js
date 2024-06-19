@@ -16,6 +16,17 @@ class ChatRelationModel extends Model {
 
     return res[0]["id"];
   };
+
+  checkUserHasRelation = async (chatId, userId) => {
+    const result = await db(CHAT_RELATION_TABLE)
+      .where({
+        chat_id: chatId,
+        user_id: userId,
+      })
+      .select();
+
+    return !!result.length;
+  };
 }
 
 module.exports = new ChatRelationModel();
