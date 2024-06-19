@@ -133,22 +133,22 @@ class ListingCommentModel extends BaseCommentModel {
         db.raw(`COUNT(${LISTING_COMMENTS_TABLE}.id) AS "commentCount"`),
 
         db.raw(
-          `COUNT(${LISTING_COMMENTS_TABLE}.punctuality) AS "averagePunctuality"`
+          `AVG(${LISTING_COMMENTS_TABLE}.punctuality) AS "averagePunctuality"`
         ),
         db.raw(
-          `COUNT(${LISTING_COMMENTS_TABLE}.general_experience) AS "averageGeneralExperience"`
+          `AVG(${LISTING_COMMENTS_TABLE}.general_experience) AS "averageGeneralExperience"`
         ),
         db.raw(
-          `COUNT(${LISTING_COMMENTS_TABLE}.communication) AS "averageCommunication"`
+          `AVG(${LISTING_COMMENTS_TABLE}.communication) AS "averageCommunication"`
         ),
         db.raw(
-          `COUNT(${LISTING_COMMENTS_TABLE}.reliability) AS "averageReliability"`
+          `AVG(${LISTING_COMMENTS_TABLE}.reliability) AS "averageReliability"`
         ),
         db.raw(
-          `COUNT(${LISTING_COMMENTS_TABLE}.kindness) AS "averageKindness"`
+          `AVG(${LISTING_COMMENTS_TABLE}.kindness) AS "averageKindness"`
         ),
         db.raw(
-          `COUNT(${LISTING_COMMENTS_TABLE}.flexibility) AS "averageFlexibility"`
+          `AVG(${LISTING_COMMENTS_TABLE}.flexibility) AS "averageFlexibility"`
         ),
 
         db.raw(`(
