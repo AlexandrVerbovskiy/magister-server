@@ -1236,11 +1236,28 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
+      let messageRes = {
+        list: [],
+        canShowMore: false,
+        options: {},
+        error: null,
+      };
+
+      if (req.body.id) {
+        messageRes = await chatController.baseGetChatMessageList(req, res);
+      }
+
+      if (messageRes.error) {
+        return this.sendErrorResponse(res, messageRes.error);
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         chats: chatRes.list,
         chatsCanShowMore: chatRes.canShowMore,
-        options: chatRes.options,
+        options: { ...chatRes.options, ...messageRes.options },
+        messages: messageRes.list,
+        messagesCanShowMore: messageRes.canShowMore,
       });
     });
 
