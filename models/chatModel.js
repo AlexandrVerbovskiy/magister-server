@@ -10,6 +10,7 @@ const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
 const CHAT_MESSAGE_TABLE = STATIC.TABLES.CHAT_MESSAGES;
 const CHAT_MESSAGE_CONTENT_TABLE = STATIC.TABLES.CHAT_MESSAGE_CONTENTS;
 const USER_TABLE = STATIC.TABLES.USERS;
+const SOCKET_TABLE = STATIC.TABLES.SOCKETS;
 
 const CHAT_TYPES = { DISPUTE: "dispute", ORDER: "order" };
 
@@ -23,7 +24,6 @@ class ChatModel extends Model {
     `${CHAT_MESSAGE_TABLE}.type as messageType`,
     `${CHAT_MESSAGE_TABLE}.sender_id as messageSenderId`,
     `${CHAT_MESSAGE_TABLE}.created_at as messageCreatedAt`,
-
   ];
 
   fullVisibleFieldsWithUser = [
@@ -32,6 +32,7 @@ class ChatModel extends Model {
     `${USER_TABLE}.photo as opponentPhoto`,
     `${USER_TABLE}.name as opponentName`,
     `${USER_TABLE}.online as opponentOnline`,
+    `opponent_relation.typing as opponentTyping`,
   ];
 
   create = async ({ name, entityId, entityType }) => {
@@ -183,6 +184,16 @@ class ChatModel extends Model {
     return this.messageJoin(query);
   };
 
+  getChatMessageCreatedDate = async (chatId) => {
+    let query = db(CHAT_TABLE);
+    query = this.messageJoin(query)
+      .where(`${CHAT_TABLE}.id`, chatId)
+      .select([`${CHAT_MESSAGE_TABLE}.created_at as createdAt`]);
+
+    const referenceItem = await query.first();
+    return referenceItem.createdAt;
+  };
+
   getList = async ({
     chatType,
     userId,
@@ -198,13 +209,17 @@ class ChatModel extends Model {
         ? this.fullVisibleFields
         : this.fullVisibleFieldsWithUser;
 
+    let query = this.getListBaseQuery({ chatType, userId });
+
+    if (lastChatId) {
+      const lastChatCreatedTime = await this.getChatMessageCreatedDate(
+        lastChatId
+      );
+
+      query = query.where(`${CHAT_MESSAGE_TABLE}.id`, "<", lastChatCreatedTime);
+    }
+
     if (needChatId) {
-      let query = this.getListBaseQuery({ chatType, userId });
-
-      if (lastChatId) {
-        query = query.where(`${CHAT_TABLE}.id`, ">", lastChatId);
-      }
-
       const firstResPart = await query
         .where(`${CHAT_TABLE}.id`, "<=", needChatId)
         .select(fields)
@@ -224,12 +239,6 @@ class ChatModel extends Model {
         result = [...result, ...secondResPart];
       }
     } else {
-      let query = this.getListBaseQuery({ chatType, userId });
-
-      if (lastChatId) {
-        query = query.where(`${CHAT_TABLE}.id`, ">", lastChatId);
-      }
-
       if (chatFilter) {
         query = query.where((builder) => {
           builder
@@ -248,13 +257,57 @@ class ChatModel extends Model {
   };
 
   checkHasMore = async ({ lastChatId, chatType, userId }) => {
+    const lastChatCreatedTime = await this.getChatMessageCreatedDate(
+      lastChatId
+    );
+
     const moreChats = await this.getListBaseQuery({ chatType, userId })
-      .where(`${CHAT_TABLE}.id`, ">", lastChatId)
+      .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastChatCreatedTime)
       .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc")
       .groupBy([`${CHAT_TABLE}.id`, `${CHAT_MESSAGE_TABLE}.created_at`])
-      .count(`${CHAT_TABLE}.id as count`);
+      .select(`${CHAT_TABLE}.id`)
+      .first();
 
-    return !!moreChats.count;
+    return !!moreChats?.id;
+  };
+
+  getChatOpponentSockets = async (chatId, userId) => {
+    const opponentInfo = await db(`${CHAT_RELATION_TABLE} as searcher_relation`)
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as opponent_relation ON (searcher_relation.chat_id = opponent_relation.chat_id AND opponent_relation.user_id != ?)`,
+        [userId]
+      )
+      .join(
+        SOCKET_TABLE,
+        `${SOCKET_TABLE}.user_id`,
+        "=",
+        "opponent_relation.user_id"
+      )
+      .where(`opponent_relation.chat_id`, "=", chatId)
+      .where("searcher_relation.user_id", "=", userId)
+      .select(`${SOCKET_TABLE}.socket`);
+
+    return opponentInfo.map((row) => row.socket);
+  };
+
+  getUserChatsOpponentSockets = async (userId) => {
+    const opponentInfos = await db(
+      `${CHAT_RELATION_TABLE} as searcher_relation`
+    )
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as opponent_relation ON (searcher_relation.chat_id = opponent_relation.chat_id AND opponent_relation.user_id != ?)`,
+        [userId]
+      )
+      .join(
+        SOCKET_TABLE,
+        `${SOCKET_TABLE}.user_id`,
+        "=",
+        "opponent_relation.user_id"
+      )
+      .select([`${SOCKET_TABLE}.socket`, `opponent_relation.chat_id as chatId`])
+      .where(`searcher_relation.user_id`, userId);
+
+    return opponentInfos;
   };
 }
 

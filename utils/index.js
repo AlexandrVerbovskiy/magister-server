@@ -11,4 +11,5 @@ module.exports = {
   cloneObject: require("./cloneObject"),
   ...require("./paypalApi"),
   ...require("./paymentCalculations"),
+  ...require("./helpers"),
 };

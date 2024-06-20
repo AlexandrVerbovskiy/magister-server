@@ -6,6 +6,7 @@ const chatMessageContentModel = require("./chatMessageContentModel");
 
 const CHAT_MESSAGE_TABLE = STATIC.TABLES.CHAT_MESSAGES;
 const CHAT_MESSAGE_CONTENT_TABLE = STATIC.TABLES.CHAT_MESSAGE_CONTENTS;
+const USER_TABLE = STATIC.TABLES.USERS;
 
 class ChatMessageModel extends Model {
   visibleFields = [
@@ -24,36 +25,35 @@ class ChatMessageModel extends Model {
     `${CHAT_MESSAGE_CONTENT_TABLE}.created_at as updatedAt`,
   ];
 
-  baseJoinQuery = (query) => {
-    const latestContents = db(CHAT_MESSAGE_CONTENT_TABLE)
-      .select(
-        `${CHAT_MESSAGE_CONTENT_TABLE}.message_id`,
-        db.raw(
-          `MAX(${CHAT_MESSAGE_CONTENT_TABLE}.created_at) as max_created_at`
-        )
+  fullVisibleFieldsWithUser = [
+    ...this.fullVisibleFields,
+    `${USER_TABLE}.photo as senderPhoto`,
+    `${USER_TABLE}.name as senderName`,
+    `${USER_TABLE}.online as senderOnline`,
+  ];
+
+  contentJoin = (query) => {
+    return query
+      .joinRaw(
+        `LEFT JOIN (SELECT message_id, MAX(id) AS last_content_id FROM ${CHAT_MESSAGE_CONTENT_TABLE} GROUP BY message_id) AS lc ON ${CHAT_MESSAGE_TABLE}.id = lc.message_id`
       )
-      .groupBy(`${CHAT_MESSAGE_CONTENT_TABLE}.message_id`);
+      .joinRaw(
+        `LEFT JOIN ${CHAT_MESSAGE_CONTENT_TABLE} ON ${CHAT_MESSAGE_CONTENT_TABLE}.id = lc.last_content_id`
+      );
+  };
 
-    query = query.leftJoin(
-      function () {
-        this.from(CHAT_MESSAGE_CONTENT_TABLE)
-          .join(latestContents.as("latest_contents"), function () {
-            this.on(
-              `${CHAT_MESSAGE_CONTENT_TABLE}.message_id`,
-              "=",
-              "latest_contents.message_id"
-            ).andOn(
-              `${CHAT_MESSAGE_CONTENT_TABLE}.created_at`,
-              "=",
-              "latest_contents.max_created_at"
-            );
-          })
-          .as("message_contents");
-      },
-      "messages.id",
-      "message_contents.message_id"
+  userInfoJoin = (query) => {
+    return query.join(
+      USER_TABLE,
+      `${USER_TABLE}.id`,
+      "=",
+      `${CHAT_MESSAGE_TABLE}.sender_id`
     );
+  };
 
+  baseJoinQuery = (query) => {
+    query = this.contentJoin(query);
+    query = this.userInfoJoin(query);
     return query;
   };
 
@@ -74,19 +74,10 @@ class ChatMessageModel extends Model {
       .returning(["id", "created_at as createdAt"]);
 
     const messageId = res[0]["id"];
-    const createdAt = res[0]["createdAt"];
 
     await chatMessageContentModel.create(messageId, content);
-
-    return {
-      messageId,
-      createdAt,
-      type,
-      chatId,
-      isAdminSender,
-      senderId,
-      hidden: false,
-    };
+    const resultMessage = await this.getFullById(messageId);
+    return resultMessage;
   };
 
   createFileMessage = async ({
@@ -94,14 +85,14 @@ class ChatMessageModel extends Model {
     type = STATIC.MESSAGE_TYPES.FILE,
     isAdminSender,
     senderId,
-    path,
+    content: { path, filename },
   }) => {
     return await this.create({
       chatId,
       type,
       isAdminSender,
       senderId,
-      content: { path },
+      content: { path, filename },
     });
   };
 
@@ -112,36 +103,6 @@ class ChatMessageModel extends Model {
       isAdminSender,
       senderId,
       content: { text },
-    });
-  };
-
-  createAudioMessage = async ({ chatId, isAdminSender, senderId, path }) => {
-    return await this.createFileMessage({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.AUDIO,
-      isAdminSender,
-      senderId,
-      content: { path },
-    });
-  };
-
-  createPhotoMessage = async ({ chatId, isAdminSender, senderId, path }) => {
-    return await this.createFileMessage({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.PHOTO,
-      isAdminSender,
-      senderId,
-      content: { path },
-    });
-  };
-
-  createVideoMessage = async ({ chatId, isAdminSender, senderId, path }) => {
-    return await this.createFileMessage({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.VIDEO,
-      isAdminSender,
-      senderId,
-      content: { path },
     });
   };
 
@@ -286,32 +247,29 @@ class ChatMessageModel extends Model {
   getShortById = async (id) => {
     return await db(CHAT_MESSAGE_TABLE)
       .where("id", id)
-      .select(this.visibleFields);
+      .select(this.visibleFields)
+      .first();
   };
 
   getFullById = async (id) => {
-    let query = db(CHAT_MESSAGE_TABLE)
-      .where("id", id)
-      .select(this.fullVisibleFields);
-
+    let query = db(CHAT_MESSAGE_TABLE).where(`${CHAT_MESSAGE_TABLE}.id`, id);
     query = this.baseJoinQuery(query);
-    return await query;
-  };
-
-  contentJoin = (query) => {
-    return query
-      .joinRaw(
-        `LEFT JOIN (SELECT message_id, MAX(id) AS last_content_id FROM ${CHAT_MESSAGE_CONTENT_TABLE} GROUP BY message_id) AS lc ON ${CHAT_MESSAGE_TABLE}.id = lc.message_id`
-      )
-      .joinRaw(
-        `LEFT JOIN ${CHAT_MESSAGE_CONTENT_TABLE} ON ${CHAT_MESSAGE_CONTENT_TABLE}.id = lc.last_content_id`
-      );
+    return await query.select(this.fullVisibleFieldsWithUser).first();
   };
 
   getListBaseQuery = () => {
     let query = db(CHAT_MESSAGE_TABLE);
     query = query.where(`${CHAT_MESSAGE_TABLE}.hidden`, false);
-    return this.contentJoin(query);
+    return this.baseJoinQuery(query);
+  };
+
+  getMessageCreatedDate = async (messageId) => {
+    const referenceItem = await db(CHAT_MESSAGE_TABLE)
+      .select("created_at as createdAt")
+      .where("id", messageId)
+      .first();
+
+    return referenceItem.createdAt;
   };
 
   getList = async ({ chatId, count = 50, lastMessageId = null }) => {
@@ -320,19 +278,41 @@ class ChatMessageModel extends Model {
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
 
     if (lastMessageId) {
-      query = query.where(`${CHAT_MESSAGE_TABLE}.id`, ">", lastMessageId);
+      const lastMessageCreatedAt = await this.getMessageCreatedDate(
+        lastMessageId
+      );
+      query = query.where(
+        `${CHAT_MESSAGE_TABLE}.created_at`,
+        "<",
+        lastMessageCreatedAt
+      );
     }
 
-    query = query.limit(count);
-    return await query.select(this.fullVisibleFields);
+    query = query
+      .limit(count)
+      .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
+
+    const messages = await query.select(this.fullVisibleFieldsWithUser);
+    return messages.reverse();
   };
 
   checkHasMore = async ({ chatId, lastMessageId }) => {
+    const lastMessageCreatedAt = await this.getMessageCreatedDate(
+      lastMessageId
+    );
+
     let query = this.getListBaseQuery();
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
-    query = query.where(`${CHAT_MESSAGE_TABLE}.id`, ">", lastMessageId);
-    const moreMessages = await query.count(`${CHAT_MESSAGE_TABLE}.id as count`);
-    return !!moreMessages.count;
+    query = query
+      .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastMessageCreatedAt)
+      .orderBy(`${CHAT_MESSAGE_TABLE}.id`, "desc")
+      .groupBy([
+        `${CHAT_MESSAGE_TABLE}.id`,
+        `${CHAT_MESSAGE_TABLE}.created_at`,
+      ]);
+
+    const moreMessages = await query.select(`${CHAT_MESSAGE_TABLE}.id`).first();
+    return !!moreMessages?.id;
   };
 }
 

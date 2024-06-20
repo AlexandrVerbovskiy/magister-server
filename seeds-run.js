@@ -8,9 +8,9 @@ const db = knex(config);
 
 const runSeeds = async () => {
   const seedsPath = path.join(__dirname, "seeds");
-  const seedFileNames = fs.readdirSync(seedsPath);
+  const seedFilenames = fs.readdirSync(seedsPath);
 
-  for (const seed of seedFileNames) {
+  for (const seed of seedFilenames) {
     const seedAlreadyRun = await checkSeedStatus(seed);
 
     if (!seedAlreadyRun) {
