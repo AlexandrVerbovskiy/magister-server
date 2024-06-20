@@ -7,17 +7,11 @@ const SOCKET_TABLE = STATIC.TABLES.SOCKETS;
 
 class Socket extends Model {
   findUserSockets = async (userIds) => {
-    const result = {};
-
-    userIds.forEach((id) => (result[id] = null));
-
     const resultSelect = await db(SOCKET_TABLE)
       .whereIn("user_id", userIds)
       .select(["user_id as userId", "socket"]);
 
-    resultSelect.forEach((row) => (result[row["userId"]] = row["socket"]));
-
-    return result;
+    return resultSelect.map((row) => row.socket);
   };
 
   connect = async (socket, userId) => {
@@ -32,7 +26,7 @@ class Socket extends Model {
   };
 
   disconnect = async (socket) => {
-    await db(SOCKET_TABLE).where("socket", socket).delete();
+    await db(SOCKET_TABLE).where("socket", socket.id).delete();
   };
 }
 

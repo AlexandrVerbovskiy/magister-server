@@ -52,6 +52,7 @@ const {
   chatModel,
   chatRelationModel,
   socketModel,
+  activeActionModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -61,6 +62,7 @@ const axios = require("axios");
 
 class Controller {
   mailTransporter = null;
+  io = null;
 
   constructor() {
     this.userModel = userModel;
@@ -69,6 +71,7 @@ class Controller {
     this.userVerifyRequestModel = userVerifyRequestModel;
     this.systemOptionModel = systemOptionModel;
     this.userEventLogModel = userEventLogModel;
+    this.activeActionModel = activeActionModel;
 
     this.listingCategoryModel = listingCategoryModel;
     this.searchedWordModel = searchedWordModel;
@@ -119,6 +122,30 @@ class Controller {
       })
     );
   }
+
+  bindIo(io) {
+    this.io = io;
+  }
+
+  sendSocketIoMessage = (socket, messageKey, message) => {
+    this.io.to(socket).emit(messageKey, message);
+  };
+
+  sendSocketMessageToUsers = async (userIds, message, data) => {
+    const sockets = await this.socketModel.findUserSockets(userIds);
+
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, message, data)
+    );
+  };
+
+  sendSocketMessageToUser = async (userId, message, data) => {
+    await this.sendSocketMessageToUsers([userId], message, data);
+  };
+
+  sendError = async (userId, error) => {
+    await this.sendSocketMessageToUser(userId, "error", error);
+  };
 
   sendResponse = (response, baseInfo, message, body, isError) => {
     return response.status(baseInfo.STATUS).json({
@@ -372,19 +399,22 @@ class Controller {
     });
   };
 
+  createFolderIfNotExists = (folderPath) => {
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+  };
+
   moveUploadsFileToFolder = (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
 
     const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public", folder);
-
-    if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir, { recursive: true });
-    }
-
+    this.createFolderIfNotExists(destinationDir);
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
+    
     return folder + "/" + name + "." + type;
   };
 
