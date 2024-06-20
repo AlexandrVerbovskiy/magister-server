@@ -1,26 +1,37 @@
 const STATIC = require("../static");
+const {
+  indicateMediaTypeByExtension,
+  generateRandomString,
+} = require("../utils");
 const Controller = require("./Controller");
+const fs = require("fs");
 
 class ChatController extends Controller {
-  io = null;
+  message_files_dir = "public/messages";
 
-  bindIo(io) {
-    this.io = io;
-  }
+  userChatRelationSendMessage = async (userId, messageKey) => {
+    const relations = await this.chatModel.getUserChatsOpponentSockets(userId);
+
+    relations.forEach((relation) =>
+      this.io.to(relation.socket).emit(messageKey, { chatId: relation.chatId })
+    );
+  };
 
   onConnection = async (socket, userId) => {
     await this.socketModel.connect(socket, userId);
     await this.userModel.updateOnline(userId, true);
+    await this.userChatRelationSendMessage(userId, "opponent-online");
   };
 
   onDisconnect = async (data, sessionInfo) => {
     const userId = sessionInfo.userId;
     const socket = sessionInfo.socket;
 
-    console.log("disconnected");
-
     await this.userModel.updateOnline(userId, false);
     await this.socketModel.disconnect(socket);
+    await this.stopAllUserActions(userId);
+
+    await this.userChatRelationSendMessage(userId, "opponent-offline");
   };
 
   baseGetChatList = async (req, res) => {
@@ -147,6 +158,184 @@ class ChatController extends Controller {
       messages: messagesRes.list,
       messagesCanShowMore: messagesRes.canShowMore,
       options: messagesRes.options,
+    });
+  };
+
+  sendSocketMessageToUserOpponent = async (
+    chatId,
+    userId,
+    messageKey,
+    message
+  ) => {
+    const sockets = await this.chatModel.getChatOpponentSockets(chatId, userId);
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, messageKey, message)
+    );
+  };
+
+  onSendTextMessage = async (data, sessionInfo) => {
+    const senderId = sessionInfo.userId;
+    const chatId = data.chatId;
+
+    const message = await this.chatMessageModel.createTextMessage({
+      chatId,
+      isAdminSender: false,
+      senderId,
+      text: data.text,
+    });
+
+    await this.sendSocketMessageToUserOpponent(
+      chatId,
+      senderId,
+      "get-message",
+      {
+        message,
+      }
+    );
+
+    return this.sendSocketMessageToUser(senderId, "success-sended-message", {
+      message,
+      tempKey: data.tempKey,
+    });
+  };
+
+  onChangeTyping = async (data, sessionInfo, typing) => {
+    const userId = sessionInfo.userId;
+    const chatId = data.chatId;
+
+    if (typing) {
+      await this.chatRelationModel.startTyping(chatId, userId);
+    } else {
+      await this.chatRelationModel.finishTyping(chatId, userId);
+    }
+
+    return await this.sendSocketMessageToUserOpponent(
+      chatId,
+      userId,
+      typing ? "start-typing" : "finish-typing",
+      {
+        chatId,
+      }
+    );
+  };
+
+  onStartTyping = async (data, sessionInfo) =>
+    this.onChangeTyping(data, sessionInfo, true);
+
+  onFinishTyping = async (data, sessionInfo) =>
+    this.onChangeTyping(data, sessionInfo, false);
+
+  uploadToFile = async ({ userId, tempKey, data, filetype, filename }) => {
+    const info = await this.activeActionModel.getByKeyAndType(
+      tempKey,
+      "sending_file"
+    );
+    let path =
+      this.message_files_dir + "/" + generateRandomString() + "." + filetype;
+
+    if (!info || !info.data) {
+      this.createFolderIfNotExists(this.message_files_dir);
+
+      fs.writeFileSync(path, data);
+      const actionInfo = JSON.stringify({
+        path,
+        filename,
+      });
+      await this.activeActionModel.create(
+        userId,
+        "sending_file",
+        tempKey,
+        actionInfo
+      );
+    } else {
+      const resParsed = JSON.parse(info.data);
+      path = resParsed.path;
+      fs.appendFileSync(path, data);
+    }
+
+    return path;
+  };
+
+  onFilePartUpload = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+
+    const { chatId, tempKey, data: fileBody, filetype, filename, last } = data;
+
+    const path = await this.uploadToFile({
+      userId,
+      tempKey,
+      data: fileBody,
+      filetype,
+      filename,
+    });
+
+    if (!last) {
+      return this.sendSocketMessageToUser(userId, "file-part-uploaded", {
+        tempKey,
+      });
+    }
+
+    const message = await this.chatMessageModel.createFileMessage({
+      chatId,
+      type: indicateMediaTypeByExtension(filetype),
+      isAdminSender: false,
+      senderId: userId,
+      content: { path, filename },
+    });
+
+    await this.activeActionModel.deleteByKeyAndType(userId, tempKey);
+
+    await this.sendSocketMessageToUserOpponent(chatId, userId, "get-message", {
+      message,
+    });
+
+    this.sendSocketMessageToUser(userId, "file-part-uploaded", {
+      tempKey,
+      message,
+    });
+  };
+
+  deleteFileAction = async (key) =>
+    await this.activeActionModel.deleteByKeyAndType(key, "sending_file");
+
+  onStopFile = async (key) => {
+    const info = await this.activeActionModel.getByKeyAndType(
+      key,
+      "sending_file"
+    );
+
+    const { path } = JSON.parse(info.data);
+    fs.unlinkSync(path);
+
+    await this.deleteFileAction(key);
+  };
+
+  stopAllUserActions = async (userId) => {
+    const actions = await this.activeActionModel.getUserActions(userId);
+
+    actions.forEach(async (action) => {
+      if (action.type == "sending_file") {
+        const key = action.key;
+        const info = action.data;
+        const { path } = JSON.parse(info);
+
+        if (fs.existsSync(path)) {
+          fs.unlinkSync(path);
+        }
+
+        await this.deleteFileAction(key);
+      }
+    });
+  };
+
+  onStopFileUpload = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+    const tempKey = data.tempKey;
+
+    await this.onStopFile(tempKey);
+
+    return this.sendSocketMessageToUser(userId, "message-cancelled", {
+      tempKey,
     });
   };
 }

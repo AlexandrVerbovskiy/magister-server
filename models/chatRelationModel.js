@@ -27,6 +27,24 @@ class ChatRelationModel extends Model {
 
     return !!result.length;
   };
+
+  startTyping = async (chatId, userId) => {
+    await db(CHAT_RELATION_TABLE)
+      .where({
+        chat_id: chatId,
+        user_id: userId,
+      })
+      .update({ typing: true });
+  };
+
+  finishTyping = async (chatId, userId) => {
+    await db(CHAT_RELATION_TABLE)
+      .where({
+        chat_id: chatId,
+        user_id: userId,
+      })
+      .update({ typing: false });
+  };
 }
 
 module.exports = new ChatRelationModel();
