@@ -5,4 +5,6 @@ const router = Router();
 
 router.post("/chat-list", isAuth, chatController.getChatList);
 
+router.post("/chat-message-list", isAuth, chatController.getChatMessageList)
+
 module.exports = router;

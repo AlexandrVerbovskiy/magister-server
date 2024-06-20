@@ -297,6 +297,43 @@ class ChatMessageModel extends Model {
     query = this.baseJoinQuery(query);
     return await query;
   };
+
+  contentJoin = (query) => {
+    return query
+      .joinRaw(
+        `LEFT JOIN (SELECT message_id, MAX(id) AS last_content_id FROM ${CHAT_MESSAGE_CONTENT_TABLE} GROUP BY message_id) AS lc ON ${CHAT_MESSAGE_TABLE}.id = lc.message_id`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHAT_MESSAGE_CONTENT_TABLE} ON ${CHAT_MESSAGE_CONTENT_TABLE}.id = lc.last_content_id`
+      );
+  };
+
+  getListBaseQuery = () => {
+    let query = db(CHAT_MESSAGE_TABLE);
+    query = query.where(`${CHAT_MESSAGE_TABLE}.hidden`, false);
+    return this.contentJoin(query);
+  };
+
+  getList = async ({ chatId, count = 50, lastMessageId = null }) => {
+    let query = this.getListBaseQuery();
+
+    query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
+
+    if (lastMessageId) {
+      query = query.where(`${CHAT_MESSAGE_TABLE}.id`, ">", lastMessageId);
+    }
+
+    query = query.limit(count);
+    return await query.select(this.fullVisibleFields);
+  };
+
+  checkHasMore = async ({ chatId, lastMessageId }) => {
+    let query = this.getListBaseQuery();
+    query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
+    query = query.where(`${CHAT_MESSAGE_TABLE}.id`, ">", lastMessageId);
+    const moreMessages = await query.count(`${CHAT_MESSAGE_TABLE}.id as count`);
+    return !!moreMessages.count;
+  };
 }
 
 module.exports = new ChatMessageModel();

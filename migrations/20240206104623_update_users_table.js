@@ -19,7 +19,6 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
-    table.string("password").notNullable().alter();
     table.dropColumn("need_set_password");
     table.dropColumn("need_regular_view_info_form");
     table.dropColumn("verified");
