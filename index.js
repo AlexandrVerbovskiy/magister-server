@@ -11,7 +11,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const { isAuth, isAdmin } = require("./middlewares");
-const { apiRoutes } = require("./routes");
+const { apiRoutes, socketsRoutes } = require("./routes");
 const STATIC = require("./static");
 const isNotAuth = require("./middlewares/isNotAuth");
 
@@ -111,12 +111,10 @@ app.use(
 );
 
 app.use("/api/sender-payments", apiRoutes.senderPaymentRoutes);
-
 app.use("/api/recipient-payments", apiRoutes.recipientPaymentRoutes);
-
 app.use("/api/comments", apiRoutes.commentRoutes);
-
 app.use("/api/disputes", apiRoutes.disputeRoutes);
+app.use("/api/chat", apiRoutes.chatRoutes);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -137,8 +135,10 @@ const server = app.listen(PORT, () => {
   console.log("Server started on port " + PORT);
 });
 
-/*const io = socketIo(server, {
+const io = socketIo(server, {
   cors: {
     credentials: true,
   },
-});*/
+});
+
+socketsRoutes.chatRoutes(io);

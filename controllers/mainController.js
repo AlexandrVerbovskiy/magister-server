@@ -25,6 +25,7 @@ const tenantCommentController = require("./tenantCommentController");
 const ownerCommentController = require("./ownerCommentController");
 const listingCommentController = require("./listingCommentController");
 const disputeController = require("./disputeController");
+const chatController = require("./chatController");
 
 class MainController extends Controller {
   getNavigationCategories = () =>
@@ -289,8 +290,9 @@ class MainController extends Controller {
 
       const listingRatingInfo =
         await this.listingCommentModel.getListingDetailInfo(listing.id);
-      const ownerRatingInfo =
-        await this.ownerCommentModel.getUserDetailInfo(listing.ownerId);
+      const ownerRatingInfo = await this.ownerCommentModel.getUserDetailInfo(
+        listing.ownerId
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
@@ -1222,6 +1224,51 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const result = await disputeController.baseDisputeList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  getUserChatOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const chatRes = await chatController.baseGetChatList(req, res);
+
+      if (chatRes.error) {
+        return this.sendErrorResponse(res, chatRes.error);
+      }
+
+      const categories = await this.getNavigationCategories();
+
+      let messageRes = {
+        list: [],
+        canShowMore: false,
+        options: {},
+        error: null,
+      };
+
+      if (req.body.id) {
+        messageRes = await chatController.baseGetChatMessageList(req, res);
+      }
+
+      if (messageRes.error) {
+        return this.sendErrorResponse(res, messageRes.error);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+        chats: chatRes.list,
+        chatsCanShowMore: chatRes.canShowMore,
+        options: { ...chatRes.options, ...messageRes.options },
+        messages: messageRes.list,
+        messagesCanShowMore: messageRes.canShowMore,
+      });
+    });
+
+  getAdminOrderChatOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
+    });
+
+  getAdminChatOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
     });
 
   test = (req, res) =>

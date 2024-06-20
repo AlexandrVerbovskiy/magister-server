@@ -705,6 +705,10 @@ class UserModel extends Model {
         `${USERS_TABLE}.created_at as createdAt`,
       ]);
   };
+
+  updateOnline = async (userId, online) => {
+    await db(USERS_TABLE).where("id", userId).update({ online });
+  };
 }
 
 module.exports = new UserModel();

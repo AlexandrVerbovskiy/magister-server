@@ -36,6 +36,7 @@ const {
   adminDisputeListOptionsValidation,
   createOwnerCommentValidation,
   createUserCommentValidation,
+  chatOptionsValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
@@ -381,6 +382,27 @@ router.post(
   isSupport,
   adminDisputeListOptionsValidation,
   mainController.getAdminDisputesPageOptions
+);
+
+router.post(
+  "/user-chat-options",
+  isAuth,
+  chatOptionsValidation,
+  mainController.getUserChatOptions
+);
+
+router.post(
+  "/admin-chat-options",
+  isAuth,
+  chatOptionsValidation,
+  mainController.getAdminChatOptions
+);
+
+router.post(
+  "/admin-order-chat-options",
+  isAuth,
+  chatOptionsValidation,
+  mainController.getAdminOrderChatOptions
 );
 
 router.get("/test", mainController.test);
