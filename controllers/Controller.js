@@ -247,7 +247,6 @@ class Controller {
     });
   };
 
-  //???
   sendAssetPickupMail = async (email, orderId) => {
     const title = "Asset Pickup Confirmation";
     //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
@@ -258,8 +257,7 @@ class Controller {
     });
   };
 
-  //???
-  sendAssetDropOffMail = async (email, invoiceId) => {
+  sendAssetPickupMail = async (email, invoiceId) => {
     const title = "Asset Drop Off Confirmation";
     //const link = CLIENT_URL + "/dashboard/invoices/" + invoiceId;
     const link = CLIENT_URL + "/";
@@ -269,7 +267,6 @@ class Controller {
     });
   };
 
-  //???
   sendLateReturnNotificationMail = async (email, orderId) => {
     const title = "Late Return Notification";
     //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
@@ -280,7 +277,6 @@ class Controller {
     });
   };
 
-  //???
   sendEarlyReturnOfAssetMail = async (email, orderId) => {
     const title = "Early Return of Asset";
     //const link = CLIENT_URL + "/dashboard/orders/" + orderId;

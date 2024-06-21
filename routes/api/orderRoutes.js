@@ -80,13 +80,13 @@ router.post(
   orderController.adminOrderList
 );
 
-/*router.post(
+router.post(
   "/delete",
   isAuth,
   isSupport,
   idBodyValidation,
   orderController.delete
-);*/
+);
 
 router.post(
   "/paypal-order-payed",

@@ -22,6 +22,7 @@ const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
+const CHAT_TABLE = STATIC.TABLES.CHATS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -60,6 +61,7 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.status as disputeStatus`,
     `${DISPUTES_TABLE}.type as disputeType`,
     `${DISPUTES_TABLE}.description as disputeDescription`,
+    `${CHAT_TABLE}.id as chatId`,
   ];
 
   lightRequestVisibleFields = [
@@ -165,6 +167,7 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.status`,
     `${DISPUTES_TABLE}.type`,
     `${DISPUTES_TABLE}.description`,
+    `${CHAT_TABLE}.id`,
   ];
 
   strFilterFields = [
@@ -264,6 +267,9 @@ class OrderModel extends Model {
         `${DISPUTES_TABLE}.order_id`,
         "=",
         `${ORDERS_TABLE}.id`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
       );
   };
 
@@ -275,7 +281,7 @@ class OrderModel extends Model {
     );
   };
 
-  orderCreatedTimeFilterWrap = (query, timeInfos) => {
+  orderTimeFilterWrap = (query, timeInfos) => {
     if (timeInfos.serverFromTime) {
       query = query.where(
         this.baseStringStartFilterDateWrap(`${ORDERS_TABLE}.created_at`),
@@ -287,26 +293,6 @@ class OrderModel extends Model {
     if (timeInfos.serverToTime) {
       query = query.where(
         this.baseStringEndFilterDateWrap(`${ORDERS_TABLE}.created_at`),
-        "<=",
-        formatDateToSQLFormat(timeInfos.serverToTime)
-      );
-    }
-
-    return query;
-  };
-
-  orderTimeFilterWrap = (query, timeInfos) => {
-    if (timeInfos.serverFromTime) {
-      query = query.where(
-        this.baseStringStartFilterDateWrap("start_date"),
-        ">=",
-        formatDateToSQLFormat(timeInfos.serverFromTime)
-      );
-    }
-
-    if (timeInfos.serverToTime) {
-      query = query.where(
-        this.baseStringEndFilterDateWrap("end_date"),
         "<=",
         formatDateToSQLFormat(timeInfos.serverToTime)
       );
@@ -588,8 +574,11 @@ class OrderModel extends Model {
   };
 
   allOrdersTotalCount = async (filter, type, timeInfos) => {
-    let query = db(ORDERS_TABLE).whereRaw(
-      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    return await this.baseAllTotalCount(
+      filter,
+      type,
+      timeInfos,
+      this.dopWhereOrder
     );
 
     query = this.fullBaseGetQuery(filter);
@@ -1212,7 +1201,7 @@ class OrderModel extends Model {
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
 
-    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
     query = query.whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
