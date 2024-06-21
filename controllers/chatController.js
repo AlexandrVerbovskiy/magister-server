@@ -8,6 +8,8 @@ const fs = require("fs");
 
 class ChatController extends Controller {
   message_files_dir = "public/messages";
+  count_message_per_iteration = 50;
+  count_chat_per_iteration = 20;
 
   userChatRelationSendMessage = async (userId, messageKey) => {
     const relations = await this.chatModel.getUserChatsOpponentSockets(userId);
@@ -39,12 +41,8 @@ class ChatController extends Controller {
     const userId = req.userData.userId;
     const chatType = req.body.chatType ?? "orders";
     const chatFilter = req.body.chatFilter ?? "";
-    let count = req.body.count ?? 20;
+    const count = this.count_chat_per_iteration;
     const lastChatId = req.body.lastChatId ?? null;
-
-    if (count > 100) {
-      count = 100;
-    }
 
     if (chatId) {
       const userHasChatAccess =
@@ -103,12 +101,8 @@ class ChatController extends Controller {
   baseGetChatMessageList = async (req, res) => {
     const chatId = req.body.id;
     const userId = req.userData.userId;
-    let count = req.body.count ?? 50;
+    const count = this.count_message_per_iteration;
     const lastMessageId = req.body.lastMessageId ?? null;
-
-    if (count > 250) {
-      count = 250;
-    }
 
     const messageList = await this.chatMessageModel.getList({
       chatId,
@@ -238,10 +232,14 @@ class ChatController extends Controller {
       }
     );
 
-    return this.sendSocketMessageToUser(senderId, "success-sended-message", {
-      message,
-      tempKey: data.tempKey,
-    });
+    return await this.sendSocketMessageToUser(
+      senderId,
+      "success-sended-message",
+      {
+        message,
+        tempKey: data.tempKey,
+      }
+    );
   };
 
   onChangeTyping = async (data, sessionInfo, typing) => {
@@ -315,7 +313,7 @@ class ChatController extends Controller {
     });
 
     if (!last) {
-      return this.sendSocketMessageToUser(userId, "file-part-uploaded", {
+      return await this.sendSocketMessageToUser(userId, "file-part-uploaded", {
         tempKey,
       });
     }
@@ -334,7 +332,7 @@ class ChatController extends Controller {
       message,
     });
 
-    this.sendSocketMessageToUser(userId, "file-part-uploaded", {
+    return await this.sendSocketMessageToUser(userId, "file-part-uploaded", {
       tempKey,
       message,
     });
@@ -379,9 +377,84 @@ class ChatController extends Controller {
 
     await this.onStopFile(tempKey);
 
-    return this.sendSocketMessageToUser(userId, "message-cancelled", {
+    return await this.sendSocketMessageToUser(userId, "message-cancelled", {
       tempKey,
     });
+  };
+
+  onUpdateMessage = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+    const messageId = data.messageId;
+    const text = data.text;
+
+    const message = await this.chatMessageModel.update(messageId, text);
+
+    await this.sendSocketMessageToUserOpponent(
+      message.chatId,
+      userId,
+      "message-updated",
+      {
+        message,
+      }
+    );
+
+    return await this.sendSocketMessageToUser(
+      userId,
+      "success-message-updated",
+      {
+        message,
+      }
+    );
+  };
+
+  onDeleteMessage = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+    const messageId = data.messageId;
+
+    const deletedMessage = await this.chatMessageModel.getShortById(messageId);
+    const chatId = deletedMessage.chatId;
+
+    const previousMessage = await this.chatMessageModel.getBeforeMessageInChat({
+      messageId,
+      chatId: chatId,
+    });
+
+    const deletedPosition =
+      await this.chatMessageModel.getMessagePositionInChat({
+        messageId,
+        chatId,
+      });
+
+    const skippedForNew = Math.ceil(deletedPosition / 50) * 50;
+
+    const replacementMessage =
+      await this.chatMessageModel.getMessageByChatPosition({
+        chatId,
+        offset: skippedForNew,
+      });
+
+    await this.chatMessageModel.delete(messageId);
+
+    await this.sendSocketMessageToUserOpponent(
+      chatId,
+      userId,
+      "message-deleted",
+      {
+        deletedMessage,
+        previousMessage,
+        replacementMessage,
+      }
+    );
+
+    return await this.sendSocketMessageToUser(
+      userId,
+      "success-message-deleted",
+      {
+        deletedMessage,
+        previousMessage,
+        replacementMessage,
+      }
+    );
   };
 }
 
