@@ -161,7 +161,6 @@ class ListingController extends Controller {
   baseListingWithStatusesList = async (req, userId = null) => {
     const active = req.body.active ?? "all";
     const approved = req.body.approved ?? "all";
-    const status = req.body.status ?? "all";
 
     const { options, countItems } = await this.baseList(
       req,
@@ -169,14 +168,12 @@ class ListingController extends Controller {
         this.listingModel.totalCountWithLastRequests(filter, userId, {
           active,
           approved,
-          status,
         })
     );
 
     options["userId"] = userId;
     options["active"] = active;
     options["approved"] = approved;
-    options["status"] = status;
 
     const listings = await this.listingModel.listWithLastRequests(options);
 

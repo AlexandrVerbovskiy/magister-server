@@ -175,10 +175,6 @@ class OrderController extends Controller {
 
       const createdOrderId = await this.baseCreate(dataToCreate);
 
-      const listing = await this.listingModel.getFullById(listingId);
-
-      this.sendBookingExtensionMail(listing.userEmail, createdOrderId);
-
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
@@ -637,8 +633,6 @@ class OrderController extends Controller {
         proofUrl: "",
       });
 
-      this.sendPaymentNotificationMail(order.tenantEmail, order.id);
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
@@ -856,7 +850,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      return await this.baseCancelOrder({
+      return this.baseCancelOrder({
         req,
         res,
         userId,
@@ -865,10 +859,7 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
-        cancelFunc: (orderId, orderInfo) => {
-          this.sendBookingCancellationOwnerMail(orderInfo.ownerEmail, orderId);
-          return this.orderModel.startCancelByTenant(orderId);
-        },
+        cancelFunc: this.orderModel.startCancelByTenant,
       });
     });
 
@@ -876,7 +867,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      return await this.baseCancelOrder({
+      return this.baseCancelOrder({
         req,
         res,
         userId,
@@ -885,10 +876,7 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
-        cancelFunc: (orderId, orderInfo) => {
-          this.sendBookingCancellationOwnerMail(orderInfo.ownerEmail, orderId);
-          return this.orderModel.startCancelByOwner(orderId);
-        },
+        cancelFunc: this.orderModel.startCancelByOwner,
       });
     });
 
@@ -917,7 +905,6 @@ class OrderController extends Controller {
 
       const {
         tenantId,
-        tenantEmail,
         status,
         cancelStatus,
         offerStartDate,
@@ -985,8 +972,6 @@ class OrderController extends Controller {
             data: { paypalId: paypalId },
             status: STATIC.RECIPIENT_STATUSES.COMPLETED,
           });
-
-          this.sendRefundProcessMail(tenantEmail, id);
         } catch (e) {
           await this.recipientPaymentModel.createRefundPayment({
             money: factTotalPriceWithoutCommission,
@@ -1020,7 +1005,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      return await this.baseCancelOrder({
+      return this.baseCancelOrder({
         req,
         res,
         userId,

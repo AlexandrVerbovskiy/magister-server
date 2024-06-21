@@ -87,11 +87,7 @@ class RecipientPaymentController extends Controller {
   markAsCompletedRefund = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
-      
       await this.recipientPaymentModel.complete(id);
-      const payment = await this.getById(id);
-      this.sendRefundProcessMail(payment.tenantEmail, payment.orderId);
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 

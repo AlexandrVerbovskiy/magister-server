@@ -104,8 +104,6 @@ class ListingApprovalRequestController extends Controller {
 
       const listing = await this.listingModel.getById(listingId);
 
-      this.sendListingVerifiedMail(listing.ownerEmail, listing.name, listingId);
-
       this.saveUserAction(
         req,
         `Accepted a request to create a listing with name ${listing.name}`

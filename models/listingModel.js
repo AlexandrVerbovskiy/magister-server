@@ -718,7 +718,7 @@ class ListingsModel extends Model {
   totalCountWithLastRequests = async (
     filter,
     userId = null,
-    { active = null, approved = null, status = null }
+    { active = null, approved = null }
   ) => {
     const subquery = db
       .select("id")
@@ -749,7 +749,6 @@ class ListingsModel extends Model {
 
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
-    query = this.queryByStatus(query, status);
 
     const { count } = await query.count("* as count").first();
     return count;
@@ -871,7 +870,6 @@ class ListingsModel extends Model {
       count,
       active = null,
       approved = null,
-      status = null,
     } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
@@ -922,7 +920,6 @@ class ListingsModel extends Model {
 
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
-    query = this.queryByStatus(query, status);
 
     return await query
       .groupBy([
