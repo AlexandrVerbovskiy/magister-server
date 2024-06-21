@@ -22,6 +22,7 @@ const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
+const CHAT_TABLE = STATIC.TABLES.CHATS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -60,6 +61,7 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.status as disputeStatus`,
     `${DISPUTES_TABLE}.type as disputeType`,
     `${DISPUTES_TABLE}.description as disputeDescription`,
+    `${CHAT_TABLE}.id as chatId`,
   ];
 
   lightRequestVisibleFields = [
@@ -165,6 +167,7 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.status`,
     `${DISPUTES_TABLE}.type`,
     `${DISPUTES_TABLE}.description`,
+    `${CHAT_TABLE}.id`,
   ];
 
   strFilterFields = [
@@ -264,6 +267,9 @@ class OrderModel extends Model {
         `${DISPUTES_TABLE}.order_id`,
         "=",
         `${ORDERS_TABLE}.id`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
       );
   };
 
