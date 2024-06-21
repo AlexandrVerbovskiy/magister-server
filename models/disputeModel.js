@@ -147,6 +147,13 @@ class DisputeModel extends Model {
     return query;
   };
 
+  getById = async(id) => {
+    let query = db(DISPUTES_TABLE);
+    query = this.fullOrdersJoin(query);
+    query = query.select(this.visibleFields).where(`${DISPUTES_TABLE}.id`, id);
+    return await query.first();
+  };
+
   totalCount = async ({ filter, timeInfos, type = null }) => {
     let query = db(DISPUTES_TABLE).whereRaw(...this.baseStrFilter(filter));
 

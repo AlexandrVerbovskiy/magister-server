@@ -219,4 +219,5 @@ module.exports = {
     "tiff",
     "webp",
   ],
+  CHAT_TYPES: { DISPUTE: "dispute", ORDER: "order" },
 };

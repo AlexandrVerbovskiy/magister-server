@@ -1243,12 +1243,20 @@ class MainController extends Controller {
         error: null,
       };
 
-      if (req.body.id) {
+      const chatId = req.body.id;
+
+      if (chatId) {
         messageRes = await chatController.baseGetChatMessageList(req, res);
       }
 
       if (messageRes.error) {
         return this.sendErrorResponse(res, messageRes.error);
+      }
+
+      let entity = null;
+
+      if (chatId) {
+        entity = await chatController.baseGetChatEntityInfo(chatId);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1258,6 +1266,7 @@ class MainController extends Controller {
         options: { ...chatRes.options, ...messageRes.options },
         messages: messageRes.list,
         messagesCanShowMore: messageRes.canShowMore,
+        entity,
       });
     });
 

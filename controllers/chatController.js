@@ -161,6 +161,51 @@ class ChatController extends Controller {
     });
   };
 
+  baseGetChatEntityInfo = async (chatId) => {
+    const chat = await this.chatModel.getById(chatId);
+
+    let entity = null;
+
+    if (chat.entityType === STATIC.CHAT_TYPES.DISPUTE) {
+      entity = await this.disputeModel.getById(chat.entityId);
+    } else {
+      entity = await this.orderModel.getById(chat.entityId);
+    }
+
+    entity["type"] = chat.entityType;
+
+    return entity;
+  };
+
+  getChatBaseInfo = async (req, res) => {
+    const chatId = req.body.id;
+    const userId = req.userData.userId;
+
+    const userHasChatAccess = await this.chatRelationModel.checkUserHasRelation(
+      chatId,
+      userId
+    );
+
+    if (!userHasChatAccess) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+    }
+
+    const messagesRes = await this.baseGetChatMessageList(req, res);
+
+    if (messagesRes.error) {
+      return this.sendErrorResponse(res, chatRes.error);
+    }
+
+    const entity = await this.baseGetChatEntityInfo(chatId);
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      messages: messagesRes.list,
+      messagesCanShowMore: messagesRes.canShowMore,
+      options: messagesRes.options,
+      entity,
+    });
+  };
+
   sendSocketMessageToUserOpponent = async (
     chatId,
     userId,
@@ -283,7 +328,7 @@ class ChatController extends Controller {
       content: { path, filename },
     });
 
-    await this.activeActionModel.deleteByKeyAndType(userId, tempKey);
+    await this.activeActionModel.deleteByKeyAndType(tempKey, "sending_file");
 
     await this.sendSocketMessageToUserOpponent(chatId, userId, "get-message", {
       message,

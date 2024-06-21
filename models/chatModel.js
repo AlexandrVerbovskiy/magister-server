@@ -12,14 +12,16 @@ const CHAT_MESSAGE_CONTENT_TABLE = STATIC.TABLES.CHAT_MESSAGE_CONTENTS;
 const USER_TABLE = STATIC.TABLES.USERS;
 const SOCKET_TABLE = STATIC.TABLES.SOCKETS;
 
-const CHAT_TYPES = { DISPUTE: "dispute", ORDER: "order" };
-
 class ChatModel extends Model {
-  fullVisibleFields = [
+  visibleFields = [
     `${CHAT_TABLE}.id`,
     `${CHAT_TABLE}.entity_id as entityId`,
     `${CHAT_TABLE}.entity_type as entityType`,
     `${CHAT_TABLE}.name as name`,
+  ];
+
+  fullVisibleFields = [
+    ...this.visibleFields,
     `${CHAT_MESSAGE_TABLE}.id as messageId`,
     `${CHAT_MESSAGE_TABLE}.type as messageType`,
     `${CHAT_MESSAGE_TABLE}.sender_id as messageSenderId`,
@@ -47,6 +49,8 @@ class ChatModel extends Model {
     return res[0]["id"];
   };
 
+  getById = (chatId) => this.baseGetById(chatId, CHAT_TABLE);
+
   createForOrder = async ({
     ownerId,
     tenantId,
@@ -65,7 +69,7 @@ class ChatModel extends Model {
 
     const chatId = await this.create({
       entityId: orderId,
-      entityType: CHAT_TYPES.ORDER,
+      entityType: STATIC.CHAT_TYPES.ORDER,
       name: `Rental ${listingName}`,
     });
 
@@ -102,7 +106,7 @@ class ChatModel extends Model {
   }) => {
     const chatId = await this.create({
       entityId: disputeId,
-      entityType: CHAT_TYPES.ORDER,
+      entityType: STATIC.CHAT_TYPES.ORDER,
       name: `Dispute for order #${orderId}`,
     });
 
@@ -167,7 +171,7 @@ class ChatModel extends Model {
     if (chatType == "disputes") {
       query = query
         .join(CHAT_TABLE, `${CHAT_TABLE}.id`, "=", "searcher_relation.chat_id")
-        .where(`${CHAT_TABLE}.entity_type`, "=", CHAT_TYPES.DISPUTE);
+        .where(`${CHAT_TABLE}.entity_type`, "=", STATIC.CHAT_TYPES.DISPUTE);
     } else {
       query = query
         .joinRaw(
@@ -176,7 +180,7 @@ class ChatModel extends Model {
         )
         .join(CHAT_TABLE, `${CHAT_TABLE}.id`, "=", "searcher_relation.chat_id")
         .join(USER_TABLE, `${USER_TABLE}.id`, "=", "opponent_relation.user_id")
-        .where(`${CHAT_TABLE}.entity_type`, "=", CHAT_TYPES.ORDER);
+        .where(`${CHAT_TABLE}.entity_type`, "=", STATIC.CHAT_TYPES.ORDER);
     }
 
     query = query.where(`searcher_relation.user_id`, "=", userId);
