@@ -35,6 +35,15 @@ class MainController extends Controller {
 
   getListingDefectQuestions = () => this.listingDefectQuestionModel.getAll();
 
+  getViewPageWithCategoriesOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const categories = await this.listingCategoryModel.getFullInfoList();
+      
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        categories,
+      });
+    });
+
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;

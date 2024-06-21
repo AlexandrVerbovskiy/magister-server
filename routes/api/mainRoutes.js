@@ -43,6 +43,8 @@ const { idParamValidation } = require("../../validations/listing");
 
 router.get("/index-options", authId, mainController.getIndexPageOptions);
 
+router.get("/view-page-options", mainController.getViewPageWithCategoriesOptions)
+
 router.get(
   "/create-listing-options",
   isAuth,
