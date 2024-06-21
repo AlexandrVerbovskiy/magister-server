@@ -74,10 +74,8 @@ class ChatMessageModel extends Model {
       .returning(["id", "created_at as createdAt"]);
 
     const messageId = res[0]["id"];
-
     await chatMessageContentModel.create(messageId, content);
-    const resultMessage = await this.getFullById(messageId);
-    return resultMessage;
+    return await this.getFullById(messageId);
   };
 
   createFileMessage = async ({
@@ -236,12 +234,13 @@ class ChatMessageModel extends Model {
 
   delete = async (messageId) => {
     await db(CHAT_MESSAGE_TABLE)
-      .where("message_id", messageId)
+      .where("id", messageId)
       .update({ hidden: true });
   };
 
-  update = async (messageId, newContent) => {
-    await chatMessageContentModel.create(messageId, newContent);
+  update = async (messageId, text) => {
+    await chatMessageContentModel.create(messageId, { text });
+    return await this.getFullById(messageId);
   };
 
   getShortById = async (id) => {
@@ -296,23 +295,71 @@ class ChatMessageModel extends Model {
     return messages.reverse();
   };
 
-  checkHasMore = async ({ chatId, lastMessageId }) => {
-    const lastMessageCreatedAt = await this.getMessageCreatedDate(
-      lastMessageId
-    );
+  getBeforeMessageInChat = async ({ messageId, chatId }) => {
+    const messageCreatedAt = await this.getMessageCreatedDate(messageId);
 
     let query = this.getListBaseQuery();
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
     query = query
-      .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastMessageCreatedAt)
+      .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", messageCreatedAt)
       .orderBy(`${CHAT_MESSAGE_TABLE}.id`, "desc")
       .groupBy([
         `${CHAT_MESSAGE_TABLE}.id`,
         `${CHAT_MESSAGE_TABLE}.created_at`,
       ]);
 
-    const moreMessages = await query.select(`${CHAT_MESSAGE_TABLE}.id`).first();
-    return !!moreMessages?.id;
+    const messageInfo = await query.select(`${CHAT_MESSAGE_TABLE}.id`).first();
+    const id = messageInfo.id;
+
+    if (!id) {
+      return null;
+    }
+
+    return await this.getFullById(id);
+  };
+
+  getMessageByChatPosition = async ({ chatId, offset }) => {
+    let query = this.getListBaseQuery();
+    query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
+    query = query
+      .orderBy(`${CHAT_MESSAGE_TABLE}.id`, "desc")
+      .groupBy([`${CHAT_MESSAGE_TABLE}.id`, `${CHAT_MESSAGE_TABLE}.created_at`])
+      .offset(offset);
+
+    const messageInfo = await query.select(`${CHAT_MESSAGE_TABLE}.id`).first();
+    const id = messageInfo.id;
+
+    if (!id) {
+      return null;
+    }
+
+    return await this.getFullById(id);
+  };
+
+  checkHasMore = async ({ chatId, lastMessageId }) => {
+    const id = await this.getBeforeMessageInChat({
+      chatId,
+      messageId: lastMessageId,
+    });
+
+    return !!id;
+  };
+
+  getMessagePositionInChat = async ({ messageId, chatId }) => {
+    const messageCreatedAt = await this.getMessageCreatedDate(messageId);
+
+    let query = this.getListBaseQuery();
+    query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
+    query = query
+      .where(`${CHAT_MESSAGE_TABLE}.created_at`, ">=", messageCreatedAt)
+      .orderBy(`${CHAT_MESSAGE_TABLE}.id`, "desc")
+      .groupBy([
+        `${CHAT_MESSAGE_TABLE}.id`,
+        `${CHAT_MESSAGE_TABLE}.created_at`,
+      ]);
+
+    const result = await query.select(`${CHAT_MESSAGE_TABLE}.id`);
+    return result.length;
   };
 }
 
