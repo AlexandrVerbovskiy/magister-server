@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { mainController } = require("../../controllers");
+const { mainController, listingController } = require("../../controllers");
 const {
   isAuth,
   isVerified,
@@ -31,24 +31,29 @@ const {
   adminOrderListOptionsValidation,
   recipientPaymentListValidation,
   senderPaymentListValidation,
+  adminIndexPageOptionsValidation,
+  adminCommentListOptionsValidation,
+  adminDisputeListOptionsValidation,
+  createOwnerCommentValidation,
+  createUserCommentValidation,
+  chatOptionsValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
 
-router.get("/index-options", mainController.getIndexPageOptions);
+router.get("/index-options", authId, mainController.getIndexPageOptions);
+
+router.get("/view-page-options", mainController.getViewPageWithCategoriesOptions)
 
 router.get(
   "/create-listing-options",
   isAuth,
-  isVerified,
-  isVerified,
   mainController.getCreateListingPageOptions
 );
 
 router.get(
   "/update-listing-options/:id",
   isAuth,
-  isVerified,
   updateListingOptionsValidation,
   mainController.getUpdateListingPageOptions
 );
@@ -143,10 +148,10 @@ router.get(
 );
 
 router.get(
-  "/get-booking-for-card-pay-options/:id",
+  "/get-order-for-card-pay-options/:id",
   isAuth,
   orderFullByIdOptionsValidation,
-  mainController.getBookingFullForCardPay
+  mainController.getOrderFullForCardPay
 );
 
 router.get(
@@ -166,7 +171,6 @@ router.get(
 router.post(
   "/user-listing-list-options",
   isAuth,
-  isVerified,
   userListingListOptionsValidation,
   mainController.getUserListingListPageOptions
 );
@@ -216,14 +220,6 @@ router.get(
 );
 
 router.get(
-  "/admin-full-booking-info-options/:id",
-  isAuth,
-  isSupport,
-  validateIdParam(),
-  mainController.getFullOrderByIdWithRequestsToUpdatePageOption
-);
-
-router.get(
   "/user-profile-edit-options",
   isAuth,
   mainController.getUserProfileEditPageOptions
@@ -232,27 +228,11 @@ router.get(
 router.get("/settings-options", isAuth, mainController.getSettingsPageOptions);
 
 router.post(
-  "/booking-list-options",
-  isAuth,
-  isVerified,
-  orderListOptionsValidation,
-  mainController.getBookingListOptions
-);
-
-router.post(
   "/order-list-options",
   isAuth,
   isVerified,
   orderListOptionsValidation,
   mainController.getOrderListOptions
-);
-
-router.post(
-  "/admin-booking-list-options",
-  isAuth,
-  isSupport,
-  adminOrderListOptionsValidation,
-  mainController.getAdminBookingListOptions
 );
 
 router.post(
@@ -342,7 +322,91 @@ router.post(
   "/get-admin-index-page-option",
   isAuth,
   isSupport,
+  adminIndexPageOptionsValidation,
   mainController.getAdminIndexPageOptions
 );
+
+router.get(
+  "/get-order-review-by-tenant/:id",
+  isAuth,
+  validateIdParam(),
+  mainController.getOrderReviewByTenantOptions
+);
+
+router.get(
+  "/get-order-review-by-owner/:id",
+  isAuth,
+  validateIdParam(),
+  mainController.getOrderReviewByOwnerOptions
+);
+
+router.post(
+  "/admin-tenant-comment-list-options",
+  isAuth,
+  isSupport,
+  adminCommentListOptionsValidation,
+  mainController.getAdminTenantCommentsPageOptions
+);
+
+router.post(
+  "/admin-owner-comment-list-options",
+  isAuth,
+  isSupport,
+  adminCommentListOptionsValidation,
+  mainController.getAdminOwnerCommentsPageOptions
+);
+
+router.post(
+  "/admin-listing-comment-list-options",
+  isAuth,
+  isSupport,
+  adminCommentListOptionsValidation,
+  mainController.getAdminListingCommentsPageOptions
+);
+
+router.post(
+  "/create-owner-review",
+  isAuth,
+  createOwnerCommentValidation,
+  mainController.createOwnerComment
+);
+
+router.post(
+  "/create-tenant-review",
+  isAuth,
+  ...createUserCommentValidation,
+  mainController.createTenantComment
+);
+
+router.post(
+  "/admin-dispute-list-options",
+  isAuth,
+  isSupport,
+  adminDisputeListOptionsValidation,
+  mainController.getAdminDisputesPageOptions
+);
+
+router.post(
+  "/user-chat-options",
+  isAuth,
+  chatOptionsValidation,
+  mainController.getUserChatOptions
+);
+
+router.post(
+  "/admin-chat-options",
+  isAuth,
+  chatOptionsValidation,
+  mainController.getAdminChatOptions
+);
+
+router.post(
+  "/admin-order-chat-options",
+  isAuth,
+  chatOptionsValidation,
+  mainController.getAdminOrderChatOptions
+);
+
+router.get("/test", mainController.test);
 
 module.exports = router;

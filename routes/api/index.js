@@ -17,4 +17,7 @@ module.exports = {
   senderPaymentRoutes: require("./senderPaymentRoutes"),
   recipientPaymentRoutes: require("./recipientPaymentRoutes"),
   listingDefectQuestionRoutes: require("./listingDefectQuestionRoutes"),
+  commentRoutes: require("./commentRoutes"),
+  disputeRoutes: require("./disputeRoutes"),
+  chatRoutes: require("./chatRoutes"),
 };

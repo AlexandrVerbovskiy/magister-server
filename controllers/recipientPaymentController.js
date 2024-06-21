@@ -156,7 +156,6 @@ class RecipientPaymentController extends Controller {
             status: STATIC.RECIPIENT_STATUSES.COMPLETED,
           });
         } catch (e) {
-          console.log("test: ", e.message);
           await this.recipientPaymentModel.updateRefundPayment({
             id,
             type: "paypal",

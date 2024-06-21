@@ -116,11 +116,9 @@ class ListingController extends Controller {
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
-    const listings = await this.listingModel.list(options);
+    let listings = await this.listingModel.list(options);
 
-    const listingsWithImages = await this.listingModel.listingsBindImages(
-      listings
-    );
+    listings = await this.listingModel.listingsBindImages(listings);
 
     const dbCategories = await this.listingCategoryModel.listGroupedByLevel();
 
@@ -139,8 +137,21 @@ class ListingController extends Controller {
       this.searchedWordModel.updateSearchCount(categoriesToCheckHasNotify[0]);
     }
 
+    listings = await this.listingCommentModel.bindAverageForKeyEntities(
+      listings,
+      "id"
+    );
+
+    if (sessionUserId) {
+      listings =
+        await this.userListingFavoriteModel.bindUserListingListFavorite(
+          listings,
+          sessionUserId
+        );
+    }
+
     return {
-      items: listingsWithImages,
+      items: listings,
       options,
       countItems,
       canSendCreateNotifyRequest,
@@ -170,8 +181,24 @@ class ListingController extends Controller {
       listings
     );
 
+    const ratingListingsWithImages =
+      await this.listingCommentModel.bindAverageForKeyEntities(
+        listingsWithImages,
+        "id"
+      );
+
+    const ratingListingsOwnersWithImages =
+      await this.ownerCommentModel.bindAverageForKeyEntities(
+        ratingListingsWithImages,
+        "ownerId",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
+
     return {
-      items: listingsWithImages,
+      items: ratingListingsOwnersWithImages,
       options,
       countItems,
     };
@@ -260,7 +287,7 @@ class ListingController extends Controller {
     return [...filesToSave, ...listingImages];
   };
 
-  baseCreate = async (req, res) => {
+  baseCreate = async (req, res, needSendRequest = false) => {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
 
@@ -273,16 +300,26 @@ class ListingController extends Controller {
 
     dataToSave["userVerified"] = true;
 
+    let createdVerifiedRequest = false;
+
+    if (needSendRequest) {
+      await this.listingApprovalRequestModel.create(listingId);
+      createdVerifiedRequest = true;
+    }
+
     return this.sendSuccessResponse(
       res,
       STATIC.SUCCESS.OK,
       "Created successfully",
       {
-        ...dataToSave,
-        id: listingId,
-        listingId,
-        listingImages,
-        defects,
+        listing: {
+          ...dataToSave,
+          id: listingId,
+          listingId,
+          listingImages,
+          defects,
+        },
+        createdVerifiedRequest,
       }
     );
   };
@@ -292,7 +329,7 @@ class ListingController extends Controller {
       const { userId } = req.userData;
       req.body.ownerId = userId;
 
-      const result = await this.baseCreate(req, res);
+      const result = await this.baseCreate(req, res, true);
 
       this.saveUserAction(
         req,
@@ -313,15 +350,12 @@ class ListingController extends Controller {
     }
   };
 
-  removeListingImages = (deletedImagesInfos) => {
-    const toRemovePaths = deletedImagesInfos
-      .filter((info) => info.type == "storage")
-      .map((info) => info.link);
-
-    toRemovePaths.forEach((path) => this.removeFile(path));
-  };
-
-  baseUpdate = async (req, res, canApprove = false) => {
+  baseUpdate = async (
+    req,
+    res,
+    canApprove = false,
+    needSendRequest = false
+  ) => {
     const dataToSave = req.body;
     dataToSave["listingImages"] = this.localGetFiles(req);
     dataToSave["defects"] = dataToSave["defects"]
@@ -333,21 +367,36 @@ class ListingController extends Controller {
 
     const {
       defects,
-      deletedImagesInfos,
       listingImages: listingImagesToRes,
     } = await this.listingModel.updateById(dataToSave);
 
-    this.removeListingImages(deletedImagesInfos);
-
     if (canApprove && dataToSave["approved"] === "true") {
       await this.listingApprovalRequestModel.approve(listingId);
+    }
+
+    let createdVerifiedRequest = false;
+
+    if (needSendRequest) {
+      const hasNotViewedByAdminRequest =
+        await this.listingApprovalRequestModel.hasNotViewedByAdminRequest(
+          listingId
+        );
+
+      if (!hasNotViewedByAdminRequest) {
+        await this.listingApprovalRequestModel.create(listingId);
+      }
+
+      createdVerifiedRequest = true;
     }
 
     return this.sendSuccessResponse(
       res,
       STATIC.SUCCESS.OK,
       "Updated successfully",
-      { ...dataToSave, listingId, listingImagesToRes, defects }
+      {
+        listing: { ...dataToSave, listingId, listingImagesToRes, defects },
+        createdVerifiedRequest,
+      }
     );
   };
 
@@ -374,24 +423,7 @@ class ListingController extends Controller {
 
       const listing = await this.listingModel.getById(listingId);
 
-      if (listing.approved) {
-        const hasNotViewedByAdminRequest =
-          await this.listingApprovalRequestModel.hasNotViewedByAdminRequest(
-            listingId
-          );
-
-        if (hasNotViewedByAdminRequest) {
-          return this.sendErrorResponse(
-            res,
-            STATIC.ERRORS.BAD_REQUEST,
-            "The request was sent earlier. Wait for the administrator's response"
-          );
-        }
-
-        await this.listingApprovalRequestModel.create(listingId);
-      }
-
-      const result = await this.baseUpdate(req, res);
+      const result = await this.baseUpdate(req, res, false, true);
 
       this.saveUserAction(
         req,
@@ -452,8 +484,7 @@ class ListingController extends Controller {
     }
 
     await this.listingApprovalRequestModel.deleteByListing(id);
-    const { deletedImagesInfos } = await this.listingModel.deleteById(id);
-    this.removeListingImages(deletedImagesInfos);
+    await this.listingModel.deleteById(id);
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
   };
@@ -530,6 +561,23 @@ class ListingController extends Controller {
       );
 
       return result;
+    });
+
+  changeFavorite = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { listingId } = req.body;
+      const { userId } = req.userData;
+
+      const isFavorite = await this.userListingFavoriteModel.changeUserFavorite(
+        userId,
+        listingId
+      );
+
+      const message = isFavorite ? "Favorite mark added" : "Favorite removed";
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message, {
+        isFavorite,
+      });
     });
 }
 

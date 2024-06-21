@@ -21,4 +21,10 @@ module.exports = {
   orderListOptionsValidation: require("./orderListOptionsValidation"),
   recipientPaymentListValidation: require("./recipientPaymentListValidation"),
   senderPaymentListValidation: require("./senderPaymentListValidation"),
+  adminIndexPageOptionsValidation: require("./adminIndexPageOptionsValidation"),
+  adminCommentListOptionsValidation: require("./adminCommentListOptionsValidation"),
+  adminDisputeListOptionsValidation: require("./adminDisputeListOptionsValidation"),
+  createUserCommentValidation: require("./createUserCommentValidation"),
+  createOwnerCommentValidation: require("./createOwnerCommentValidation"),
+  chatOptionsValidation: require("./chatOptionsValidation"),
 };
