@@ -640,15 +640,22 @@ class OrderModel extends Model {
     return res[0]["id"];
   };
 
-  getByWhere = async (key, value) => {
+  getByWhere = async (key, value, needList = false) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
     query = query.select(this.fullVisibleFields).where(key, value);
 
-    return await query.first();
+    if (needList) {
+      return await query;
+    } else {
+      return await query.first();
+    }
   };
 
   getById = (id) => this.getByWhere(`${ORDERS_TABLE}.id`, id);
+
+  getChildrenList = (parentId) =>
+    this.getByWhere(`${ORDERS_TABLE}.parent_id`, parentId, true);
 
   getLastActive = async (id) => {
     let lastOrderQuery = db(ORDERS_TABLE);
@@ -759,7 +766,8 @@ class OrderModel extends Model {
           .whereRaw(
             `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
           )
-          .whereNot("status", STATIC.ORDER_STATUSES.REJECTED);
+          .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
+          .whereNot("status", STATIC.ORDER_STATUSES.FINISHED);
       })
       .select([
         "end_date as endDate",

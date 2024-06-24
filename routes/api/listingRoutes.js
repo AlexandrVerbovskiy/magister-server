@@ -19,110 +19,114 @@ const {
   createValidation,
   updateValidation,
   ownerListValidation,
-  idBodyValidation
+  idBodyValidation,
 } = require("../../validations/listing");
 
-router.post("/list", authId, listValidation, listingController.mainList);
+module.exports = (io) => {
+  listingController.bindIo(io);
 
-router.post(
-  "/owner-list",
-  authId,
-  ownerListValidation,
-  listingController.ownerList
-);
+  router.post("/list", authId, listValidation, listingController.mainList);
 
-router.post(
-  "/admin-list",
-  isAuth,
-  isAdmin,
-  listStatusValidation,
-  listingController.adminList
-);
-router.post(
-  "/user-list",
-  isAuth,
-  listStatusValidation,
-  listingController.getCurrentUserList
-);
+  router.post(
+    "/owner-list",
+    authId,
+    ownerListValidation,
+    listingController.ownerList
+  );
 
-router.get(
-  "/get-short-by-id/:id",
-  idParamValidation,
-  listingController.getShortById
-);
-router.get(
-  "/get-full-by-id/:id",
-  idParamValidation,
-  listingController.getFullById
-);
+  router.post(
+    "/admin-list",
+    isAuth,
+    isAdmin,
+    listStatusValidation,
+    listingController.adminList
+  );
+  router.post(
+    "/user-list",
+    isAuth,
+    listStatusValidation,
+    listingController.getCurrentUserList
+  );
 
-router.post(
-  "/create",
-  isAuth,
-  upload.any(),
-  isSummaryFileLimit,
-  isFileLimit,
-  createValidation,
-  listingController.create
-);
+  router.get(
+    "/get-short-by-id/:id",
+    idParamValidation,
+    listingController.getShortById
+  );
+  router.get(
+    "/get-full-by-id/:id",
+    idParamValidation,
+    listingController.getFullById
+  );
 
-router.post(
-  "/update",
-  isAuth,
-  upload.any(),
-  isSummaryFileLimit,
-  isFileLimit,
-  updateValidation,
-  listingController.update
-);
+  router.post(
+    "/create",
+    isAuth,
+    upload.any(),
+    isSummaryFileLimit,
+    isFileLimit,
+    createValidation,
+    listingController.create
+  );
 
-router.post(
-  "/create-by-admin",
-  isAuth,
-  isAdmin,
-  upload.any(),
-  isSummaryFileLimit,
-  isFileLimit,
-  createByAdminValidation,
-  listingController.createByAdmin
-);
+  router.post(
+    "/update",
+    isAuth,
+    upload.any(),
+    isSummaryFileLimit,
+    isFileLimit,
+    updateValidation,
+    listingController.update
+  );
 
-router.post(
-  "/update-by-admin",
-  isAuth,
-  isAdmin,
-  upload.any(),
-  isSummaryFileLimit,
-  isFileLimit,
-  updateByAdminValidation,
-  listingController.updateByAdmin
-);
+  router.post(
+    "/create-by-admin",
+    isAuth,
+    isAdmin,
+    upload.any(),
+    isSummaryFileLimit,
+    isFileLimit,
+    createByAdminValidation,
+    listingController.createByAdmin
+  );
 
-router.post("/delete", isAuth, deleteValidation, listingController.delete);
+  router.post(
+    "/update-by-admin",
+    isAuth,
+    isAdmin,
+    upload.any(),
+    isSummaryFileLimit,
+    isFileLimit,
+    updateByAdminValidation,
+    listingController.updateByAdmin
+  );
 
-router.post(
-  "/delete-by-admin",
-  isAuth,
-  isAdmin,
-  deleteValidation,
-  listingController.deleteByAdmin
-);
+  router.post("/delete", isAuth, deleteValidation, listingController.delete);
 
-router.post(
-  "/change-active",
-  isAuth,
-  idBodyValidation,
-  listingController.changeActive
-);
+  router.post(
+    "/delete-by-admin",
+    isAuth,
+    isAdmin,
+    deleteValidation,
+    listingController.deleteByAdmin
+  );
 
-router.post(
-  "/change-active-by-admin",
-  isAuth,
-  isAdmin,
-  idBodyValidation,
-  listingController.changeActiveByAdmin
-);
+  router.post(
+    "/change-active",
+    isAuth,
+    idBodyValidation,
+    listingController.changeActive
+  );
 
-router.post("/change-favorite", isAuth, listingController.changeFavorite);
+  router.post(
+    "/change-active-by-admin",
+    isAuth,
+    isAdmin,
+    idBodyValidation,
+    listingController.changeActiveByAdmin
+  );
 
-module.exports = router;
+  router.post("/change-favorite", isAuth, listingController.changeFavorite);
+
+  return router;
+};

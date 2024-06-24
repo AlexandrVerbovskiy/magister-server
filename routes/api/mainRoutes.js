@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { mainController, listingController } = require("../../controllers");
+const { mainController } = require("../../controllers");
 const {
   isAuth,
   isVerified,
@@ -41,372 +41,383 @@ const {
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
 
-router.get("/index-options", authId, mainController.getIndexPageOptions);
+module.exports = (io) => {
+  mainController.bindIo(io);
 
-router.get("/view-page-options", mainController.getViewPageWithCategoriesOptions)
+  router.get("/index-options", authId, mainController.getIndexPageOptions);
 
-router.get(
-  "/create-listing-options",
-  isAuth,
-  mainController.getCreateListingPageOptions
-);
+  router.get(
+    "/view-page-options",
+    mainController.getViewPageWithCategoriesOptions
+  );
 
-router.get(
-  "/update-listing-options/:id",
-  isAuth,
-  updateListingOptionsValidation,
-  mainController.getUpdateListingPageOptions
-);
+  router.get(
+    "/create-listing-options",
+    isAuth,
+    mainController.getCreateListingPageOptions
+  );
 
-router.get(
-  "/current-user-documents-options",
-  isAuth,
-  mainController.getCurrentUserDocumentsPageOptions
-);
+  router.get(
+    "/update-listing-options/:id",
+    isAuth,
+    updateListingOptionsValidation,
+    mainController.getUpdateListingPageOptions
+  );
 
-router.get(
-  "/admin-create-listing-options",
-  isAuth,
-  isAdmin,
-  mainController.getAdminListingCreatePageOptions
-);
+  router.get(
+    "/current-user-documents-options",
+    isAuth,
+    mainController.getCurrentUserDocumentsPageOptions
+  );
 
-router.get(
-  "/admin-update-listing-options/:id",
-  isAuth,
-  isAdmin,
-  adminUpdateListingOptionsValidation,
-  mainController.getAdminListingEditPageOptions
-);
+  router.get(
+    "/admin-create-listing-options",
+    isAuth,
+    isAdmin,
+    mainController.getAdminListingCreatePageOptions
+  );
 
-router.post(
-  "/admin-user-list-options",
-  isAuth,
-  isSupport,
-  adminUserListOptionsValidation,
-  mainController.getAdminUserListPageOptions
-);
+  router.get(
+    "/admin-update-listing-options/:id",
+    isAuth,
+    isAdmin,
+    adminUpdateListingOptionsValidation,
+    mainController.getAdminListingEditPageOptions
+  );
 
-router.post(
-  "/admin-log-list-options",
-  isAuth,
-  isAdmin,
-  adminLogListOptionsValidation,
-  mainController.getAdminLogListPageOptions
-);
+  router.post(
+    "/admin-user-list-options",
+    isAuth,
+    isSupport,
+    adminUserListOptionsValidation,
+    mainController.getAdminUserListPageOptions
+  );
 
-router.post(
-  "/admin-user-event-log-list-options",
-  isAuth,
-  isAdmin,
-  adminUserEventLogListOptionsValidation,
-  mainController.getAdminUserEventLogListPageOptions
-);
+  router.post(
+    "/admin-log-list-options",
+    isAuth,
+    isAdmin,
+    adminLogListOptionsValidation,
+    mainController.getAdminLogListPageOptions
+  );
 
-router.post(
-  "/admin-user-verify-request-list-options",
-  isAuth,
-  isSupport,
-  adminUserVerifyRequestListOptionsValidation,
-  mainController.getAdminUserUserVerifyRequestListPageOptions
-);
+  router.post(
+    "/admin-user-event-log-list-options",
+    isAuth,
+    isAdmin,
+    adminUserEventLogListOptionsValidation,
+    mainController.getAdminUserEventLogListPageOptions
+  );
 
-router.post(
-  "/admin-searched-word-list-options",
-  isAuth,
-  isAdmin,
-  adminSearchedWordListOptionsValidation,
-  mainController.getAdminSearchedWordListPageOptions
-);
+  router.post(
+    "/admin-user-verify-request-list-options",
+    isAuth,
+    isSupport,
+    adminUserVerifyRequestListOptionsValidation,
+    mainController.getAdminUserUserVerifyRequestListPageOptions
+  );
 
-router.post(
-  "/listing-list-options",
-  authId,
-  listingListOptionsValidation,
-  mainController.getMainListingListPageOptions
-);
+  router.post(
+    "/admin-searched-word-list-options",
+    isAuth,
+    isAdmin,
+    adminSearchedWordListOptionsValidation,
+    mainController.getAdminSearchedWordListPageOptions
+  );
 
-router.post(
-  "/owner-listing-list-options",
-  authId,
-  ownerListingListOptionsValidation,
-  mainController.getOwnerListingListPageOptions
-);
+  router.post(
+    "/listing-list-options",
+    authId,
+    listingListOptionsValidation,
+    mainController.getMainListingListPageOptions
+  );
 
-router.get(
-  "/listing-full-by-id-options/:id",
-  authId,
-  listingFullByIdOptionsValidation,
-  mainController.getListingFullByIdOptions
-);
+  router.post(
+    "/owner-listing-list-options",
+    authId,
+    ownerListingListOptionsValidation,
+    mainController.getOwnerListingListPageOptions
+  );
 
-router.get(
-  "/order-full-by-id-options/:id",
-  isAuth,
-  orderFullByIdOptionsValidation,
-  mainController.getOrderFullByIdOptions
-);
+  router.get(
+    "/listing-full-by-id-options/:id",
+    authId,
+    listingFullByIdOptionsValidation,
+    mainController.getListingFullByIdOptions
+  );
 
-router.get(
-  "/get-order-for-card-pay-options/:id",
-  isAuth,
-  orderFullByIdOptionsValidation,
-  mainController.getOrderFullForCardPay
-);
+  router.get(
+    "/order-full-by-id-options/:id",
+    isAuth,
+    orderFullByIdOptionsValidation,
+    mainController.getOrderFullByIdOptions
+  );
 
-router.get(
-  "/tenant-scanning-listing-rental-code/:token",
-  isAuth,
-  orderFullByTokenOptionsValidation,
-  mainController.getOrderTenantQrCodeInfo
-);
+  router.get(
+    "/get-order-for-card-pay-options/:id",
+    isAuth,
+    orderFullByIdOptionsValidation,
+    mainController.getOrderFullForCardPay
+  );
 
-router.get(
-  "/owner-scanning-listing-rental-code/:token",
-  isAuth,
-  orderFullByTokenOptionsValidation,
-  mainController.getOrderOwnerQrCodeInfo
-);
+  router.get(
+    "/tenant-scanning-listing-rental-code/:token",
+    isAuth,
+    orderFullByTokenOptionsValidation,
+    mainController.getOrderTenantQrCodeInfo
+  );
 
-router.post(
-  "/user-listing-list-options",
-  isAuth,
-  userListingListOptionsValidation,
-  mainController.getUserListingListPageOptions
-);
+  router.get(
+    "/owner-scanning-listing-rental-code/:token",
+    isAuth,
+    orderFullByTokenOptionsValidation,
+    mainController.getOrderOwnerQrCodeInfo
+  );
 
-router.post(
-  "/admin-listing-list-options",
-  isAuth,
-  isAdmin,
-  adminListingListOptionsValidation,
-  mainController.getAdminListingListPageOptions
-);
+  router.post(
+    "/user-listing-list-options",
+    isAuth,
+    userListingListOptionsValidation,
+    mainController.getUserListingListPageOptions
+  );
 
-router.post(
-  "/user-name-id-list",
-  userNameIdListValidation,
-  mainController.userNameIdList
-);
+  router.post(
+    "/admin-listing-list-options",
+    isAuth,
+    isAdmin,
+    adminListingListOptionsValidation,
+    mainController.getAdminListingListPageOptions
+  );
 
-router.post(
-  "/admin-listing-approval-request-list-options",
-  isAuth,
-  isAdmin,
-  adminListingApprovalRequestListOptionsValidation,
-  mainController.getAdminListingApprovalRequestListPageOptions
-);
+  router.post(
+    "/user-name-id-list",
+    userNameIdListValidation,
+    mainController.userNameIdList
+  );
 
-router.get(
-  "/admin-listing-approval-request-options/:id",
-  isAuth,
-  isAdmin,
-  adminListingApprovalRequestOptionsValidation,
-  mainController.getAdminListingApprovalRequestPageOptions
-);
+  router.post(
+    "/admin-listing-approval-request-list-options",
+    isAuth,
+    isAdmin,
+    adminListingApprovalRequestListOptionsValidation,
+    mainController.getAdminListingApprovalRequestListPageOptions
+  );
 
-router.get(
-  "/user-documents-options/:id",
-  userDocumentsOptionsValidation,
-  mainController.getUserDocumentsPageOption
-);
+  router.get(
+    "/admin-listing-approval-request-options/:id",
+    isAuth,
+    isAdmin,
+    adminListingApprovalRequestOptionsValidation,
+    mainController.getAdminListingApprovalRequestPageOptions
+  );
 
-router.get(
-  "/admin-full-order-info-options/:id",
-  isAuth,
-  isSupport,
-  validateIdParam(),
-  mainController.getFullOrderByIdPageOption
-);
+  router.get(
+    "/user-documents-options/:id",
+    userDocumentsOptionsValidation,
+    mainController.getUserDocumentsPageOption
+  );
 
-router.get(
-  "/user-profile-edit-options",
-  isAuth,
-  mainController.getUserProfileEditPageOptions
-);
+  router.get(
+    "/admin-full-order-info-options/:id",
+    isAuth,
+    isSupport,
+    validateIdParam(),
+    mainController.getFullOrderByIdPageOption
+  );
 
-router.get("/settings-options", isAuth, mainController.getSettingsPageOptions);
+  router.get(
+    "/user-profile-edit-options",
+    isAuth,
+    mainController.getUserProfileEditPageOptions
+  );
 
-router.post(
-  "/order-list-options",
-  isAuth,
-  isVerified,
-  orderListOptionsValidation,
-  mainController.getOrderListOptions
-);
+  router.get(
+    "/settings-options",
+    isAuth,
+    mainController.getSettingsPageOptions
+  );
 
-router.post(
-  "/admin-order-list-options",
-  isAuth,
-  isSupport,
-  adminOrderListOptionsValidation,
-  mainController.getAdminOrderListOptions
-);
+  router.post(
+    "/order-list-options",
+    isAuth,
+    isVerified,
+    orderListOptionsValidation,
+    mainController.getOrderListOptions
+  );
 
-router.post(
-  "/admin-sender-payment-list-options",
-  isAuth,
-  isAdmin,
-  adminOrderListOptionsValidation,
-  mainController.getAdminSenderPaymentListOptions
-);
+  router.post(
+    "/admin-order-list-options",
+    isAuth,
+    isSupport,
+    adminOrderListOptionsValidation,
+    mainController.getAdminOrderListOptions
+  );
 
-router.get(
-  "/admin-sender-payment-options/:id",
-  isAuth,
-  isAdmin,
-  idParamValidation,
-  mainController.getAdminSenderPaymentOptions
-);
+  router.post(
+    "/admin-sender-payment-list-options",
+    isAuth,
+    isAdmin,
+    adminOrderListOptionsValidation,
+    mainController.getAdminSenderPaymentListOptions
+  );
 
-router.get(
-  "/admin-recipient-payment-options/:id",
-  isAuth,
-  isAdmin,
-  idParamValidation,
-  mainController.getAdminRecipientPaymentOptions
-);
+  router.get(
+    "/admin-sender-payment-options/:id",
+    isAuth,
+    isAdmin,
+    idParamValidation,
+    mainController.getAdminSenderPaymentOptions
+  );
 
-router.post(
-  "/admin-recipient-payment-list-options",
-  isAuth,
-  isAdmin,
-  adminOrderListOptionsValidation,
-  mainController.getAdminRecipientPaymentListOptions
-);
+  router.get(
+    "/admin-recipient-payment-options/:id",
+    isAuth,
+    isAdmin,
+    idParamValidation,
+    mainController.getAdminRecipientPaymentOptions
+  );
 
-router.get(
-  "/admin-listing-defects-edit-options",
-  isAuth,
-  isAdmin,
-  mainController.getAdminListingDefectsEditOptions
-);
+  router.post(
+    "/admin-recipient-payment-list-options",
+    isAuth,
+    isAdmin,
+    adminOrderListOptionsValidation,
+    mainController.getAdminRecipientPaymentListOptions
+  );
 
-router.get(
-  "/admin-listing-defect-questions-edit-options",
-  isAuth,
-  isAdmin,
-  mainController.getAdminListingDefectQuestionsEditOptions
-);
+  router.get(
+    "/admin-listing-defects-edit-options",
+    isAuth,
+    isAdmin,
+    mainController.getAdminListingDefectsEditOptions
+  );
 
-router.get(
-  "/get-order-invoice-options/:id",
-  isAuth,
-  isVerified,
-  validateIdParam(),
-  mainController.getOrderInvoiceOptions
-);
+  router.get(
+    "/admin-listing-defect-questions-edit-options",
+    isAuth,
+    isAdmin,
+    mainController.getAdminListingDefectQuestionsEditOptions
+  );
 
-router.get(
-  "/get-wallet-info-options",
-  isAuth,
-  mainController.getWalletInfoOptions
-);
+  router.get(
+    "/get-order-invoice-options/:id",
+    isAuth,
+    isVerified,
+    validateIdParam(),
+    mainController.getOrderInvoiceOptions
+  );
 
-router.get(
-  "/admin-waiting-refund-options/:id",
-  isAuth,
-  isAdmin,
-  validateIdParam(),
-  mainController.getAdminWaitingRefundById
-);
+  router.get(
+    "/get-wallet-info-options",
+    isAuth,
+    mainController.getWalletInfoOptions
+  );
 
-router.get(
-  "/get-waiting-refund-options/:id",
-  isAuth,
-  validateIdParam(),
-  mainController.getWaitingRefundById
-);
+  router.get(
+    "/admin-waiting-refund-options/:id",
+    isAuth,
+    isAdmin,
+    validateIdParam(),
+    mainController.getAdminWaitingRefundById
+  );
 
-router.post(
-  "/get-admin-index-page-option",
-  isAuth,
-  isSupport,
-  adminIndexPageOptionsValidation,
-  mainController.getAdminIndexPageOptions
-);
+  router.get(
+    "/get-waiting-refund-options/:id",
+    isAuth,
+    validateIdParam(),
+    mainController.getWaitingRefundById
+  );
 
-router.get(
-  "/get-order-review-by-tenant/:id",
-  isAuth,
-  validateIdParam(),
-  mainController.getOrderReviewByTenantOptions
-);
+  router.post(
+    "/get-admin-index-page-option",
+    isAuth,
+    isSupport,
+    adminIndexPageOptionsValidation,
+    mainController.getAdminIndexPageOptions
+  );
 
-router.get(
-  "/get-order-review-by-owner/:id",
-  isAuth,
-  validateIdParam(),
-  mainController.getOrderReviewByOwnerOptions
-);
+  router.get(
+    "/get-order-review-by-tenant/:id",
+    isAuth,
+    validateIdParam(),
+    mainController.getOrderReviewByTenantOptions
+  );
 
-router.post(
-  "/admin-tenant-comment-list-options",
-  isAuth,
-  isSupport,
-  adminCommentListOptionsValidation,
-  mainController.getAdminTenantCommentsPageOptions
-);
+  router.get(
+    "/get-order-review-by-owner/:id",
+    isAuth,
+    validateIdParam(),
+    mainController.getOrderReviewByOwnerOptions
+  );
 
-router.post(
-  "/admin-owner-comment-list-options",
-  isAuth,
-  isSupport,
-  adminCommentListOptionsValidation,
-  mainController.getAdminOwnerCommentsPageOptions
-);
+  router.post(
+    "/admin-tenant-comment-list-options",
+    isAuth,
+    isSupport,
+    adminCommentListOptionsValidation,
+    mainController.getAdminTenantCommentsPageOptions
+  );
 
-router.post(
-  "/admin-listing-comment-list-options",
-  isAuth,
-  isSupport,
-  adminCommentListOptionsValidation,
-  mainController.getAdminListingCommentsPageOptions
-);
+  router.post(
+    "/admin-owner-comment-list-options",
+    isAuth,
+    isSupport,
+    adminCommentListOptionsValidation,
+    mainController.getAdminOwnerCommentsPageOptions
+  );
 
-router.post(
-  "/create-owner-review",
-  isAuth,
-  createOwnerCommentValidation,
-  mainController.createOwnerComment
-);
+  router.post(
+    "/admin-listing-comment-list-options",
+    isAuth,
+    isSupport,
+    adminCommentListOptionsValidation,
+    mainController.getAdminListingCommentsPageOptions
+  );
 
-router.post(
-  "/create-tenant-review",
-  isAuth,
-  ...createUserCommentValidation,
-  mainController.createTenantComment
-);
+  router.post(
+    "/create-owner-review",
+    isAuth,
+    createOwnerCommentValidation,
+    mainController.createOwnerComment
+  );
 
-router.post(
-  "/admin-dispute-list-options",
-  isAuth,
-  isSupport,
-  adminDisputeListOptionsValidation,
-  mainController.getAdminDisputesPageOptions
-);
+  router.post(
+    "/create-tenant-review",
+    isAuth,
+    ...createUserCommentValidation,
+    mainController.createTenantComment
+  );
 
-router.post(
-  "/user-chat-options",
-  isAuth,
-  chatOptionsValidation,
-  mainController.getUserChatOptions
-);
+  router.post(
+    "/admin-dispute-list-options",
+    isAuth,
+    isSupport,
+    adminDisputeListOptionsValidation,
+    mainController.getAdminDisputesPageOptions
+  );
 
-router.post(
-  "/admin-chat-options",
-  isAuth,
-  chatOptionsValidation,
-  mainController.getAdminChatOptions
-);
+  router.post(
+    "/user-chat-options",
+    isAuth,
+    chatOptionsValidation,
+    mainController.getUserChatOptions
+  );
 
-router.post(
-  "/admin-order-chat-options",
-  isAuth,
-  chatOptionsValidation,
-  mainController.getAdminOrderChatOptions
-);
+  router.post(
+    "/admin-chat-options",
+    isAuth,
+    chatOptionsValidation,
+    mainController.getAdminChatOptions
+  );
 
-router.get("/test", mainController.test);
+  router.post(
+    "/admin-order-chat-options",
+    isAuth,
+    chatOptionsValidation,
+    mainController.getAdminOrderChatOptions
+  );
 
-module.exports = router;
+  router.get("/test", mainController.test);
+
+  return router;
+};

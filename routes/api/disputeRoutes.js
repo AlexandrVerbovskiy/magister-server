@@ -9,35 +9,39 @@ const {
   unsolveDisputeValidation,
 } = require("../../validations/disputes");
 
-router.post(
-  "/list",
-  isAuth,
-  isSupport,
-  adminDisputeListValidation,
-  disputeController.list
-);
+module.exports = (io) => {
+  disputeController.bindIo(io);
 
-router.post(
-  "/create",
-  isAuth,
-  createDisputeValidation,
-  disputeController.create
-);
+  router.post(
+    "/list",
+    isAuth,
+    isSupport,
+    adminDisputeListValidation,
+    disputeController.list
+  );
 
-router.post(
-  "/solve",
-  isAuth,
-  isSupport,
-  solveDisputeValidation,
-  disputeController.solve
-);
+  router.post(
+    "/create",
+    isAuth,
+    createDisputeValidation,
+    disputeController.create
+  );
 
-router.post(
-  "/unsolve",
-  isAuth,
-  isSupport,
-  unsolveDisputeValidation,
-  disputeController.unsolve
-);
+  router.post(
+    "/solve",
+    isAuth,
+    isSupport,
+    solveDisputeValidation,
+    disputeController.solve
+  );
 
-module.exports = router;
+  router.post(
+    "/unsolve",
+    isAuth,
+    isSupport,
+    unsolveDisputeValidation,
+    disputeController.unsolve
+  );
+
+  return router;
+};

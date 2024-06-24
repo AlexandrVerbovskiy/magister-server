@@ -105,21 +105,24 @@ class OrderController extends Controller {
       this.sendBookingApprovalRequestMail(listing.userEmail);
 
       const firstImage = listing.listingImages[0];
+      const ownerId = listing.ownerId;
 
       const createdMessages = await this.chatModel.createForOrder({
-        ownerId: listing.ownerId,
+        ownerId,
         tenantId,
         orderInfo: {
           orderId: createdOrderId,
           listingName: listing.name,
           offerPrice: pricePerDay,
-          listingPhotoPath: firstImage?.type,
-          listingPhotoType: firstImage?.link,
+          listingPhotoPath: firstImage?.link,
+          listingPhotoType: firstImage?.type,
           offerDateStart: startDate,
           offerDateEnd: endDate,
           description: message,
         },
       });
+
+      await this.sendMessageForOrder(createdMessages[ownerId], tenantId);
 
       return this.sendSuccessResponse(
         res,
@@ -586,7 +589,7 @@ class OrderController extends Controller {
       await capturePaypalOrder(paypalOrderId);
 
       const paypalOrderInfo = await getPaypalOrderInfo(paypalOrderId);
-      
+
       const payerCardLastDigits =
         paypalOrderInfo.payment_source?.card?.last_digits;
       const payerCardLastBrand = paypalOrderInfo.payment_source?.card?.brand;
@@ -606,7 +609,9 @@ class OrderController extends Controller {
       const amount = paypalOrderInfo.purchase_units[0].amount.value;
 
       const { token, image: generatedImage } = await this.generateQrCodeInfo(
-          order.orderParentId ? STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
+        order.orderParentId
+          ? STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
+          : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
       if (order.orderParentId) {

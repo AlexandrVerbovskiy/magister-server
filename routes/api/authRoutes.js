@@ -28,121 +28,129 @@ const { upload } = require("../../utils");
 
 const { emailValidation } = require("../../validations/base");
 
-router.post(
-  "/register",
-  isNotAuth,
-  registerValidation,
-  userController.register
-);
+module.exports = (io) => {
+  userController.bindIo(io);
 
-router.post("/login", isNotAuth, loginValidation, userController.login);
+  router.post(
+    "/register",
+    isNotAuth,
+    registerValidation,
+    userController.register
+  );
 
-router.post("/my-info", isAuth, userController.myInfo);
-router.post(
-  "/save-profile",
-  upload.single("photo"),
-  isFileLimit,
-  isAuth,
-  saveProfileValidation,
-  userController.saveProfile
-);
+  router.post("/login", isNotAuth, loginValidation, userController.login);
 
-router.post(
-  "/update-my-password",
-  isAuth,
-  updatePasswordValidation,
-  userController.updateMyPassword
-);
+  router.post("/my-info", isAuth, userController.myInfo);
+  router.post(
+    "/save-profile",
+    upload.single("photo"),
+    isFileLimit,
+    isAuth,
+    saveProfileValidation,
+    userController.saveProfile
+  );
 
-router.post(
-  "/save-my-documents",
-  isAuth,
-  upload.any(),
-  isSummaryFileLimit,
-  isFileLimit,
-  userController.updateMyDocuments
-);
+  router.post(
+    "/update-my-password",
+    isAuth,
+    updatePasswordValidation,
+    userController.updateMyPassword
+  );
 
-router.post(
-  "/two-factor-auth-generate",
-  isNotAuth,
-  twoFactorAuthGenerateValidation,
-  userController.twoFactorAuthGenerate
-);
+  router.post(
+    "/save-my-documents",
+    isAuth,
+    upload.any(),
+    isSummaryFileLimit,
+    isFileLimit,
+    userController.updateMyDocuments
+  );
 
-router.post(
-  "/two-factor-auth-verify",
-  twoFactorAuthVerifyValidation,
-  userController.twoFactorAuthVerify
-);
+  router.post(
+    "/two-factor-auth-generate",
+    isNotAuth,
+    twoFactorAuthGenerateValidation,
+    userController.twoFactorAuthGenerate
+  );
 
-router.post(
-  "/verify-email",
-  isNotAuth,
-  verifyEmailValidation,
-  userController.verifyEmail
-);
+  router.post(
+    "/two-factor-auth-verify",
+    twoFactorAuthVerifyValidation,
+    userController.twoFactorAuthVerify
+  );
 
-router.post(
-  "/reset-password-send",
-  isNotAuth,
-  emailValidation,
-  userController.resetPassword
-);
+  router.post(
+    "/verify-email",
+    isNotAuth,
+    verifyEmailValidation,
+    userController.verifyEmail
+  );
 
-router.post(
-  "/reset-password",
-  isNotAuth,
-  resetPasswordValidation,
-  userController.setNewPassword
-);
+  router.post(
+    "/reset-password-send",
+    isNotAuth,
+    emailValidation,
+    userController.resetPassword
+  );
 
-router.post("/generate-my-phone-code", isAuth, userController.sendVerifyPhone);
+  router.post(
+    "/reset-password",
+    isNotAuth,
+    resetPasswordValidation,
+    userController.setNewPassword
+  );
 
-router.post(
-  "/generate-my-email-code",
-  isNotAuth,
-  emailValidation,
-  userController.sendVerifyEmail
-);
+  router.post(
+    "/generate-my-phone-code",
+    isAuth,
+    userController.sendVerifyPhone
+  );
 
-router.post(
-  "/check-my-phone-code",
-  isAuth,
-  codeValidation,
-  userController.verifyPhone
-);
+  router.post(
+    "/generate-my-email-code",
+    isNotAuth,
+    emailValidation,
+    userController.sendVerifyEmail
+  );
 
-router.post(
-  "/generate-two-factor-code",
-  isNotAuth,
-  typeValidation,
-  userController.twoFactorAuthGenerate
-);
-router.post(
-  "/check-two-factor-code",
-  isNotAuth,
-  checkTwoFactorCodeValidation,
-  userController.twoFactorAuthVerify
-);
+  router.post(
+    "/check-my-phone-code",
+    isAuth,
+    codeValidation,
+    userController.verifyPhone
+  );
 
-router.post(
-  "/change-two-factor-auth",
-  isAuth,
-  userController.changeTwoFactorAuth
-);
+  router.post(
+    "/generate-two-factor-code",
+    isNotAuth,
+    typeValidation,
+    userController.twoFactorAuthGenerate
+  );
+  router.post(
+    "/check-two-factor-code",
+    isNotAuth,
+    checkTwoFactorCodeValidation,
+    userController.twoFactorAuthVerify
+  );
 
-router.post(
-  "/no-need-regular-view-info-form",
-  isAuth,
-  userController.noNeedRegularViewInfoForm
-);
+  router.post(
+    "/change-two-factor-auth",
+    isAuth,
+    userController.changeTwoFactorAuth
+  );
 
-router.post(
-  "/auth-by-provider",
-  isNotAuth,
-  authByProviderValidation,
-  userController.authByProvider
-);
+  router.post(
+    "/no-need-regular-view-info-form",
+    isAuth,
+    userController.noNeedRegularViewInfoForm
+  );
 
-module.exports = router;
+  router.post(
+    "/auth-by-provider",
+    isNotAuth,
+    authByProviderValidation,
+    userController.authByProvider
+  );
+
+  return router;
+};

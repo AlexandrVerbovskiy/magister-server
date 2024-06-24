@@ -68,7 +68,7 @@ class ChatController extends Controller {
 
     if (lastChat) {
       canShowMore = await this.chatModel.checkHasMore({
-        lastChatId: lastChat.id,
+        lastMessageCreatedTime: lastChat.messageCreatedAt,
         chatType,
         userId,
       });
@@ -116,7 +116,7 @@ class ChatController extends Controller {
 
     if (lastMessage) {
       canShowMore = await this.chatMessageModel.checkHasMore({
-        lastMessageId: lastMessage.id,
+        messageCreatedAt: lastMessage.createdAt,
         chatId,
       });
     }
@@ -163,7 +163,10 @@ class ChatController extends Controller {
     if (chat.entityType === STATIC.CHAT_TYPES.DISPUTE) {
       entity = await this.disputeModel.getById(chat.entityId);
     } else {
-      entity = await this.orderModel.getById(chat.entityId);
+      entity = await this.orderModel.getFullById(chat.entityId);
+      entity["childrenList"] = await this.orderModel.getChildrenList(
+        chat.entityId
+      );
     }
 
     entity["type"] = chat.entityType;
@@ -200,18 +203,6 @@ class ChatController extends Controller {
     });
   };
 
-  sendSocketMessageToUserOpponent = async (
-    chatId,
-    userId,
-    messageKey,
-    message
-  ) => {
-    const sockets = await this.chatModel.getChatOpponentSockets(chatId, userId);
-    sockets.forEach((socket) =>
-      this.sendSocketIoMessage(socket, messageKey, message)
-    );
-  };
-
   onSendTextMessage = async (data, sessionInfo) => {
     const senderId = sessionInfo.userId;
     const chatId = data.chatId;
@@ -223,12 +214,16 @@ class ChatController extends Controller {
       text: data.text,
     });
 
+    const sender = await this.userModel.getById(senderId);
+    const getter = await this.chatModel.getChatOpponent(chatId, senderId);
+
     await this.sendSocketMessageToUserOpponent(
       chatId,
       senderId,
       "get-message",
       {
         message,
+        opponent: sender,
       }
     );
 
@@ -238,6 +233,7 @@ class ChatController extends Controller {
       {
         message,
         tempKey: data.tempKey,
+        opponent: getter,
       }
     );
   };
@@ -328,13 +324,18 @@ class ChatController extends Controller {
 
     await this.activeActionModel.deleteByKeyAndType(tempKey, "sending_file");
 
+    const sender = await this.userModel.getById(userId);
+    const getter = await this.chatModel.getChatOpponent(chatId, userId);
+
     await this.sendSocketMessageToUserOpponent(chatId, userId, "get-message", {
       message,
+      opponent: sender,
     });
 
     return await this.sendSocketMessageToUser(userId, "file-part-uploaded", {
       tempKey,
       message,
+      opponent: getter,
     });
   };
 
@@ -415,7 +416,7 @@ class ChatController extends Controller {
     const chatId = deletedMessage.chatId;
 
     const previousMessage = await this.chatMessageModel.getBeforeMessageInChat({
-      messageId,
+      messageCreatedAt: deletedMessage.createdAt,
       chatId: chatId,
     });
 

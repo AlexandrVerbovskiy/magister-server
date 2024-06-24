@@ -19,48 +19,52 @@ const {
 
 const { validateIdParam } = require("../../validations/base");
 
-router.post(
-  "/paypal-create-order",
-  isAuth,
-  paypalCreateOrderValidation,
-  senderPaymentController.paypalCreateOrder
-);
+module.exports = (io) => {
+  senderPaymentController.bindIo(io);
 
-router.post(
-  "/list",
-  isAuth,
-  isVerified,
-  listValidation,
-  senderPaymentController.userList
-);
+  router.post(
+    "/paypal-create-order",
+    isAuth,
+    paypalCreateOrderValidation,
+    senderPaymentController.paypalCreateOrder
+  );
 
-router.post(
-  "/admin-list",
-  isAuth,
-  isAdmin,
-  listValidation,
-  senderPaymentController.adminList
-);
+  router.post(
+    "/list",
+    isAuth,
+    isVerified,
+    listValidation,
+    senderPaymentController.userList
+  );
 
-router.get(
-  "/invoice-pdf/:id",
-  isAuth,
-  validateIdParam(),
-  senderPaymentController.generateInvoicePdf
-);
+  router.post(
+    "/admin-list",
+    isAuth,
+    isAdmin,
+    listValidation,
+    senderPaymentController.adminList
+  );
 
-router.post(
-  "/approve-credit-card-transaction",
-  isAuth,
-  approveCreditCardTransactionValidation,
-  senderPaymentController.approveTransaction
-);
+  router.get(
+    "/invoice-pdf/:id",
+    isAuth,
+    validateIdParam(),
+    senderPaymentController.generateInvoicePdf
+  );
 
-router.post(
-  "/reject-credit-card-transaction",
-  isAuth,
-  rejectCreditCardTransactionValidation,
-  senderPaymentController.rejectTransaction
-);
+  router.post(
+    "/approve-credit-card-transaction",
+    isAuth,
+    approveCreditCardTransactionValidation,
+    senderPaymentController.approveTransaction
+  );
 
-module.exports = router;
+  router.post(
+    "/reject-credit-card-transaction",
+    isAuth,
+    rejectCreditCardTransactionValidation,
+    senderPaymentController.rejectTransaction
+  );
+
+  return router;
+};
