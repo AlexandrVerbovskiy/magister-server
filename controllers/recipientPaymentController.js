@@ -6,10 +6,6 @@ const {
 const Controller = require("./Controller");
 
 class RecipientPaymentController extends Controller {
-  constructor() {
-    super();
-  }
-
   defaultItemsPerPage = 10;
 
   baseRecipientPaymentList = async ({
@@ -170,4 +166,4 @@ class RecipientPaymentController extends Controller {
     });
 }
 
-module.exports = new RecipientPaymentController();
+module.exports = RecipientPaymentController;

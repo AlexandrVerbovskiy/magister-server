@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { disputeController } = require("../../controllers");
+const { DisputeController } = require("../../controllers");
 const { isAuth, isSupport } = require("../../middlewares");
 const {
   adminDisputeListValidation,
@@ -10,7 +10,7 @@ const {
 } = require("../../validations/disputes");
 
 module.exports = (io) => {
-  disputeController.bindIo(io);
+  const disputeController = new DisputeController(io);
 
   router.post(
     "/list",

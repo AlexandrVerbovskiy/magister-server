@@ -1,7 +1,7 @@
 const STATIC = require("../static");
 const Controller = require("./Controller");
 
-class ListingCategoryCreateNotificationModel extends Controller {
+class ListingCategoryCreateNotificationController extends Controller {
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { categoryName } = req.body;
@@ -16,4 +16,4 @@ class ListingCategoryCreateNotificationModel extends Controller {
     });
 }
 
-module.exports = new ListingCategoryCreateNotificationModel();
+module.exports = ListingCategoryCreateNotificationController;

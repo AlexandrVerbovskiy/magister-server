@@ -4,10 +4,6 @@ const { createPaypalOrder } = require("../utils");
 const Controller = require("./Controller");
 
 class SenderPaymentController extends Controller {
-  constructor() {
-    super();
-  }
-
   paypalCreateOrder = async (req, res) =>
     this.baseWrapper(res, res, async () => {
       const { amount, orderId } = req.body;
@@ -192,4 +188,4 @@ class SenderPaymentController extends Controller {
     });
 }
 
-module.exports = new SenderPaymentController();
+module.exports = SenderPaymentController;

@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { recipientPaymentController } = require("../../controllers");
+const { RecipientPaymentController } = require("../../controllers");
 const { isAuth, isAdmin, isVerified } = require("../../middlewares");
 const {
   listValidation,
@@ -8,7 +8,7 @@ const {
 } = require("../../validations/recipientPayment");
 
 module.exports = (io) => {
-  recipientPaymentController.bindIo(io);
+  const recipientPaymentController = new RecipientPaymentController(io);
 
   router.post(
     "/list",

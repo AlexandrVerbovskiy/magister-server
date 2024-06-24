@@ -1,7 +1,6 @@
 const STATIC = require("../static");
 const Controller = require("./Controller");
 const lodash = require("lodash");
-const listingCategoryCreateNotificationController = require("./listingCategoryCreateNotificationController");
 
 class ListingCategoriesController extends Controller {
   list = (req, res) =>
@@ -308,4 +307,4 @@ class ListingCategoriesController extends Controller {
     });
 }
 
-module.exports = new ListingCategoriesController();
+module.exports = ListingCategoriesController;

@@ -1,8 +1,8 @@
-const { chatController } = require("../../controllers");
+const { ChatController } = require("../../controllers");
 const { validateToken } = require("../../utils");
 
 module.exports = (io) => {
-  chatController.bindIo(io);
+  const chatController = new ChatController(io);
 
   const onConnection = async (socket) => {
     const sendError = (message) => io.to(socket.id).emit("error", message);

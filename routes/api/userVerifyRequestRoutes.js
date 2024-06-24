@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { userVerifyRequestController } = require("../../controllers");
+const { UserVerifyRequestController } = require("../../controllers");
 const { isAuth, isSupport, isUnverified } = require("../../middlewares");
 const {
   listValidation,
@@ -9,7 +9,7 @@ const {
 } = require("../../validations/userVerifyRequest");
 
 module.exports = (io) => {
-  userVerifyRequestController.bindIo(io);
+  const userVerifyRequestController = new UserVerifyRequestController(io);
 
   router.post(
     "/list",

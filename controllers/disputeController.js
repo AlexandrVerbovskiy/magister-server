@@ -109,4 +109,4 @@ class DisputeController extends Controller {
     });
 }
 
-module.exports = new DisputeController();
+module.exports = DisputeController;

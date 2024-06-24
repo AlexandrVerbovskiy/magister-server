@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { senderPaymentController } = require("../../controllers");
+const { SenderPaymentController } = require("../../controllers");
 const {
   isAuth,
   isAdmin,
@@ -20,7 +20,7 @@ const {
 const { validateIdParam } = require("../../validations/base");
 
 module.exports = (io) => {
-  senderPaymentController.bindIo(io);
+  const senderPaymentController = new SenderPaymentController(io);
 
   router.post(
     "/paypal-create-order",

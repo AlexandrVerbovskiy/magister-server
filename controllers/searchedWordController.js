@@ -1,10 +1,12 @@
 const STATIC = require("../static");
 const Controller = require("./Controller");
-const listingCategoriesController = require("./listingCategoriesController");
+const ListingCategoriesController = require("./ListingCategoriesController");
 
 class SearchedWordController extends Controller {
-  constructor() {
-    super();
+  constructor(io) {
+    super(io);
+
+    this.listingCategoriesController = new ListingCategoriesController(io);
   }
 
   baseSearchedWordList = async (req) => {
@@ -89,7 +91,7 @@ class SearchedWordController extends Controller {
         image,
       });
 
-      await listingCategoriesController.onCreateCategory(name, createdId);
+      await this.listingCategoriesController.onCreateCategory(name, createdId);
 
       this.saveUserAction(
         req,
@@ -106,4 +108,4 @@ class SearchedWordController extends Controller {
     });
 }
 
-module.exports = new SearchedWordController();
+module.exports = SearchedWordController;

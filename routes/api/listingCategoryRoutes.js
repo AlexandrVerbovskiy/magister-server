@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { listingCategoriesController } = require("../../controllers");
+const { ListingCategoriesController } = require("../../controllers");
 const {
   isAuth,
   isAdmin,
@@ -11,7 +11,7 @@ const { smallUpload } = require("../../utils");
 const { saveValidation } = require("../../validations/listingCategory");
 
 module.exports = (io) => {
-  listingCategoriesController.bindIo(io);
+  const listingCategoriesController = new ListingCategoriesController(io);
 
   router.get("/list", listingCategoriesController.list);
 

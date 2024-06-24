@@ -7,7 +7,7 @@ const {
   isUnverified,
   isSummaryFileLimit,
 } = require("../../middlewares");
-const { userController } = require("../../controllers");
+const { UserController } = require("../../controllers");
 const {
   registerValidation,
   loginValidation,
@@ -29,7 +29,7 @@ const { upload } = require("../../utils");
 const { emailValidation } = require("../../validations/base");
 
 module.exports = (io) => {
-  userController.bindIo(io);
+  const userController = new UserController(io);
 
   router.post(
     "/register",

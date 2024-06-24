@@ -65,4 +65,4 @@ class OrderUpdateRequestController extends Controller {
     });
 }
 
-module.exports = new OrderUpdateRequestController();
+module.exports = OrderUpdateRequestController;

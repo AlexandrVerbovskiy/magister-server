@@ -24,4 +24,4 @@ class OwnerCommentController extends BaseCommentController {
   };
 }
 
-module.exports = new OwnerCommentController();
+module.exports = OwnerCommentController;

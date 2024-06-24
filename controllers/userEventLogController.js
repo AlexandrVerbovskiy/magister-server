@@ -2,10 +2,6 @@ const STATIC = require("../static");
 const Controller = require("./Controller");
 
 class UserEventLogController extends Controller {
-  constructor() {
-    super();
-  }
-
   baseUserEventLogList = async (req) => {
     const timeInfos = await this.listTimeNameOption(req);
     const type = req.body.type ?? "all";
@@ -40,4 +36,4 @@ class UserEventLogController extends Controller {
     });
 }
 
-module.exports = new UserEventLogController();
+module.exports = UserEventLogController;
