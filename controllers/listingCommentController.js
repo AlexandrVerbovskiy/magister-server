@@ -26,4 +26,4 @@ class ListingCommentController extends BaseCommentController {
   };
 }
 
-module.exports = new ListingCommentController();
+module.exports = ListingCommentController;

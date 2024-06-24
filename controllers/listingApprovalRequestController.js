@@ -132,4 +132,4 @@ class ListingApprovalRequestController extends Controller {
     });
 }
 
-module.exports = new ListingApprovalRequestController();
+module.exports = ListingApprovalRequestController;

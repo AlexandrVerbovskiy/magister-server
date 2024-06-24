@@ -2,10 +2,6 @@ const Controller = require("./Controller");
 const STATIC = require("../static");
 
 class UserVerifyRequestController extends Controller {
-  constructor() {
-    super();
-  }
-
   baseUserVerifyRequestList = async (req) => {
     const timeInfos = await this.getListTimeAutoOption(
       req,
@@ -92,4 +88,4 @@ class UserVerifyRequestController extends Controller {
     });
 }
 
-module.exports = new UserVerifyRequestController();
+module.exports = UserVerifyRequestController;

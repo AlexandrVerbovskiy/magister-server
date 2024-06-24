@@ -1,15 +1,17 @@
 const { Router } = require("express");
 const router = Router();
-const { listingCommentController } = require("../../controllers");
+const { ListingCommentController } = require("../../controllers");
 const { isAuth, isSupport } = require("../../middlewares");
-const tenantCommentController = require("../../controllers/tenantCommentController");
-const ownerCommentController = require("../../controllers/ownerCommentController");
+const TenantCommentController = require("../../controllers/TenantCommentController");
+const OwnerCommentController = require("../../controllers/OwnerCommentController");
 const { commentListValidation } = require("../../validations/comments");
 const commentRejectValidation = require("../../validations/comments/commentRejectValidation");
 const commentApproveValidation = require("../../validations/comments/commentApproveValidation");
 
 module.exports = (io) => {
-  listingCommentController.bindIo(io);
+  const listingCommentController = new ListingCommentController(io);
+  const ownerCommentController = new OwnerCommentController(io);
+  const tenantCommentController = new TenantCommentController(io);
 
   router.post(
     "/listing-list",

@@ -64,7 +64,9 @@ class Controller {
   mailTransporter = null;
   io = null;
 
-  constructor() {
+  constructor(io = null) {
+    this.io = io;
+
     this.userModel = userModel;
 
     this.logModel = logModel;
@@ -121,10 +123,6 @@ class Controller {
         viewPath: path.resolve("./mails/"),
       })
     );
-  }
-
-  bindIo(io) {
-    this.io = io;
   }
 
   sendSocketIoMessage = (socket, messageKey, message) => {

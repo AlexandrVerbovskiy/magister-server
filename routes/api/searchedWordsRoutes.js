@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { searchedWordController } = require("../../controllers");
+const { SearchedWordController } = require("../../controllers");
 const { isAuth, isAdmin, isSmallFileLimit } = require("../../middlewares");
 const {
   listValidation,
@@ -11,7 +11,7 @@ const {
 const { smallUpload } = require("../../utils");
 
 module.exports = (io) => {
-  searchedWordController.bindIo(io);
+  const searchedWordController = new SearchedWordController(io);
 
   router.post(
     "/list",

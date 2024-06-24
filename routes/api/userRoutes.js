@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { userController } = require("../../controllers");
+const { UserController } = require("../../controllers");
 const {
   setRoleValidation,
   idBodyValidation,
@@ -14,7 +14,7 @@ const { isFileLimit } = require("../../middlewares");
 const { isAuth, isSupport, isAdmin } = require("../../middlewares");
 
 module.exports = (io) => {
-  userController.bindIo(io);
+  const userController = new UserController(io);
 
   router.post("/list", isAuth, isSupport, listValidation, userController.list);
 

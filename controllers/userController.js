@@ -9,10 +9,6 @@ const fetch = require("node-fetch");
 const { OAuth2Client } = require("google-auth-library");
 
 class UserController extends Controller {
-  constructor() {
-    super();
-  }
-
   filterUserFields = (user) => {
     delete user["password"];
   };
@@ -877,4 +873,4 @@ class UserController extends Controller {
     });
 }
 
-module.exports = new UserController();
+module.exports = UserController;

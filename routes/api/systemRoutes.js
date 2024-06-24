@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { systemController } = require("../../controllers");
+const { SystemController } = require("../../controllers");
 const {
   setCommissionOptionsValidation,
   setMainOptionsValidation,
@@ -8,7 +8,7 @@ const {
 } = require("../../validations/system");
 
 module.exports = (io) => {
-  systemController.bindIo(io);
+  const systemController = new SystemController(io);
 
   router.get("/get-system-options", systemController.getSystemOptions);
 

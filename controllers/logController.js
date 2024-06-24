@@ -2,10 +2,6 @@ const STATIC = require("../static");
 const Controller = require("./Controller");
 
 class LogController extends Controller {
-  constructor() {
-    super();
-  }
-
   baseLogList = async (req) => {
     const timeInfos = await this.listTimeOption({
       req,
@@ -37,4 +33,4 @@ class LogController extends Controller {
   getById = (req, res) => this.baseGetById(req, res, this.logModel);
 }
 
-module.exports = new LogController();
+module.exports = LogController;

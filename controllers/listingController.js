@@ -581,4 +581,4 @@ class ListingController extends Controller {
     });
 }
 
-module.exports = new ListingController();
+module.exports = ListingController;

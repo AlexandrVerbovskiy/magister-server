@@ -44,4 +44,4 @@ class ListingDefectController extends Controller {
     });
 }
 
-module.exports = new ListingDefectController();
+module.exports = ListingDefectController;

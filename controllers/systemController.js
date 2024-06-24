@@ -2,10 +2,6 @@ const STATIC = require("../static");
 const Controller = require("./Controller");
 
 class SystemController extends Controller {
-  constructor() {
-    super();
-  }
-
   getSystemOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const props = await this.systemOptionModel.getOptions();
@@ -75,4 +71,4 @@ class SystemController extends Controller {
     });
 }
 
-module.exports = new SystemController();
+module.exports = SystemController;

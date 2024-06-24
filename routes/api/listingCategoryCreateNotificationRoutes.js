@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const {
-  listingCategoryCreateNotificationController,
+  ListingCategoryCreateNotificationController,
 } = require("../../controllers");
 const { isAuth } = require("../../middlewares");
 const {
@@ -9,7 +9,7 @@ const {
 } = require("../../validations/listingCategoryCreateNotification");
 
 module.exports = (io) => {
-  listingCategoryCreateNotificationController.bindIo(io);
+  const listingCategoryCreateNotificationController = new ListingCategoryCreateNotificationController(io);
 
   router.post(
     "/create",

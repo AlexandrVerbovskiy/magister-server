@@ -459,4 +459,4 @@ class ChatController extends Controller {
   };
 }
 
-module.exports = new ChatController();
+module.exports = ChatController;

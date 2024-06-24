@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { listingApprovalRequestController } = require("../../controllers");
+const { ListingApprovalRequestController } = require("../../controllers");
 const { isAuth, isAdmin } = require("../../middlewares");
 const {
   listValidation,
@@ -9,7 +9,9 @@ const {
 } = require("../../validations/listingApprovalRequest");
 
 module.exports = (io) => {
-  listingApprovalRequestController.bindIo(io);
+  const listingApprovalRequestController = new ListingApprovalRequestController(
+    io
+  );
 
   router.post("/list", listValidation, listingApprovalRequestController.list);
 

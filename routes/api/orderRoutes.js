@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { orderController } = require("../../controllers");
+const { OrderController } = require("../../controllers");
 const {
   isAuth,
   isVerified,
@@ -24,7 +24,7 @@ const {
 const { validateIdParam } = require("../../validations/base");
 
 module.exports = (io) => {
-  orderController.bindIo(io);
+  const orderController = new OrderController(io);
 
   router.post(
     "/create",

@@ -1,11 +1,11 @@
 const { Router } = require("express");
 const router = Router();
-const { orderUpdateRequestController } = require("../../controllers");
+const { OrderUpdateRequestController } = require("../../controllers");
 const { isAuth, isVerified } = require("../../middlewares");
 const { createValidation } = require("../../validations/orderUpdateRequest");
 
 module.exports = (io) => {
-  orderUpdateRequestController.bindIo(io);
+  const orderUpdateRequestController = new OrderUpdateRequestController(io);
 
   router.post(
     "/create",

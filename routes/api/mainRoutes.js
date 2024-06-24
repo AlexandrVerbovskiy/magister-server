@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { mainController } = require("../../controllers");
+const { MainController } = require("../../controllers");
 const {
   isAuth,
   isVerified,
@@ -42,7 +42,7 @@ const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
 
 module.exports = (io) => {
-  mainController.bindIo(io);
+  const mainController = new MainController(io);
 
   router.get("/index-options", authId, mainController.getIndexPageOptions);
 

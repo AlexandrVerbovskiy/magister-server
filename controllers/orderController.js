@@ -11,10 +11,6 @@ const Controller = require("./Controller");
 const fs = require("fs");
 
 class OrderController extends Controller {
-  constructor() {
-    super();
-  }
-
   getFullById = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
@@ -1092,4 +1088,4 @@ class OrderController extends Controller {
     });
 }
 
-module.exports = new OrderController();
+module.exports = OrderController;
