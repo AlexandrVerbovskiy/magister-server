@@ -174,7 +174,7 @@ module.exports = {
     FILE: "file",
     VIDEO: "video",
     AUDIO: "audio",
-    PHOTO: "photo",
+    IMAGE: "image",
     NEW_ORDER: "new-order",
     UPDATE_ORDER: "update-order",
     LISTING_REVIEW: "listing-review",

@@ -28,6 +28,7 @@ class UserModel extends Model {
     `${USERS_TABLE}.contact_details as contactDetails`,
     `${USERS_TABLE}.brief_bio as briefBio`,
     `${USERS_TABLE}.photo`,
+    `${USERS_TABLE}.online`,
     `${USERS_TABLE}.phone`,
     `${USERS_TABLE}.suspicious`,
     `${USERS_TABLE}.place_work as placeWork`,

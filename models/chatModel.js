@@ -224,8 +224,18 @@ class ChatModel extends Model {
     }
 
     if (needChatId) {
+      const chatMessageCreatedTime = await this.messageJoin(
+        db(CHAT_TABLE).where(`${CHAT_TABLE}.id`, "=", needChatId)
+      )
+        .select(`${CHAT_MESSAGE_TABLE}.created_at as messageCreatedAt`)
+        .first();
+
       const firstResPart = await query
-        .where(`${CHAT_TABLE}.id`, "<=", needChatId)
+        .where(
+          `${CHAT_MESSAGE_TABLE}.created_at`,
+          ">=",
+          chatMessageCreatedTime.messageCreatedAt
+        )
         .select(fields)
         .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
 
@@ -235,7 +245,11 @@ class ChatModel extends Model {
 
       if (firstResPartLength % count != 0) {
         const secondResPart = await this.getListBaseQuery({ chatType, userId })
-          .where(`${CHAT_TABLE}.id`, ">", needChatId)
+          .where(
+            `${CHAT_MESSAGE_TABLE}.created_at`,
+            "<",
+            chatMessageCreatedTime.messageCreatedAt
+          )
           .limit(count - (firstResPartLength % count))
           .select(fields)
           .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
@@ -260,19 +274,45 @@ class ChatModel extends Model {
     return result;
   };
 
-  checkHasMore = async ({ lastChatId, chatType, userId }) => {
-    const lastChatCreatedTime = await this.getChatMessageCreatedDate(
-      lastChatId
-    );
+  getFullById = async ({ chatId, chatType, userId }) => {
+    const fields =
+      chatType == "disputes"
+        ? this.fullVisibleFields
+        : this.fullVisibleFieldsWithUser;
 
+    let query = this.getListBaseQuery({ chatType, userId });
+
+    return await query.where("chat_id", chatId).select(fields).first();
+  };
+
+  checkHasMore = async ({ lastMessageCreatedTime, chatType, userId }) => {
     const moreChats = await this.getListBaseQuery({ chatType, userId })
-      .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastChatCreatedTime)
+      .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastMessageCreatedTime)
       .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc")
-      .groupBy([`${CHAT_TABLE}.id`, `${CHAT_MESSAGE_TABLE}.created_at`])
       .select(`${CHAT_TABLE}.id`)
       .first();
 
     return !!moreChats?.id;
+  };
+
+  getChatOpponent = async (chatId, userId) => {
+    const opponentInfo = await db(`${CHAT_RELATION_TABLE} as searcher_relation`)
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as opponent_relation ON (searcher_relation.chat_id = opponent_relation.chat_id AND opponent_relation.user_id != ?)`,
+        [userId]
+      )
+      .join(USER_TABLE, `${USER_TABLE}.id`, "=", `opponent_relation.user_id`)
+      .where(`opponent_relation.chat_id`, "=", chatId)
+      .where("searcher_relation.user_id", "=", userId)
+      .select([
+        `${USER_TABLE}.id`,
+        `${USER_TABLE}.name`,
+        `${USER_TABLE}.photo`,
+        `${USER_TABLE}.online`,
+      ])
+      .first();
+
+    return opponentInfo;
   };
 
   getChatOpponentSockets = async (chatId, userId) => {

@@ -1,21 +1,30 @@
 const { Router } = require("express");
 const router = Router();
 const { listingCategoriesController } = require("../../controllers");
-const { isAuth, isAdmin, isSmallFileLimit, isSummaryFileLimit } = require("../../middlewares");
+const {
+  isAuth,
+  isAdmin,
+  isSmallFileLimit,
+  isSummaryFileLimit,
+} = require("../../middlewares");
 const { smallUpload } = require("../../utils");
 const { saveValidation } = require("../../validations/listingCategory");
 
-router.get("/list", listingCategoriesController.list);
+module.exports = (io) => {
+  listingCategoriesController.bindIo(io);
 
-router.post(
-  "/save",
-  isAuth,
-  isAdmin,
-  smallUpload.any(),
-  isSummaryFileLimit,
-  isSmallFileLimit,
-  saveValidation,
-  listingCategoriesController.saveList
-);
+  router.get("/list", listingCategoriesController.list);
 
-module.exports = router;
+  router.post(
+    "/save",
+    isAuth,
+    isAdmin,
+    smallUpload.any(),
+    isSummaryFileLimit,
+    isSmallFileLimit,
+    saveValidation,
+    listingCategoriesController.saveList
+  );
+
+  return router;
+};

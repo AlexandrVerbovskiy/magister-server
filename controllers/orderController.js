@@ -67,11 +67,7 @@ class OrderController extends Controller {
     );
 
     if (hasBlockedDate) {
-      return this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "The selected date is not available for booking"
-      );
+      throw new Error("The selected date is not available for booking");
     }
 
     return await this.orderModel.create({
@@ -104,6 +100,30 @@ class OrderController extends Controller {
         tenantId,
       });
 
+      const listing = await this.listingModel.getFullById(listingId);
+
+      this.sendBookingApprovalRequestMail(listing.userEmail);
+
+      const firstImage = listing.listingImages[0];
+      const ownerId = listing.ownerId;
+
+      const createdMessages = await this.chatModel.createForOrder({
+        ownerId,
+        tenantId,
+        orderInfo: {
+          orderId: createdOrderId,
+          listingName: listing.name,
+          offerPrice: pricePerDay,
+          listingPhotoPath: firstImage?.link,
+          listingPhotoType: firstImage?.type,
+          offerDateStart: startDate,
+          offerDateEnd: endDate,
+          description: message,
+        },
+      });
+
+      await this.sendMessageForOrder(createdMessages[ownerId], tenantId);
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
@@ -132,7 +152,8 @@ class OrderController extends Controller {
       if (
         !prevOrder ||
         prevOrder.tenantId != tenantId ||
-        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER
+        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER ||
+        prevOrder.disputeStatus
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -249,53 +270,28 @@ class OrderController extends Controller {
       });
     });
 
+    let requestsWithRatingImages = await this.bindOrderRating(
+      requestsWithImages
+    );
+
+    requestsWithRatingImages =
+      await this.listingModel.bindTenantListCountListings(
+        requestsWithRatingImages,
+        "tenantId"
+      );
+
+    requestsWithRatingImages =
+      await this.listingModel.bindOwnerListCountListings(
+        requestsWithRatingImages,
+        "tenantId"
+      );
+
     return {
-      items: requestsWithImages,
+      items: requestsWithRatingImages,
       options: { ...options, type },
       countItems,
     };
   };
-
-  baseTenantBookingList = async (req) => {
-    const tenantId = req.userData.userId;
-
-    const totalCountCall = (filter, timeInfos) =>
-      this.orderModel.tenantBookingsTotalCount(filter, timeInfos, tenantId);
-
-    const listCall = (options) => {
-      options["tenantId"] = tenantId;
-      return this.orderModel.tenantBookingsList(options);
-    };
-
-    return await this.baseRequestsList(req, totalCountCall, listCall);
-  };
-
-  baseListingOwnerBookingList = async (req) => {
-    const ownerId = req.userData.userId;
-
-    const totalCountCall = (filter, timeInfos) =>
-      this.orderModel.ownerBookingsTotalCount(filter, timeInfos, ownerId);
-
-    const listCall = (options) => {
-      options["ownerId"] = ownerId;
-      return this.orderModel.ownerBookingsList(options);
-    };
-
-    return await this.baseRequestsList(req, totalCountCall, listCall);
-  };
-
-  bookingList = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const isForTenant = req.body.type !== "owner";
-
-      const request = isForTenant
-        ? this.baseTenantBookingList
-        : this.baseListingOwnerBookingList;
-
-      const result = await request(req);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
 
   baseAdminOptionsAdd = async (orders) => {
     const listingIds = orders.map((order) => order.listingId);
@@ -314,41 +310,36 @@ class OrderController extends Controller {
     return orders;
   };
 
-  baseAdminBookingList = async (req) => {
-    const timeInfos = await this.listTimeNameOption(req);
-    const type = req.body.type ?? "all";
-    const filter = req.body.filter ?? "";
-
-    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      this.orderModel.allBookingsTotalCount(filter, type, timeInfos)
+  bindOrderRating = async (orders) => {
+    orders = await this.tenantCommentModel.bindAverageForKeyEntities(
+      orders,
+      "tenantId",
+      {
+        commentCountName: "tenantCommentCount",
+        averageRatingName: "tenantAverageRating",
+      }
     );
 
-    options["type"] = type;
+    orders = await this.ownerCommentModel.bindAverageForKeyEntities(
+      orders,
+      "ownerId",
+      {
+        commentCountName: "ownerCommentCount",
+        averageRatingName: "ownerAverageRating",
+      }
+    );
 
-    options = this.addTimeInfoToOptions(options, timeInfos);
+    orders = await this.listingCommentModel.bindAverageForKeyEntities(
+      orders,
+      "listingId",
+      {
+        commentCountName: "listingCommentCount",
+        averageRatingName: "listingAverageRating",
+      }
+    );
 
-    const statusCount = await this.orderModel.getBookingStatusesCount({
-      timeInfos,
-      filter,
-    });
-
-    let orders = await this.orderModel.allBookingsList(options);
-
-    orders = await this.baseAdminOptionsAdd(orders);
-
-    return {
-      items: orders,
-      options,
-      countItems,
-      statusCount,
-    };
+    return orders;
   };
-
-  adminBookingList = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result = await this.baseAdminBookingList(req);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
 
   baseTenantOrderList = async (req) => {
     const tenantId = req.userData.userId;
@@ -413,6 +404,8 @@ class OrderController extends Controller {
 
     orders = await this.baseAdminOptionsAdd(orders);
 
+    orders = await this.bindOrderRating(orders);
+
     return {
       items: orders,
       options,
@@ -451,7 +444,10 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.tenantId != userId && order.ownerId != userId) {
+      if (
+        (order.tenantId != userId && order.ownerId != userId) ||
+        order.disputeStatus
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -473,6 +469,16 @@ class OrderController extends Controller {
           order.ownerId != userId)
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const conflictOrders = await this.orderModel.getConflictOrders([id]);
+
+      if (conflictOrders[`${id}`].length > 0) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.FORBIDDEN,
+          "Order has conflict orders"
+        );
       }
 
       let resetParentId = false;
@@ -520,7 +526,10 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.tenantId != userId && order.ownerId != userId) {
+      if (
+        (order.tenantId != userId && order.ownerId != userId) ||
+        order.disputeStatus
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -581,12 +590,16 @@ class OrderController extends Controller {
 
       const paypalOrderInfo = await getPaypalOrderInfo(paypalOrderId);
 
+      const payerCardLastDigits =
+        paypalOrderInfo.payment_source?.card?.last_digits;
+      const payerCardLastBrand = paypalOrderInfo.payment_source?.card?.brand;
+
       const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
       const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.tenantId != userId) {
+      if (order.tenantId != userId || order.disputeStatus) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -596,7 +609,9 @@ class OrderController extends Controller {
       const amount = paypalOrderInfo.purchase_units[0].amount.value;
 
       const { token, image: generatedImage } = await this.generateQrCodeInfo(
-        STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
+        order.orderParentId
+          ? STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
+          : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
       if (order.orderParentId) {
@@ -618,6 +633,8 @@ class OrderController extends Controller {
         paypalSenderId: paypalSenderId,
         paypalOrderId: paypalOrderId,
         paypalCaptureId: paypalCaptureId,
+        payerCardLastDigits,
+        payerCardLastBrand,
         proofUrl: "",
       });
 
@@ -630,7 +647,7 @@ class OrderController extends Controller {
 
     const order = await this.orderModel.getById(orderId);
 
-    if (order.tenantId != userId) {
+    if (order.tenantId != userId || order.disputeStatus) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
@@ -692,7 +709,11 @@ class OrderController extends Controller {
         );
       }
 
-      if (!orderInfo || orderInfo.tenantId != userId) {
+      if (
+        !orderInfo ||
+        orderInfo.tenantId != userId ||
+        orderInfo.disputeStatus
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
@@ -745,7 +766,7 @@ class OrderController extends Controller {
     const isCancelByTenant = isTenant && orderInfo.tenantId === userId;
     const isCancelByOwner = isOwner && orderInfo.ownerId === userId;
 
-    if (!isCancelByTenant && !isCancelByOwner) {
+    if ((!isCancelByTenant && !isCancelByOwner) || orderInfo.disputeStatus) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
@@ -779,9 +800,10 @@ class OrderController extends Controller {
     }
 
     if (
-      userType === "tenant" &&
-      orderInfo.cancelStatus !=
-        STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE
+      (userType === "tenant" &&
+        orderInfo.cancelStatus !=
+          STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE) ||
+      orderInfo.disputeStatus
     ) {
       return this.sendErrorResponse(
         res,
@@ -896,7 +918,7 @@ class OrderController extends Controller {
         offerPricePerDay,
       } = orderInfo;
 
-      if (tenantId != userId) {
+      if (tenantId != userId || orderInfo.disputeStatus) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -1009,8 +1031,12 @@ class OrderController extends Controller {
 
       const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
-      if (!orderInfo || orderInfo.ownerId !== userId) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      if (
+        !orderInfo ||
+        orderInfo.ownerId !== userId ||
+        orderInfo.disputeStatus
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       if (orderInfo.cancelStatus != null) {

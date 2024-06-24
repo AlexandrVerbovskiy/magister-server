@@ -19,6 +19,10 @@ const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 const LISTING_DEFECT_QUESTION_RELATIONS_TABLE =
   STATIC.TABLES.LISTING_DEFECT_QUESTION_RELATIONS;
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
+const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
+const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
+const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
+const CHAT_TABLE = STATIC.TABLES.CHATS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -53,6 +57,11 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
+    `${DISPUTES_TABLE}.id as disputeId`,
+    `${DISPUTES_TABLE}.status as disputeStatus`,
+    `${DISPUTES_TABLE}.type as disputeType`,
+    `${DISPUTES_TABLE}.description as disputeDescription`,
+    `${CHAT_TABLE}.id as chatId`,
   ];
 
   lightRequestVisibleFields = [
@@ -91,10 +100,74 @@ class OrderModel extends Model {
   ];
 
   selectPartPayedInfo = [
+    `${SENDER_PAYMENTS_TABLE}.id as payedId`,
     `${SENDER_PAYMENTS_TABLE}.failed_description as payedFailedDescription`,
     `${SENDER_PAYMENTS_TABLE}.waiting_approved as payedWaitingApproved`,
     `${SENDER_PAYMENTS_TABLE}.admin_approved as payedAdminApproved`,
     `${SENDER_PAYMENTS_TABLE}.type as payedType`,
+  ];
+
+  fullGroupBy = [
+    `${ORDERS_TABLE}.id`,
+    `${ORDERS_TABLE}.status`,
+    `${ORDERS_TABLE}.cancel_status`,
+    `${ORDERS_TABLE}.price_per_day`,
+    `${ORDERS_TABLE}.start_date`,
+    `${ORDERS_TABLE}.end_date`,
+    `${ORDERS_TABLE}.tenant_fee`,
+    `${ORDERS_TABLE}.owner_fee`,
+    `${ORDERS_TABLE}.prev_price_per_day`,
+    `${ORDERS_TABLE}.prev_start_date`,
+    `${ORDERS_TABLE}.prev_end_date`,
+    `searching_order.id`,
+    `tenants.id`,
+    `tenants.name`,
+    `tenants.email`,
+    `tenants.photo`,
+    `tenants.phone`,
+    `owners.id`,
+    `owners.name`,
+    `owners.email`,
+    `owners.photo`,
+    `owners.phone`,
+    `${LISTINGS_TABLE}.id`,
+    `${LISTINGS_TABLE}.name`,
+    `${LISTINGS_TABLE}.city`,
+    `${LISTINGS_TABLE}.price_per_day`,
+    `${LISTINGS_TABLE}.min_rental_days`,
+    `${LISTINGS_TABLE}.category_id`,
+    `${LISTING_CATEGORIES_TABLE}.name`,
+    `${LISTINGS_TABLE}.description`,
+    `${LISTINGS_TABLE}.rental_terms`,
+    `${LISTINGS_TABLE}.address`,
+    `${LISTINGS_TABLE}.postcode`,
+    `${LISTINGS_TABLE}.rental_lat`,
+    `${LISTINGS_TABLE}.rental_lng`,
+    `${LISTINGS_TABLE}.rental_radius`,
+    `${LISTINGS_TABLE}.compensation_cost`,
+    `${LISTINGS_TABLE}.count_stored_items`,
+    `${ORDERS_TABLE}.tenant_accept_listing_qrcode`,
+    `${ORDERS_TABLE}.owner_accept_listing_qrcode`,
+    `tenants.phone`,
+    `owners.phone`,
+    `tenants.place_work`,
+    `owners.place_work`,
+    `owners.twitter_url`,
+    `owners.facebook_url`,
+    `owners.linkedin_url`,
+    `owners.instagram_url`,
+    `tenants.twitter_url`,
+    `tenants.facebook_url`,
+    `tenants.linkedin_url`,
+    `tenants.instagram_url`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
+    `${DISPUTES_TABLE}.id`,
+    `${DISPUTES_TABLE}.status`,
+    `${DISPUTES_TABLE}.type`,
+    `${DISPUTES_TABLE}.description`,
+    `${CHAT_TABLE}.id`,
   ];
 
   strFilterFields = [
@@ -124,6 +197,8 @@ class OrderModel extends Model {
     `tenants.email`,
     `owners.name`,
     `owners.email`,
+    `orders.start_date`,
+    `orders.end_date`,
     `${LISTINGS_TABLE}.name`,
   ];
 
@@ -133,13 +208,6 @@ class OrderModel extends Model {
     STATIC.ORDER_STATUSES.PENDING_OWNER,
     STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
     STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-  ];
-
-  bookingStatuses = [
-    STATIC.ORDER_STATUSES.PENDING_OWNER,
-    STATIC.ORDER_STATUSES.PENDING_TENANT,
-    STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
-    STATIC.ORDER_STATUSES.REJECTED,
   ];
 
   canFastCancelPayedOrder = (order) => {
@@ -168,8 +236,8 @@ class OrderModel extends Model {
     return today > quickCancelLastPossible;
   };
 
-  fullBaseGetQuery = (filter) => {
-    let query = db(ORDERS_TABLE)
+  fullOrdersJoin = (query) => {
+    return query
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
@@ -194,9 +262,23 @@ class OrderModel extends Model {
         "=",
         `${ORDERS_TABLE}.tenant_id`
       )
-      .whereRaw(this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`));
+      .leftJoin(
+        `${DISPUTES_TABLE} as disputes`,
+        `${DISPUTES_TABLE}.order_id`,
+        "=",
+        `${ORDERS_TABLE}.id`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
+      );
+  };
 
-    return query;
+  fullBaseGetQuery = (filter) => {
+    let query = db(ORDERS_TABLE);
+    query = this.fullOrdersJoin(query);
+    return query.whereRaw(
+      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
+    );
   };
 
   orderTimeFilterWrap = (query, timeInfos) => {
@@ -273,40 +355,63 @@ class OrderModel extends Model {
     );
   };
 
-  tenantBaseGetQuery = (
-    filter,
-    timeInfos,
-    tenantId,
-    needRequestInfo = false,
-    needPayedInfo = false
-  ) => {
-    const baseGetReq = needRequestInfo
-      ? this.fullBaseGetQueryWithRequestInfo
-      : this.fullBaseGetQuery;
+  commentsInfoJoin = (query) => {
+    query = query.leftJoin(
+      LISTING_COMMENTS_TABLE,
+      `${LISTING_COMMENTS_TABLE}.order_id`,
+      "=",
+      `${ORDERS_TABLE}.id`
+    );
+
+    query = query.joinRaw(
+      `LEFT JOIN ${USER_COMMENTS_TABLE} as "tenant_comments" 
+      ON tenant_comments.order_id = ${ORDERS_TABLE}.id AND 
+      tenant_comments.type = 'tenant'`
+    );
+
+    query = query.joinRaw(
+      `LEFT JOIN ${USER_COMMENTS_TABLE} as "owner_comments" 
+      ON owner_comments.order_id = ${ORDERS_TABLE}.id AND 
+      owner_comments.type = 'owner'`
+    );
+
+    return query;
+  };
+
+  commentsVisibleFields = (visibleFields) => {
+    return [
+      ...visibleFields,
+
+      `tenant_comments.id as tenantCommentId`,
+      `owner_comments.id as ownerCommentId`,
+      `${LISTING_COMMENTS_TABLE}.id as listingCommentId`,
+
+      `tenant_comments.waiting_admin as tenantCommentWaitingAdmin`,
+      `owner_comments.waiting_admin as ownerCommentWaitingAdmin`,
+      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentWaitingAdmin`,
+
+      `tenant_comments.waiting_admin as tenantCommentApproved`,
+      `owner_comments.waiting_admin as ownerCommentApproved`,
+      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentApproved`,
+    ];
+  };
+
+  tenantBaseGetQuery = (filter, timeInfos, tenantId) => {
+    const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
 
     let query = baseGetReq(filter);
-
-    if (needPayedInfo) {
-      query = this.payedInfoJoin(query);
-    }
-
-    query = needRequestInfo
-      ? this.orderWithRequestTimeFilterWrap(query, timeInfos)
-      : this.orderTimeFilterWrap(query, timeInfos);
+    query = this.payedInfoJoin(query);
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
 
     return query.whereRaw("tenants.id = ?", tenantId);
   };
 
-  ownerBaseGetQuery = (filter, timeInfos, ownerId, needRequestInfo = false) => {
-    const baseGetReq = needRequestInfo
-      ? this.fullBaseGetQueryWithRequestInfo
-      : this.fullBaseGetQuery;
+  ownerBaseGetQuery = (filter, timeInfos, ownerId) => {
+    const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
 
     let query = baseGetReq(filter);
 
-    query = needRequestInfo
-      ? this.orderWithRequestTimeFilterWrap(query, timeInfos)
-      : this.orderTimeFilterWrap(query, timeInfos);
+    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
 
     return query.whereRaw("owners.id = ?", ownerId);
   };
@@ -384,96 +489,45 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  baseTenantTotalCount = async (filter, timeInfos, tenantId, dopWhereCall) => {
+  baseTenantTotalCount = async (filter, timeInfos, tenantId) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
     query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
 
-    query = dopWhereCall(query);
-
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  baseOwnerTotalCount = async (filter, timeInfos, ownerId, dopWhereCall) => {
+  baseOwnerTotalCount = async (filter, timeInfos, ownerId) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
     query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
 
-    query = dopWhereCall(query);
-
     const { count } = await query.count("* as count").first();
     return count;
   };
 
-  baseWithRequestInfoTotalCount = async (
-    filter,
-    type,
-    timeInfos,
-    dopWhereCall
-  ) => {
-    let query = db(ORDERS_TABLE).whereRaw(
-      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
-    );
-
-    query = this.fullBaseGetQueryWithRequestInfo(filter);
-    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
-
-    query = dopWhereCall(query);
-
-    query = this.baseQueryListByType(query, type);
-
-    const { count } = await query.count("* as count").first();
-    return count;
-  };
-
-  baseAllTotalCount = async (filter, type, timeInfos, dopWhereCall) => {
-    let query = db(ORDERS_TABLE).whereRaw(
-      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
-    );
-
-    query = this.fullBaseGetQuery(filter);
-    query = this.orderTimeFilterWrap(query, timeInfos);
-
-    query = dopWhereCall(query);
-
-    query = this.baseQueryListByType(query, type);
-
-    const { count } = await query.count("* as count").first();
-    return count;
-  };
-
-  baseTenantList = async (props, type) => {
+  baseTenantList = async (props) => {
     const { filter, start, count, timeInfos, tenantId } = props;
 
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.tenantBaseGetQuery(
-      filter,
-      timeInfos,
-      tenantId,
-      type == "booking",
-      type == "booking"
-    );
+    let query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
 
-    if (type == "booking") {
-      query = this.dopWhereBooking(query);
-    } else {
-      query = this.dopWhereOrder(query);
-    }
+    query = this.commentsInfoJoin(query);
 
-    const visibleFields =
-      type == "booking"
-        ? [...this.lightRequestVisibleFields, ...this.selectPartPayedInfo]
-        : this.lightVisibleFields;
+    let visibleFields = [
+      ...this.lightRequestVisibleFields,
+      ...this.selectPartPayedInfo,
+    ];
 
-    if (type == "order") {
-      query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
-    }
+    visibleFields = this.commentsVisibleFields(visibleFields);
+
+    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
 
     return await query
       .select(visibleFields)
@@ -482,27 +536,19 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  baseOwnerList = async (props, type) => {
+  baseOwnerList = async (props) => {
     const { filter, start, count, timeInfos, ownerId } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.ownerBaseGetQuery(
-      filter,
-      timeInfos,
-      ownerId,
-      type == "booking"
+    let query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
+
+    query = this.commentsInfoJoin(query);
+
+    const visibleFields = this.commentsVisibleFields(
+      this.lightRequestVisibleFields
     );
 
-    if (type == "booking") {
-      query = this.dopWhereBooking(query);
-    } else {
-      query = this.dopWhereOrder(query);
-    }
-
-    const visibleFields =
-      type == "booking"
-        ? this.lightRequestVisibleFields
-        : this.lightVisibleFields;
+    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
 
     return await query
       .select(visibleFields)
@@ -511,107 +557,20 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  baseAllList = async (props, dopWhereCall) => {
-    const { filter, start, count, timeInfos, type = null } = props;
-    const { order, orderType } = this.getOrderInfo(props);
-
-    let query = this.fullBaseGetQuery(filter);
-    query = this.payedInfoJoin(query);
-    query = this.orderTimeFilterWrap(query, timeInfos);
-
-    query = dopWhereCall(query);
-
-    query = this.baseQueryListByType(query, type);
-
-    return await query
-      .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
-      .orderBy(order, orderType)
-      .limit(count)
-      .offset(start);
-  };
-
-  baseWithRequestInfoList = async (props, dopWhereCall) => {
-    const { filter, start, count, timeInfos, type = null } = props;
-    const { order, orderType } = this.getOrderInfo(props);
-
-    let query = this.fullBaseGetQueryWithRequestInfo(filter);
-
-    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
-
-    query = dopWhereCall(query);
-    query = query.select(this.lightRequestVisibleFields);
-    query = query.orderBy(order, orderType);
-
-    query = this.baseQueryListByType(query, type);
-
-    return await query.limit(count).offset(start);
-  };
-
-  dopWhereBooking = (query) =>
-    query.whereIn(`${ORDERS_TABLE}.status`, this.bookingStatuses);
-
-  dopWhereOrder = (query) =>
-    query.whereNotIn(`${ORDERS_TABLE}.status`, this.bookingStatuses);
-
-  tenantBookingsTotalCount = async (filter, timeInfos, tenantId) => {
-    return await this.baseTenantTotalCount(
-      filter,
-      timeInfos,
-      tenantId,
-      this.dopWhereBooking
-    );
-  };
-
   tenantOrdersTotalCount = async (filter, timeInfos, userId) => {
-    return await this.baseTenantTotalCount(
-      filter,
-      timeInfos,
-      userId,
-      this.dopWhereOrder
-    );
-  };
-
-  tenantBookingsList = async (props) => {
-    return await this.baseTenantList(props, "booking");
+    return await this.baseTenantTotalCount(filter, timeInfos, userId);
   };
 
   tenantOrdersList = async (props) => {
-    return await this.baseTenantList(props, "order");
-  };
-
-  ownerBookingsTotalCount = async (filter, timeInfos, userId) => {
-    return await this.baseOwnerTotalCount(
-      filter,
-      timeInfos,
-      userId,
-      this.dopWhereBooking
-    );
+    return await this.baseTenantList(props);
   };
 
   ownerOrdersTotalCount = async (filter, timeInfos, userId) => {
-    return await this.baseOwnerTotalCount(
-      filter,
-      timeInfos,
-      userId,
-      this.dopWhereOrder
-    );
-  };
-
-  ownerBookingsList = async (props) => {
-    return await this.baseOwnerList(props, "booking");
+    return await this.baseOwnerTotalCount(filter, timeInfos, userId);
   };
 
   ownerOrderList = async (props) => {
-    return await this.baseOwnerList(props, "order");
-  };
-
-  allBookingsTotalCount = async (filter, type, timeInfos) => {
-    return await this.baseWithRequestInfoTotalCount(
-      filter,
-      type,
-      timeInfos,
-      this.dopWhereBooking
-    );
+    return await this.baseOwnerList(props);
   };
 
   allOrdersTotalCount = async (filter, type, timeInfos) => {
@@ -621,14 +580,31 @@ class OrderModel extends Model {
       timeInfos,
       this.dopWhereOrder
     );
-  };
 
-  allBookingsList = async (props) => {
-    return await this.baseWithRequestInfoList(props, this.dopWhereBooking);
+    query = this.fullBaseGetQuery(filter);
+    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
+
+    query = this.baseQueryListByType(query, type);
+
+    const { count } = await query.count("* as count").first();
+    return count;
   };
 
   allOrderList = async (props) => {
-    return await this.baseAllList(props, this.dopWhereOrder);
+    const { filter, start, count, timeInfos, type = null } = props;
+    const { order, orderType } = this.getOrderInfo(props);
+
+    let query = this.fullBaseGetQuery(filter);
+    query = this.payedInfoJoin(query);
+    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
+
+    query = this.baseQueryListByType(query, type);
+
+    return await query
+      .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
   };
 
   create = async ({
@@ -664,43 +640,22 @@ class OrderModel extends Model {
     return res[0]["id"];
   };
 
-  fullOrdersJoin = (db) => {
-    return db
-      .join(
-        LISTINGS_TABLE,
-        `${LISTINGS_TABLE}.id`,
-        "=",
-        `${ORDERS_TABLE}.listing_id`
-      )
-      .join(
-        LISTING_CATEGORIES_TABLE,
-        `${LISTING_CATEGORIES_TABLE}.id`,
-        "=",
-        `${LISTINGS_TABLE}.category_id`
-      )
-      .join(
-        `${USERS_TABLE} as owners`,
-        `owners.id`,
-        "=",
-        `${LISTINGS_TABLE}.owner_id`
-      )
-      .join(
-        `${USERS_TABLE} as tenants`,
-        `tenants.id`,
-        "=",
-        `${ORDERS_TABLE}.tenant_id`
-      );
-  };
-
-  getByWhere = async (key, value) => {
+  getByWhere = async (key, value, needList = false) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
     query = query.select(this.fullVisibleFields).where(key, value);
 
-    return await query.first();
+    if (needList) {
+      return await query;
+    } else {
+      return await query.first();
+    }
   };
 
   getById = (id) => this.getByWhere(`${ORDERS_TABLE}.id`, id);
+
+  getChildrenList = (parentId) =>
+    this.getByWhere(`${ORDERS_TABLE}.parent_id`, parentId, true);
 
   getLastActive = async (id) => {
     let lastOrderQuery = db(ORDERS_TABLE);
@@ -709,13 +664,13 @@ class OrderModel extends Model {
     const lastOrder = await lastOrderQuery
       .select(this.fullVisibleFields)
       .where(`${ORDERS_TABLE}.parent_id`, id)
-      .whereIn("status", [
+      .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
       ])
-      .whereNull("cancel_status")
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .orderBy(`${ORDERS_TABLE}.end_date`, "desc")
       .first();
 
@@ -746,6 +701,18 @@ class OrderModel extends Model {
   };
 
   getFullById = (id) => this.getFullByBaseRequest(() => this.getById(id));
+
+  getFullWithCommentsById = (id) =>
+    this.getFullByBaseRequest(async () => {
+      const visibleFields = this.commentsVisibleFields(this.fullVisibleFields);
+
+      let query = db(ORDERS_TABLE);
+      query = this.fullOrdersJoin(query);
+      query = this.commentsInfoJoin(query);
+      query = query.select(visibleFields).where(`${ORDERS_TABLE}.id`, id);
+
+      return await query.first();
+    });
 
   getFullByTenantListingToken = (token) =>
     this.getFullByBaseRequest(() =>
@@ -799,7 +766,8 @@ class OrderModel extends Model {
           .whereRaw(
             `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
           )
-          .whereNot("status", STATIC.ORDER_STATUSES.REJECTED);
+          .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
+          .whereNot("status", STATIC.ORDER_STATUSES.FINISHED);
       })
       .select([
         "end_date as endDate",
@@ -932,63 +900,7 @@ class OrderModel extends Model {
       .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
 
     const conflictOrders = await query
-      .groupBy([
-        `${ORDERS_TABLE}.id`,
-        `${ORDERS_TABLE}.status`,
-        `${ORDERS_TABLE}.cancel_status`,
-        `${ORDERS_TABLE}.price_per_day`,
-        `${ORDERS_TABLE}.start_date`,
-        `${ORDERS_TABLE}.end_date`,
-        `${ORDERS_TABLE}.tenant_fee`,
-        `${ORDERS_TABLE}.owner_fee`,
-        `${ORDERS_TABLE}.prev_price_per_day`,
-        `${ORDERS_TABLE}.prev_start_date`,
-        `${ORDERS_TABLE}.prev_end_date`,
-        `searching_order.id`,
-        `tenants.id`,
-        `tenants.name`,
-        `tenants.email`,
-        `tenants.photo`,
-        `tenants.phone`,
-        `owners.id`,
-        `owners.name`,
-        `owners.email`,
-        `owners.photo`,
-        `owners.phone`,
-        `${LISTINGS_TABLE}.id`,
-        `${LISTINGS_TABLE}.name`,
-        `${LISTINGS_TABLE}.city`,
-        `${LISTINGS_TABLE}.price_per_day`,
-        `${LISTINGS_TABLE}.min_rental_days`,
-        `${LISTINGS_TABLE}.category_id`,
-        `${LISTING_CATEGORIES_TABLE}.name`,
-        `${LISTINGS_TABLE}.description`,
-        `${LISTINGS_TABLE}.rental_terms`,
-        `${LISTINGS_TABLE}.address`,
-        `${LISTINGS_TABLE}.postcode`,
-        `${LISTINGS_TABLE}.rental_lat`,
-        `${LISTINGS_TABLE}.rental_lng`,
-        `${LISTINGS_TABLE}.rental_radius`,
-        `${LISTINGS_TABLE}.compensation_cost`,
-        `${LISTINGS_TABLE}.count_stored_items`,
-        `${ORDERS_TABLE}.tenant_accept_listing_qrcode`,
-        `${ORDERS_TABLE}.owner_accept_listing_qrcode`,
-        `tenants.phone`,
-        `owners.phone`,
-        `tenants.place_work`,
-        `owners.place_work`,
-        `owners.twitter_url`,
-        `owners.facebook_url`,
-        `owners.linkedin_url`,
-        `owners.instagram_url`,
-        `tenants.twitter_url`,
-        `tenants.facebook_url`,
-        `tenants.linkedin_url`,
-        `tenants.instagram_url`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
-      ])
+      .groupBy(this.fullGroupBy)
       .select([
         ...this.fullVisibleFields,
         `searching_order.id as searchingOrderId`,
@@ -1125,8 +1037,8 @@ class OrderModel extends Model {
 
   getUnfinishedTenantCount = async (tenantId) => {
     const { count } = await db(ORDERS_TABLE)
-      .whereIn("status", this.processStatuses)
-      .whereNull("cancel_status")
+      .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .where("tenant_id", tenantId)
       .count("* as count")
       .first();
@@ -1136,8 +1048,8 @@ class OrderModel extends Model {
 
   getUnfinishedOwnerCount = async (ownerId) => {
     const { count } = await db(ORDERS_TABLE)
-      .whereIn("status", this.processStatuses)
-      .whereNull("cancel_status")
+      .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .leftJoin(
         LISTINGS_TABLE,
         LISTINGS_TABLE + ".id",
@@ -1163,7 +1075,7 @@ class OrderModel extends Model {
 
   getUnfinishedListingCount = async (listingId) => {
     const { count } = await db(ORDERS_TABLE)
-      .whereIn("status", this.processStatuses)
+      .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
       .where("listing_id", listingId)
       .count("* as count")
       .first();
@@ -1243,7 +1155,7 @@ class OrderModel extends Model {
           userId
         );*/
       })
-      .whereIn("status", [
+      .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
@@ -1254,8 +1166,12 @@ class OrderModel extends Model {
 
   updateExtendedFinished = async () => {
     return await db(ORDERS_TABLE)
-      .whereIn("id", function () {
-        this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
+      .where(function () {
+        this.whereIn("id", function () {
+          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
+        }) /*.orWhereIn("parent_id", function () {
+          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
+        })*/;
       })
       .whereNull("cancel_status")
       .where("status", STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER)
@@ -1271,7 +1187,7 @@ class OrderModel extends Model {
         "=",
         `${ORDERS_TABLE}.listing_id`
       )
-      .whereIn("status", [
+      .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
       ])
@@ -1283,51 +1199,6 @@ class OrderModel extends Model {
         "start_date as startDate",
         "end_date as endDate",
       ]);
-  };
-
-  getBookingStatusesCount = async ({ timeInfos, filter }) => {
-    let query = db(ORDERS_TABLE);
-    query = query.joinRaw(
-      `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-       ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
-        AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
-    );
-
-    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
-    query = query.whereRaw(
-      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
-    );
-
-    const result = await query
-      .whereIn("status", this.bookingStatuses)
-      .select(
-        db.raw(`COUNT(*) AS "allCount"`),
-        db.raw(
-          `SUM(CASE 
-            WHEN ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}' 
-            AND ${ORDERS_TABLE}.cancel_status IS NULL
-            THEN 1 ELSE 0 END) AS "rejectedCount"`
-        ),
-        db.raw(
-          `SUM(CASE 
-            WHEN ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' 
-            THEN 1 ELSE 0 END) AS "canceledCount"`
-        ),
-        db.raw(
-          `SUM(CASE 
-            WHEN ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT}' 
-            AND ${ORDERS_TABLE}.cancel_status IS NULL
-            THEN 1 ELSE 0 END) AS "acceptedCount"`
-        )
-      )
-      .first();
-
-    return {
-      allCount: result["allCount"] ?? 0,
-      rejectedCount: result["rejectedCount"] ?? 0,
-      canceledCount: result["canceledCount"] ?? 0,
-      acceptedCount: result["acceptedCount"] ?? 0,
-    };
   };
 
   getOrderStatusesCount = async ({ timeInfos, filter }) => {
@@ -1344,7 +1215,6 @@ class OrderModel extends Model {
     );
 
     const result = await query
-      .whereNotIn("status", this.bookingStatuses)
       .select(
         db.raw(`COUNT(*) AS "allCount"`),
         db.raw(
@@ -1387,7 +1257,7 @@ class OrderModel extends Model {
     ids.forEach((id) => (checkLists[id] = []));
 
     const requestResult = await db(LISTING_DEFECT_QUESTION_RELATIONS_TABLE)
-      .where("type", "tenant")
+      .where(`type`, "tenant")
       .whereIn("order_id", ids)
       .where("answer", true)
       .select("question", `order_id as orderId`);

@@ -7,6 +7,7 @@ const chatMessageContentModel = require("./chatMessageContentModel");
 const CHAT_MESSAGE_TABLE = STATIC.TABLES.CHAT_MESSAGES;
 const CHAT_MESSAGE_CONTENT_TABLE = STATIC.TABLES.CHAT_MESSAGE_CONTENTS;
 const USER_TABLE = STATIC.TABLES.USERS;
+const CHAT_TABLE = STATIC.TABLES.CHATS;
 
 class ChatMessageModel extends Model {
   visibleFields = [
@@ -27,6 +28,9 @@ class ChatMessageModel extends Model {
 
   fullVisibleFieldsWithUser = [
     ...this.fullVisibleFields,
+    `${CHAT_TABLE}.entity_id as entityId`,
+    `${CHAT_TABLE}.entity_type as entityType`,
+    `${CHAT_TABLE}.name as chatName`,
     `${USER_TABLE}.photo as senderPhoto`,
     `${USER_TABLE}.name as senderName`,
     `${USER_TABLE}.online as senderOnline`,
@@ -39,6 +43,9 @@ class ChatMessageModel extends Model {
       )
       .joinRaw(
         `LEFT JOIN ${CHAT_MESSAGE_CONTENT_TABLE} ON ${CHAT_MESSAGE_CONTENT_TABLE}.id = lc.last_content_id`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} ON ${CHAT_TABLE}.id = ${CHAT_MESSAGE_TABLE}.chat_id`
       );
   };
 
@@ -295,9 +302,7 @@ class ChatMessageModel extends Model {
     return messages.reverse();
   };
 
-  getBeforeMessageInChat = async ({ messageId, chatId }) => {
-    const messageCreatedAt = await this.getMessageCreatedDate(messageId);
-
+  getBeforeMessageInChat = async ({ messageCreatedAt, chatId }) => {
     let query = this.getListBaseQuery();
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
     query = query
@@ -309,7 +314,7 @@ class ChatMessageModel extends Model {
       ]);
 
     const messageInfo = await query.select(`${CHAT_MESSAGE_TABLE}.id`).first();
-    const id = messageInfo.id;
+    const id = messageInfo?.id;
 
     if (!id) {
       return null;
@@ -336,10 +341,10 @@ class ChatMessageModel extends Model {
     return await this.getFullById(id);
   };
 
-  checkHasMore = async ({ chatId, lastMessageId }) => {
+  checkHasMore = async ({ messageCreatedAt, chatId }) => {
     const id = await this.getBeforeMessageInChat({
+      messageCreatedAt,
       chatId,
-      messageId: lastMessageId,
     });
 
     return !!id;

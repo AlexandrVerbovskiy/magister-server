@@ -8,76 +8,80 @@ const { commentListValidation } = require("../../validations/comments");
 const commentRejectValidation = require("../../validations/comments/commentRejectValidation");
 const commentApproveValidation = require("../../validations/comments/commentApproveValidation");
 
-router.post(
-  "/listing-list",
-  isAuth,
-  isSupport,
-  commentListValidation,
-  listingCommentController.commentList
-);
+module.exports = (io) => {
+  listingCommentController.bindIo(io);
 
-router.post(
-  "/tenant-list",
-  isAuth,
-  isSupport,
-  commentListValidation,
-  tenantCommentController.commentList
-);
+  router.post(
+    "/listing-list",
+    isAuth,
+    isSupport,
+    commentListValidation,
+    listingCommentController.commentList
+  );
 
-router.post(
-  "/owner-list",
-  isAuth,
-  isSupport,
-  commentListValidation,
-  ownerCommentController.commentList
-);
+  router.post(
+    "/tenant-list",
+    isAuth,
+    isSupport,
+    commentListValidation,
+    tenantCommentController.commentList
+  );
 
-router.post(
-  "/listing-approve",
-  isAuth,
-  isSupport,
-  commentApproveValidation,
-  listingCommentController.approve
-);
+  router.post(
+    "/owner-list",
+    isAuth,
+    isSupport,
+    commentListValidation,
+    ownerCommentController.commentList
+  );
 
-router.post(
-  "/tenant-approve",
-  isAuth,
-  isSupport,
-  commentApproveValidation,
-  tenantCommentController.approve
-);
+  router.post(
+    "/listing-approve",
+    isAuth,
+    isSupport,
+    commentApproveValidation,
+    listingCommentController.approve
+  );
 
-router.post(
-  "/owner-approve",
-  isAuth,
-  isSupport,
-  commentApproveValidation,
-  ownerCommentController.approve
-);
+  router.post(
+    "/tenant-approve",
+    isAuth,
+    isSupport,
+    commentApproveValidation,
+    tenantCommentController.approve
+  );
 
-router.post(
-  "/listing-reject",
-  isAuth,
-  isSupport,
-  commentRejectValidation,
-  listingCommentController.reject
-);
+  router.post(
+    "/owner-approve",
+    isAuth,
+    isSupport,
+    commentApproveValidation,
+    ownerCommentController.approve
+  );
 
-router.post(
-  "/tenant-reject",
-  isAuth,
-  isSupport,
-  commentRejectValidation,
-  tenantCommentController.reject
-);
+  router.post(
+    "/listing-reject",
+    isAuth,
+    isSupport,
+    commentRejectValidation,
+    listingCommentController.reject
+  );
 
-router.post(
-  "/owner-reject",
-  isAuth,
-  isSupport,
-  commentRejectValidation,
-  ownerCommentController.reject
-);
+  router.post(
+    "/tenant-reject",
+    isAuth,
+    isSupport,
+    commentRejectValidation,
+    tenantCommentController.reject
+  );
 
-module.exports = router;
+  router.post(
+    "/owner-reject",
+    isAuth,
+    isSupport,
+    commentRejectValidation,
+    ownerCommentController.reject
+  );
+
+  return router;
+};

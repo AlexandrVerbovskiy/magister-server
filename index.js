@@ -79,42 +79,52 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
+const server = app.listen(PORT, () => {
+  console.log("Server started on port " + PORT);
+});
+
+const io = socketIo(server, {
+  cors: {
+    credentials: true,
+  },
+});
+
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
 
-app.use("/api/main", apiRoutes.mainRoutes);
-app.use("/api/auth", apiRoutes.authApiRoutes);
-app.use("/api/users", apiRoutes.userApiRoutes);
-app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestApiRoutes);
-app.use("/api/logs", isAuth, isAdmin, apiRoutes.logApiRoutes);
+app.use("/api/main", apiRoutes.mainRoutes(io));
+app.use("/api/auth", apiRoutes.authApiRoutes(io));
+app.use("/api/users", apiRoutes.userApiRoutes(io));
+app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestApiRoutes(io));
+app.use("/api/logs", isAuth, isAdmin, apiRoutes.logApiRoutes(io));
 app.use(
   "/api/user-event-logs",
   isAuth,
   isAdmin,
-  apiRoutes.userEventLogApiRoutes
+  apiRoutes.userEventLogApiRoutes(io)
 );
 
-app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes);
-app.use("/api/listing-defects", apiRoutes.listingDefectRoutes);
-app.use("/api/listing-defect-questions", apiRoutes.listingDefectQuestionRoutes);
-app.use("/api/listings", apiRoutes.listingRoutes);
-app.use("/api/orders", apiRoutes.orderRoutes);
-app.use("/api/order-update-requests", apiRoutes.orderUpdateRequestRoutes);
-app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes);
-app.use("/api/searched-words", apiRoutes.searchedWordsRoutes);
+app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes(io));
+app.use("/api/listing-defects", apiRoutes.listingDefectRoutes(io));
+app.use("/api/listing-defect-questions", apiRoutes.listingDefectQuestionRoutes(io));
+app.use("/api/listings", apiRoutes.listingRoutes(io));
+app.use("/api/orders", apiRoutes.orderRoutes(io));
+app.use("/api/order-update-requests", apiRoutes.orderUpdateRequestRoutes(io));
+app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes(io));
+app.use("/api/searched-words", apiRoutes.searchedWordsRoutes(io));
 app.use(
   "/api/listing-approval-requests",
-  apiRoutes.listingApprovalRequestRoutes
+  apiRoutes.listingApprovalRequestRoutes(io)
 );
 app.use(
   "/api/listing-category-create-notification",
-  apiRoutes.listingCategoryCreateNotificationRoutes
+  apiRoutes.listingCategoryCreateNotificationRoutes(io)
 );
 
-app.use("/api/sender-payments", apiRoutes.senderPaymentRoutes);
-app.use("/api/recipient-payments", apiRoutes.recipientPaymentRoutes);
-app.use("/api/comments", apiRoutes.commentRoutes);
-app.use("/api/disputes", apiRoutes.disputeRoutes);
-app.use("/api/chat", apiRoutes.chatRoutes);
+app.use("/api/sender-payments", apiRoutes.senderPaymentRoutes(io));
+app.use("/api/recipient-payments", apiRoutes.recipientPaymentRoutes(io));
+app.use("/api/comments", apiRoutes.commentRoutes(io));
+app.use("/api/disputes", apiRoutes.disputeRoutes(io));
+app.use("/api/chat", apiRoutes.chatRoutes(io));
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -129,16 +139,6 @@ app.use((req, res, next) => {
       .end();
   }
   next();
-});
-
-const server = app.listen(PORT, () => {
-  console.log("Server started on port " + PORT);
-});
-
-const io = socketIo(server, {
-  cors: {
-    credentials: true,
-  },
 });
 
 socketsRoutes.chatRoutes(io);

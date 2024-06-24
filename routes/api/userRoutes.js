@@ -13,75 +13,79 @@ const { upload } = require("../../utils");
 const { isFileLimit } = require("../../middlewares");
 const { isAuth, isSupport, isAdmin } = require("../../middlewares");
 
-router.post("/list", isAuth, isSupport, listValidation, userController.list);
+module.exports = (io) => {
+  userController.bindIo(io);
 
-router.get("/get-by-id/:id", idParamValidation, userController.getById);
+  router.post("/list", isAuth, isSupport, listValidation, userController.list);
 
-router.get(
-  "/get-full-by-id/:id",
-  isAuth,
-  isSupport,
-  idParamValidation,
-  userController.getFullById
-);
+  router.get("/get-by-id/:id", idParamValidation, userController.getById);
 
-router.post(
-  "/set-role",
-  isAuth,
-  isAdmin,
-  setRoleValidation,
-  userController.setRole
-);
+  router.get(
+    "/get-full-by-id/:id",
+    isAuth,
+    isSupport,
+    idParamValidation,
+    userController.getFullById
+  );
 
-router.post(
-  "/delete",
-  isAuth,
-  isAdmin,
-  idBodyValidation,
-  userController.delete
-);
+  router.post(
+    "/set-role",
+    isAuth,
+    isAdmin,
+    setRoleValidation,
+    userController.setRole
+  );
 
-router.post(
-  "/change-active",
-  isAuth,
-  isAdmin,
-  idBodyValidation,
-  userController.changeActive
-);
-router.post(
-  "/change-verified",
-  isAuth,
-  isSupport,
-  idBodyValidation,
-  userController.changeVerified
-);
+  router.post(
+    "/delete",
+    isAuth,
+    isAdmin,
+    idBodyValidation,
+    userController.delete
+  );
 
-router.post(
-  "/update",
-  isAuth,
-  isAdmin,
-  upload.single("photo"),
-  isFileLimit,
-  updateValidation,
-  userController.update
-);
+  router.post(
+    "/change-active",
+    isAuth,
+    isAdmin,
+    idBodyValidation,
+    userController.changeActive
+  );
+  router.post(
+    "/change-verified",
+    isAuth,
+    isSupport,
+    idBodyValidation,
+    userController.changeVerified
+  );
 
-router.post(
-  "/create",
-  isAuth,
-  isAdmin,
-  upload.single("photo"),
-  isFileLimit,
-  createValidation,
-  userController.create
-);
+  router.post(
+    "/update",
+    isAuth,
+    isAdmin,
+    upload.single("photo"),
+    isFileLimit,
+    updateValidation,
+    userController.update
+  );
 
-router.post(
-  "/documents",
-  isAuth,
-  isSupport,
-  idBodyValidation,
-  userController.getDocumentsByUserId
-);
+  router.post(
+    "/create",
+    isAuth,
+    isAdmin,
+    upload.single("photo"),
+    isFileLimit,
+    createValidation,
+    userController.create
+  );
 
-module.exports = router;
+  router.post(
+    "/documents",
+    isAuth,
+    isSupport,
+    idBodyValidation,
+    userController.getDocumentsByUserId
+  );
+
+  return router;
+};

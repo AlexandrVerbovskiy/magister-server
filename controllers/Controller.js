@@ -42,6 +42,17 @@ const {
   recipientPaymentModel,
   listingDefectModel,
   listingDefectQuestionModel,
+  listingCommentModel,
+  ownerCommentModel,
+  tenantCommentModel,
+  userListingFavoriteModel,
+  disputeModel,
+  chatMessageContentModel,
+  chatMessageModel,
+  chatModel,
+  chatRelationModel,
+  socketModel,
+  activeActionModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -51,26 +62,46 @@ const axios = require("axios");
 
 class Controller {
   mailTransporter = null;
+  io = null;
 
   constructor() {
     this.userModel = userModel;
+
     this.logModel = logModel;
     this.userVerifyRequestModel = userVerifyRequestModel;
     this.systemOptionModel = systemOptionModel;
     this.userEventLogModel = userEventLogModel;
+    this.activeActionModel = activeActionModel;
+
     this.listingCategoryModel = listingCategoryModel;
     this.searchedWordModel = searchedWordModel;
+
     this.listingModel = listingModel;
     this.listingDefectModel = listingDefectModel;
+
     this.orderModel = orderModel;
     this.orderUpdateRequestModel = orderUpdateRequestModel;
+    this.disputeModel = disputeModel;
+
     this.listingApprovalRequestModel = listingApprovalRequestModel;
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
     this.listingDefectQuestionModel = listingDefectQuestionModel;
 
+    this.listingCommentModel = listingCommentModel;
+    this.ownerCommentModel = ownerCommentModel;
+    this.tenantCommentModel = tenantCommentModel;
+
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
+    this.userListingFavoriteModel = userListingFavoriteModel;
+
+    this.chatMessageContentModel = chatMessageContentModel;
+    this.chatMessageModel = chatMessageModel;
+    this.chatModel = chatModel;
+    this.chatRelationModel = chatRelationModel;
+
+    this.socketModel = socketModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -92,6 +123,30 @@ class Controller {
     );
   }
 
+  bindIo(io) {
+    this.io = io;
+  }
+
+  sendSocketIoMessage = (socket, messageKey, message) => {
+    this.io.to(socket).emit(messageKey, message);
+  };
+
+  sendSocketMessageToUsers = async (userIds, message, data) => {
+    const sockets = await this.socketModel.findUserSockets(userIds);
+
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, message, data)
+    );
+  };
+
+  sendSocketMessageToUser = async (userId, message, data) => {
+    await this.sendSocketMessageToUsers([userId], message, data);
+  };
+
+  sendError = async (userId, error) => {
+    await this.sendSocketMessageToUser(userId, "error", error);
+  };
+
   sendResponse = (response, baseInfo, message, body, isError) => {
     return response.status(baseInfo.STATUS).json({
       message: message ?? baseInfo.DEFAULT_MESSAGE,
@@ -106,7 +161,10 @@ class Controller {
     message = null,
     body = {}
   ) => {
-    if (!baseInfo) baseInfo = STATIC.SUCCESS.OK;
+    if (!baseInfo) {
+      baseInfo = STATIC.SUCCESS.OK;
+    }
+
     return this.sendResponse(response, baseInfo, message, body, false);
   };
 
@@ -337,19 +395,22 @@ class Controller {
     });
   };
 
+  createFolderIfNotExists = (folderPath) => {
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+  };
+
   moveUploadsFileToFolder = (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
 
     const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public", folder);
-
-    if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir, { recursive: true });
-    }
-
+    this.createFolderIfNotExists(destinationDir);
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
+
     return folder + "/" + name + "." + type;
   };
 
@@ -670,7 +731,9 @@ class Controller {
       ? shortTimeConverter(payment.createdAt)
       : "-";
 
-    const dueInfo = payment.dueAt ? shortTimeConverter(payment.dueAt) : "-";
+    const dueInfo = payment.createdAt
+      ? shortTimeConverter(payment.createdAt)
+      : "-";
 
     const params = {
       billTo: payment.listingAddress ?? payment.listingCity,
@@ -694,6 +757,33 @@ class Controller {
     };
 
     return await this.generatePdf("/pdfs/invoice", params);
+  };
+
+  sendSocketMessageToUserOpponent = async (
+    chatId,
+    userId,
+    messageKey,
+    message
+  ) => {
+    const sockets = await this.chatModel.getChatOpponentSockets(chatId, userId);
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, messageKey, message)
+    );
+  };
+
+  sendMessageForOrder = async (message, senderId) => {
+    const chatId = message.chatId;
+    const sender = await this.userModel.getById(senderId);
+
+    await this.sendSocketMessageToUserOpponent(
+      chatId,
+      senderId,
+      "get-message",
+      {
+        message,
+        opponent: sender,
+      }
+    );
   };
 }
 
