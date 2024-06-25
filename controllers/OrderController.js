@@ -118,7 +118,7 @@ class OrderController extends Controller {
         },
       });
 
-      await this.sendMessageForOrder(createdMessages[ownerId], tenantId);
+      await this.sendMessageForOrder(createdMessages[tenantId], tenantId);
 
       return this.sendSuccessResponse(
         res,
@@ -173,6 +173,30 @@ class OrderController extends Controller {
       }
 
       const createdOrderId = await this.baseCreate(dataToCreate);
+
+      const listing = await this.listingModel.getFullById(listingId);
+
+      this.sendBookingApprovalRequestMail(listing.userEmail);
+
+      const firstImage = listing.listingImages[0];
+      const ownerId = listing.ownerId;
+
+      const createdMessages = await this.chatModel.createForOrder({
+        ownerId,
+        tenantId,
+        orderInfo: {
+          orderId: createdOrderId,
+          listingName: listing.name,
+          offerPrice: pricePerDay,
+          listingPhotoPath: firstImage?.link,
+          listingPhotoType: firstImage?.type,
+          offerDateStart: startDate,
+          offerDateEnd: endDate,
+          description: message,
+        },
+      });
+
+      await this.sendMessageForOrder(createdMessages[tenantId], tenantId);
 
       return this.sendSuccessResponse(
         res,

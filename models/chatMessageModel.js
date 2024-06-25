@@ -145,9 +145,11 @@ class ChatMessageModel extends Model {
     chatId,
     senderId,
     data: {
+      requestId,
       listingName,
       offerPrice,
       listingPhotoPath,
+      listingPhotoType,
       offerDateStart,
       offerDateEnd,
     },
@@ -158,9 +160,11 @@ class ChatMessageModel extends Model {
       isAdminSender: false,
       senderId,
       content: {
+        requestId,
         listingName,
         offerPrice,
         listingPhotoPath,
+        listingPhotoType,
         offerDateStart,
         offerDateEnd,
       },
