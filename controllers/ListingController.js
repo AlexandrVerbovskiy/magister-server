@@ -297,6 +297,10 @@ class ListingController extends Controller {
       (file) => file.fieldname === "background_photo"
     );
 
+    if (!backgroundPhoto) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST);
+    }
+
     dataToSave["backgroundPhoto"] = this.moveUploadsFileToFolder(
       backgroundPhoto,
       "listings"
