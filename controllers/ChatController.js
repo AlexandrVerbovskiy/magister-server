@@ -5,11 +5,17 @@ const {
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
+const OrderController = require("./OrderController");
 
 class ChatController extends Controller {
   message_files_dir = "public/messages";
   count_message_per_iteration = 50;
   count_chat_per_iteration = 20;
+
+  constructor(io) {
+    super(io);
+    this.orderController = new OrderController(io);
+  }
 
   userChatRelationSendMessage = async (userId, messageKey) => {
     const relations = await this.chatModel.getUserChatsOpponentSockets(userId);
@@ -155,10 +161,11 @@ class ChatController extends Controller {
     });
   };
 
-  baseGetChatEntityInfo = async (chatId) => {
+  baseGetChatEntityInfo = async (chatId, userId) => {
     const chat = await this.chatModel.getById(chatId);
 
     let entity = null;
+    const dopEntityInfo = {};
 
     if (chat.entityType === STATIC.CHAT_TYPES.DISPUTE) {
       entity = await this.disputeModel.getById(chat.entityId);
@@ -167,11 +174,18 @@ class ChatController extends Controller {
       entity["childrenList"] = await this.orderModel.getChildrenList(
         chat.entityId
       );
+
+      dopEntityInfo["tenantBaseCommission"] =
+        await this.systemOptionModel.getTenantBaseCommissionPercent();
+      dopEntityInfo["bankInfo"] =
+        await this.systemOptionModel.getBankAccountInfo();
+
+      entity = await this.orderController.wrapOrderFullInfo(entity, userId);
     }
 
     entity["type"] = chat.entityType;
 
-    return entity;
+    return { entity, dopEntityInfo };
   };
 
   getChatBaseInfo = async (req, res) => {
@@ -193,13 +207,17 @@ class ChatController extends Controller {
       return this.sendErrorResponse(res, chatRes.error);
     }
 
-    const entity = await this.baseGetChatEntityInfo(chatId);
+    const { entity, dopEntityInfo } = await this.baseGetChatEntityInfo(
+      chatId,
+      userId
+    );
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
       messages: messagesRes.list,
       messagesCanShowMore: messagesRes.canShowMore,
       options: messagesRes.options,
       entity,
+      dopEntityInfo,
     });
   };
 

@@ -1086,6 +1086,49 @@ class OrderController extends Controller {
       res.contentType("application/pdf");
       res.send(buffer);
     });
+
+  wrapOrderFullInfo = async (order, userId) => {
+    const resGetConflictOrders = await this.orderModel.getConflictOrders([
+      order.id,
+    ]);
+
+    order["extendOrders"] = await this.orderModel.getOrdersExtends([order.id]);
+
+    const conflictOrders = resGetConflictOrders[order.id];
+    order["blockedDates"] =
+      this.orderModel.generateBlockedDatesByOrders(conflictOrders);
+
+    const blockedListingsDates =
+      await this.orderModel.getBlockedListingsDatesForUser(
+        [order.listingId],
+        userId
+      );
+
+    order["blockedForRentalDates"] = blockedListingsDates[order.listingId];
+
+    if (userId == order.ownerId) {
+      order["conflictOrders"] = conflictOrders;
+      order["ownerAcceptListingQrcode"] = null;
+    } else {
+      order["tenantAcceptListingQrcode"] = null;
+    }
+
+    order["actualUpdateRequest"] =
+      await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
+
+    order["previousUpdateRequest"] =
+      await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
+
+    order["tenantCountItems"] = await this.listingModel.getTenantCountListings(
+      order.tenantId
+    );
+
+    order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(
+      order.ownerId
+    );
+
+    return order;
+  };
 }
 
 module.exports = OrderController;

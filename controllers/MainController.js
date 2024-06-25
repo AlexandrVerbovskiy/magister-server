@@ -345,7 +345,7 @@ class MainController extends Controller {
   ) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
-      const order = await getOrderByRequest();
+      let order = await getOrderByRequest();
 
       if (!order || (userId != order.tenantId && userId != order.ownerId)) {
         return this.sendErrorResponse(
@@ -355,45 +355,7 @@ class MainController extends Controller {
         );
       }
 
-      const resGetConflictOrders = await this.orderModel.getConflictOrders([
-        order.id,
-      ]);
-
-      order["extendOrders"] = await this.orderModel.getOrdersExtends([
-        order.id,
-      ]);
-
-      const conflictOrders = resGetConflictOrders[order.id];
-      order["blockedDates"] =
-        this.orderModel.generateBlockedDatesByOrders(conflictOrders);
-
-      const blockedListingsDates =
-        await this.orderModel.getBlockedListingsDatesForUser(
-          [order.listingId],
-          userId
-        );
-
-      order["blockedForRentalDates"] = blockedListingsDates[order.listingId];
-
-      if (userId == order.ownerId) {
-        order["conflictOrders"] = conflictOrders;
-        order["ownerAcceptListingQrcode"] = null;
-      } else {
-        order["tenantAcceptListingQrcode"] = null;
-      }
-
-      order["actualUpdateRequest"] =
-        await this.orderUpdateRequestModel.getActualRequestInfo(order.id);
-
-      order["previousUpdateRequest"] =
-        await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
-
-      order["tenantCountItems"] =
-        await this.listingModel.getTenantCountListings(order.tenantId);
-
-      order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(
-        order.ownerId
-      );
+      order = await this.orderController.wrapOrderFullInfo(order, userId);
 
       const categories = await this.getNavigationCategories();
 
@@ -409,12 +371,7 @@ class MainController extends Controller {
         tenantCancelFeePercent: tenantCancelFee,
       } = await this.systemOptionModel.getCommissionInfo();
 
-      const {
-        bankAccountIban,
-        bankAccountSwiftBic,
-        bankAccountBeneficiary,
-        bankAccountReferenceConceptCode,
-      } = await this.systemOptionModel.getBankAccountInfo();
+      const bankInfo = await this.systemOptionModel.getBankAccountInfo();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order: { ...order, ...dopOrderOptions },
@@ -423,12 +380,7 @@ class MainController extends Controller {
         ownerBaseCommission,
         tenantBaseCommission,
         tenantCancelFee,
-        bankInfo: {
-          bankAccountIban,
-          bankAccountSwiftBic,
-          bankAccountBeneficiary,
-          bankAccountReferenceConceptCode,
-        },
+        bankInfo,
       });
     });
 
@@ -1264,6 +1216,8 @@ class MainController extends Controller {
 
   getUserChatOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const chatId = req.body.id;
+      const userId = req.userData.userId;
       const chatRes = await this.chatController.baseGetChatList(req, res);
 
       if (chatRes.error) {
@@ -1279,8 +1233,6 @@ class MainController extends Controller {
         error: null,
       };
 
-      const chatId = req.body.id;
-
       if (chatId) {
         messageRes = await this.chatController.baseGetChatMessageList(req, res);
       }
@@ -1290,9 +1242,16 @@ class MainController extends Controller {
       }
 
       let entity = null;
+      let dopEntityInfo = {};
 
       if (chatId) {
-        entity = await this.chatController.baseGetChatEntityInfo(chatId);
+        const entityInfoRes = await this.chatController.baseGetChatEntityInfo(
+          chatId,
+          userId
+        );
+
+        entity = entityInfoRes.entity;
+        dopEntityInfo = entityInfoRes.dopEntityInfo;
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1303,6 +1262,7 @@ class MainController extends Controller {
         messages: messageRes.list,
         messagesCanShowMore: messageRes.canShowMore,
         entity,
+        dopEntityInfo,
       });
     });
 
