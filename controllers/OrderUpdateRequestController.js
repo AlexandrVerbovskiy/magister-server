@@ -8,8 +8,9 @@ class OrderUpdateRequestController extends Controller {
       const senderId = req.userData.userId;
 
       const order = await this.orderModel.getFullById(orderId);
+      const { tenantId, ownerId, chatId } = order;
 
-      if (order.tenantId != senderId && order.ownerId != senderId) {
+      if (tenantId != senderId && ownerId != senderId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -33,11 +34,11 @@ class OrderUpdateRequestController extends Controller {
         }
       }
 
-      if (order.tenantId == senderId) {
+      if (tenantId == senderId) {
         await this.orderModel.setPendingOwnerStatus(orderId);
       }
 
-      if (order.ownerId == senderId) {
+      if (ownerId == senderId) {
         await this.orderModel.setPendingTenantStatus(orderId);
       }
 
@@ -56,11 +57,33 @@ class OrderUpdateRequestController extends Controller {
         createdRequestId
       );
 
+      let chatMessage = null;
+
+      if (chatId) {
+        const firstImage = order.listingImages[0];
+
+        chatMessage = await this.chatMessageModel.createUpdateOrderMessage({
+          chatId: order.chatId,
+          senderId,
+          data: {
+            requestId: request.id,
+            listingName: order.listingName,
+            offerPrice: newPricePerDay,
+            listingPhotoPath: firstImage?.link,
+            listingPhotoType: firstImage?.type,
+            offerDateStart: newStartDate,
+            offerDateEnd: newEndDate,
+          },
+        });
+
+        await this.sendMessageForOrder(chatMessage, senderId);
+      }
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
         "Created successfully",
-        request
+        { request, chatMessage }
       );
     });
 }
