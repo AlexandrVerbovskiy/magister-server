@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { searchedWordController } = require("../../controllers");
+const { SearchedWordController } = require("../../controllers");
 const { isAuth, isAdmin, isSmallFileLimit } = require("../../middlewares");
 const {
   listValidation,
@@ -10,30 +10,36 @@ const {
 } = require("../../validations/searchedWord");
 const { smallUpload } = require("../../utils");
 
-router.post(
-  "/list",
-  isAuth,
-  isAdmin,
-  listValidation,
-  searchedWordController.list
-);
-router.post(
-  "/create-category",
-  smallUpload.single("photo"),
-  isSmallFileLimit,
-  isAuth,
-  isAdmin,
-  createCategoryValidation,
-  searchedWordController.createCategory
-);
+module.exports = (io) => {
+  const searchedWordController = new SearchedWordController(io);
 
-router.get(
-  "/get-by-id/:id",
-  isAuth,
-  isAdmin,
-  idValidation,
-  searchedWordController.getById
-);
-router.get("/tips-list", tipsListValidation, searchedWordController.tipsList);
+  router.post(
+    "/list",
+    isAuth,
+    isAdmin,
+    listValidation,
+    searchedWordController.list
+  );
 
-module.exports = router;
+  router.post(
+    "/create-category",
+    smallUpload.single("photo"),
+    isSmallFileLimit,
+    isAuth,
+    isAdmin,
+    createCategoryValidation,
+    searchedWordController.createCategory
+  );
+
+  router.get(
+    "/get-by-id/:id",
+    isAuth,
+    isAdmin,
+    idValidation,
+    searchedWordController.getById
+  );
+
+  router.get("/tips-list", tipsListValidation, searchedWordController.tipsList);
+
+  return router;
+};

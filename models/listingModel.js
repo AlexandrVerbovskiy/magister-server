@@ -38,6 +38,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_terms`,
     `${LISTINGS_TABLE}.key_words`,
     `${LISTINGS_TABLE}.dop_defect`,
+    `${LISTINGS_TABLE}.background_photo`,
   ];
 
   visibleFields = [
@@ -61,6 +62,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_terms as rentalTerms`,
     `${LISTINGS_TABLE}.key_words as keyWords`,
     `${LISTINGS_TABLE}.dop_defect as dopDefect`,
+    `${LISTINGS_TABLE}.background_photo as backgroundPhoto`,
   ];
 
   fullVisibleFields = [
@@ -161,6 +163,7 @@ class ListingsModel extends Model {
     listingImages = [],
     defects = [],
     city,
+    backgroundPhoto = null,
     active = true,
     dopDefect = "",
   }) => {
@@ -189,6 +192,7 @@ class ListingsModel extends Model {
         city,
         active,
         dop_defect: dopDefect,
+        background_photo: backgroundPhoto,
       })
       .returning("id");
 
@@ -235,6 +239,15 @@ class ListingsModel extends Model {
     const defects = await this.getDefects(id);
 
     return { ...listing, listingImages, defects };
+  };
+
+  getBackgroundPhoto = async (id) => {
+    const listing = await db(LISTINGS_TABLE)
+      .where({ id })
+      .select(`background_photo as backgroundPhoto`)
+      .first();
+
+    return listing?.backgroundPhoto;
   };
 
   getListByIds = async (ids) => {
@@ -319,34 +332,39 @@ class ListingsModel extends Model {
     active,
     dopDefect = "",
     defects = [],
+    backgroundPhoto = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
     }
 
-    await db(LISTINGS_TABLE)
-      .where({ id })
-      .update({
-        name,
-        city,
-        description,
-        postcode,
-        approved,
-        rental_lat: Number(rentalLat),
-        rental_lng: Number(rentalLng),
-        rental_terms: rentalTerms,
-        rental_radius: rentalRadius,
-        category_id: categoryId,
-        price_per_day: pricePerDay,
-        min_rental_days: minRentalDays,
-        compensation_cost: compensationCost,
-        count_stored_items: countStoredItems,
-        key_words: keyWords,
-        owner_id: ownerId,
-        address,
-        active,
-        dop_defect: dopDefect,
-      });
+    const updateData = {
+      name,
+      city,
+      description,
+      postcode,
+      approved,
+      rental_lat: Number(rentalLat),
+      rental_lng: Number(rentalLng),
+      rental_terms: rentalTerms,
+      rental_radius: rentalRadius,
+      category_id: categoryId,
+      price_per_day: pricePerDay,
+      min_rental_days: minRentalDays,
+      compensation_cost: compensationCost,
+      count_stored_items: countStoredItems,
+      key_words: keyWords,
+      owner_id: ownerId,
+      address,
+      active,
+      dop_defect: dopDefect,
+    };
+
+    if (backgroundPhoto) {
+      updateData["background_photo"] = backgroundPhoto;
+    }
+
+    await db(LISTINGS_TABLE).where({ id }).update(updateData);
 
     const currentImages = await this.getListingImages(id);
     const currentImageLinks = currentImages.map((image) => image.link);
@@ -364,7 +382,7 @@ class ListingsModel extends Model {
       .map((image) => image.link);
 
     const imagesToUpdateIds = listingImagesToUpdate.map((image) => image.id);
-    
+
     await db(LISTING_IMAGES_TABLE)
       .where("listing_id", id)
       .whereNotIn("link", actualListingImageLinks)
@@ -864,13 +882,7 @@ class ListingsModel extends Model {
   };
 
   listWithLastRequests = async (props) => {
-    const {
-      filter,
-      start,
-      count,
-      active = null,
-      approved = null,
-    } = props;
+    const { filter, start, count, active = null, approved = null } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = db(LISTINGS_TABLE)

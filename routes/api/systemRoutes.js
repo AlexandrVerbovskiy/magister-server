@@ -1,29 +1,34 @@
 const { Router } = require("express");
 const router = Router();
-const { systemController } = require("../../controllers");
+const { SystemController } = require("../../controllers");
 const {
   setCommissionOptionsValidation,
   setMainOptionsValidation,
   setSystemBankAccountInfoValidation,
 } = require("../../validations/system");
 
-router.get("/get-system-options", systemController.getSystemOptions);
-router.post(
-  "/set-system-commission-options",
-  setCommissionOptionsValidation,
-  systemController.setSystemCommissionOptions
-);
+module.exports = (io) => {
+  const systemController = new SystemController(io);
 
-router.post(
-  "/set-system-bank-account-options",
-  setSystemBankAccountInfoValidation,
-  systemController.setSystemBankAccountInfo
-);
+  router.get("/get-system-options", systemController.getSystemOptions);
 
-router.post(
-  "/set-system-main-options",
-  setMainOptionsValidation,
-  systemController.setMainCommissionOptions
-);
+  router.post(
+    "/set-system-commission-options",
+    setCommissionOptionsValidation,
+    systemController.setSystemCommissionOptions
+  );
 
-module.exports = router;
+  router.post(
+    "/set-system-bank-account-options",
+    setSystemBankAccountInfoValidation,
+    systemController.setSystemBankAccountInfo
+  );
+
+  router.post(
+    "/set-system-main-options",
+    setMainOptionsValidation,
+    systemController.setMainCommissionOptions
+  );
+
+  return router;
+};
