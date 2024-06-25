@@ -294,8 +294,12 @@ class ListingController extends Controller {
     const dataToSave = req.body;
 
     const backgroundPhoto = req.files.find(
-      (file) => file.fieldname === "backgroundPhoto"
+      (file) => file.fieldname === "background_photo"
     );
+
+    if (!backgroundPhoto) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST);
+    }
 
     dataToSave["backgroundPhoto"] = this.moveUploadsFileToFolder(
       backgroundPhoto,
@@ -378,15 +382,19 @@ class ListingController extends Controller {
 
     let backgroundImageToDelete = null;
 
-    if (backgroundPhoto) {
-      backgroundImageToDelete = await this.listingModel.getBackgroundPhoto(
-        listingId
-      );
+    const currentBackgroundImage = await this.listingModel.getBackgroundPhoto(
+      listingId
+    );
 
+    if (backgroundPhoto) {
       dataToSave["backgroundPhoto"] = this.moveUploadsFileToFolder(
         backgroundPhoto,
         "listings"
       );
+
+      backgroundImageToDelete = currentBackgroundImage;
+    } else {
+      dataToSave["backgroundPhoto"] = currentBackgroundImage;
     }
 
     dataToSave["listingImages"] = this.localGetFiles(req);
