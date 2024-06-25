@@ -2,16 +2,16 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Controller = require("./Controller");
-const listingController = require("./listingController");
-const userController = require("./userController");
-const logController = require("./logController");
-const userEventLogController = require("./userEventLogController");
-const userVerifyRequestController = require("./userVerifyRequestController");
-const searchedWordController = require("./searchedWordController");
-const listingApprovalRequestController = require("./listingApprovalRequestController");
-const orderController = require("./orderController");
-const senderPaymentController = require("./senderPaymentController");
-const recipientPaymentController = require("./recipientPaymentController");
+const ListingController = require("./ListingController");
+const UserController = require("./UserController");
+const LogController = require("./LogController");
+const UserEventLogController = require("./UserEventLogController");
+const UserVerifyRequestController = require("./UserVerifyRequestController");
+const SearchedWordController = require("./SearchedWordController");
+const ListingApprovalRequestController = require("./ListingApprovalRequestController");
+const OrderController = require("./OrderController");
+const SenderPaymentController = require("./SenderPaymentController");
+const RecipientPaymentController = require("./RecipientPaymentController");
 
 const coordsByIp = require("../utils/coordsByIp");
 const {
@@ -21,13 +21,34 @@ const {
   getDaysDifference,
   isDateAfterStartDate,
 } = require("../utils");
-const tenantCommentController = require("./tenantCommentController");
-const ownerCommentController = require("./ownerCommentController");
-const listingCommentController = require("./listingCommentController");
-const disputeController = require("./disputeController");
-const chatController = require("./chatController");
+const TenantCommentController = require("./TenantCommentController");
+const OwnerCommentController = require("./OwnerCommentController");
+const ListingCommentController = require("./ListingCommentController");
+const DisputeController = require("./DisputeController");
+const ChatController = require("./ChatController");
 
 class MainController extends Controller {
+  constructor(io) {
+    super(io);
+
+    this.listingController = new ListingController(io);
+    this.userController = new UserController(io);
+    this.logController = new LogController(io);
+    this.userEventLogController = new UserEventLogController(io);
+    this.userVerifyRequestController = new UserVerifyRequestController(io);
+    this.searchedWordController = new SearchedWordController(io);
+    this.listingApprovalRequestController =
+      new ListingApprovalRequestController(io);
+    this.orderController = new OrderController(io);
+    this.senderPaymentController = new SenderPaymentController(io);
+    this.recipientPaymentController = new RecipientPaymentController(io);
+    this.tenantCommentController = new TenantCommentController(io);
+    this.ownerCommentController = new OwnerCommentController(io);
+    this.listingCommentController = new ListingCommentController(io);
+    this.disputeController = new DisputeController(io);
+    this.chatController = new ChatController(io);
+  }
+
   getNavigationCategories = () =>
     this.listingCategoryModel.listGroupedByLevel();
 
@@ -38,7 +59,7 @@ class MainController extends Controller {
   getViewPageWithCategoriesOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.listingCategoryModel.getFullInfoList();
-      
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
       });
@@ -127,7 +148,8 @@ class MainController extends Controller {
   getUserListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
-      const result = await listingController.baseListingWithStatusesList(
+
+      const result = await this.listingController.baseListingWithStatusesList(
         req,
         userId
       );
@@ -142,7 +164,7 @@ class MainController extends Controller {
 
   getAdminUserListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await userController.baseUserList(req);
+      const result = await this.userController.baseUserList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -150,7 +172,7 @@ class MainController extends Controller {
 
   getAdminLogListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const logListOptions = await logController.baseLogList(req);
+      const logListOptions = await this.logController.baseLogList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...logListOptions,
       });
@@ -159,7 +181,7 @@ class MainController extends Controller {
   getAdminUserEventLogListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const eventLogListOptions =
-        await userEventLogController.baseUserEventLogList(req);
+        await this.userEventLogController.baseUserEventLogList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...eventLogListOptions,
       });
@@ -168,7 +190,7 @@ class MainController extends Controller {
   getAdminUserUserVerifyRequestListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userVerifyRequestListOptions =
-        await userVerifyRequestController.baseUserVerifyRequestList(req);
+        await this.userVerifyRequestController.baseUserVerifyRequestList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...userVerifyRequestListOptions,
@@ -178,7 +200,8 @@ class MainController extends Controller {
   getAdminSearchedWordListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const searchedWordListOptions =
-        await searchedWordController.baseSearchedWordList(req);
+        await this.searchedWordController.baseSearchedWordList(req);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...searchedWordListOptions,
       });
@@ -214,7 +237,7 @@ class MainController extends Controller {
     }
 
     if (searchCategories.length != 1 || !needSubscriptionNewCategory) {
-      const { countItems } = await listingController.baseCountListings(
+      const { countItems } = await this.listingController.baseCountListings(
         req,
         ownerId
       );
@@ -227,7 +250,7 @@ class MainController extends Controller {
     req.body.lat = coords.lat;
     req.body.lng = coords.lng;
 
-    const result = await listingController.baseListingList(req, ownerId);
+    const result = await this.listingController.baseListingList(req, ownerId);
 
     const priceLimits = await this.listingModel.priceLimits();
 
@@ -522,7 +545,7 @@ class MainController extends Controller {
   getAdminListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
-        await listingController.baseListingWithStatusesList(req);
+        await this.listingController.baseListingWithStatusesList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
@@ -616,10 +639,11 @@ class MainController extends Controller {
   getUserListingApprovalRequestListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
-      const result = await listingApprovalRequestController.baseRequestsList(
-        req,
-        userId
-      );
+      const result =
+        await this.listingApprovalRequestController.baseRequestsList(
+          req,
+          userId
+        );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
@@ -628,9 +652,8 @@ class MainController extends Controller {
 
   getAdminListingApprovalRequestListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await listingApprovalRequestController.baseRequestsList(
-        req
-      );
+      const result =
+        await this.listingApprovalRequestController.baseRequestsList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
@@ -689,8 +712,8 @@ class MainController extends Controller {
       } = await this.systemOptionModel.getOptions();
 
       const request = isForTenant
-        ? orderController.baseTenantOrderList
-        : orderController.baseListingOwnerOrderList;
+        ? this.orderController.baseTenantOrderList
+        : this.orderController.baseListingOwnerOrderList;
 
       const result = await request(req);
       const categories = await this.getNavigationCategories();
@@ -733,7 +756,7 @@ class MainController extends Controller {
 
   getAdminOrderListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await orderController.baseAdminOrderList(req);
+      const result = await this.orderController.baseAdminOrderList(req);
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -762,12 +785,13 @@ class MainController extends Controller {
 
   getAdminSenderPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await senderPaymentController.baseAllSenderPaymentList(
-        req,
-        null,
-        STATIC.TIME_FILTER_TYPES.TYPE,
-        true
-      );
+      const result =
+        await this.senderPaymentController.baseAllSenderPaymentList(
+          req,
+          null,
+          STATIC.TIME_FILTER_TYPES.TYPE,
+          true
+        );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -800,7 +824,7 @@ class MainController extends Controller {
   getAdminRecipientPaymentListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result =
-        await recipientPaymentController.baseAllRecipientPaymentList(
+        await this.recipientPaymentController.baseAllRecipientPaymentList(
           req,
           null,
           STATIC.TIME_FILTER_TYPES.TYPE
@@ -852,10 +876,13 @@ class MainController extends Controller {
       const { userId } = req.userData;
 
       const senderPaymentInfo =
-        await senderPaymentController.baseAllSenderPaymentList(req, userId);
+        await this.senderPaymentController.baseAllSenderPaymentList(
+          req,
+          userId
+        );
 
       const recipientPaymentInfo =
-        await recipientPaymentController.baseAllRecipientPaymentList(
+        await this.recipientPaymentController.baseAllRecipientPaymentList(
           req,
           userId,
           STATIC.TIME_FILTER_TYPES.DURATION
@@ -1156,7 +1183,7 @@ class MainController extends Controller {
 
   getAdminTenantCommentsPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await tenantCommentController.baseCommentList(req);
+      const result = await this.tenantCommentController.baseCommentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -1164,7 +1191,7 @@ class MainController extends Controller {
 
   getAdminOwnerCommentsPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await ownerCommentController.baseCommentList(req);
+      const result = await this.ownerCommentController.baseCommentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -1172,7 +1199,7 @@ class MainController extends Controller {
 
   getAdminListingCommentsPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await listingCommentController.baseCommentList(req);
+      const result = await this.listingCommentController.baseCommentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -1231,13 +1258,13 @@ class MainController extends Controller {
 
   getAdminDisputesPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await disputeController.baseDisputeList(req);
+      const result = await this.disputeController.baseDisputeList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   getUserChatOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const chatRes = await chatController.baseGetChatList(req, res);
+      const chatRes = await this.chatController.baseGetChatList(req, res);
 
       if (chatRes.error) {
         return this.sendErrorResponse(res, chatRes.error);
@@ -1255,7 +1282,7 @@ class MainController extends Controller {
       const chatId = req.body.id;
 
       if (chatId) {
-        messageRes = await chatController.baseGetChatMessageList(req, res);
+        messageRes = await this.chatController.baseGetChatMessageList(req, res);
       }
 
       if (messageRes.error) {
@@ -1265,7 +1292,7 @@ class MainController extends Controller {
       let entity = null;
 
       if (chatId) {
-        entity = await chatController.baseGetChatEntityInfo(chatId);
+        entity = await this.chatController.baseGetChatEntityInfo(chatId);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1295,4 +1322,4 @@ class MainController extends Controller {
     });
 }
 
-module.exports = new MainController();
+module.exports = MainController;

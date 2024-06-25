@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { listingApprovalRequestController } = require("../../controllers");
+const { ListingApprovalRequestController } = require("../../controllers");
 const { isAuth, isAdmin } = require("../../middlewares");
 const {
   listValidation,
@@ -8,37 +8,43 @@ const {
   rejectValidation,
 } = require("../../validations/listingApprovalRequest");
 
-router.post("/list", listValidation, listingApprovalRequestController.list);
+module.exports = (io) => {
+  const listingApprovalRequestController = new ListingApprovalRequestController(
+    io
+  );
 
-router.post(
-  "/admin-list",
-  isAuth,
-  isAdmin,
-  listValidation,
-  listingApprovalRequestController.adminList
-);
+  router.post("/list", listValidation, listingApprovalRequestController.list);
 
-router.post(
-  "/create",
-  isAuth,
-  idValidation,
-  listingApprovalRequestController.create
-);
+  router.post(
+    "/admin-list",
+    isAuth,
+    isAdmin,
+    listValidation,
+    listingApprovalRequestController.adminList
+  );
 
-router.post(
-  "/approve",
-  isAuth,
-  isAdmin,
-  idValidation,
-  listingApprovalRequestController.approve
-);
+  router.post(
+    "/create",
+    isAuth,
+    idValidation,
+    listingApprovalRequestController.create
+  );
 
-router.post(
-  "/reject",
-  isAuth,
-  isAdmin,
-  rejectValidation,
-  listingApprovalRequestController.reject
-);
+  router.post(
+    "/approve",
+    isAuth,
+    isAdmin,
+    idValidation,
+    listingApprovalRequestController.approve
+  );
 
-module.exports = router;
+  router.post(
+    "/reject",
+    isAuth,
+    isAdmin,
+    rejectValidation,
+    listingApprovalRequestController.reject
+  );
+
+  return router;
+};

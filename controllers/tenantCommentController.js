@@ -24,4 +24,4 @@ class TenantCommentController extends BaseCommentController {
   };
 }
 
-module.exports = new TenantCommentController();
+module.exports = TenantCommentController;

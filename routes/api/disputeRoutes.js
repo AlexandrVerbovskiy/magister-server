@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const { disputeController } = require("../../controllers");
+const { DisputeController } = require("../../controllers");
 const { isAuth, isSupport } = require("../../middlewares");
 const {
   adminDisputeListValidation,
@@ -9,35 +9,39 @@ const {
   unsolveDisputeValidation,
 } = require("../../validations/disputes");
 
-router.post(
-  "/list",
-  isAuth,
-  isSupport,
-  adminDisputeListValidation,
-  disputeController.list
-);
+module.exports = (io) => {
+  const disputeController = new DisputeController(io);
 
-router.post(
-  "/create",
-  isAuth,
-  createDisputeValidation,
-  disputeController.create
-);
+  router.post(
+    "/list",
+    isAuth,
+    isSupport,
+    adminDisputeListValidation,
+    disputeController.list
+  );
 
-router.post(
-  "/solve",
-  isAuth,
-  isSupport,
-  solveDisputeValidation,
-  disputeController.solve
-);
+  router.post(
+    "/create",
+    isAuth,
+    createDisputeValidation,
+    disputeController.create
+  );
 
-router.post(
-  "/unsolve",
-  isAuth,
-  isSupport,
-  unsolveDisputeValidation,
-  disputeController.unsolve
-);
+  router.post(
+    "/solve",
+    isAuth,
+    isSupport,
+    solveDisputeValidation,
+    disputeController.solve
+  );
 
-module.exports = router;
+  router.post(
+    "/unsolve",
+    isAuth,
+    isSupport,
+    unsolveDisputeValidation,
+    disputeController.unsolve
+  );
+
+  return router;
+};

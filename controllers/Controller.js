@@ -64,7 +64,9 @@ class Controller {
   mailTransporter = null;
   io = null;
 
-  constructor() {
+  constructor(io = null) {
+    this.io = io;
+
     this.userModel = userModel;
 
     this.logModel = logModel;
@@ -121,10 +123,6 @@ class Controller {
         viewPath: path.resolve("./mails/"),
       })
     );
-  }
-
-  bindIo(io) {
-    this.io = io;
   }
 
   sendSocketIoMessage = (socket, messageKey, message) => {
@@ -410,7 +408,7 @@ class Controller {
     this.createFolderIfNotExists(destinationDir);
     const newFilePath = path.join(destinationDir, name + "." + type);
     fs.renameSync(originalFilePath, newFilePath);
-    
+
     return folder + "/" + name + "." + type;
   };
 
@@ -757,6 +755,33 @@ class Controller {
     };
 
     return await this.generatePdf("/pdfs/invoice", params);
+  };
+
+  sendSocketMessageToUserOpponent = async (
+    chatId,
+    userId,
+    messageKey,
+    message
+  ) => {
+    const sockets = await this.chatModel.getChatOpponentSockets(chatId, userId);
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, messageKey, message)
+    );
+  };
+
+  sendMessageForOrder = async (message, senderId) => {
+    const chatId = message.chatId;
+    const sender = await this.userModel.getById(senderId);
+
+    await this.sendSocketMessageToUserOpponent(
+      chatId,
+      senderId,
+      "get-message",
+      {
+        message,
+        opponent: sender,
+      }
+    );
   };
 }
 

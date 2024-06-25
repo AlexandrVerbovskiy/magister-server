@@ -1,18 +1,19 @@
 const { Router } = require("express");
 const router = Router();
-const { orderUpdateRequestController } = require("../../controllers");
-const {
-  isAuth,
-  isVerified,
-} = require("../../middlewares");
-const {createValidation} = require("../../validations/orderUpdateRequest");
+const { OrderUpdateRequestController } = require("../../controllers");
+const { isAuth, isVerified } = require("../../middlewares");
+const { createValidation } = require("../../validations/orderUpdateRequest");
 
-router.post(
-  "/create",
-  isAuth,
-  isVerified,
-  createValidation,
-  orderUpdateRequestController.create
-);
+module.exports = (io) => {
+  const orderUpdateRequestController = new OrderUpdateRequestController(io);
 
-module.exports = router;
+  router.post(
+    "/create",
+    isAuth,
+    isVerified,
+    createValidation,
+    orderUpdateRequestController.create
+  );
+
+  return router;
+};

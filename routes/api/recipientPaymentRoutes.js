@@ -1,48 +1,56 @@
 const { Router } = require("express");
 const router = Router();
-const { recipientPaymentController } = require("../../controllers");
+const { RecipientPaymentController } = require("../../controllers");
 const { isAuth, isAdmin, isVerified } = require("../../middlewares");
 const {
   listValidation,
   waitingRefundsListValidation,
 } = require("../../validations/recipientPayment");
 
-router.post(
-  "/list",
-  isAuth,
-  isVerified,
-  listValidation,
-  recipientPaymentController.userList
-);
+module.exports = (io) => {
+  const recipientPaymentController = new RecipientPaymentController(io);
 
-router.post(
-  "/admin-list",
-  isAuth,
-  isAdmin,
-  listValidation,
-  recipientPaymentController.adminList
-);
+  router.post(
+    "/list",
+    isAuth,
+    isVerified,
+    listValidation,
+    recipientPaymentController.userList
+  );
 
-router.post(
-  "/completed",
-  isAuth,
-  isAdmin,
-  recipientPaymentController.markAsCompletedRefund
-);
+  router.post(
+    "/admin-list",
+    isAuth,
+    isAdmin,
+    listValidation,
+    recipientPaymentController.adminList
+  );
 
-router.post(
-  "/rejected",
-  isAuth,
-  isAdmin,
-  recipientPaymentController.markAsFailedRefund
-);
+  router.post(
+    "/completed",
+    isAuth,
+    isAdmin,
+    recipientPaymentController.markAsCompletedRefund
+  );
 
-router.post("/update-failed", isAuth, recipientPaymentController.updateFailed);
+  router.post(
+    "/rejected",
+    isAuth,
+    isAdmin,
+    recipientPaymentController.markAsFailedRefund
+  );
 
-router.post(
-  "/failed-recipient-mark-done",
-  isAuth,
-  recipientPaymentController.markFailedRecipientDone
-);
+  router.post(
+    "/update-failed",
+    isAuth,
+    recipientPaymentController.updateFailed
+  );
 
-module.exports = router;
+  router.post(
+    "/failed-recipient-mark-done",
+    isAuth,
+    recipientPaymentController.markFailedRecipientDone
+  );
+
+  return router;
+};

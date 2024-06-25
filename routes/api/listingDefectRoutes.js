@@ -1,8 +1,10 @@
 const { Router } = require("express");
 const router = Router();
-const { listingDefectController } = require("../../controllers");
+const { ListingDefectController } = require("../../controllers");
 const { isAuth, isAdmin, isSmallFileLimit } = require("../../middlewares");
 
-router.post("/save", isAuth, isAdmin, listingDefectController.saveList);
-
-module.exports = router;
+module.exports = (io) => {
+  const listingDefectController = new ListingDefectController(io);
+  router.post("/save", isAuth, isAdmin, listingDefectController.saveList);
+  return router;
+};
