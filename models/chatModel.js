@@ -334,6 +334,25 @@ class ChatModel extends Model {
     return opponentInfo.map((row) => row.socket);
   };
 
+  getChatUsersSockets = async (chatId) => {
+    const userInfos = await db(`${CHAT_RELATION_TABLE} as searcher_relation`)
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as opponent_relation ON (searcher_relation.chat_id = opponent_relation.chat_id)`
+      )
+      .join(
+        SOCKET_TABLE,
+        `${SOCKET_TABLE}.user_id`,
+        "=",
+        "opponent_relation.user_id"
+      )
+      .where(`opponent_relation.chat_id`, "=", chatId)
+      .select(`${SOCKET_TABLE}.socket`);
+
+    const sockets = userInfos.map((row) => row.socket);
+    const uniqueSockets = [...new Set(sockets)];
+    return uniqueSockets;
+  };
+
   getUserChatsOpponentSockets = async (userId) => {
     const opponentInfos = await db(
       `${CHAT_RELATION_TABLE} as searcher_relation`

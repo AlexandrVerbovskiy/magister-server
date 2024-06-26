@@ -165,16 +165,53 @@ class SenderPaymentController extends Controller {
       const { token: ownerToken, image: generatedImage } =
         await this.generateQrCodeInfo(STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL);
 
+      let newStatus = null;
+
       if (order.parentId) {
-        await this.orderModel.orderTenantGotListing(orderId, {
+        newStatus = await this.orderModel.orderTenantGotListing(orderId, {
           token: ownerToken,
           qrCode: generatedImage,
         });
       } else {
-        await this.orderModel.orderTenantPayed(orderId, {
+        newStatus = await this.orderModel.orderTenantPayed(orderId, {
           token: ownerToken,
           qrCode: generatedImage,
         });
+      }
+
+      const chatId = order.chatId;
+
+      if (chatId) {
+        const message = await createMessageFunc({
+          chatId,
+          senderId: order.tenantId,
+          data: messageData,
+        });
+
+        const tenant = await this.userModel.getById(order.tenantId);
+        const owner = await this.userModel.getById(order.ownerId);
+
+        await this.sendSocketMessageToUserOpponent(
+          chatId,
+          order.ownerId,
+          "get-message",
+          {
+            message,
+            opponent: tenant,
+            orderPart: { status: newStatus },
+          }
+        );
+
+        await this.sendSocketMessageToUserOpponent(
+          chatId,
+          order.tenantId,
+          "get-message",
+          {
+            message,
+            opponent: owner,
+            orderPart: { status: newStatus },
+          }
+        );
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);

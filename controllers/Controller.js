@@ -769,19 +769,48 @@ class Controller {
     );
   };
 
-  sendMessageForOrder = async (message, senderId) => {
-    const chatId = message.chatId;
+  sendSocketMessageToChatUsers = async (
+    chatId,
+    messageKey,
+    message
+  ) => {
+    const sockets = await this.chatModel.getChatUsersSockets(chatId);
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, messageKey, message)
+    );
+  };
+
+  createAndSendMessageForUpdatedOrder = async ({
+    chatId,
+    senderId,
+    orderPart,
+    createMessageFunc,
+    messageData = {},
+  }) => {
+    if (!chatId) {
+      return { chatMessage: null };
+    }
+
+    const message = await createMessageFunc({
+      chatId,
+      senderId,
+      data: messageData,
+    });
+
     const sender = await this.userModel.getById(senderId);
 
     await this.sendSocketMessageToUserOpponent(
       chatId,
       senderId,
-      "get-message",
+      "update-order-message",
       {
         message,
         opponent: sender,
+        orderPart,
       }
     );
+
+    return { chatMessage: message };
   };
 }
 

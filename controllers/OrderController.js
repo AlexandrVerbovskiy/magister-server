@@ -11,6 +11,21 @@ const Controller = require("./Controller");
 const fs = require("fs");
 
 class OrderController extends Controller {
+  sendMessageForNewOrder = async ({ message, senderId }) => {
+    const chatId = createdMessages[ownerId].chatId;
+    const sender = await this.userModel.getById(senderId);
+
+    await this.sendSocketMessageToUserOpponent(
+      chatId,
+      senderId,
+      "get-message",
+      {
+        message,
+        opponent: sender,
+      }
+    );
+  };
+
   getFullById = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
@@ -118,7 +133,10 @@ class OrderController extends Controller {
         },
       });
 
-      await this.sendMessageForOrder(createdMessages[tenantId], tenantId);
+      await this.sendMessageForNewOrder({
+        message: createdMessages,
+        senderId: tenantId,
+      });
 
       return this.sendSuccessResponse(
         res,
@@ -196,7 +214,10 @@ class OrderController extends Controller {
         },
       });
 
-      await this.sendMessageForOrder(createdMessages[tenantId], tenantId);
+      await this.sendMessageForNewOrder({
+        message: createdMessages,
+        senderId: tenantId,
+      });
 
       return this.sendSuccessResponse(
         res,
@@ -532,7 +553,23 @@ class OrderController extends Controller {
         await this.orderModel.acceptOrder(id);
       }
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const newStatus = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createAcceptedOrderMessage,
+        orderPart: {
+          id: order.id,
+          status: newStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        status: newStatus,
+      });
     });
 
   rejectBooking = (req, res) =>
@@ -582,15 +619,37 @@ class OrderController extends Controller {
         };
       }
 
+      let newStatus = null;
+      let newCancelStatus = null;
+
       if (order.tenantId == userId) {
         await this.orderModel.successCancelled(id, newData);
+        newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
       } else {
         await this.orderModel.rejectOrder(id, newData);
+        newCancelStatus = STATIC.ORDER_STATUSES.REJECTED;
+        newStatus = order.status;
       }
 
       await this.orderUpdateRequestModel.closeLast(id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createRejectedOrderMessage,
+        orderPart: {
+          id: order.id,
+          status: newStatus,
+          cancelStatus: newCancelStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        status: newStatus,
+        cancelStatus: newCancelStatus,
+      });
     });
 
   delete = (req, res) =>
@@ -634,13 +693,15 @@ class OrderController extends Controller {
           : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
+      let newStatus = null;
+
       if (order.orderParentId) {
-        await this.orderModel.orderTenantGotListing(orderId, {
+        newStatus = await this.orderModel.orderTenantGotListing(orderId, {
           token,
           qrCode: generatedImage,
         });
       } else {
-        await this.orderModel.orderTenantPayed(orderId, {
+        newStatus = await this.orderModel.orderTenantPayed(orderId, {
           token,
           qrCode: generatedImage,
         });
@@ -658,7 +719,20 @@ class OrderController extends Controller {
         proofUrl: "",
       });
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createTenantPayedOrderMessage,
+        orderPart: {
+          status: newStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        status: newStatus,
+      });
     });
 
   unpaidTransactionByCreditCard = async (req, res) => {
@@ -770,6 +844,7 @@ class OrderController extends Controller {
     userId,
     userType,
     cancelFunc,
+    createMessageFunc,
     availableStatusesToCancel = [],
   }) => {
     const { id } = req.body;
@@ -806,8 +881,23 @@ class OrderController extends Controller {
       );
     }
 
-    const funcResult = await cancelFunc(id, orderInfo);
-    return funcResult ?? this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    const cancelStatus = await cancelFunc(id, orderInfo);
+
+    const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+      chatId: orderInfo.chatId,
+      messageData: {},
+      senderId: userId,
+      createMessageFunc: createMessageFunc,
+      orderPart: {
+        id: orderInfo.id,
+        cancelStatus,
+      },
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      chatMessage,
+      orderPart: { cancelStatus },
+    });
   };
 
   acceptCancelOrder = async (req, res, userId, userType) => {
@@ -885,6 +975,8 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
         cancelFunc: this.orderModel.startCancelByTenant,
+        createMessageFunc:
+          this.chatMessageModel.createCancelOrderRequestMessage,
       });
     });
 
@@ -902,6 +994,8 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
         cancelFunc: this.orderModel.startCancelByOwner,
+        createMessageFunc:
+          this.chatMessageModel.createCancelOrderRequestMessage,
       });
     });
 
@@ -1021,9 +1115,23 @@ class OrderController extends Controller {
         });
       }
 
-      await this.orderModel.successCancelled(id);
+      const newCancelStatus = await this.orderModel.successCancelled(id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: orderInfo.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+        orderPart: {
+          id: orderInfo.id,
+          cancelStatus: newCancelStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: { cancelStatus: newCancelStatus },
+      });
     });
 
   fullCancel = (req, res) =>
@@ -1040,6 +1148,7 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
         ],
         cancelFunc: this.orderModel.successCancelled,
+        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
       });
     });
 

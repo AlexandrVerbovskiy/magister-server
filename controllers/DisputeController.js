@@ -83,16 +83,49 @@ class DisputeController extends Controller {
         orderId,
       });
 
+      const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: { description, type },
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createStartedDisputeMessage,
+        orderPart: {
+          id: order.id,
+          disputeId,
+          disputeStatus,
+          disputeType: type,
+          disputeDescription: description,
+        },
+      });
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
         disputeId,
+        disputeStatus,
+        disputeType: type,
+        disputeDescription: description,
       });
     });
 
   solve = async (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { disputeId, solution } = req.body;
-      await this.disputeModel.solve(solution, disputeId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const disputeStatus = await this.disputeModel.solve(solution, disputeId);
+      const chatId = await this.disputeModel.getChatId(disputeId);
+
+      const chatMessage =
+        await this.chatMessageModel.createResolvedDisputeMessage({ chatId });
+
+      this.sendSocketMessageToChatUsers(chatId, "get-message", {
+        message: chatMessage,
+        orderPart: { disputeStatus },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        message: chatMessage,
+        orderPart: { disputeStatus },
+      });
     });
 
   unsolve = async (req, res) =>
