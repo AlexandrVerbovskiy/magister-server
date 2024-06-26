@@ -1156,7 +1156,8 @@ class MainController extends Controller {
     });
 
   createOwnerComment = async (req, res) => {
-    const { ownerCommentInfo, listingCommentInfo, orderId } = req.body;
+    const { userCommentInfo, listingCommentInfo, orderId } = req.body;
+    const senderId = req.userData.id;
 
     const orderHasOwnerComment =
       await this.ownerCommentModel.checkOrderHasComment(orderId);
@@ -1173,13 +1174,41 @@ class MainController extends Controller {
     }
 
     const ownerCommentId = await this.ownerCommentModel.create({
-      ...ownerCommentInfo,
+      ...userCommentInfo,
       orderId,
     });
 
     const listingCommentId = await this.listingCommentModel.create({
       ...listingCommentInfo,
       orderId,
+    });
+
+    const order = await this.orderModel.getById(orderId);
+    const chatId = order.chatId;
+
+    const listingMessage =
+      await this.chatMessageModel.createListingReviewMessage({
+        chatId,
+        senderId,
+        data: listingCommentInfo,
+      });
+
+    const ownerMessage = await this.chatMessageModel.createUserReviewMessage({
+      chatId,
+      senderId,
+      data: { ...userCommentInfo, type: "owner" },
+    });
+
+    const sender = await this.userModel.getById(senderId);
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: listingMessage,
+      opponent: sender,
+    });
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: ownerMessage,
+      opponent: sender,
     });
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1189,7 +1218,8 @@ class MainController extends Controller {
   };
 
   createTenantComment = async (req, res) => {
-    const { tenantCommentInfo, orderId } = req.body;
+    const { userCommentInfo, orderId } = req.body;
+    const senderId = req.userData.id;
 
     const orderHasTenantComment =
       await this.tenantCommentModel.checkOrderHasComment(orderId);
@@ -1199,8 +1229,24 @@ class MainController extends Controller {
     }
 
     const tenantCommentId = await this.tenantCommentModel.create({
-      ...tenantCommentInfo,
+      ...userCommentInfo,
       orderId,
+    });
+
+    const order = await this.orderModel.getById(orderId);
+    const chatId = order.chatId;
+
+    const tenantMessage = await this.chatMessageModel.createUserReviewMessage({
+      chatId,
+      senderId,
+      data: { ...userCommentInfo, type: "tenant" },
+    });
+
+    const sender = await this.userModel.getById(senderId);
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: tenantMessage,
+      opponent: sender,
     });
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {

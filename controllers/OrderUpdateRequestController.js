@@ -34,12 +34,16 @@ class OrderUpdateRequestController extends Controller {
         }
       }
 
+      let newStatus = null;
+
       if (tenantId == senderId) {
         await this.orderModel.setPendingOwnerStatus(orderId);
+        newStatus = STATIC.ORDER_STATUSES.PENDING_OWNER;
       }
 
       if (ownerId == senderId) {
         await this.orderModel.setPendingTenantStatus(orderId);
+        newStatus = STATIC.ORDER_STATUSES.PENDING_TENANT;
       }
 
       const fee = await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -57,27 +61,24 @@ class OrderUpdateRequestController extends Controller {
         createdRequestId
       );
 
-      let chatMessage = null;
-
-      if (chatId) {
-        const firstImage = order.listingImages[0];
-
-        chatMessage = await this.chatMessageModel.createUpdateOrderMessage({
-          chatId: order.chatId,
-          senderId,
-          data: {
-            requestId: request.id,
-            listingName: order.listingName,
-            offerPrice: newPricePerDay,
-            listingPhotoPath: firstImage?.link,
-            listingPhotoType: firstImage?.type,
-            offerDateStart: newStartDate,
-            offerDateEnd: newEndDate,
-          },
-        });
-
-        await this.sendMessageForOrder(chatMessage, senderId);
-      }
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {
+          requestId: request.id,
+          listingName: order.listingName,
+          offerPrice: newPricePerDay,
+          listingPhotoPath: firstImage?.link,
+          listingPhotoType: firstImage?.type,
+          offerDateStart: newStartDate,
+          offerDateEnd: newEndDate,
+        },
+        senderId,
+        createMessageFunc: this.chatMessageModel.createUpdateOrderMessage,
+        orderPart: {
+          id: order.id,
+          status: newStatus,
+        },
+      });
 
       return this.sendSuccessResponse(
         res,

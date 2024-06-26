@@ -5,8 +5,10 @@ const Model = require("./Model");
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const CHATS_TABLE = STATIC.TABLES.CHATS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
+
 class DisputeModel extends Model {
   lightVisibleFields = [
     `${DISPUTES_TABLE}.id`,
@@ -110,16 +112,24 @@ class DisputeModel extends Model {
   };
 
   solve = async (solution, disputeId) => {
+    const status = STATIC.DISPUTE_STATUSES.SOLVED;
+
     await db(DISPUTES_TABLE).where("id", disputeId).update({
       solution,
-      status: STATIC.DISPUTE_STATUSES.SOLVED,
+      status,
     });
+
+    return status;
   };
 
   unsolve = async (disputeId) => {
+    const status = STATIC.DISPUTE_STATUSES.UNSOLVED;
+
     await db(DISPUTES_TABLE).where("id", disputeId).update({
-      status: STATIC.DISPUTE_STATUSES.UNSOLVED,
+      status,
     });
+
+    return status;
   };
 
   baseTypeWhere = (type, query) => {
@@ -147,7 +157,7 @@ class DisputeModel extends Model {
     return query;
   };
 
-  getById = async(id) => {
+  getById = async (id) => {
     let query = db(DISPUTES_TABLE);
     query = this.fullOrdersJoin(query);
     query = query.select(this.visibleFields).where(`${DISPUTES_TABLE}.id`, id);
@@ -251,6 +261,22 @@ class DisputeModel extends Model {
       solvedCount: result["solvedCount"] ?? 0,
       unsolvedCount: result["unsolvedCount"] ?? 0,
     };
+  };
+
+  getChatId = async (disputeId) => {
+    const result = await db(DISPUTES_TABLE)
+      .join(
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
+        "=",
+        `${DISPUTES_TABLE}.order_id`
+      )
+      .join(CHATS_TABLE, `${CHATS_TABLE}.entity_id`, "=", `${ORDERS_TABLE}.id`)
+      .where(`${DISPUTES_TABLE}.id`, "=", disputeId)
+      .select([`${CHATS_TABLE}.id as chatId`])
+      .first();
+
+    return result?.chatId;
   };
 }
 

@@ -50,7 +50,7 @@ class ChatMessageModel extends Model {
   };
 
   userInfoJoin = (query) => {
-    return query.join(
+    return query.leftJoin(
       USER_TABLE,
       `${USER_TABLE}.id`,
       "=",
@@ -171,6 +171,80 @@ class ChatMessageModel extends Model {
     });
   };
 
+  createUpdatedTypeMessage = async ({ chatId, senderId, type }) => {
+    return await this.create({
+      chatId,
+      type,
+      isAdminSender: false,
+      senderId,
+      content: {},
+    });
+  };
+
+  createAcceptedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.ACCEPTED_ORDER,
+      senderId,
+    });
+  };
+
+  createRejectedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.REJECTED_ORDER,
+      senderId,
+    });
+  };
+
+  createTenantPayedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.TENANT_PAYED,
+      senderId,
+    });
+  };
+
+  createPendedToClientOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.PENDED_TO_CLIENT,
+      senderId,
+    });
+  };
+
+  createFinishedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.FINISHED,
+      senderId,
+    });
+  };
+
+  createCanceledOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.CANCELED_ORDER,
+      senderId,
+    });
+  };
+
+  createCancelOrderRequestMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.CREATED_CANCEL_REQUEST,
+      senderId,
+    });
+  };
+
+  createAcceptOrderRequestMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.ACCEPTED_CANCEL_REQUEST,
+      senderId,
+    });
+  };
+
   createListingReviewMessage = async ({
     chatId,
     senderId,
@@ -212,6 +286,8 @@ class ChatMessageModel extends Model {
       performance,
       location,
       leaveFeedback,
+      description,
+      type,
     },
   }) => {
     return await this.create({
@@ -227,11 +303,17 @@ class ChatMessageModel extends Model {
         performance,
         location,
         leaveFeedback,
+        description,
+        type,
       },
     });
   };
 
-  createStartedDisputeMessage = async ({ chatId, senderId, description }) => {
+  createStartedDisputeMessage = async ({
+    chatId,
+    senderId,
+    data: { description, type },
+  }) => {
     return await this.create({
       chatId,
       type: STATIC.MESSAGE_TYPES.STARTED_DISPUTE,
@@ -239,7 +321,16 @@ class ChatMessageModel extends Model {
       senderId,
       content: {
         description,
+        type,
       },
+    });
+  };
+
+  createResolvedDisputeMessage = async ({ chatId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.RESOLVED_DISPUTE,
+      senderId: null,
     });
   };
 
