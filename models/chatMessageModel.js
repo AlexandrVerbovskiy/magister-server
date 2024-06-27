@@ -326,6 +326,24 @@ class ChatMessageModel extends Model {
     });
   };
 
+  createNewDisputeMessage = async ({
+    chatId,
+    data: { description, type, senderId, senderName },
+  }) => {
+    return await this.create({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.STARTED_DISPUTE,
+      isAdminSender: false,
+      senderId: null,
+      content: {
+        description,
+        type,
+        senderName,
+        senderId,
+      },
+    });
+  };
+
   createResolvedDisputeMessage = async ({ chatId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,

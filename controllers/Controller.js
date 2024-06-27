@@ -769,11 +769,7 @@ class Controller {
     );
   };
 
-  sendSocketMessageToChatUsers = async (
-    chatId,
-    messageKey,
-    message
-  ) => {
+  sendSocketMessageToChatUsers = async (chatId, messageKey, message) => {
     const sockets = await this.chatModel.getChatUsersSockets(chatId);
     sockets.forEach((socket) =>
       this.sendSocketIoMessage(socket, messageKey, message)

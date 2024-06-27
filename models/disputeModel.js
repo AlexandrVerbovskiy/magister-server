@@ -159,7 +159,7 @@ class DisputeModel extends Model {
 
   getById = async (id) => {
     let query = db(DISPUTES_TABLE);
-    query = this.fullOrdersJoin(query);
+    query = this.baseListJoin(query);
     query = query.select(this.visibleFields).where(`${DISPUTES_TABLE}.id`, id);
     return await query.first();
   };

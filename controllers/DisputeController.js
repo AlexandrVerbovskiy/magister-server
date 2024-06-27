@@ -63,8 +63,11 @@ class DisputeController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
+      const tenantId = +order.tenantId;
+      const ownerId = +order.ownerId;
+
       if (
-        (order.ownerId != userId && order.tenantId != userId) ||
+        (ownerId != userId && tenantId != userId) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         [
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
@@ -98,6 +101,27 @@ class DisputeController extends Controller {
           disputeDescription: description,
         },
       });
+
+      const senderName = userId == ownerId ? order.ownerId : order.tenantId;
+
+      const createdMessages = await this.chatModel.createForDispute({
+        orderId,
+        disputeId,
+        userIds: [tenantId, ownerId],
+        data: { senderId: userId, senderName, description, type },
+      });
+
+      if (userId == ownerId) {
+        await this.sendSocketMessageToUser(tenantId, "get-message", {
+          message: createdMessages[tenantId],
+        });
+      }
+
+      if (userId == tenantId) {
+        await this.sendSocketMessageToUser(ownerId, "get-message", {
+          message: createdMessages[ownerId],
+        });
+      }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
