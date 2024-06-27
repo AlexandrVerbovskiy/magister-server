@@ -100,22 +100,20 @@ class ChatModel extends Model {
   createForDisputeUserChat = async ({
     disputeId,
     userId,
-    senderId,
-    description,
     orderId,
+    data: { senderId, senderName, description, type },
   }) => {
     const chatId = await this.create({
       entityId: disputeId,
-      entityType: STATIC.CHAT_TYPES.ORDER,
+      entityType: STATIC.CHAT_TYPES.DISPUTE,
       name: `Dispute for order #${orderId}`,
     });
 
     await chatRelationModel.create(chatId, userId);
 
-    const message = await chatMessageModel.createStartedDisputeMessage({
+    const message = await chatMessageModel.createNewDisputeMessage({
       chatId,
-      senderId,
-      description,
+      data: { description, type, senderId, senderName },
     });
 
     return message;
@@ -125,8 +123,7 @@ class ChatModel extends Model {
     orderId,
     disputeId,
     userIds,
-    senderId,
-    description,
+    data: { senderId, senderName, description, type },
   }) => {
     const createdUsersMessages = {};
 
@@ -134,9 +131,8 @@ class ChatModel extends Model {
       createdUsersMessages[userId] = await this.createForDisputeUserChat({
         disputeId,
         userId,
-        senderId,
-        description,
         orderId,
+        data: { senderId, senderName, description, type },
       });
     }
 
@@ -168,7 +164,7 @@ class ChatModel extends Model {
   getListBaseQuery = ({ chatType, userId }) => {
     let query = db(`${CHAT_RELATION_TABLE} as searcher_relation`);
 
-    if (chatType == "disputes") {
+    if (chatType == STATIC.CHAT_TYPES.DISPUTE) {
       query = query
         .join(CHAT_TABLE, `${CHAT_TABLE}.id`, "=", "searcher_relation.chat_id")
         .where(`${CHAT_TABLE}.entity_type`, "=", STATIC.CHAT_TYPES.DISPUTE);
@@ -198,6 +194,17 @@ class ChatModel extends Model {
     return referenceItem.createdAt;
   };
 
+  getChatType = async (chatId) => {
+    let query = db(CHAT_TABLE);
+
+    const result = await query
+      .where(`${CHAT_TABLE}.id`, chatId)
+      .select([`${CHAT_TABLE}.entity_type as entityType`])
+      .first();
+
+    return result.entityType;
+  };
+
   getList = async ({
     chatType,
     userId,
@@ -208,10 +215,11 @@ class ChatModel extends Model {
   }) => {
     let result = [];
 
-    const fields =
-      chatType == "disputes"
-        ? this.fullVisibleFields
-        : this.fullVisibleFieldsWithUser;
+    const isDispute = chatType == STATIC.CHAT_TYPES.DISPUTE;
+
+    const fields = isDispute
+      ? this.fullVisibleFields
+      : this.fullVisibleFieldsWithUser;
 
     let query = this.getListBaseQuery({ chatType, userId });
 
@@ -259,9 +267,13 @@ class ChatModel extends Model {
     } else {
       if (chatFilter) {
         query = query.where((builder) => {
-          builder
-            .whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`)
-            .orWhereILike(`${USER_TABLE}.name`, `%${chatFilter}%`);
+          if (isDispute) {
+            builder.whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`);
+          } else {
+            builder
+              .whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`)
+              .orWhereILike(`${USER_TABLE}.name`, `%${chatFilter}%`);
+          }
         });
       }
 
@@ -276,7 +288,7 @@ class ChatModel extends Model {
 
   getFullById = async ({ chatId, chatType, userId }) => {
     const fields =
-      chatType == "disputes"
+      chatType == STATIC.CHAT_TYPES.DISPUTE
         ? this.fullVisibleFields
         : this.fullVisibleFieldsWithUser;
 

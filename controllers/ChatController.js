@@ -45,7 +45,7 @@ class ChatController extends Controller {
   baseGetChatList = async (req, res) => {
     const chatId = req.body.id;
     const userId = req.userData.userId;
-    const chatType = req.body.chatType ?? "orders";
+    let chatType = req.body.chatType ?? STATIC.CHAT_TYPES.ORDER;
     const chatFilter = req.body.chatFilter ?? "";
     const count = this.count_chat_per_iteration;
     const lastChatId = req.body.lastChatId ?? null;
@@ -57,6 +57,10 @@ class ChatController extends Controller {
       if (!userHasChatAccess) {
         return { error: STATIC.ERRORS.NOT_FOUND };
       }
+    }
+
+    if (chatId) {
+      chatType = await this.chatModel.getChatType(chatId);
     }
 
     const chatList = await this.chatModel.getList({
@@ -78,6 +82,8 @@ class ChatController extends Controller {
         chatType,
         userId,
       });
+
+      chatType = lastChat["entityType"];
     }
 
     return {
