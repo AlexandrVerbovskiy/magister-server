@@ -629,7 +629,6 @@ class OrderModel extends Model {
     ownerFee,
     tenantFee,
     feeActive,
-    message,
     orderParentId = null,
   }) => {
     const res = await db(ORDERS_TABLE)
@@ -645,7 +644,6 @@ class OrderModel extends Model {
         tenant_accept_listing_qrcode: "",
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
-        message,
         parent_id: orderParentId,
       })
       .returning("id");
