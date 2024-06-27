@@ -1118,32 +1118,40 @@ class OrderModel extends Model {
   };
 
   orderTenantPayed = async (orderId, { token, qrCode }) => {
+    const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT;
+
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       tenant_accept_listing_token: token,
       tenant_accept_listing_qrcode: qrCode,
-      status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+      status: status,
     });
 
-    return STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT;
+    return status;
   };
 
   orderTenantGotListing = async (orderId, { token, qrCode }) => {
+    const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER;
+
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       owner_accept_listing_token: token,
       owner_accept_listing_qrcode: qrCode,
-      status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+      status,
     });
 
-    return STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER;
+    return status;
   };
 
   orderFinished = async (token) => {
+    const status = STATIC.ORDER_STATUSES.FINISHED;
+
     await db(ORDERS_TABLE)
       .where({ owner_accept_listing_token: token })
       .update({
-        status: STATIC.ORDER_STATUSES.FINISHED,
+        status,
         finished_at: db.raw("CURRENT_TIMESTAMP"),
       });
+
+    return status;
   };
 
   generateDefectQuestionList = async ({ questionInfos, type, orderId }) => {
