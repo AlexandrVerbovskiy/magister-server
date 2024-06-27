@@ -12,7 +12,7 @@ const fs = require("fs");
 
 class OrderController extends Controller {
   sendMessageForNewOrder = async ({ message, senderId }) => {
-    const chatId = createdMessages[ownerId].chatId;
+    const chatId = message.chatId;
     const sender = await this.userModel.getById(senderId);
 
     await this.sendSocketMessageToUserOpponent(
@@ -54,7 +54,6 @@ class OrderController extends Controller {
     endDate,
     listingId,
     feeActive,
-    message,
     tenantId,
     orderParentId = null,
   }) => {
@@ -90,7 +89,6 @@ class OrderController extends Controller {
       ownerFee: ownerFee,
       tenantFee: tenantFee,
       feeActive,
-      message,
       orderParentId,
     });
   };
@@ -107,7 +105,6 @@ class OrderController extends Controller {
         endDate,
         listingId,
         feeActive,
-        message,
         tenantId,
       });
 
@@ -134,7 +131,7 @@ class OrderController extends Controller {
       });
 
       await this.sendMessageForNewOrder({
-        message: createdMessages,
+        message: createdMessages[ownerId],
         senderId: tenantId,
       });
 
@@ -180,7 +177,6 @@ class OrderController extends Controller {
         endDate,
         listingId,
         feeActive,
-        message,
         tenantId,
       };
 
@@ -215,9 +211,11 @@ class OrderController extends Controller {
       });
 
       await this.sendMessageForNewOrder({
-        message: createdMessages,
+        message: createdMessages[ownerId],
         senderId: tenantId,
       });
+
+      const opponent = await this.userModel.getById(ownerId);
 
       return this.sendSuccessResponse(
         res,
@@ -225,6 +223,8 @@ class OrderController extends Controller {
         "Created successfully",
         {
           id: createdOrderId,
+          chatMessage: createdMessages[tenantId],
+          opponent,
         }
       );
     });
