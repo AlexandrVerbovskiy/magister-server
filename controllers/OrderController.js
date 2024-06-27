@@ -819,10 +819,13 @@ class OrderController extends Controller {
         orderInfo.id
       );
 
-      await this.orderModel.orderTenantGotListing(orderInfo.id, {
-        token: ownerToken,
-        qrCode: generatedImage,
-      });
+      const newStatus = await this.orderModel.orderTenantGotListing(
+        orderInfo.id,
+        {
+          token: ownerToken,
+          qrCode: generatedImage,
+        }
+      );
 
       await this.recipientPaymentModel.paypalPaymentPlanGeneration({
         startDate: orderInfo.offerStartDate,
@@ -833,7 +836,21 @@ class OrderController extends Controller {
         fee: orderInfo.ownerFee,
       });
 
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: orderInfo.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc:
+          this.chatMessageModel.createPendedToClientOrderMessage,
+        orderPart: {
+          id: orderInfo.id,
+          status: newStatus,
+        },
+      });
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: { status: newStatus },
         qrCode: generatedImage,
       });
     });
@@ -956,9 +973,23 @@ class OrderController extends Controller {
       });
     }*/
 
-    await this.orderModel.successCancelled(id);
+    const newCancelStatus = await this.orderModel.successCancelled(id);
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+      chatId: orderInfo.chatId,
+      messageData: {},
+      senderId: userId,
+      createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+      orderPart: {
+        id: orderInfo.id,
+        cancelStatus: newCancelStatus,
+      },
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      chatMessage,
+      orderPart: { cancelStatus: newCancelStatus },
+    });
   };
 
   cancelByTenant = (req, res) =>
@@ -1189,9 +1220,23 @@ class OrderController extends Controller {
         orderInfo.id
       );
 
-      await this.orderModel.orderFinished(token);
+      const newStatus = await this.orderModel.orderFinished(token);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: orderInfo.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createFinishedOrderMessage,
+        orderPart: {
+          id: orderInfo.id,
+          status: newStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: { status: newStatus },
+      });
     });
 
   generateInvoicePdf = (req, res) =>
