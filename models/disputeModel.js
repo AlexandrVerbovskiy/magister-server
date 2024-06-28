@@ -5,10 +5,13 @@ const Model = require("./Model");
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const CHATS_TABLE = STATIC.TABLES.CHATS;
+const CHAT_RELATIONS_TABLE = STATIC.TABLES.CHAT_RELATIONS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
+
 class DisputeModel extends Model {
-  lightVisibleFields = [
+  visibleFields = [
     `${DISPUTES_TABLE}.id`,
     `${DISPUTES_TABLE}.description as description`,
     `${DISPUTES_TABLE}.solution as solution`,
@@ -47,6 +50,7 @@ class DisputeModel extends Model {
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
+    `${CHATS_TABLE}.id as chatId`,
   ];
 
   orderFields = [
@@ -92,6 +96,9 @@ class DisputeModel extends Model {
         `tenants.id`,
         "=",
         `${ORDERS_TABLE}.tenant_id`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHATS_TABLE} ON (${CHATS_TABLE}.entity_id = ${ORDERS_TABLE}.id AND ${CHATS_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}')`
       );
 
   create = async ({ description, type, senderId, orderId }) => {
@@ -110,16 +117,24 @@ class DisputeModel extends Model {
   };
 
   solve = async (solution, disputeId) => {
+    const status = STATIC.DISPUTE_STATUSES.SOLVED;
+
     await db(DISPUTES_TABLE).where("id", disputeId).update({
       solution,
-      status: STATIC.DISPUTE_STATUSES.SOLVED,
+      status,
     });
+
+    return status;
   };
 
   unsolve = async (disputeId) => {
+    const status = STATIC.DISPUTE_STATUSES.UNSOLVED;
+
     await db(DISPUTES_TABLE).where("id", disputeId).update({
-      status: STATIC.DISPUTE_STATUSES.UNSOLVED,
+      status,
     });
+
+    return status;
   };
 
   baseTypeWhere = (type, query) => {
@@ -147,10 +162,36 @@ class DisputeModel extends Model {
     return query;
   };
 
-  getById = async(id) => {
+  getById = async (id) => {
     let query = db(DISPUTES_TABLE);
-    query = this.fullOrdersJoin(query);
+    query = this.baseListJoin(query);
     query = query.select(this.visibleFields).where(`${DISPUTES_TABLE}.id`, id);
+    return await query.first();
+  };
+
+  getFullById = async (id) => {
+    const fields = [
+      ...this.visibleFields,
+      "tenant_chats.id as tenantChatId",
+      "owner_chats.id as ownerChatId",
+    ];
+
+    let query = db(DISPUTES_TABLE);
+    query = this.baseListJoin(query);
+    query = query
+      .joinRaw(
+        `JOIN ${CHATS_TABLE} as owner_chats ON (owner_chats.entity_id = ${DISPUTES_TABLE}.id AND owner_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+      )
+      .joinRaw(
+        `JOIN ${CHAT_RELATIONS_TABLE} as owner_chat_relations ON (owner_chat_relations.user_id = owners.id AND owner_chats.id = owner_chat_relations.chat_id)`
+      )
+      .joinRaw(
+        `JOIN ${CHATS_TABLE} as tenant_chats ON (tenant_chats.entity_id = ${DISPUTES_TABLE}.id AND tenant_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+      )
+      .joinRaw(
+        `JOIN ${CHAT_RELATIONS_TABLE} as tenant_chat_relations ON (tenant_chat_relations.user_id = tenants.id AND tenant_chats.id = tenant_chat_relations.chat_id)`
+      );
+    query = query = query.select(fields).where(`${DISPUTES_TABLE}.id`, id);
     return await query.first();
   };
 
@@ -183,7 +224,7 @@ class DisputeModel extends Model {
     query = this.baseTypeWhere(type, query);
 
     return await query
-      .select(this.lightVisibleFields)
+      .select(this.visibleFields)
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
@@ -251,6 +292,22 @@ class DisputeModel extends Model {
       solvedCount: result["solvedCount"] ?? 0,
       unsolvedCount: result["unsolvedCount"] ?? 0,
     };
+  };
+
+  getChatId = async (disputeId) => {
+    const result = await db(DISPUTES_TABLE)
+      .join(
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
+        "=",
+        `${DISPUTES_TABLE}.order_id`
+      )
+      .join(CHATS_TABLE, `${CHATS_TABLE}.entity_id`, "=", `${ORDERS_TABLE}.id`)
+      .where(`${DISPUTES_TABLE}.id`, "=", disputeId)
+      .select([`${CHATS_TABLE}.id as chatId`])
+      .first();
+
+    return result?.chatId;
   };
 }
 

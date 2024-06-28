@@ -63,8 +63,11 @@ class DisputeController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
+      const tenantId = +order.tenantId;
+      const ownerId = +order.ownerId;
+
       if (
-        (order.ownerId != userId && order.tenantId != userId) ||
+        (ownerId != userId && tenantId != userId) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         [
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
@@ -83,16 +86,70 @@ class DisputeController extends Controller {
         orderId,
       });
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: { description, type },
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createStartedDisputeMessage,
+        orderPart: {
+          id: order.id,
+          disputeId,
+          disputeStatus,
+          disputeType: type,
+          disputeDescription: description,
+        },
+      });
+
+      const senderName = userId == ownerId ? order.ownerId : order.tenantId;
+
+      const createdMessages = await this.chatModel.createForDispute({
+        orderId,
         disputeId,
+        userIds: [tenantId, ownerId],
+        data: { senderId: userId, senderName, description, type },
+      });
+
+      if (userId == ownerId) {
+        await this.sendSocketMessageToUser(tenantId, "get-message", {
+          message: createdMessages[tenantId],
+        });
+      }
+
+      if (userId == tenantId) {
+        await this.sendSocketMessageToUser(ownerId, "get-message", {
+          message: createdMessages[ownerId],
+        });
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        disputeId,
+        disputeStatus,
+        disputeType: type,
+        disputeDescription: description,
       });
     });
 
   solve = async (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { disputeId, solution } = req.body;
-      await this.disputeModel.solve(solution, disputeId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const disputeStatus = await this.disputeModel.solve(solution, disputeId);
+      const chatId = await this.disputeModel.getChatId(disputeId);
+
+      const chatMessage =
+        await this.chatMessageModel.createResolvedDisputeMessage({ chatId });
+
+      this.sendSocketMessageToChatUsers(chatId, "get-message", {
+        message: chatMessage,
+        orderPart: { disputeStatus },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        message: chatMessage,
+        orderPart: { disputeStatus },
+      });
     });
 
   unsolve = async (req, res) =>

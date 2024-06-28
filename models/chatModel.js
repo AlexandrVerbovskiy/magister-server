@@ -4,6 +4,7 @@ const db = require("../database");
 const Model = require("./Model");
 const chatRelationModel = require("./chatRelationModel");
 const chatMessageModel = require("./chatMessageModel");
+const { query } = require("express");
 
 const CHAT_TABLE = STATIC.TABLES.CHATS;
 const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
@@ -11,6 +12,9 @@ const CHAT_MESSAGE_TABLE = STATIC.TABLES.CHAT_MESSAGES;
 const CHAT_MESSAGE_CONTENT_TABLE = STATIC.TABLES.CHAT_MESSAGE_CONTENTS;
 const USER_TABLE = STATIC.TABLES.USERS;
 const SOCKET_TABLE = STATIC.TABLES.SOCKETS;
+const ORDER_TABLE = STATIC.TABLES.ORDERS;
+const DISPUTE_TABLE = STATIC.TABLES.DISPUTES;
+const LISTING_TABLE = STATIC.TABLES.LISTINGS;
 
 class ChatModel extends Model {
   visibleFields = [
@@ -35,6 +39,22 @@ class ChatModel extends Model {
     `${USER_TABLE}.name as opponentName`,
     `${USER_TABLE}.online as opponentOnline`,
     `opponent_relation.typing as opponentTyping`,
+  ];
+
+  fullVisibleFieldsForAdmin = [
+    ...this.fullVisibleFields,
+    "tenants.id as tenantId",
+    "tenants.name as tenantName",
+    "tenants.photo as tenantPhoto",
+    "tenant_chats.id as tenantChatId",
+    "owners.id as ownerId",
+    "owners.name as ownerName",
+    "owners.photo as ownerPhoto",
+    "owner_chats.id as ownerChatId",
+    `${ORDER_TABLE}.id as orderId`,
+    `${LISTING_TABLE}.id as listingId`,
+    `${DISPUTE_TABLE}.id as disputeId`,
+    `${DISPUTE_TABLE}.status as disputeStatus`,
   ];
 
   create = async ({ name, entityId, entityType }) => {
@@ -100,22 +120,20 @@ class ChatModel extends Model {
   createForDisputeUserChat = async ({
     disputeId,
     userId,
-    senderId,
-    description,
     orderId,
+    data: { senderId, senderName, description, type },
   }) => {
     const chatId = await this.create({
       entityId: disputeId,
-      entityType: STATIC.CHAT_TYPES.ORDER,
+      entityType: STATIC.CHAT_TYPES.DISPUTE,
       name: `Dispute for order #${orderId}`,
     });
 
     await chatRelationModel.create(chatId, userId);
 
-    const message = await chatMessageModel.createStartedDisputeMessage({
+    const message = await chatMessageModel.createNewDisputeMessage({
       chatId,
-      senderId,
-      description,
+      data: { description, type, senderId, senderName },
     });
 
     return message;
@@ -125,8 +143,7 @@ class ChatModel extends Model {
     orderId,
     disputeId,
     userIds,
-    senderId,
-    description,
+    data: { senderId, senderName, description, type },
   }) => {
     const createdUsersMessages = {};
 
@@ -134,9 +151,8 @@ class ChatModel extends Model {
       createdUsersMessages[userId] = await this.createForDisputeUserChat({
         disputeId,
         userId,
-        senderId,
-        description,
         orderId,
+        data: { senderId, senderName, description, type },
       });
     }
 
@@ -153,22 +169,10 @@ class ChatModel extends Model {
       );
   };
 
-  fullMessageInfoJoin = (query) => {
-    query = query
-      .joinRaw(
-        `LEFT JOIN (SELECT chat_id, MAX(id) AS last_message_id FROM ${CHAT_MESSAGE_TABLE} WHERE ${CHAT_MESSAGE_TABLE}.hidden = false GROUP BY ${CHAT_MESSAGE_TABLE}.chat_id) AS lm ON ${CHAT_TABLE}.id = lm.chat_id`
-      )
-      .joinRaw(
-        `LEFT JOIN ${CHAT_MESSAGE_TABLE} ON ${CHAT_MESSAGE_TABLE}.chat_id = ${CHAT_TABLE}.id AND ${CHAT_MESSAGE_TABLE}.id = lm.last_message_id`
-      );
-
-    return chatMessageModel.contentJoin(query);
-  };
-
   getListBaseQuery = ({ chatType, userId }) => {
     let query = db(`${CHAT_RELATION_TABLE} as searcher_relation`);
 
-    if (chatType == "disputes") {
+    if (chatType == STATIC.CHAT_TYPES.DISPUTE) {
       query = query
         .join(CHAT_TABLE, `${CHAT_TABLE}.id`, "=", "searcher_relation.chat_id")
         .where(`${CHAT_TABLE}.entity_type`, "=", STATIC.CHAT_TYPES.DISPUTE);
@@ -198,6 +202,17 @@ class ChatModel extends Model {
     return referenceItem.createdAt;
   };
 
+  getChatType = async (chatId) => {
+    let query = db(CHAT_TABLE);
+
+    const result = await query
+      .where(`${CHAT_TABLE}.id`, chatId)
+      .select([`${CHAT_TABLE}.entity_type as entityType`])
+      .first();
+
+    return result?.entityType;
+  };
+
   getList = async ({
     chatType,
     userId,
@@ -208,10 +223,11 @@ class ChatModel extends Model {
   }) => {
     let result = [];
 
-    const fields =
-      chatType == "disputes"
-        ? this.fullVisibleFields
-        : this.fullVisibleFieldsWithUser;
+    const isDispute = chatType == STATIC.CHAT_TYPES.DISPUTE;
+
+    const fields = isDispute
+      ? this.fullVisibleFields
+      : this.fullVisibleFieldsWithUser;
 
     let query = this.getListBaseQuery({ chatType, userId });
 
@@ -259,9 +275,13 @@ class ChatModel extends Model {
     } else {
       if (chatFilter) {
         query = query.where((builder) => {
-          builder
-            .whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`)
-            .orWhereILike(`${USER_TABLE}.name`, `%${chatFilter}%`);
+          if (isDispute) {
+            builder.whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`);
+          } else {
+            builder
+              .whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`)
+              .orWhereILike(`${USER_TABLE}.name`, `%${chatFilter}%`);
+          }
         });
       }
 
@@ -276,7 +296,7 @@ class ChatModel extends Model {
 
   getFullById = async ({ chatId, chatType, userId }) => {
     const fields =
-      chatType == "disputes"
+      chatType == STATIC.CHAT_TYPES.DISPUTE
         ? this.fullVisibleFields
         : this.fullVisibleFieldsWithUser;
 
@@ -285,13 +305,175 @@ class ChatModel extends Model {
     return await query.where("chat_id", chatId).select(fields).first();
   };
 
-  checkHasMore = async ({ lastMessageCreatedTime, chatType, userId }) => {
-    const moreChats = await this.getListBaseQuery({ chatType, userId })
+  checkHasMore = async ({
+    lastMessageCreatedTime,
+    chatType,
+    userId,
+    chatFilter,
+  }) => {
+    let query = this.getListBaseQuery({ chatType, userId })
       .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastMessageCreatedTime)
-      .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc")
-      .select(`${CHAT_TABLE}.id`)
+      .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
+
+    if (chatFilter) {
+      query = query.where((builder) => {
+        if (chatType == STATIC.CHAT_TYPES.DISPUTE) {
+          builder.whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`);
+        } else {
+          builder
+            .whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`)
+            .orWhereILike(`${USER_TABLE}.name`, `%${chatFilter}%`);
+        }
+      });
+    }
+
+    const moreChats = await query.select(`${CHAT_TABLE}.id`).first();
+    return !!moreChats?.id;
+  };
+
+  checkChatHasDispute = async (chatId) => {
+    const chatInfo = await db(CHAT_TABLE)
+      .join(ORDER_TABLE, `${ORDER_TABLE}.id`, "=", `${DISPUTE_TABLE}.order_id`)
+      .joinRaw(
+        `JOIN ${CHAT_TABLE} ON (${ORDER_TABLE}.id = ${CHAT_TABLE}.order_id AND ${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}')`
+      )
+      .where(`${CHAT_TABLE}.id`, "=", chatId)
+      .select(`${DISPUTE_TABLE}.id as disputeId`)
       .first();
 
+    return chatInfo?.disputeId;
+  };
+
+  baseGetForAdmin = () => {
+    const query = db(CHAT_TABLE)
+      .joinRaw(
+        `JOIN ${ORDER_TABLE} ON (${CHAT_TABLE}.entity_id = ${ORDER_TABLE}.id AND ${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}')`
+      )
+      .join(
+        DISPUTE_TABLE,
+        `${DISPUTE_TABLE}.order_id`,
+        "=",
+        `${ORDER_TABLE}.id`
+      )
+      .leftJoin(
+        `${USER_TABLE} as tenants`,
+        `tenants.id`,
+        "=",
+        `${ORDER_TABLE}.tenant_id`
+      )
+      .leftJoin(
+        LISTING_TABLE,
+        `${LISTING_TABLE}.id`,
+        "=",
+        `${ORDER_TABLE}.listing_id`
+      )
+      .leftJoin(
+        `${USER_TABLE} as owners`,
+        `owners.id`,
+        "=",
+        `${LISTING_TABLE}.owner_id`
+      )
+      .joinRaw(
+        `JOIN ${CHAT_TABLE} as owner_chats ON (owner_chats.entity_id = ${DISPUTE_TABLE}.id AND owner_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+      )
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as owner_chat_relations ON (owner_chat_relations.user_id = owners.id AND owner_chats.id = owner_chat_relations.chat_id)`
+      )
+      .joinRaw(
+        `JOIN ${CHAT_TABLE} as tenant_chats ON (tenant_chats.entity_id = ${DISPUTE_TABLE}.id AND tenant_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+      )
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as tenant_chat_relations ON (tenant_chat_relations.user_id = tenants.id AND tenant_chats.id = tenant_chat_relations.chat_id)`
+      );
+
+    return this.messageJoin(query);
+  };
+
+  getForAdminList = async ({
+    needChatId = null,
+    count = 20,
+    lastChatId = null,
+    chatFilter = "",
+  }) => {
+    let result = [];
+
+    let query = this.baseGetForAdmin();
+
+    const fields = this.fullVisibleFieldsForAdmin;
+
+    if (lastChatId) {
+      const lastChatCreatedTime = await this.getChatMessageCreatedDate(
+        lastChatId
+      );
+
+      query = query.where(`${CHAT_MESSAGE_TABLE}.id`, "<", lastChatCreatedTime);
+    }
+
+    if (needChatId) {
+      const chatMessageCreatedTime = await this.messageJoin(
+        db(CHAT_TABLE).where(`${CHAT_TABLE}.id`, "=", needChatId)
+      )
+        .select(`${CHAT_MESSAGE_TABLE}.created_at as messageCreatedAt`)
+        .first();
+
+      const firstResPart = await query
+        .where(
+          `${CHAT_MESSAGE_TABLE}.created_at`,
+          ">=",
+          chatMessageCreatedTime.messageCreatedAt
+        )
+        .select(fields)
+        .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
+
+      const firstResPartLength = firstResPart.length;
+
+      result = [...firstResPart];
+
+      if (firstResPartLength % count != 0) {
+        const secondResPart = await this.baseGetForAdmin()
+          .where(
+            `${CHAT_MESSAGE_TABLE}.created_at`,
+            "<",
+            chatMessageCreatedTime.messageCreatedAt
+          )
+          .limit(count - (firstResPartLength % count))
+          .select(fields)
+          .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
+
+        result = [...result, ...secondResPart];
+      }
+    } else {
+      if (chatFilter) {
+        query = query.where((builder) => {
+          builder
+            .whereILike(`tenants.name`, `%${chatFilter}%`)
+            .orWhereILike(`owners.name`, `%${chatFilter}%`);
+        });
+      }
+
+      result = await query
+        .limit(count)
+        .select(fields)
+        .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
+    }
+
+    return result;
+  };
+
+  checkAdminHasMore = async ({ lastMessageCreatedTime, chatFilter }) => {
+    const query = this.baseGetForAdmin()
+      .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastMessageCreatedTime)
+      .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
+
+    if (chatFilter) {
+      query = query.where((builder) => {
+        builder
+          .whereILike(`tenants.name`, `%${chatFilter}%`)
+          .orWhereILike(`owners.name`, `%${chatFilter}%`);
+      });
+    }
+
+    const moreChats = await query.select(`${CHAT_TABLE}.id`).first();
     return !!moreChats?.id;
   };
 
@@ -332,6 +514,25 @@ class ChatModel extends Model {
       .select(`${SOCKET_TABLE}.socket`);
 
     return opponentInfo.map((row) => row.socket);
+  };
+
+  getChatUsersSockets = async (chatId) => {
+    const userInfos = await db(`${CHAT_RELATION_TABLE} as searcher_relation`)
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as opponent_relation ON (searcher_relation.chat_id = opponent_relation.chat_id)`
+      )
+      .join(
+        SOCKET_TABLE,
+        `${SOCKET_TABLE}.user_id`,
+        "=",
+        "opponent_relation.user_id"
+      )
+      .where(`opponent_relation.chat_id`, "=", chatId)
+      .select(`${SOCKET_TABLE}.socket`);
+
+    const sockets = userInfos.map((row) => row.socket);
+    const uniqueSockets = [...new Set(sockets)];
+    return uniqueSockets;
   };
 
   getUserChatsOpponentSockets = async (userId) => {

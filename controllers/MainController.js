@@ -1156,7 +1156,8 @@ class MainController extends Controller {
     });
 
   createOwnerComment = async (req, res) => {
-    const { ownerCommentInfo, listingCommentInfo, orderId } = req.body;
+    const { userCommentInfo, listingCommentInfo, orderId } = req.body;
+    const senderId = req.userData.id;
 
     const orderHasOwnerComment =
       await this.ownerCommentModel.checkOrderHasComment(orderId);
@@ -1173,13 +1174,41 @@ class MainController extends Controller {
     }
 
     const ownerCommentId = await this.ownerCommentModel.create({
-      ...ownerCommentInfo,
+      ...userCommentInfo,
       orderId,
     });
 
     const listingCommentId = await this.listingCommentModel.create({
       ...listingCommentInfo,
       orderId,
+    });
+
+    const order = await this.orderModel.getById(orderId);
+    const chatId = order.chatId;
+
+    const listingMessage =
+      await this.chatMessageModel.createListingReviewMessage({
+        chatId,
+        senderId,
+        data: listingCommentInfo,
+      });
+
+    const ownerMessage = await this.chatMessageModel.createUserReviewMessage({
+      chatId,
+      senderId,
+      data: { ...userCommentInfo, type: "owner" },
+    });
+
+    const sender = await this.userModel.getById(senderId);
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: listingMessage,
+      opponent: sender,
+    });
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: ownerMessage,
+      opponent: sender,
     });
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1189,7 +1218,8 @@ class MainController extends Controller {
   };
 
   createTenantComment = async (req, res) => {
-    const { tenantCommentInfo, orderId } = req.body;
+    const { userCommentInfo, orderId } = req.body;
+    const senderId = req.userData.id;
 
     const orderHasTenantComment =
       await this.tenantCommentModel.checkOrderHasComment(orderId);
@@ -1199,8 +1229,24 @@ class MainController extends Controller {
     }
 
     const tenantCommentId = await this.tenantCommentModel.create({
-      ...tenantCommentInfo,
+      ...userCommentInfo,
       orderId,
+    });
+
+    const order = await this.orderModel.getById(orderId);
+    const chatId = order.chatId;
+
+    const tenantMessage = await this.chatMessageModel.createUserReviewMessage({
+      chatId,
+      senderId,
+      data: { ...userCommentInfo, type: "tenant" },
+    });
+
+    const sender = await this.userModel.getById(senderId);
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: tenantMessage,
+      opponent: sender,
     });
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1214,11 +1260,17 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  getUserChatOptions = (req, res) =>
+  baseGetChatOptions = ({
+    req,
+    res,
+    getChatList,
+    getEntityInfo,
+    defaultEntityRes,
+  }) =>
     this.baseWrapper(req, res, async () => {
       const chatId = req.body.id;
       const userId = req.userData.userId;
-      const chatRes = await this.chatController.baseGetChatList(req, res);
+      const chatRes = await getChatList(req, res);
 
       if (chatRes.error) {
         return this.sendErrorResponse(res, chatRes.error);
@@ -1241,17 +1293,10 @@ class MainController extends Controller {
         return this.sendErrorResponse(res, messageRes.error);
       }
 
-      let entity = null;
-      let dopEntityInfo = {};
+      let entityInfoRes = defaultEntityRes;
 
       if (chatId) {
-        const entityInfoRes = await this.chatController.baseGetChatEntityInfo(
-          chatId,
-          userId
-        );
-
-        entity = entityInfoRes.entity;
-        dopEntityInfo = entityInfoRes.dopEntityInfo;
+        entityInfoRes = await getEntityInfo(chatId, userId);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1261,17 +1306,41 @@ class MainController extends Controller {
         options: { ...chatRes.options, ...messageRes.options },
         messages: messageRes.list,
         messagesCanShowMore: messageRes.canShowMore,
-        entity,
-        dopEntityInfo,
+        ...entityInfoRes,
       });
     });
 
-  getAdminOrderChatOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
-    });
+  getUserChatOptions = (req, res) => {
+    const chatId = req.body.id;
+    const userId = req.userData.userId;
 
-  getAdminChatOptions = (req, res) =>
+    const getEntityInfo = () =>
+      this.chatController.baseGetChatEntityInfo(chatId, userId);
+
+    return this.baseGetChatOptions({
+      req,
+      res,
+      getChatList: this.chatController.baseGetChatList,
+      getEntityInfo,
+      defaultEntityRes: { entity: null, dopEntityInfo: {} },
+    });
+  };
+
+  getAdminChatOptions = (req, res) => {
+    const chatId = req.body.id;
+    const getEntityInfo = () =>
+      this.chatController.baseGetChatDisputeInfo(chatId);
+
+    return this.baseGetChatOptions({
+      req,
+      res,
+      getChatList: this.chatController.baseGetAdminChatList,
+      getEntityInfo,
+      defaultEntityRes: { order: null, dispute: null, dopInfo: {} },
+    });
+  };
+
+  getAdminOrderChatOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
     });

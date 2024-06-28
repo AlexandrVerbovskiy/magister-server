@@ -629,7 +629,6 @@ class OrderModel extends Model {
     ownerFee,
     tenantFee,
     feeActive,
-    message,
     orderParentId = null,
   }) => {
     const res = await db(ORDERS_TABLE)
@@ -645,7 +644,6 @@ class OrderModel extends Model {
         tenant_accept_listing_qrcode: "",
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
-        message,
         parent_id: orderParentId,
       })
       .returning("id");
@@ -1031,21 +1029,35 @@ class OrderModel extends Model {
   };
 
   startCancelByTenant = async (orderId) => {
+    const cancelStatus =
+      STATIC.ORDER_CANCELATION_STATUSES.WAITING_OWNER_APPROVE;
+
     await db(ORDERS_TABLE).where("id", orderId).update({
-      cancel_status: STATIC.ORDER_CANCELATION_STATUSES.WAITING_OWNER_APPROVE,
+      cancel_status: cancelStatus,
     });
+
+    return cancelStatus;
   };
 
   needAdminCancel = async (orderId) => {
+    const cancelStatus =
+      STATIC.ORDER_CANCELATION_STATUSES.WAITING_ADMIN_APPROVE;
+
     await db(ORDERS_TABLE).where("id", orderId).update({
-      cancel_status: STATIC.ORDER_CANCELATION_STATUSES.WAITING_ADMIN_APPROVE,
+      cancel_status: cancelStatus,
     });
+
+    return cancelStatus;
   };
 
   successCancelled = async (orderId, newData = {}) => {
+    const cancelStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
+
     await db(ORDERS_TABLE)
       .where("id", orderId)
-      .update({ cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELLED });
+      .update({ cancel_status: cancelStatus });
+
+    return cancelStatus;
   };
 
   getUnfinishedTenantCount = async (tenantId) => {
@@ -1104,28 +1116,40 @@ class OrderModel extends Model {
   };
 
   orderTenantPayed = async (orderId, { token, qrCode }) => {
+    const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT;
+
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       tenant_accept_listing_token: token,
       tenant_accept_listing_qrcode: qrCode,
-      status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+      status: status,
     });
+
+    return status;
   };
 
   orderTenantGotListing = async (orderId, { token, qrCode }) => {
+    const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER;
+
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       owner_accept_listing_token: token,
       owner_accept_listing_qrcode: qrCode,
-      status: STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+      status,
     });
+
+    return status;
   };
 
   orderFinished = async (token) => {
+    const status = STATIC.ORDER_STATUSES.FINISHED;
+
     await db(ORDERS_TABLE)
       .where({ owner_accept_listing_token: token })
       .update({
-        status: STATIC.ORDER_STATUSES.FINISHED,
+        status,
         finished_at: db.raw("CURRENT_TIMESTAMP"),
       });
+
+    return status;
   };
 
   generateDefectQuestionList = async ({ questionInfos, type, orderId }) => {

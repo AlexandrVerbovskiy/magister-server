@@ -8,8 +8,9 @@ class OrderUpdateRequestController extends Controller {
       const senderId = req.userData.userId;
 
       const order = await this.orderModel.getFullById(orderId);
+      const { tenantId, ownerId, chatId } = order;
 
-      if (order.tenantId != senderId && order.ownerId != senderId) {
+      if (tenantId != senderId && ownerId != senderId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -33,12 +34,16 @@ class OrderUpdateRequestController extends Controller {
         }
       }
 
-      if (order.tenantId == senderId) {
+      let newStatus = null;
+
+      if (tenantId == senderId) {
         await this.orderModel.setPendingOwnerStatus(orderId);
+        newStatus = STATIC.ORDER_STATUSES.PENDING_OWNER;
       }
 
-      if (order.ownerId == senderId) {
+      if (ownerId == senderId) {
         await this.orderModel.setPendingTenantStatus(orderId);
+        newStatus = STATIC.ORDER_STATUSES.PENDING_TENANT;
       }
 
       const fee = await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -56,11 +61,30 @@ class OrderUpdateRequestController extends Controller {
         createdRequestId
       );
 
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {
+          requestId: request.id,
+          listingName: order.listingName,
+          offerPrice: newPricePerDay,
+          listingPhotoPath: firstImage?.link,
+          listingPhotoType: firstImage?.type,
+          offerDateStart: newStartDate,
+          offerDateEnd: newEndDate,
+        },
+        senderId,
+        createMessageFunc: this.chatMessageModel.createUpdateOrderMessage,
+        orderPart: {
+          id: order.id,
+          status: newStatus,
+        },
+      });
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
         "Created successfully",
-        request
+        { request, chatMessage }
       );
     });
 }

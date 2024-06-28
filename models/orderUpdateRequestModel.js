@@ -88,6 +88,7 @@ class OrderUpdateRequestModel extends Model {
   getActualRequestInfo = async (orderId) => {
     const request = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .select([
+        `${ORDER_UPDATE_REQUESTS_TABLE}.id as id`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
