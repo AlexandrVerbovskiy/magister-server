@@ -37,13 +37,11 @@ class OrderUpdateRequestController extends Controller {
       let newStatus = null;
 
       if (tenantId == senderId) {
-        await this.orderModel.setPendingOwnerStatus(orderId);
-        newStatus = STATIC.ORDER_STATUSES.PENDING_OWNER;
+        newStatus = await this.orderModel.setPendingOwnerStatus(orderId);
       }
 
       if (ownerId == senderId) {
-        await this.orderModel.setPendingTenantStatus(orderId);
-        newStatus = STATIC.ORDER_STATUSES.PENDING_TENANT;
+        newStatus = await this.orderModel.setPendingTenantStatus(orderId);
       }
 
       const fee = await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -61,6 +59,8 @@ class OrderUpdateRequestController extends Controller {
         createdRequestId
       );
 
+      const firstImage = order.listingImages[0];
+
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
         messageData: {
@@ -77,6 +77,7 @@ class OrderUpdateRequestController extends Controller {
         orderPart: {
           id: order.id,
           status: newStatus,
+          actualUpdateRequest: request,
         },
       });
 

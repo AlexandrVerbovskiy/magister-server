@@ -966,15 +966,17 @@ class OrderModel extends Model {
   };
 
   setPendingTenantStatus = async (id) => {
+    const status = STATIC.ORDER_STATUSES.PENDING_TENANT;
     await db(ORDERS_TABLE)
       .where("id", id)
       .update("status", STATIC.ORDER_STATUSES.PENDING_TENANT);
+    return status;
   };
 
   setPendingOwnerStatus = async (id) => {
-    await db(ORDERS_TABLE)
-      .where("id", id)
-      .update("status", STATIC.ORDER_STATUSES.PENDING_OWNER);
+    const status = STATIC.ORDER_STATUSES.PENDING_OWNER;
+    await db(ORDERS_TABLE).where("id", id).update("status", status);
+    return status;
   };
 
   updateOrder = async (
