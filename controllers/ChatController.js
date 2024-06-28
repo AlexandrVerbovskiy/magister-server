@@ -81,6 +81,7 @@ class ChatController extends Controller {
         lastMessageCreatedTime: lastChat.messageCreatedAt,
         chatType,
         userId,
+        chatFilter,
       });
 
       chatType = lastChat["entityType"];
@@ -96,8 +97,47 @@ class ChatController extends Controller {
     };
   };
 
-  getChatList = async (req, res) => {
-    const chatRes = await this.baseGetChatList(req, res);
+  baseGetAdminChatList = async (req, res) => {
+    const chatId = req.body.chatId;
+    const chatFilter = req.body.chatFilter ?? "";
+    const count = this.count_chat_per_iteration;
+    const lastChatId = req.body.lastChatId ?? null;
+
+    if (chatId) {
+      disputeId = await this.chatModel.checkChatHasDispute(chatId);
+
+      if (!disputeId) {
+        return { error: STATIC.ERRORS.NOT_FOUND };
+      }
+    }
+
+    const chatList = await this.chatModel.getForAdminList({
+      needChatId: chatId,
+      count,
+      lastChatId,
+      chatFilter,
+    });
+
+    const lastChat = chatList[chatList.length - 1];
+
+    let canShowMore = false;
+
+    if (lastChat) {
+      canShowMore = await this.chatModel.checkAdminHasMore({
+        lastMessageCreatedTime: lastChat.messageCreatedAt,
+        chatFilter,
+      });
+    }
+
+    return {
+      error: null,
+      list: chatList,
+      canShowMore,
+    };
+  };
+
+  getChatListWrapper = async (req, res, func) => {
+    const chatRes = await func(req, res);
 
     if (chatRes.error) {
       return this.sendErrorResponse(res, chatRes.error);
@@ -110,9 +150,14 @@ class ChatController extends Controller {
     });
   };
 
+  getChatList = async (req, res) =>
+    this.getChatListWrapper(req, res, this.baseGetChatList(req, res));
+
+  getChatListForAdmin = async (req, res) =>
+    this.getChatListWrapper(req, res, this.baseGetAdminChatList(req, res));
+
   baseGetChatMessageList = async (req, res) => {
     const chatId = req.body.id;
-    const userId = req.userData.userId;
     const count = this.count_message_per_iteration;
     const lastMessageId = req.body.lastMessageId ?? null;
 
@@ -194,17 +239,40 @@ class ChatController extends Controller {
     return { entity, dopEntityInfo };
   };
 
-  getChatBaseInfo = async (req, res) => {
+  baseGetChatDisputeInfo = async (chatId) => {
+    const dopInfo = {};
+    const chat = await this.chatModel.getById(chatId);
+    let order = await this.orderModel.getFullById(chat.entityId);
+
+    order["childrenList"] = await this.orderModel.getChildrenList(
+      chat.entityId
+    );
+
+    dopInfo["tenantBaseCommission"] =
+      await this.systemOptionModel.getTenantBaseCommissionPercent();
+    dopInfo["bankInfo"] = await this.systemOptionModel.getBankAccountInfo();
+
+    const dispute = await this.disputeModel.getFullById(order.disputeId);
+
+    return { order, dispute, dopInfo };
+  };
+
+  getChatBaseInfo = async ({
+    req,
+    res,
+    getChatDopInfo,
+    needCheckAccess = true,
+  }) => {
     const chatId = req.body.id;
     const userId = req.userData.userId;
 
-    const userHasChatAccess = await this.chatRelationModel.checkUserHasRelation(
-      chatId,
-      userId
-    );
+    if (needCheckAccess) {
+      const userHasChatAccess =
+        await this.chatRelationModel.checkUserHasRelation(chatId, userId);
 
-    if (!userHasChatAccess) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      if (!userHasChatAccess) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
     }
 
     const messagesRes = await this.baseGetChatMessageList(req, res);
@@ -213,17 +281,32 @@ class ChatController extends Controller {
       return this.sendErrorResponse(res, chatRes.error);
     }
 
-    const { entity, dopEntityInfo } = await this.baseGetChatEntityInfo(
-      chatId,
-      userId
-    );
+    const chatInfo = await getChatDopInfo();
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
       messages: messagesRes.list,
       messagesCanShowMore: messagesRes.canShowMore,
       options: messagesRes.options,
-      entity,
-      dopEntityInfo,
+      ...chatInfo,
+    });
+  };
+
+  getChatInfoByUser = async (req, res) => {
+    const chatId = req.body.id;
+    const userId = req.userData.userId;
+    return this.getChatBaseInfo({
+      req,
+      res,
+      getChatDopInfo: () => this.baseGetChatEntityInfo(chatId, userId),
+    });
+  };
+
+  getChatInfoByAdmin = async (req, res) => {
+    const chatId = req.body.id;
+    return this.getChatBaseInfo({
+      req,
+      res,
+      getChatDopInfo: () => this.baseGetChatDisputeInfo(chatId),
     });
   };
 
