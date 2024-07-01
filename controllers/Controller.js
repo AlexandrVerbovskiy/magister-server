@@ -769,6 +769,13 @@ class Controller {
     );
   };
 
+  sendSocketMessageToAdmins = async (messageKey, message) => {
+    const sockets = await this.socketModel.getAdminsSockets();
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, messageKey, message)
+    );
+  };
+
   sendSocketMessageToChatUsers = async (chatId, messageKey, message) => {
     const sockets = await this.chatModel.getChatUsersSockets(chatId);
     sockets.forEach((socket) =>

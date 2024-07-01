@@ -1307,6 +1307,7 @@ class MainController extends Controller {
         messages: messageRes.list,
         messagesCanShowMore: messageRes.canShowMore,
         ...entityInfoRes,
+        ...chatRes.dopInfo,
       });
     });
 
@@ -1328,6 +1329,7 @@ class MainController extends Controller {
 
   getAdminChatOptions = (req, res) => {
     const chatId = req.body.id;
+
     const getEntityInfo = () =>
       this.chatController.baseGetChatDisputeInfo(chatId);
 

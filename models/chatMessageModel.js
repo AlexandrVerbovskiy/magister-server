@@ -352,10 +352,23 @@ class ChatMessageModel extends Model {
     });
   };
 
+  checkAuthor = async (messageId, userId) => {
+    const message = await this.getFullById(messageId);
+
+    if (message.senderId !== userId) {
+      throw new Error(STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE);
+    }
+  };
+
   delete = async (messageId) => {
     await db(CHAT_MESSAGE_TABLE)
       .where("id", messageId)
       .update({ hidden: true });
+  };
+
+  deleteIfAuthor = async (messageId, userId) => {
+    await this.checkAuthor(messageId, userId);
+    return await this.delete(messageId);
   };
 
   update = async (messageId, text) => {
@@ -363,11 +376,9 @@ class ChatMessageModel extends Model {
     return await this.getFullById(messageId);
   };
 
-  getShortById = async (id) => {
-    return await db(CHAT_MESSAGE_TABLE)
-      .where("id", id)
-      .select(this.visibleFields)
-      .first();
+  updateIfAuthor = async (messageId, text, userId) => {
+    await this.checkAuthor(messageId, userId);
+    return await this.update(messageId, text);
   };
 
   getFullById = async (id) => {
@@ -445,7 +456,7 @@ class ChatMessageModel extends Model {
       .offset(offset);
 
     const messageInfo = await query.select(`${CHAT_MESSAGE_TABLE}.id`).first();
-    const id = messageInfo.id;
+    const id = messageInfo?.id;
 
     if (!id) {
       return null;
