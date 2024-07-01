@@ -331,15 +331,66 @@ class ChatModel extends Model {
     return !!moreChats?.id;
   };
 
-  checkChatHasDispute = async (chatId) => {
+  chatTypeAndDispute = async (chatId) => {
     const chatInfo = await db(CHAT_TABLE)
-      .join(ORDER_TABLE, `${ORDER_TABLE}.id`, "=", `${DISPUTE_TABLE}.order_id`)
-      .joinRaw(
-        `JOIN ${CHAT_TABLE} ON (${ORDER_TABLE}.id = ${CHAT_TABLE}.order_id AND ${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}')`
-      )
       .where(`${CHAT_TABLE}.id`, "=", chatId)
-      .select(`${DISPUTE_TABLE}.id as disputeId`)
+      .select(`${CHAT_TABLE}.entity_type as type`)
       .first();
+
+    const type = chatInfo?.type;
+
+    if (!type) {
+      return null;
+    }
+
+    if (type == STATIC.CHAT_TYPES.ORDER) {
+      const chatInfoWithType = await db(CHAT_TABLE)
+        .joinRaw(
+          `JOIN ${DISPUTE_TABLE} ON (${CHAT_TABLE}.entity_id = ${DISPUTE_TABLE}.order_id)`
+        )
+        .joinRaw(
+          `JOIN ${CHAT_TABLE} as dispute_chats ON (${DISPUTE_TABLE}.id = dispute_chats.entity_id AND dispute_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+        )
+        .where(`${CHAT_TABLE}.id`, "=", chatId)
+        .select(`${CHAT_TABLE}.entity_type as type`)
+        .first();
+
+      if (!chatInfoWithType) {
+        return null;
+      }
+
+      return {
+        type,
+        disputeId: chatInfoWithType.disputeId,
+        mainChatId: chatId,
+      };
+    }
+
+    if (type == STATIC.CHAT_TYPES.DISPUTE) {
+      const chatInfoWithType = await db(CHAT_TABLE)
+        .joinRaw(
+          `JOIN ${DISPUTE_TABLE} ON (${CHAT_TABLE}.entity_id = ${DISPUTE_TABLE}.id)`
+        )
+        .joinRaw(
+          `JOIN ${CHAT_TABLE} as order_chats ON (${DISPUTE_TABLE}.order_id = order_chats.entity_id AND order_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}')`
+        )
+        .where(`${CHAT_TABLE}.id`, "=", chatId)
+        .select([
+          `order_chats.entity_type as type`,
+          `order_chats.id as orderChatId`,
+        ])
+        .first();
+
+      if (!chatInfoWithType) {
+        return null;
+      }
+
+      return {
+        type,
+        disputeId: chatInfoWithType.disputeId,
+        mainChatId: chatInfoWithType.orderChatId,
+      };
+    }
 
     return chatInfo?.disputeId;
   };
@@ -387,6 +438,13 @@ class ChatModel extends Model {
       );
 
     return this.messageJoin(query);
+  };
+
+  baseChatListFilter = (builder, chatFilter) => {
+    return builder
+      .whereILike(`tenants.name`, `%${chatFilter}%`)
+      .orWhereILike(`owners.name`, `%${chatFilter}%`)
+      .orWhereRaw(this.filterIdLikeString(chatFilter, `${DISPUTE_TABLE}.id`));
   };
 
   getForAdminList = async ({
@@ -445,9 +503,7 @@ class ChatModel extends Model {
     } else {
       if (chatFilter) {
         query = query.where((builder) => {
-          builder
-            .whereILike(`tenants.name`, `%${chatFilter}%`)
-            .orWhereILike(`owners.name`, `%${chatFilter}%`);
+          this.baseChatListFilter(builder, chatFilter);
         });
       }
 
@@ -461,15 +517,13 @@ class ChatModel extends Model {
   };
 
   checkAdminHasMore = async ({ lastMessageCreatedTime, chatFilter }) => {
-    const query = this.baseGetForAdmin()
+    let query = this.baseGetForAdmin()
       .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", lastMessageCreatedTime)
       .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
 
     if (chatFilter) {
       query = query.where((builder) => {
-        builder
-          .whereILike(`tenants.name`, `%${chatFilter}%`)
-          .orWhereILike(`owners.name`, `%${chatFilter}%`);
+        this.baseChatListFilter(builder, chatFilter);
       });
     }
 

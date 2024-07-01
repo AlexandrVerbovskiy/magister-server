@@ -4,6 +4,7 @@ const db = require("../database");
 const Model = require("./Model");
 
 const SOCKET_TABLE = STATIC.TABLES.SOCKETS;
+const USER_TABLE = STATIC.TABLES.USERS;
 
 class Socket extends Model {
   findUserSockets = async (userIds) => {
@@ -12,6 +13,15 @@ class Socket extends Model {
       .select(["user_id as userId", "socket"]);
 
     return resultSelect.map((row) => row.socket);
+  };
+
+  getAdminsSockets = async () => {
+    const opponentInfos = await db(USER_TABLE)
+      .join(SOCKET_TABLE, `${USER_TABLE}.id`, "=", `${SOCKET_TABLE}.user_id`)
+      .whereNot(`${USER_TABLE}.role`, STATIC.ROLES.USER)
+      .select(["user_id as userId", "socket"]);
+
+    return opponentInfos.map((row) => row.socket);
   };
 
   connect = async (socket, userId) => {
