@@ -136,18 +136,42 @@ class DisputeController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { disputeId, solution } = req.body;
       const disputeStatus = await this.disputeModel.solve(solution, disputeId);
-      const chatId = await this.disputeModel.getChatId(disputeId);
+      const orderChatId = await this.disputeModel.getOrderChatId(disputeId);
+
+      const createdMessages = [];
 
       const chatMessage =
-        await this.chatMessageModel.createResolvedDisputeMessage({ chatId });
+        await this.chatMessageModel.createResolvedDisputeMessage({
+          chatId: orderChatId,
+        });
 
-      this.sendSocketMessageToChatUsers(chatId, "get-message", {
+      this.sendSocketMessageToChatUsers(orderChatId, "get-message", {
         message: chatMessage,
         orderPart: { disputeStatus },
       });
 
+      createdMessages.push(chatMessage);
+
+      const disputeChats = await this.disputeModel.getDisputeChatIds(disputeId);
+
+      for (let i = 0; i < disputeChats.length; i++) {
+        const disputeChatId = disputeChats[i];
+
+        const chatMessage =
+          await this.chatMessageModel.createResolvedDisputeMessage({
+            chatId: disputeChatId,
+          });
+
+        this.sendSocketMessageToChatUsers(disputeChatId, "get-message", {
+          message: chatMessage,
+          orderPart: { disputeStatus },
+        });
+
+        createdMessages.push(chatMessage);
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        message: chatMessage,
+        messages: createdMessages,
         orderPart: { disputeStatus },
       });
     });

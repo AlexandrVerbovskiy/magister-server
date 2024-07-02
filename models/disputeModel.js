@@ -294,7 +294,7 @@ class DisputeModel extends Model {
     };
   };
 
-  getChatId = async (disputeId) => {
+  getOrderChatId = async (disputeId) => {
     const result = await db(DISPUTES_TABLE)
       .join(
         ORDERS_TABLE,
@@ -302,12 +302,25 @@ class DisputeModel extends Model {
         "=",
         `${DISPUTES_TABLE}.order_id`
       )
-      .join(CHATS_TABLE, `${CHATS_TABLE}.entity_id`, "=", `${ORDERS_TABLE}.id`)
+      .joinRaw(
+        `JOIN ${CHATS_TABLE} ON (${CHATS_TABLE}.entity_id = ${ORDERS_TABLE}.id AND ${CHATS_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}')`
+      )
       .where(`${DISPUTES_TABLE}.id`, "=", disputeId)
       .select([`${CHATS_TABLE}.id as chatId`])
       .first();
 
     return result?.chatId;
+  };
+
+  getDisputeChatIds = async (disputeId) => {
+    const result = await db(DISPUTES_TABLE)
+      .joinRaw(
+        `JOIN ${CHATS_TABLE} ON (${CHATS_TABLE}.entity_id = ${DISPUTES_TABLE}.id AND ${CHATS_TABLE}.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+      )
+      .where(`${DISPUTES_TABLE}.id`, "=", disputeId)
+      .select([`${CHATS_TABLE}.id as chatId`]);
+
+    return result.map((data) => data.chatId);
   };
 }
 
