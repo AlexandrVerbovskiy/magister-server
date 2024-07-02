@@ -43,14 +43,17 @@ module.exports = (io) => {
       "admin-delete-message",
       chatController.onDeleteMessageByAdmin
     );
+
     bindFuncToEvent("start-typing", chatController.onStartTyping);
-    bindFuncToEvent("admin-start-typing", chatController.onStartTyping);
+    //bindFuncToEvent("admin-start-typing", chatController.onStartTyping);
     bindFuncToEvent("end-typing", chatController.onFinishTyping);
-    bindFuncToEvent("admin-end-typing", chatController.onFinishTyping);
+    //bindFuncToEvent("admin-end-typing", chatController.onFinishTyping);
+
     bindFuncToEvent("file-part-upload", chatController.onFilePartUpload);
-    bindFuncToEvent("admin-file-part-upload", chatController.onFilePartUpload);
+    bindFuncToEvent("admin-file-part-upload", chatController.onFilePartUploadByAdmin);
     bindFuncToEvent("stop-file-upload", chatController.onStopFileUpload);
     bindFuncToEvent("admin-stop-file-upload", chatController.onStopFileUpload);
+
     bindFuncToEvent("disconnect", chatController.onDisconnect);
   };
 

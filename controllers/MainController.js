@@ -1264,6 +1264,7 @@ class MainController extends Controller {
     req,
     res,
     getChatList,
+    getMessageList,
     getEntityInfo,
     defaultEntityRes,
   }) =>
@@ -1286,7 +1287,7 @@ class MainController extends Controller {
       };
 
       if (chatId) {
-        messageRes = await this.chatController.baseGetChatMessageList(req, res);
+        messageRes = await getMessageList(req, res);
       }
 
       if (messageRes.error) {
@@ -1322,6 +1323,7 @@ class MainController extends Controller {
       req,
       res,
       getChatList: this.chatController.baseGetChatList,
+      getMessageList: this.chatController.baseGetChatMessageList,
       getEntityInfo,
       defaultEntityRes: { entity: null, dopEntityInfo: {} },
     });
@@ -1337,6 +1339,7 @@ class MainController extends Controller {
       req,
       res,
       getChatList: this.chatController.baseGetAdminChatList,
+      getMessageList: this.chatController.baseGetAdminChatMessageList,
       getEntityInfo,
       defaultEntityRes: { order: null, dispute: null, dopInfo: {} },
     });

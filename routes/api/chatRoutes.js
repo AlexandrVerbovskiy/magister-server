@@ -23,7 +23,7 @@ module.exports = (io) => {
     "/admin-chat-message-list",
     isAuth,
     isAdmin,
-    chatController.getChatMessageList
+    chatController.getChatMessageListForAdmin
   );
 
   router.post(

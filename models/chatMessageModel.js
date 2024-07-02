@@ -26,8 +26,7 @@ class ChatMessageModel extends Model {
     `${CHAT_MESSAGE_CONTENT_TABLE}.created_at as updatedAt`,
   ];
 
-  fullVisibleFieldsWithUser = [
-    ...this.fullVisibleFields,
+  userFields = [
     `${CHAT_TABLE}.entity_id as entityId`,
     `${CHAT_TABLE}.entity_type as entityType`,
     `${CHAT_TABLE}.name as chatName`,
@@ -35,6 +34,10 @@ class ChatMessageModel extends Model {
     `${USER_TABLE}.name as senderName`,
     `${USER_TABLE}.online as senderOnline`,
   ];
+
+  fullVisibleFieldsWithUser = [...this.fullVisibleFields, ...this.userFields];
+
+  visibleFieldsWithUser = [...this.visibleFields, ...this.userFields];
 
   contentJoin = (query) => {
     return query
@@ -402,9 +405,13 @@ class ChatMessageModel extends Model {
     return referenceItem.createdAt;
   };
 
-  getList = async ({ chatId, count = 50, lastMessageId = null }) => {
-    let query = this.getListBaseQuery();
-
+  baseGetList = async ({
+    query,
+    visibleFields,
+    chatId,
+    count = 50,
+    lastMessageId = null,
+  }) => {
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
 
     if (lastMessageId) {
@@ -422,13 +429,44 @@ class ChatMessageModel extends Model {
       .limit(count)
       .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
 
-    const messages = await query.select(this.fullVisibleFieldsWithUser);
+    const messages = await query.select(visibleFields);
     return messages.reverse();
   };
 
-  getBeforeMessageInChat = async ({ messageCreatedAt, chatId }) => {
+  getList = async ({ chatId, count = 50, lastMessageId = null }) => {
+    return await this.baseGetList({
+      query: this.getListBaseQuery(),
+      visibleFields: this.fullVisibleFieldsWithUser,
+      chatId,
+      count,
+      lastMessageId,
+    });
+  };
+
+  getFullList = async ({ chatId, count = 50, lastMessageId = null }) => {
+    const messages = await this.baseGetList({
+      query: this.baseJoinQuery(db(CHAT_MESSAGE_TABLE)),
+      visibleFields: this.fullVisibleFieldsWithUser,
+      chatId,
+      count,
+      lastMessageId,
+    });
+
+    return messages;
+  };
+
+  getBeforeMessageInChat = async ({
+    messageCreatedAt,
+    chatId,
+    full = false,
+  }) => {
     let query = this.getListBaseQuery();
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
+
+    if (!full) {
+      query = query.where(`${CHAT_MESSAGE_TABLE}.hidden`, "=", false);
+    }
+
     query = query
       .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", messageCreatedAt)
       .orderBy(`${CHAT_MESSAGE_TABLE}.id`, "desc")
@@ -469,6 +507,16 @@ class ChatMessageModel extends Model {
     const id = await this.getBeforeMessageInChat({
       messageCreatedAt,
       chatId,
+    });
+
+    return !!id;
+  };
+
+  checkHasFullMore = async ({ messageCreatedAt, chatId }) => {
+    const id = await this.getBeforeMessageInChat({
+      messageCreatedAt,
+      chatId,
+      full: true,
     });
 
     return !!id;
