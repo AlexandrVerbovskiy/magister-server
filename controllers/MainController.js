@@ -20,7 +20,7 @@ const {
   checkDateInDuration,
   getDaysDifference,
   isDateAfterStartDate,
-  getProfileData,
+  getUserPaypalId,
 } = require("../utils");
 const TenantCommentController = require("./TenantCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
@@ -1353,21 +1353,23 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
     });
 
-  test = async (req, res) => {
-    const authCode = req.query.code;
-    console.log("Authorization Code:", authCode);
-    console.log("test");
-    return res.send("success");
-  };
+  test = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const authCode = req.query.code;
+      const result = await getUserPaypalId(authCode);
 
-  test2 = async (req, res) => {
-    const authCode =
-      "C21AAKvzmSFk2Mqrln87sp99-5QNfgpSRTT0W0_I8DAtGwnKCcJVFC78GH2b0qysZZjIB5HT_13FnZSNEHqiUuJkX5rvRy-zQ";
-
-    const result = await getProfileData(authCode);
-    console.log(result);
-    res.send("test");
-  };
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST.DEFAULT_MESSAGE,
+          result.error
+        );
+      } else {
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          paypalId: result.paypalId,
+        });
+      }
+    });
 }
 
 module.exports = MainController;

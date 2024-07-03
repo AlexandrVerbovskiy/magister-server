@@ -418,8 +418,5 @@ module.exports = (io) => {
   );
 
   router.get("/auth/paypal/callback", mainController.test);
-
-  router.get("/auth/paypal/callback2", mainController.test2);
-
   return router;
 };

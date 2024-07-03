@@ -257,6 +257,39 @@ const getProfileData = async (code) => {
   }
 };
 
+const getUserPaypalId = async (code) => {
+  try {
+    const profileData = await getProfileData(code);
+
+    if (profileData.error) {
+      return { error: profileData.error, paypalId: null };
+    }
+
+    const response = await fetch(
+      "https://api.sandbox.paypal.com/v1/identity/oauth2/userinfo?schema",
+      {
+        headers: {
+          Authorization: `Bearer ${profileData.data.access_token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return {
+        error: `HTTP error! status: ${response.status}`,
+        paypalId: null,
+      };
+    }
+
+    const result = await response.json();
+
+    return { error: null, paypalId: result.payer_id };
+  } catch (e) {
+    return { error: e.message, paypalId: null };
+  }
+};
+
 module.exports = {
   capturePaypalOrder,
   createPaypalOrder,
@@ -266,4 +299,5 @@ module.exports = {
   getPaypalOrderInfo,
   refundPaypalOrderCapture,
   getProfileData,
+  getUserPaypalId
 };
