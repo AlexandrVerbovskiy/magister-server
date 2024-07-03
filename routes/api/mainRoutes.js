@@ -417,7 +417,7 @@ module.exports = (io) => {
     mainController.getAdminOrderChatOptions
   );
 
-  router.get("/test", mainController.test);
+  router.get("/auth/paypal/callback", mainController.test);
 
   return router;
 };
