@@ -149,7 +149,7 @@ class UserModel extends Model {
       verified,
       acceptedTermCondition,
       needRegularViewInfoForm,
-      paypalId,
+      paypalId = null,
     } = userData;
 
     const updateData = {
@@ -289,6 +289,10 @@ class UserModel extends Model {
 
   setRole = async (id, role) => {
     await db(USERS_TABLE).where({ id }).update({ role });
+  };
+
+  setPaypalId = async (id, paypalId) => {
+    await db(USERS_TABLE).where({ id }).update({ paypal_id: paypalId });
   };
 
   changeActive = async (id) => {
