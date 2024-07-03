@@ -41,6 +41,7 @@ module.exports = (io) => {
   router.post("/login", isNotAuth, loginValidation, userController.login);
 
   router.post("/my-info", isAuth, userController.myInfo);
+  
   router.post(
     "/save-profile",
     upload.single("photo"),
