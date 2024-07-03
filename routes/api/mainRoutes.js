@@ -225,7 +225,7 @@ module.exports = (io) => {
     mainController.getFullOrderByIdPageOption
   );
 
-  router.get(
+  router.post(
     "/user-profile-edit-options",
     isAuth,
     mainController.getUserProfileEditPageOptions

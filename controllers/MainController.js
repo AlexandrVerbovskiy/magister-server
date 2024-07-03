@@ -636,10 +636,31 @@ class MainController extends Controller {
 
   getUserProfileEditPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const paypalCode = req.body.paypalCode;
+      const userId = req.userData.userId;
+
+      let newPaypalId = null;
+
+      if (paypalCode) {
+        const result = await getUserPaypalId(authCode);
+
+        if (result.error) {
+          return this.sendErrorResponse(
+            res,
+            STATIC.ERRORS.BAD_REQUEST.DEFAULT_MESSAGE,
+            result.error
+          );
+        } else {
+          newPaypalId = result.paypalId;
+          await this.userModel.setPaypalId(userId, newPaypalId);
+        }
+      }
+
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
+        newPaypalId,
       });
     });
 
@@ -1353,23 +1374,7 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
     });
 
-  test = async (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const authCode = req.query.code;
-      const result = await getUserPaypalId(authCode);
-
-      if (result.error) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.BAD_REQUEST.DEFAULT_MESSAGE,
-          result.error
-        );
-      } else {
-        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          paypalId: result.paypalId,
-        });
-      }
-    });
+  test = async (req, res) => this.baseWrapper(req, res, async () => {});
 }
 
 module.exports = MainController;
