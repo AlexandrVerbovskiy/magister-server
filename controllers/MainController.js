@@ -642,7 +642,7 @@ class MainController extends Controller {
       let newPaypalId = null;
 
       if (paypalCode) {
-        const result = await getUserPaypalId(authCode);
+        const result = await getUserPaypalId(paypalCode);
 
         if (result.error) {
           return this.sendErrorResponse(
