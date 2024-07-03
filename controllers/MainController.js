@@ -386,8 +386,10 @@ class MainController extends Controller {
 
   getOrderFullByIdOptions = (req, res) => {
     const { id } = req.params;
+    const userId = req.userData.userId;
 
-    const getOrderByRequest = () => this.orderModel.getFullWithCommentsById(id);
+    const getOrderByRequest = () =>
+      this.orderModel.getFullWithCommentsById(id, userId);
 
     const getDopOrderOptions = async (order) => {
       const paymentInfo =
@@ -1157,7 +1159,7 @@ class MainController extends Controller {
 
   createOwnerComment = async (req, res) => {
     const { userCommentInfo, listingCommentInfo, orderId } = req.body;
-    const senderId = req.userData.id;
+    const senderId = req.userData.userId;
 
     const orderHasOwnerComment =
       await this.ownerCommentModel.checkOrderHasComment(orderId);
@@ -1219,7 +1221,7 @@ class MainController extends Controller {
 
   createTenantComment = async (req, res) => {
     const { userCommentInfo, orderId } = req.body;
-    const senderId = req.userData.id;
+    const senderId = req.userData.userId;
 
     const orderHasTenantComment =
       await this.tenantCommentModel.checkOrderHasComment(orderId);
@@ -1264,6 +1266,7 @@ class MainController extends Controller {
     req,
     res,
     getChatList,
+    getMessageList,
     getEntityInfo,
     defaultEntityRes,
   }) =>
@@ -1286,7 +1289,7 @@ class MainController extends Controller {
       };
 
       if (chatId) {
-        messageRes = await this.chatController.baseGetChatMessageList(req, res);
+        messageRes = await getMessageList(req, res);
       }
 
       if (messageRes.error) {
@@ -1307,6 +1310,7 @@ class MainController extends Controller {
         messages: messageRes.list,
         messagesCanShowMore: messageRes.canShowMore,
         ...entityInfoRes,
+        ...chatRes.dopInfo,
       });
     });
 
@@ -1321,6 +1325,7 @@ class MainController extends Controller {
       req,
       res,
       getChatList: this.chatController.baseGetChatList,
+      getMessageList: this.chatController.baseGetChatMessageList,
       getEntityInfo,
       defaultEntityRes: { entity: null, dopEntityInfo: {} },
     });
@@ -1328,6 +1333,7 @@ class MainController extends Controller {
 
   getAdminChatOptions = (req, res) => {
     const chatId = req.body.id;
+
     const getEntityInfo = () =>
       this.chatController.baseGetChatDisputeInfo(chatId);
 
@@ -1335,6 +1341,7 @@ class MainController extends Controller {
       req,
       res,
       getChatList: this.chatController.baseGetAdminChatList,
+      getMessageList: this.chatController.baseGetAdminChatMessageList,
       getEntityInfo,
       defaultEntityRes: { order: null, dispute: null, dopInfo: {} },
     });

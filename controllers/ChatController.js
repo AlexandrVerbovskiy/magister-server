@@ -9,7 +9,7 @@ const OrderController = require("./OrderController");
 
 class ChatController extends Controller {
   message_files_dir = "public/messages";
-  count_message_per_iteration = 50;
+  count_message_per_iteration = 20;
   count_chat_per_iteration = 20;
 
   constructor(io) {
@@ -43,7 +43,7 @@ class ChatController extends Controller {
   };
 
   baseGetChatList = async (req, res) => {
-    const chatId = req.body.id;
+    const chatId = req.body.id ?? null;
     const userId = req.userData.userId;
     let chatType = req.body.chatType ?? STATIC.CHAT_TYPES.ORDER;
     const chatFilter = req.body.chatFilter ?? "";
@@ -94,25 +94,34 @@ class ChatController extends Controller {
       options: {
         chatType,
       },
+      dopInfo: {},
     };
   };
 
   baseGetAdminChatList = async (req, res) => {
-    const chatId = req.body.chatId;
+    const chatId = req.body.id ?? null;
     const chatFilter = req.body.chatFilter ?? "";
     const count = this.count_chat_per_iteration;
     const lastChatId = req.body.lastChatId ?? null;
 
-    if (chatId) {
-      disputeId = await this.chatModel.checkChatHasDispute(chatId);
+    let mainSearchChatId = chatId;
+    let searchChatType = null;
+    let searchChatDisputeId;
 
-      if (!disputeId) {
+    if (chatId) {
+      const resChatSearching = await this.chatModel.chatTypeAndDispute(chatId);
+
+      if (!resChatSearching) {
         return { error: STATIC.ERRORS.NOT_FOUND };
       }
+
+      mainSearchChatId = resChatSearching.mainChatId;
+      searchChatType = resChatSearching.type;
+      searchChatDisputeId = resChatSearching.disputeId;
     }
 
     const chatList = await this.chatModel.getForAdminList({
-      needChatId: chatId,
+      needChatId: mainSearchChatId,
       count,
       lastChatId,
       chatFilter,
@@ -133,28 +142,33 @@ class ChatController extends Controller {
       error: null,
       list: chatList,
       canShowMore,
+      dopInfo: { mainSearchChatId, searchChatType },
     };
   };
 
-  getChatListWrapper = async (req, res, func) => {
-    const chatRes = await func(req, res);
+  getChatListWrapper = (req, res, func) =>
+    this.baseWrapper(req, res, async () => {
+      const chatRes = await func(req, res);
 
-    if (chatRes.error) {
-      return this.sendErrorResponse(res, chatRes.error);
-    }
+      if (chatRes.error) {
+        return this.sendErrorResponse(res, chatRes.error);
+      }
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-      chats: chatRes.list,
-      chatsCanShowMore: chatRes.canShowMore,
-      options: chatRes.options,
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chats: chatRes.list,
+        chatsCanShowMore: chatRes.canShowMore,
+        options: chatRes.options,
+        ...chatRes.dopInfo,
+      });
     });
-  };
 
   getChatList = async (req, res) =>
-    this.getChatListWrapper(req, res, this.baseGetChatList(req, res));
+    this.getChatListWrapper(req, res, () => this.baseGetChatList(req, res));
 
   getChatListForAdmin = async (req, res) =>
-    this.getChatListWrapper(req, res, this.baseGetAdminChatList(req, res));
+    this.getChatListWrapper(req, res, () =>
+      this.baseGetAdminChatList(req, res)
+    );
 
   baseGetChatMessageList = async (req, res) => {
     const chatId = req.body.id;
@@ -167,7 +181,7 @@ class ChatController extends Controller {
       lastMessageId,
     });
 
-    const lastMessage = messageList[messageList.length - 1];
+    const lastMessage = messageList[0];
 
     let canShowMore = false;
 
@@ -181,6 +195,65 @@ class ChatController extends Controller {
     return {
       error: null,
       list: messageList,
+      canShowMore,
+      options: {},
+    };
+  };
+
+  baseGetAdminChatMessageList = async (req, res) => {
+    const chatId = req.body.id;
+    const count = this.count_message_per_iteration;
+    const lastMessageId = req.body.lastMessageId ?? null;
+
+    const chatType = await this.chatModel.getChatType(chatId);
+
+    if (!chatType) {
+      return {
+        error: "Chat not found",
+        list: [],
+        canShowMore: false,
+        options: {},
+      };
+    }
+
+    const getList =
+      chatType == STATIC.CHAT_TYPES.ORDER
+        ? this.chatMessageModel.getFullList
+        : this.chatMessageModel.getList;
+
+    const checkHasMore =
+      chatType == STATIC.CHAT_TYPES.ORDER
+        ? this.chatMessageModel.checkHasFullMore
+        : this.chatMessageModel.checkHasMore;
+
+    const messageList = await getList({
+      chatId,
+      count,
+      lastMessageId,
+    });
+
+    const lastMessage = messageList[0];
+
+    let canShowMore = false;
+
+    if (lastMessage) {
+      canShowMore = await checkHasMore({
+        messageCreatedAt: lastMessage.createdAt,
+        chatId,
+      });
+    }
+
+    let resultList = messageList;
+
+    if (chatType == STATIC.CHAT_TYPES.ORDER) {
+      resultList = await this.chatMessageContentModel.bindContentsToMessages(
+        messageList
+      );
+    }
+
+    return {
+      error: null,
+      list: resultList,
       canShowMore,
       options: {},
     };
@@ -212,6 +285,20 @@ class ChatController extends Controller {
     });
   };
 
+  getChatMessageListForAdmin = async (req, res) => {
+    const messagesRes = await this.baseGetAdminChatMessageList(req, res);
+
+    if (messagesRes.error) {
+      return this.sendErrorResponse(res, chatRes.error);
+    }
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      messages: messagesRes.list,
+      messagesCanShowMore: messagesRes.canShowMore,
+      options: messagesRes.options,
+    });
+  };
+
   baseGetChatEntityInfo = async (chatId, userId) => {
     const chat = await this.chatModel.getById(chatId);
 
@@ -220,21 +307,25 @@ class ChatController extends Controller {
 
     if (chat.entityType === STATIC.CHAT_TYPES.DISPUTE) {
       entity = await this.disputeModel.getById(chat.entityId);
+      entity["type"] = STATIC.CHAT_TYPES.DISPUTE;
     } else {
-      entity = await this.orderModel.getFullById(chat.entityId);
+      entity = await this.orderModel.getFullByIdeWithDisputeChat(
+        chat.entityId,
+        userId
+      );
       entity["childrenList"] = await this.orderModel.getChildrenList(
         chat.entityId
       );
 
       dopEntityInfo["tenantBaseCommission"] =
         await this.systemOptionModel.getTenantBaseCommissionPercent();
+
       dopEntityInfo["bankInfo"] =
         await this.systemOptionModel.getBankAccountInfo();
 
       entity = await this.orderController.wrapOrderFullInfo(entity, userId);
+      entity["type"] = STATIC.CHAT_TYPES.ORDER;
     }
-
-    entity["type"] = chat.entityType;
 
     return { entity, dopEntityInfo };
   };
@@ -242,7 +333,19 @@ class ChatController extends Controller {
   baseGetChatDisputeInfo = async (chatId) => {
     const dopInfo = {};
     const chat = await this.chatModel.getById(chatId);
-    let order = await this.orderModel.getFullById(chat.entityId);
+
+    const isDisputeChat = chat.entityType == STATIC.CHAT_TYPES.DISPUTE;
+
+    let dispute = null;
+    let order = null;
+
+    if (isDisputeChat) {
+      dispute = await this.disputeModel.getFullById(chat.entityId);
+      order = await this.orderModel.getFullById(dispute.orderId);
+    } else {
+      order = await this.orderModel.getFullById(chat.entityId);
+      dispute = await this.disputeModel.getFullById(order.disputeId);
+    }
 
     order["childrenList"] = await this.orderModel.getChildrenList(
       chat.entityId
@@ -250,11 +353,17 @@ class ChatController extends Controller {
 
     dopInfo["tenantBaseCommission"] =
       await this.systemOptionModel.getTenantBaseCommissionPercent();
+
     dopInfo["bankInfo"] = await this.systemOptionModel.getBankAccountInfo();
 
-    const dispute = await this.disputeModel.getFullById(order.disputeId);
-
-    return { order, dispute, dopInfo };
+    return {
+      order,
+      dispute,
+      dopInfo,
+      mainSearchChatId: chat.chatId,
+      searchChatType: chat.entityType,
+      searchChatDisputeId: dispute.id,
+    };
   };
 
   getChatBaseInfo = async ({
@@ -262,6 +371,7 @@ class ChatController extends Controller {
     res,
     getChatDopInfo,
     needCheckAccess = true,
+    getMessageList,
   }) => {
     const chatId = req.body.id;
     const userId = req.userData.userId;
@@ -275,7 +385,7 @@ class ChatController extends Controller {
       }
     }
 
-    const messagesRes = await this.baseGetChatMessageList(req, res);
+    const messagesRes = await getMessageList(req, res);
 
     if (messagesRes.error) {
       return this.sendErrorResponse(res, chatRes.error);
@@ -298,15 +408,35 @@ class ChatController extends Controller {
       req,
       res,
       getChatDopInfo: () => this.baseGetChatEntityInfo(chatId, userId),
+      getMessageList: this.baseGetChatMessageList,
     });
   };
 
   getChatInfoByAdmin = async (req, res) => {
     const chatId = req.body.id;
+    const type = await this.chatModel.getChatType(chatId);
+
     return this.getChatBaseInfo({
       req,
       res,
       getChatDopInfo: () => this.baseGetChatDisputeInfo(chatId),
+      getMessageList:
+        type === STATIC.CHAT_TYPES.DISPUTE
+          ? this.baseGetChatMessageList
+          : this.baseGetAdminChatMessageList,
+      needCheckAccess: false,
+    });
+  };
+
+  baseSendTextMessage = async (data, sessionInfo, isAdminSender = false) => {
+    const senderId = sessionInfo.userId;
+    const chatId = data.chatId;
+
+    return await this.chatMessageModel.createTextMessage({
+      chatId,
+      isAdminSender,
+      senderId,
+      text: data.text,
     });
   };
 
@@ -314,25 +444,28 @@ class ChatController extends Controller {
     const senderId = sessionInfo.userId;
     const chatId = data.chatId;
 
-    const message = await this.chatMessageModel.createTextMessage({
-      chatId,
-      isAdminSender: false,
-      senderId,
-      text: data.text,
-    });
-
+    let getter = null;
+    const message = await this.baseSendTextMessage(data, sessionInfo, false);
     const sender = await this.userModel.getById(senderId);
-    const getter = await this.chatModel.getChatOpponent(chatId, senderId);
 
-    await this.sendSocketMessageToUserOpponent(
-      chatId,
-      senderId,
-      "get-message",
-      {
+    if (message.entityType == STATIC.CHAT_TYPES.ORDER) {
+      getter = await this.chatModel.getChatOpponent(chatId, senderId);
+
+      await this.sendSocketMessageToUserOpponent(
+        chatId,
+        senderId,
+        "get-message",
+        {
+          message,
+          opponent: sender,
+        }
+      );
+    } else {
+      await this.sendSocketMessageToAdmins("admin-get-message", {
         message,
         opponent: sender,
-      }
-    );
+      });
+    }
 
     return await this.sendSocketMessageToUser(
       senderId,
@@ -341,6 +474,29 @@ class ChatController extends Controller {
         message,
         tempKey: data.tempKey,
         opponent: getter,
+      }
+    );
+  };
+
+  onSendTextMessageByAdmin = async (data, sessionInfo) => {
+    const senderId = sessionInfo.userId;
+    const chatId = data.chatId;
+
+    const message = await this.baseSendTextMessage(data, sessionInfo, true);
+    const sender = await this.userModel.getById(senderId);
+
+    await this.sendSocketMessageToChatUsers(chatId, "get-message", {
+      message,
+      opponent: sender,
+    });
+
+    return await this.sendSocketMessageToUser(
+      senderId,
+      "admin-success-sended-message",
+      {
+        message,
+        tempKey: data.tempKey,
+        opponent: null,
       }
     );
   };
@@ -402,7 +558,7 @@ class ChatController extends Controller {
     return path;
   };
 
-  onFilePartUpload = async (data, sessionInfo) => {
+  baseOnFilePartUpload = async (data, sessionInfo) => {
     const userId = sessionInfo.userId;
 
     const { chatId, tempKey, data: fileBody, filetype, filename, last } = data;
@@ -416,9 +572,7 @@ class ChatController extends Controller {
     });
 
     if (!last) {
-      return await this.sendSocketMessageToUser(userId, "file-part-uploaded", {
-        tempKey,
-      });
+      return { last: false, tempKey };
     }
 
     const message = await this.chatMessageModel.createFileMessage({
@@ -431,19 +585,91 @@ class ChatController extends Controller {
 
     await this.activeActionModel.deleteByKeyAndType(tempKey, "sending_file");
 
-    const sender = await this.userModel.getById(userId);
-    const getter = await this.chatModel.getChatOpponent(chatId, userId);
+    return { last: true, tempKey, message };
+  };
 
-    await this.sendSocketMessageToUserOpponent(chatId, userId, "get-message", {
-      message,
-      opponent: sender,
-    });
+  onFilePartUpload = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+    const { chatId } = data;
+
+    const {
+      message = null,
+      last,
+      tempKey,
+    } = await this.baseOnFilePartUpload(data, sessionInfo);
+
+    if (!last) {
+      return await this.sendSocketMessageToUser(userId, "file-part-uploaded", {
+        tempKey,
+      });
+    }
+
+    const sender = await this.userModel.getById(userId);
+
+    let getter = null;
+
+    if (message.entityType == STATIC.CHAT_TYPES.ORDER) {
+      getter = await this.chatModel.getChatOpponent(chatId, userId);
+
+      await this.sendSocketMessageToUserOpponent(
+        chatId,
+        userId,
+        "get-message",
+        {
+          message,
+          opponent: sender,
+        }
+      );
+    } else {
+      await this.sendSocketMessageToAdmins("admin-get-message", {
+        message,
+        opponent: sender,
+      });
+    }
 
     return await this.sendSocketMessageToUser(userId, "file-part-uploaded", {
       tempKey,
       message,
       opponent: getter,
     });
+  };
+
+  onFilePartUploadByAdmin = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+    const { chatId } = data;
+
+    const {
+      message = null,
+      last,
+      tempKey,
+    } = await this.baseOnFilePartUpload(data, sessionInfo);
+
+    if (!last) {
+      return await this.sendSocketMessageToUser(
+        userId,
+        "admin-file-part-uploaded",
+        {
+          tempKey,
+        }
+      );
+    }
+
+    const sender = await this.userModel.getById(userId);
+
+    await this.sendSocketMessageToChatUsers(chatId, "get-message", {
+      message,
+      opponent: sender,
+    });
+
+    return await this.sendSocketMessageToUser(
+      userId,
+      "admin-file-part-uploaded",
+      {
+        tempKey,
+        message,
+        opponent: null,
+      }
+    );
   };
 
   deleteFileAction = async (key) =>
@@ -490,36 +716,56 @@ class ChatController extends Controller {
     });
   };
 
-  onUpdateMessage = async (data, sessionInfo) => {
+  baseOnUpdate = async (data, sessionInfo, updateFunc) => {
     const userId = sessionInfo.userId;
     const messageId = data.messageId;
     const text = data.text;
 
-    const message = await this.chatMessageModel.update(messageId, text);
-
-    await this.sendSocketMessageToUserOpponent(
-      message.chatId,
-      userId,
-      "message-updated",
-      {
-        message,
-      }
-    );
-
-    return await this.sendSocketMessageToUser(
-      userId,
-      "success-message-updated",
-      {
-        message,
-      }
-    );
+    return await updateFunc({ messageId, text, userId });
   };
 
-  onDeleteMessage = async (data, sessionInfo) => {
+  onUpdateMessage = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+    const message = await this.baseOnUpdate(
+      data,
+      sessionInfo,
+      ({ messageId, text, userId }) =>
+        this.chatMessageModel.updateIfAuthor(messageId, text, userId)
+    );
+
+    if (message.entityType == STATIC.CHAT_TYPES.ORDER) {
+      await this.sendSocketMessageToUserOpponent(
+        message.chatId,
+        userId,
+        "message-updated",
+        {
+          message,
+        }
+      );
+    } else {
+      await this.sendSocketMessageToAdmins("admin-message-updated", {
+        message,
+      });
+    }
+  };
+
+  onUpdateMessageByAdmin = async (data, sessionInfo) => {
+    const message = await this.baseOnUpdate(
+      data,
+      sessionInfo,
+      ({ messageId, text }) => this.chatMessageModel.update(messageId, text)
+    );
+
+    await this.sendSocketMessageToChatUsers(message.chatId, "message-updated", {
+      message,
+    });
+  };
+
+  baseOnDelete = async (data, sessionInfo, deleteFunc) => {
     const userId = sessionInfo.userId;
     const messageId = data.messageId;
 
-    const deletedMessage = await this.chatMessageModel.getShortById(messageId);
+    const deletedMessage = await this.chatMessageModel.getFullById(messageId);
     const chatId = deletedMessage.chatId;
 
     const previousMessage = await this.chatMessageModel.getBeforeMessageInChat({
@@ -541,12 +787,58 @@ class ChatController extends Controller {
         offset: skippedForNew,
       });
 
-    await this.chatMessageModel.delete(messageId);
+    await deleteFunc({ messageId, userId });
 
-    await this.sendSocketMessageToUserOpponent(
-      chatId,
+    return { deletedMessage, replacementMessage, previousMessage };
+  };
+
+  onDeleteMessage = async (data, sessionInfo) => {
+    const { deletedMessage, replacementMessage, previousMessage } =
+      await this.baseOnDelete(data, sessionInfo, ({ messageId, userId }) =>
+        this.chatMessageModel.deleteIfAuthor(messageId, userId)
+      );
+
+    if (deletedMessage.entityType == STATIC.CHAT_TYPES.ORDER) {
+      await this.sendSocketMessageToUserOpponent(
+        chatId,
+        userId,
+        "message-deleted",
+        {
+          deletedMessage,
+          previousMessage,
+          replacementMessage,
+        }
+      );
+    } else {
+      await this.sendSocketMessageToAdmins("admin-message-deleted", {
+        deletedMessage,
+        previousMessage,
+        replacementMessage,
+      });
+    }
+
+    return await this.sendSocketMessageToUser(
       userId,
-      "message-deleted",
+      "success-message-deleted",
+      {
+        deletedMessage,
+        previousMessage,
+        replacementMessage,
+      }
+    );
+  };
+
+  onDeleteMessageByAdmin = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+
+    const { deletedMessage, replacementMessage, previousMessage } =
+      await this.baseOnDelete(data, sessionInfo, ({ messageId }) =>
+        this.chatMessageModel.delete(messageId)
+      );
+
+    await this.sendSocketMessageToChatUsers(
+      deletedMessage.chatId,
+      "success-message-deleted",
       {
         deletedMessage,
         previousMessage,
@@ -556,7 +848,7 @@ class ChatController extends Controller {
 
     return await this.sendSocketMessageToUser(
       userId,
-      "success-message-deleted",
+      "admin-success-message-deleted",
       {
         deletedMessage,
         previousMessage,
