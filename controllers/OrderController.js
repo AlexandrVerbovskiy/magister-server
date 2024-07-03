@@ -674,7 +674,7 @@ class OrderController extends Controller {
       const payerCardLastBrand = paypalOrderInfo.payment_source?.card?.brand;
 
       const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
-      const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
+      const orderId = +paypalOrderInfo.purchase_units[0].items[0].sku;
 
       const order = await this.orderModel.getById(orderId);
 
@@ -726,12 +726,16 @@ class OrderController extends Controller {
         createMessageFunc: this.chatMessageModel.createTenantPayedOrderMessage,
         orderPart: {
           status: newStatus,
+          id: orderId,
         },
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        status: newStatus,
+        orderPart: {
+          status: newStatus,
+          id: orderId,
+        },
       });
     });
 
@@ -850,7 +854,7 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        orderPart: { status: newStatus },
+        orderPart: { status: newStatus, id: orderInfo.id },
         qrCode: generatedImage,
       });
     });
@@ -913,7 +917,7 @@ class OrderController extends Controller {
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
       chatMessage,
-      orderPart: { cancelStatus },
+      orderPart: { cancelStatus, id: orderInfo.id },
     });
   };
 
@@ -988,7 +992,7 @@ class OrderController extends Controller {
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
       chatMessage,
-      orderPart: { cancelStatus: newCancelStatus },
+      orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
     });
   };
 
@@ -1161,7 +1165,7 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        orderPart: { cancelStatus: newCancelStatus },
+        orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
       });
     });
 
@@ -1235,7 +1239,7 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        orderPart: { status: newStatus },
+        orderPart: { status: newStatus, id: orderInfo.id },
       });
     });
 

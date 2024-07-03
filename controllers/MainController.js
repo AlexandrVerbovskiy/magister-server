@@ -386,8 +386,10 @@ class MainController extends Controller {
 
   getOrderFullByIdOptions = (req, res) => {
     const { id } = req.params;
+    const userId = req.userData.userId;
 
-    const getOrderByRequest = () => this.orderModel.getFullWithCommentsById(id);
+    const getOrderByRequest = () =>
+      this.orderModel.getFullWithCommentsById(id, userId);
 
     const getDopOrderOptions = async (order) => {
       const paymentInfo =
@@ -1157,7 +1159,7 @@ class MainController extends Controller {
 
   createOwnerComment = async (req, res) => {
     const { userCommentInfo, listingCommentInfo, orderId } = req.body;
-    const senderId = req.userData.id;
+    const senderId = req.userData.userId;
 
     const orderHasOwnerComment =
       await this.ownerCommentModel.checkOrderHasComment(orderId);
@@ -1219,7 +1221,7 @@ class MainController extends Controller {
 
   createTenantComment = async (req, res) => {
     const { userCommentInfo, orderId } = req.body;
-    const senderId = req.userData.id;
+    const senderId = req.userData.userId;
 
     const orderHasTenantComment =
       await this.tenantCommentModel.checkOrderHasComment(orderId);

@@ -23,6 +23,7 @@ const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const CHAT_TABLE = STATIC.TABLES.CHATS;
+const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -375,6 +376,16 @@ class OrderModel extends Model {
     );
   };
 
+  disputeChatInfoJoin = (query, userId) => {
+    return query
+      .joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} as dispute_chats ON (dispute_chats.entity_id = ${DISPUTES_TABLE}.id AND dispute_chats.entity_type='${STATIC.CHAT_TYPES.DISPUTE}')`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHAT_RELATION_TABLE} ON (${CHAT_RELATION_TABLE}.user_id = ${userId} AND dispute_chats.id = ${CHAT_RELATION_TABLE}.chat_id)`
+      );
+  };
+
   commentsInfoJoin = (query) => {
     query = query.leftJoin(
       LISTING_COMMENTS_TABLE,
@@ -416,6 +427,10 @@ class OrderModel extends Model {
     ];
   };
 
+  disputeChatsVisibleFields = (visibleFields) => {
+    return [...visibleFields, `dispute_chats.id as disputeChatId`];
+  };
+
   tenantBaseGetQuery = (filter, timeInfos, tenantId) => {
     const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
 
@@ -430,7 +445,6 @@ class OrderModel extends Model {
     const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
 
     let query = baseGetReq(filter);
-
     query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
 
     return query.whereRaw("owners.id = ?", ownerId);
@@ -539,6 +553,7 @@ class OrderModel extends Model {
     let query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
 
     query = this.commentsInfoJoin(query);
+    query = this.disputeChatInfoJoin(query, tenantId);
 
     let visibleFields = [
       ...this.lightRequestVisibleFields,
@@ -546,6 +561,7 @@ class OrderModel extends Model {
     ];
 
     visibleFields = this.commentsVisibleFields(visibleFields);
+    visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
     query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
 
@@ -564,11 +580,14 @@ class OrderModel extends Model {
 
     query = this.commentsInfoJoin(query);
 
-    const visibleFields = this.commentsVisibleFields(
+    let visibleFields = this.commentsVisibleFields(
       this.lightRequestVisibleFields
     );
 
     query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
+    query = this.disputeChatInfoJoin(query, ownerId);
+
+    visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
     return await query
       .select(visibleFields)
@@ -663,7 +682,25 @@ class OrderModel extends Model {
     }
   };
 
+  getByWhereWithDisputeChat = async (key, value, needList = false, userId) => {
+    let query = db(ORDERS_TABLE);
+    query = this.fullOrdersJoin(query);
+    query = this.disputeChatInfoJoin(query, userId);
+    query = query
+      .select(this.disputeChatsVisibleFields(this.fullVisibleFields))
+      .where(key, value);
+
+    if (needList) {
+      return await query;
+    } else {
+      return await query.first();
+    }
+  };
+
   getById = (id) => this.getByWhere(`${ORDERS_TABLE}.id`, id);
+
+  getByIdWithDisputeChat = (id, userId) =>
+    this.getByWhereWithDisputeChat(`${ORDERS_TABLE}.id`, id, false, userId);
 
   getChildrenList = (parentId) =>
     this.getByWhere(`${ORDERS_TABLE}.parent_id`, parentId, true);
@@ -713,13 +750,20 @@ class OrderModel extends Model {
 
   getFullById = (id) => this.getFullByBaseRequest(() => this.getById(id));
 
-  getFullWithCommentsById = (id) =>
+  getFullByIdeWithDisputeChat = (id, userId) =>
+    this.getFullByBaseRequest(() => this.getByIdWithDisputeChat(id, userId));
+
+  getFullWithCommentsById = (id, userId) =>
     this.getFullByBaseRequest(async () => {
-      const visibleFields = this.commentsVisibleFields(this.fullVisibleFields);
+      let visibleFields = this.commentsVisibleFields(this.fullVisibleFields);
+      visibleFields = this.disputeChatsVisibleFields(this.fullVisibleFields);
 
       let query = db(ORDERS_TABLE);
+
       query = this.fullOrdersJoin(query);
       query = this.commentsInfoJoin(query);
+      query = this.disputeChatInfoJoin(query, userId);
+
       query = query.select(visibleFields).where(`${ORDERS_TABLE}.id`, id);
 
       return await query.first();
