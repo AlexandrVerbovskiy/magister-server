@@ -1355,8 +1355,8 @@ class MainController extends Controller {
 
   test = async (req, res) => {
     const authCode = req.query.code;
-    console.log("Authorization Code:", authCode);
-    console.log("test");
+    const result = await getProfileData(authCode);
+    console.log(result);
     return res.send("success");
   };
 
