@@ -168,7 +168,7 @@ class DisputeModel extends Model {
     query = query.select(this.visibleFields).where(`${DISPUTES_TABLE}.id`, id);
     return await query.first();
   };
-
+  
   getFullById = async (id) => {
     const fields = [
       ...this.visibleFields,

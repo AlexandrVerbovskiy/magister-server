@@ -66,8 +66,11 @@ class DisputeController extends Controller {
       const tenantId = +order.tenantId;
       const ownerId = +order.ownerId;
 
+      const isOwnerCreatedDispute = userId == ownerId;
+      const isTenantCreatedDispute = userId == tenantId;
+
       if (
-        (ownerId != userId && tenantId != userId) ||
+        (!isTenantCreatedDispute && !isOwnerCreatedDispute) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         [
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
@@ -87,6 +90,29 @@ class DisputeController extends Controller {
       });
 
       const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
+      const senderName = isOwnerCreatedDispute ? order.ownerId : order.tenantId;
+
+      const createdMessages = await this.chatModel.createForDispute({
+        orderId,
+        disputeId,
+        userIds: [tenantId, ownerId],
+        data: { senderId: userId, senderName, description, type },
+      });
+
+      if (isOwnerCreatedDispute) {
+        await this.sendSocketMessageToUser(tenantId, "get-message", {
+          message: createdMessages[tenantId],
+        });
+      }
+
+      if (isTenantCreatedDispute) {
+        await this.sendSocketMessageToUser(ownerId, "get-message", {
+          message: createdMessages[ownerId],
+        });
+      }
+
+      const ownerDisputeChatId = createdMessages[ownerId].chatId;
+      const tenantDisputeChatId = createdMessages[tenantId].chatId;
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -99,36 +125,24 @@ class DisputeController extends Controller {
           disputeStatus,
           disputeType: type,
           disputeDescription: description,
+          disputeChatId: isOwnerCreatedDispute
+            ? tenantDisputeChatId
+            : ownerDisputeChatId,
         },
       });
 
-      const senderName = userId == ownerId ? order.ownerId : order.tenantId;
-
-      const createdMessages = await this.chatModel.createForDispute({
-        orderId,
-        disputeId,
-        userIds: [tenantId, ownerId],
-        data: { senderId: userId, senderName, description, type },
-      });
-
-      if (userId == ownerId) {
-        await this.sendSocketMessageToUser(tenantId, "get-message", {
-          message: createdMessages[tenantId],
-        });
-      }
-
-      if (userId == tenantId) {
-        await this.sendSocketMessageToUser(ownerId, "get-message", {
-          message: createdMessages[ownerId],
-        });
-      }
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        disputeId,
-        disputeStatus,
-        disputeType: type,
-        disputeDescription: description,
+        orderPart: {
+          id: order.id,
+          disputeId,
+          disputeStatus,
+          disputeType: type,
+          disputeDescription: description,
+          disputeChatId: isOwnerCreatedDispute
+            ? ownerDisputeChatId
+            : tenantDisputeChatId,
+        },
       });
     });
 

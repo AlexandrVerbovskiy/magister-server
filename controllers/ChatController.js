@@ -309,7 +309,10 @@ class ChatController extends Controller {
       entity = await this.disputeModel.getById(chat.entityId);
       entity["type"] = STATIC.CHAT_TYPES.DISPUTE;
     } else {
-      entity = await this.orderModel.getFullById(chat.entityId);
+      entity = await this.orderModel.getFullByIdeWithDisputeChat(
+        chat.entityId,
+        userId
+      );
       entity["childrenList"] = await this.orderModel.getChildrenList(
         chat.entityId
       );
