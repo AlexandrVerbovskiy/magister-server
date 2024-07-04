@@ -244,7 +244,13 @@ const getProfileData = async (code) => {
     );
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if(response.status){
+        throw new Error(`Paypal Api error! status: ${response.status}`);
+      }else if(response.statusText){
+        throw new Error(`Paypal Api error! ${response.statusText}`);
+      }else{
+        throw new Error(`Paypal Api unknown error! PaypalApi line 252`);
+      }
     }
 
     const data = await response.json();
@@ -262,7 +268,7 @@ const getUserPaypalId = async (code) => {
     const profileData = await getProfileData(code);
 
     if (profileData.error) {
-      return { error: profileData.error, paypalId: null };
+      throw new Error(profileData.error);
     }
 
     const response = await fetch(
@@ -276,10 +282,13 @@ const getUserPaypalId = async (code) => {
     );
 
     if (!response.ok) {
-      return {
-        error: `HTTP error! status: ${response.status}`,
-        paypalId: null,
-      };
+      if(response.status){
+        throw new Error(`Paypal Api error! status: ${response.statusText}`);
+      }else if(response.statusText){
+        throw new Error(`Paypal Api error! ${response.status}`);
+      }else{
+        throw new Error(`Paypal Api unknown error! PaypalApi line 252`);
+      }
     }
 
     const result = await response.json();
