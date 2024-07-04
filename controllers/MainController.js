@@ -21,6 +21,9 @@ const {
   getDaysDifference,
   isDateAfterStartDate,
   getUserPaypalId,
+  incrementDateCounts,
+  incrementDateSums,
+  determineStepType,
 } = require("../utils");
 const TenantCommentController = require("./TenantCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
@@ -664,15 +667,6 @@ class MainController extends Controller {
       });
     });
 
-  getSettingsPageOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const categories = await this.getNavigationCategories();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        categories,
-      });
-    });
-
   getOrderListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
@@ -923,180 +917,303 @@ class MainController extends Controller {
       });
     });
 
-  getAdminIndexPageOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const {
-        timeFilterType,
-        clientFromTime,
-        serverFromTime,
-        clientToTime,
-        serverToTime,
-        clientServerHoursDiff,
-      } = await this.listTimeNameOption(req);
+  baseGetAdminDashboardOptions = async (req) => {
+    const {
+      timeFilterType,
+      clientFromTime,
+      serverFromTime,
+      clientToTime,
+      serverToTime,
+      clientServerHoursDiff,
+    } = await this.listTimeNameOption(req);
 
-      let stepType = "days";
+    const stepType = determineStepType(timeFilterType);
 
-      if (timeFilterType === "last-year") {
-        stepType = "months";
+    const generatedDates = generateDatesByTypeBetween(
+      clientFromTime,
+      clientToTime,
+      stepType
+    );
+
+    const rentListingCounts = cloneObject(generatedDates);
+    const transactionDatesCount = cloneObject(generatedDates);
+    const transactionDatesSum = cloneObject(generatedDates);
+    const userRegisterDatesCount = cloneObject(generatedDates);
+    const userInactiveRegisterDatesCount = cloneObject(generatedDates);
+    const userTotalDatesCount = cloneObject(generatedDates);
+    const disputeTotalDatesCount = cloneObject(generatedDates);
+
+    const rentListingInfos = await this.orderModel.getInUseListings(
+      clientFromTime,
+      clientToTime
+    );
+
+    incrementDateCounts(rentListingCounts, rentListingInfos, (key, info) =>
+      checkDateInDuration(key, info.startDate, info.endDate, stepType)
+    );
+
+    const disputeInfos = await this.disputeModel.getInDuration(
+      clientFromTime,
+      clientToTime
+    );
+
+    const disputeStatisticInfo = {
+      allDisputes: disputeInfos.length,
+      allActiveDisputes: disputeInfos.filter(
+        (d) => d.status != STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+      allSolvedDisputes: disputeInfos.filter(
+        (d) => d.status == STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+    };
+
+    incrementDateCounts(disputeTotalDatesCount, disputeInfos, (key, info) =>
+      checkDateInDuration(key, info.createdAt, info.solvedAt, stepType)
+    );
+
+    const transactionInfos = await this.senderPaymentModel.getSendersByDuration(
+      serverFromTime,
+      serverToTime
+    );
+
+    const transactionsDetailInfo = {
+      paypal: { amount: 0, count: 0 },
+      bankTransfer: { amount: 0, count: 0 },
+    };
+
+    incrementDateCounts(transactionDatesCount, transactionInfos, (key, info) =>
+      checkDateInDuration(
+        key,
+        info.createdAt,
+        info.createdAt,
+        stepType,
+        clientServerHoursDiff
+      )
+    );
+
+    incrementDateSums(
+      transactionDatesSum,
+      transactionInfos,
+      (key, info) =>
+        checkDateInDuration(
+          key,
+          info.createdAt,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        ),
+      (info) => {
+        const sum =
+          getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
+        transactionsDetailInfo[
+          info.type === "paypal" ? "paypal" : "bankTransfer"
+        ].amount += sum;
+        transactionsDetailInfo[
+          info.type === "paypal" ? "paypal" : "bankTransfer"
+        ].count += 1;
+        return sum;
       }
+    );
 
-      if (timeFilterType === "last-day") {
-        stepType = "hours";
-      }
+    const totalUsersAtStart = await this.userModel.getTotalCountBeforeDate(
+      serverFromTime
+    );
 
-      const generatedDates = generateDatesByTypeBetween(
-        clientFromTime,
-        clientToTime,
-        stepType
-      );
+    Object.keys(userTotalDatesCount).forEach(
+      (date) => (userTotalDatesCount[date] = totalUsersAtStart)
+    );
 
-      const rentListingCounts = cloneObject(generatedDates);
+    const userRegisterInfos = await this.userModel.getRegisteredByDuration(
+      serverFromTime,
+      serverToTime
+    );
 
-      const rentListingInfos = await this.orderModel.getInUseListings(
-        clientFromTime,
-        clientToTime
-      );
-
-      rentListingInfos.forEach((info) => {
-        Object.keys(rentListingCounts).forEach((key) => {
-          const startInfo = info["startDate"];
-          const endInfo = info["endDate"];
-
-          if (checkDateInDuration(key, startInfo, endInfo, stepType)) {
-            rentListingCounts[key]++;
-          }
-        });
-      });
-
-      const transactionDatesCount = cloneObject(generatedDates);
-      const transactionDatesSum = cloneObject(generatedDates);
-
-      const transactionInfos =
-        await this.senderPaymentModel.getSendersByDuration(
-          serverFromTime,
-          serverToTime
-        );
-
-      const transactionsDetailInfo = {
-        paypal: { amount: 0, count: 0 },
-        bankTransfer: { amount: 0, count: 0 },
-      };
-
-      transactionInfos.forEach((info) => {
-        Object.keys(transactionDatesCount).forEach((key) => {
-          if (
-            checkDateInDuration(
-              key,
-              info["createdAt"],
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            transactionDatesCount[key]++;
-          }
-        });
-
-        Object.keys(transactionDatesSum).forEach((key) => {
-          if (
-            checkDateInDuration(
-              key,
-              info["createdAt"],
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            const sum =
-              getDaysDifference(info["startDate"], info["endDate"]) *
-              info["pricePerDay"];
-            transactionDatesSum[key] += sum;
-
-            const payType =
-              info["type"] == "paypal" ? "paypal" : "bankTransfer";
-
-            transactionsDetailInfo[payType]["amount"] += sum;
-            transactionsDetailInfo[payType]["count"] += 1;
-          }
-        });
-      });
-
-      const userRegisterDatesCount = cloneObject(generatedDates);
-      const userInactiveRegisterDatesCount = cloneObject(generatedDates);
-      const userTotalDatesCount = cloneObject(generatedDates);
-
-      const totalUsersAtStart = await this.userModel.getTotalCountBeforeDate(
-        serverFromTime
-      );
-
-      Object.keys(userTotalDatesCount).forEach(
-        (date) => (userTotalDatesCount[date] = totalUsersAtStart)
-      );
-
-      const userRegisterInfos = await this.userModel.getRegisteredByDuration(
+    const userInactiveInfos =
+      await this.userModel.getInactiveRegisteredByDuration(
         serverFromTime,
         serverToTime
       );
 
-      const userInactiveInfos =
-        await this.userModel.getInactiveRegisteredByDuration(
-          serverFromTime,
-          serverToTime
-        );
+    incrementDateCounts(
+      userInactiveRegisterDatesCount,
+      userInactiveInfos,
+      (key, info) =>
+        isDateAfterStartDate(
+          key,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        )
+    );
 
-      userInactiveInfos.forEach((info) => {
-        Object.keys(userInactiveRegisterDatesCount).forEach((key) => {
-          if (
-            isDateAfterStartDate(
-              key,
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            userInactiveRegisterDatesCount[key] += 1;
-          }
-        });
-      });
+    incrementDateCounts(
+      userRegisterDatesCount,
+      userRegisterInfos,
+      (key, info) =>
+        isDateAfterStartDate(
+          key,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        )
+    );
 
-      userRegisterInfos.forEach((info) => {
-        Object.keys(userRegisterDatesCount).forEach((key) => {
-          if (
-            isDateAfterStartDate(
-              key,
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            userRegisterDatesCount[key] += 1;
-          }
-        });
+    incrementDateCounts(userTotalDatesCount, userRegisterInfos, (key, info) =>
+      isDateAfterStartDate(key, info.createdAt, stepType, clientServerHoursDiff)
+    );
 
-        Object.keys(userTotalDatesCount).forEach((key) => {
-          if (
-            isDateAfterStartDate(
-              key,
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            userTotalDatesCount[key] += 1;
-          }
-        });
-      });
+    return {
+      timeFilterType,
+      userRegisterDatesCount,
+      userInactiveRegisterDatesCount,
+      userTotalDatesCount,
+      transactionDatesCount,
+      transactionDatesSum,
+      rentListingCounts,
+      transactionsDetailInfo,
+      disputeTotalDatesCount,
+      disputeStatisticInfo,
+    };
+  };
+
+  getAdminDashboardPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetAdminDashboardOptions(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, options);
+    });
+
+  getAdminDashboardOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetAdminDashboardOptions(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, options);
+    });
+
+  baseGetUserDashboardOptions = async (req) => {
+    const userId = req.userData.userId;
+    const {
+      timeFilterType,
+      clientFromTime,
+      serverFromTime,
+      clientToTime,
+      serverToTime,
+      clientServerHoursDiff,
+    } = await this.listTimeNameOption(req);
+
+    const stepType = determineStepType(timeFilterType);
+
+    const generatedDates = generateDatesByTypeBetween(
+      clientFromTime,
+      clientToTime,
+      stepType
+    );
+
+    const rentListingCounts = cloneObject(generatedDates);
+    const transactionDatesCount = cloneObject(generatedDates);
+    const transactionDatesSum = cloneObject(generatedDates);
+    const disputeTotalDatesCount = cloneObject(generatedDates);
+
+    const rentListingInfos = await this.orderModel.getInUseUserListings(
+      clientFromTime,
+      clientToTime,
+      userId
+    );
+
+    const disputeInfos = await this.disputeModel.getUserInDuration(
+      clientFromTime,
+      clientToTime,
+      userId
+    );
+
+    const disputeStatisticInfo = {
+      allDisputes: disputeInfos.length,
+      allActiveDisputes: disputeInfos.filter(
+        (d) => d.status != STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+      allSolvedDisputes: disputeInfos.filter(
+        (d) => d.status == STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+    };
+
+    incrementDateCounts(disputeTotalDatesCount, disputeInfos, (key, info) =>
+      checkDateInDuration(key, info.createdAt, info.solvedAt, stepType)
+    );
+
+    incrementDateCounts(rentListingCounts, rentListingInfos, (key, info) =>
+      checkDateInDuration(key, info.startDate, info.endDate, stepType)
+    );
+
+    const transactionInfos =
+      await this.senderPaymentModel.getUserSendersByDuration(
+        serverFromTime,
+        serverToTime,
+        userId
+      );
+
+    const transactionsDetailInfo = {
+      paypal: { amount: 0, count: 0 },
+      bankTransfer: { amount: 0, count: 0 },
+    };
+
+    incrementDateCounts(transactionDatesCount, transactionInfos, (key, info) =>
+      checkDateInDuration(
+        key,
+        info.createdAt,
+        info.createdAt,
+        stepType,
+        clientServerHoursDiff
+      )
+    );
+
+    incrementDateSums(
+      transactionDatesSum,
+      transactionInfos,
+      (key, info) =>
+        checkDateInDuration(
+          key,
+          info.createdAt,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        ),
+      (info) => {
+        const sum =
+          getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
+        transactionsDetailInfo[
+          info.type === "paypal" ? "paypal" : "bankTransfer"
+        ].amount += sum;
+        transactionsDetailInfo[
+          info.type === "paypal" ? "paypal" : "bankTransfer"
+        ].count += 1;
+        return sum;
+      }
+    );
+
+    return {
+      timeFilterType,
+      transactionDatesCount,
+      transactionDatesSum,
+      rentListingCounts,
+      transactionsDetailInfo,
+      disputeStatisticInfo,
+      disputeTotalDatesCount,
+    };
+  };
+
+  getUserDashboardPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetUserDashboardOptions(req);
+      const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        timeFilterType,
-        userRegisterDatesCount,
-        userInactiveRegisterDatesCount,
-        userTotalDatesCount,
-        transactionDatesCount,
-        transactionDatesSum,
-        rentListingCounts,
-        transactionsDetailInfo,
+        ...options,
+        categories,
       });
+    });
+
+  getUserDashboardOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetUserDashboardOptions(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, options);
     });
 
   getOrderReviewByTenantOptions = (req, res) =>

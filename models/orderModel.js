@@ -383,7 +383,8 @@ class OrderModel extends Model {
       )
       .joinRaw(
         `LEFT JOIN ${CHAT_RELATION_TABLE} ON (${CHAT_RELATION_TABLE}.user_id = ${userId} AND dispute_chats.id = ${CHAT_RELATION_TABLE}.chat_id)`
-      );
+      )
+      .where(`${CHAT_RELATION_TABLE}.user_id`, "=", userId);
   };
 
   commentsInfoJoin = (query) => {
@@ -1262,8 +1263,8 @@ class OrderModel extends Model {
       .update({ status: STATIC.ORDER_STATUSES.FINISHED });
   };
 
-  getInUseListings = async (dateStart, dateEnd) => {
-    return await db(ORDERS_TABLE)
+  getInUseListingsBaseQuery = (dateStart, dateEnd) =>
+    db(ORDERS_TABLE)
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
@@ -1282,6 +1283,16 @@ class OrderModel extends Model {
         "start_date as startDate",
         "end_date as endDate",
       ]);
+
+  getInUseListings = async (dateStart, dateEnd) => {
+    return await this.getInUseListingsBaseQuery(dateStart, dateEnd);
+  };
+
+  getInUseUserListings = async (dateStart, dateEnd, userId) => {
+    return await this.getInUseListingsBaseQuery(dateStart, dateEnd).where(
+      `${LISTINGS_TABLE}.owner_id`,
+      userId
+    );
   };
 
   getOrderStatusesCount = async ({ timeInfos, filter }) => {
