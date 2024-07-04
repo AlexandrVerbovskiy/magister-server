@@ -182,11 +182,11 @@ class SenderPaymentController extends Controller {
       const chatId = order.chatId;
 
       if (chatId) {
-        const message = await createMessageFunc({
-          chatId,
-          senderId: order.tenantId,
-          data: messageData,
-        });
+        const message =
+          await this.chatMessageModel.createTenantPayedOrderMessage({
+            chatId,
+            senderId: order.tenantId,
+          });
 
         const tenant = await this.userModel.getById(order.tenantId);
         const owner = await this.userModel.getById(order.ownerId);

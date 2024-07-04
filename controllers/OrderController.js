@@ -6,6 +6,7 @@ const {
   sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
   getDaysDifference,
+  isPayedUsedPaypal,
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
@@ -291,9 +292,34 @@ class OrderController extends Controller {
     });
 
     const orderIdsNeedExtendInfo = Object.keys(orderIdsNeedExtendInfoObj);
+
     const orderExtends = await this.orderModel.getOrdersExtends(
       orderIdsNeedExtendInfo
     );
+
+    const extendOrderIds = orderExtends.map((request) => request.id);
+
+    const extendPaymentInfos =
+      await this.senderPaymentModel.getInfoAboutOrdersPayments(extendOrderIds);
+
+    orderExtends.forEach((request, index) => {
+      const currentOrderConflicts = conflictOrders[request.orderParentId];
+      orderExtends[index]["conflictOrders"] = currentOrderConflicts;
+
+      orderExtends[index]["blockedDates"] =
+        this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
+
+      orderExtends[index]["blockedForRentalDates"] =
+        blockedListingsDates[request.listingId];
+
+      orderExtends[index]["paymentInfo"] = extendPaymentInfos[request.id];
+
+      orderExtends[index]["canFastCancelPayed"] =
+        this.orderModel.canFastCancelPayedOrder(request);
+
+      orderExtends[index]["canFinalization"] =
+        this.orderModel.canFinalizationOrder(request);
+    });
 
     requestsWithImages.forEach((request, index) => {
       requestsWithImages[index]["canFastCancelPayed"] =
@@ -663,7 +689,7 @@ class OrderController extends Controller {
   paypalOrderPayed = async (req, res) =>
     this.baseWrapper(res, res, async () => {
       const { userId } = req.userData;
-      const { orderId: paypalOrderId } = req.body;
+      const { orderId: paypalOrderId, type: paypalType } = req.body;
 
       await capturePaypalOrder(paypalOrderId);
 
@@ -717,6 +743,7 @@ class OrderController extends Controller {
         payerCardLastDigits,
         payerCardLastBrand,
         proofUrl: "",
+        type: paypalType,
       });
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
@@ -1111,7 +1138,7 @@ class OrderController extends Controller {
       const factTotalPriceWithoutCommission =
         (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
 
-      if (type == "paypal") {
+      if (isPayedUsedPaypal(type)) {
         try {
           await sendMoneyToPaypalByPaypalID(
             paypalId,
@@ -1122,7 +1149,7 @@ class OrderController extends Controller {
             money: factTotalPriceWithoutCommission,
             userId: userId,
             orderId: id,
-            type: "paypal",
+            type: STATIC.PAYMENT_TYPES.PAYPAL,
             data: { paypalId: paypalId },
             status: STATIC.RECIPIENT_STATUSES.COMPLETED,
           });
@@ -1131,7 +1158,7 @@ class OrderController extends Controller {
             money: factTotalPriceWithoutCommission,
             userId: userId,
             orderId: id,
-            type: "paypal",
+            type: STATIC.PAYMENT_TYPES.PAYPAL,
             data: { paypalId: paypalId },
             status: STATIC.RECIPIENT_STATUSES.FAILED,
             failedDescription: e.message,
@@ -1139,12 +1166,12 @@ class OrderController extends Controller {
         }
       }
 
-      if (type == "card") {
+      if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
         await this.recipientPaymentModel.createRefundPayment({
           money: factTotalPriceWithoutCommission,
           userId: userId,
           orderId: id,
-          type: "card",
+          type: STATIC.PAYMENT_TYPES.BANK_TRANSFER,
           data: { cardNumber: cardNumber },
           status: STATIC.RECIPIENT_STATUSES.WAITING,
         });

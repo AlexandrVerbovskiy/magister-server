@@ -1,6 +1,7 @@
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
+const { formatDateToSQLFormat } = require("../utils");
 
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const USERS_TABLE = STATIC.TABLES.USERS;
@@ -119,10 +120,13 @@ class DisputeModel extends Model {
   solve = async (solution, disputeId) => {
     const status = STATIC.DISPUTE_STATUSES.SOLVED;
 
-    await db(DISPUTES_TABLE).where("id", disputeId).update({
-      solution,
-      status,
-    });
+    await db(DISPUTES_TABLE)
+      .where("id", disputeId)
+      .update({
+        solution,
+        status,
+        solved_at: db.raw("CURRENT_TIMESTAMP"),
+      });
 
     return status;
   };
@@ -168,7 +172,7 @@ class DisputeModel extends Model {
     query = query.select(this.visibleFields).where(`${DISPUTES_TABLE}.id`, id);
     return await query.first();
   };
-  
+
   getFullById = async (id) => {
     const fields = [
       ...this.visibleFields,
@@ -321,6 +325,50 @@ class DisputeModel extends Model {
       .select([`${CHATS_TABLE}.id as chatId`]);
 
     return result.map((data) => data.chatId);
+  };
+
+  baseGetInDuration = (dateStart, dateEnd) => {
+    return db(DISPUTES_TABLE)
+      .where(function () {
+        this.where(
+          `${DISPUTES_TABLE}.solved_at`,
+          ">=",
+          formatDateToSQLFormat(dateStart)
+        ).orWhereNull(`${DISPUTES_TABLE}.solved_at`);
+      })
+      .where(
+        `${DISPUTES_TABLE}.created_at`,
+        "<=",
+        formatDateToSQLFormat(dateEnd)
+      )
+      .select([
+        `${DISPUTES_TABLE}.id as id`,
+        `${DISPUTES_TABLE}.status as status`,
+        `${DISPUTES_TABLE}.solved_at as solvedAt`,
+        `${DISPUTES_TABLE}.created_at as createdAt`,
+      ]);
+  };
+
+  getInDuration = async (dateStart, dateEnd) => {
+    return await this.baseGetInDuration(dateStart, dateEnd);
+  };
+
+  getUserInDuration = async (dateStart, dateEnd, userId) => {
+    return await this.baseGetInDuration(dateStart, dateEnd)
+      .join(
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
+        "=",
+        `${DISPUTES_TABLE}.order_id`
+      )
+      .join(
+        LISTINGS_TABLE,
+        `${LISTINGS_TABLE}.id`,
+        "=",
+        `${ORDERS_TABLE}.listing_id`
+      )
+      .where(`${LISTINGS_TABLE}.owner_id`, "=", userId)
+      .where(`${ORDERS_TABLE}.tenant_id`, "=", userId);
   };
 }
 
