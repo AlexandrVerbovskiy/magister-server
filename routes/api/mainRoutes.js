@@ -231,10 +231,16 @@ module.exports = (io) => {
     mainController.getUserProfileEditPageOptions
   );
 
-  router.get(
-    "/settings-options",
+  router.post(
+    "/dashboard-page-options",
     isAuth,
-    mainController.getSettingsPageOptions
+    mainController.getUserDashboardPageOptions
+  );
+
+  router.post(
+    "/dashboard-options",
+    isAuth,
+    mainController.getUserDashboardOptions
   );
 
   router.post(
@@ -329,11 +335,19 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/get-admin-index-page-option",
+    "/get-admin-dashboard-page-option",
     isAuth,
     isSupport,
     adminIndexPageOptionsValidation,
-    mainController.getAdminIndexPageOptions
+    mainController.getAdminDashboardPageOptions
+  );
+
+  router.post(
+    "/get-admin-dashboard-option",
+    isAuth,
+    isSupport,
+    adminIndexPageOptionsValidation,
+    mainController.getAdminDashboardOptions
   );
 
   router.get(
