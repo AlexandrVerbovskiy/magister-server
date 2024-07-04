@@ -647,7 +647,7 @@ class MainController extends Controller {
         if (result.error) {
           return this.sendErrorResponse(
             res,
-            STATIC.ERRORS.BAD_REQUEST.DEFAULT_MESSAGE,
+            STATIC.ERRORS.BAD_REQUEST,
             result.error
           );
         } else {
