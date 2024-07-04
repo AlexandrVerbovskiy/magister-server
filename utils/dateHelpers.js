@@ -212,49 +212,66 @@ const checkDateInDuration = (
 ) => {
   const durationMilliseconds = durationHours * 60 * 60 * 1000;
 
-  const startInfoDate = new Date(startInfo);
-  const endInfoDate = new Date(endInfo);
+  const startInfoDate = startInfo ? new Date(startInfo) : null;
+  const endInfoDate = endInfo ? new Date(endInfo) : null;
 
-  startInfoDate.setTime(startInfoDate.getTime() + durationMilliseconds);
-  endInfoDate.setTime(endInfoDate.getTime() + durationMilliseconds);
+  if (startInfoDate) {
+    startInfoDate.setTime(startInfoDate.getTime() + durationMilliseconds);
+  }
+
+  if (endInfoDate) {
+    endInfoDate.setTime(endInfoDate.getTime() + durationMilliseconds);
+  }
+
+  let startPart = true;
+  let endPart = true;
 
   if (stepType == "hours") {
-    startInfoDate.setMinutes(0, 0);
-    endInfoDate.setMinutes(59, 59);
+    if (startInfoDate) {
+      startInfoDate.setMinutes(0, 0);
+      startInfo = timeConverter(startInfoDate);
+      startPart = timeConverter(key) >= startInfo;
+    }
 
-    startInfo = timeConverter(startInfoDate);
-    endInfo = timeConverter(endInfoDate);
-
-    return timeConverter(key) >= startInfo && timeConverter(key) <= endInfo;
+    if (endInfoDate) {
+      endInfoDate.setMinutes(59, 59);
+      endInfo = timeConverter(endInfoDate);
+      endPart = timeConverter(key) <= endInfo;
+    }
   } else if (stepType == "days") {
-    startInfo = shortTimeConverter(startInfoDate);
-    endInfo = shortTimeConverter(endInfoDate);
+    if (startInfoDate) {
+      startPart = shortTimeConverter(key) >= shortTimeConverter(startInfoDate);
+    }
 
-    return (
-      shortTimeConverter(key) >= startInfo && shortTimeConverter(key) <= endInfo
-    );
+    if (endInfoDate) {
+      endPart = shortTimeConverter(key) <= shortTimeConverter(endInfoDate);
+    }
   } else {
-    startInfo = shortTimeConverter(startInfoDate);
-    endInfo = shortTimeConverter(endInfoDate);
-
-    const splittedStartInfo = startInfo.split("/");
-    const startInfoMonth = splittedStartInfo[0];
-    const startInfoYear = splittedStartInfo[2];
-
-    const splittedEndInfo = endInfo.split("/");
-    const endInfoMonth = splittedEndInfo[0];
-    const endInfoYear = splittedEndInfo[2];
-
     const splittedKeyInfo = key.split("/");
     const keyInfoMonth = splittedKeyInfo[0];
     const keyInfoYear = splittedKeyInfo[1];
-
-    const startDate = new Date(startInfoYear, startInfoMonth - 1, 1);
-    const endDate = new Date(endInfoYear, endInfoMonth - 1, 1);
     const checkDate = new Date(keyInfoYear, keyInfoMonth - 1, 1);
 
-    return checkDate >= startDate && checkDate <= endDate;
+    if (startInfoDate) {
+      startInfo = shortTimeConverter(startInfoDate);
+      const splittedStartInfo = startInfo.split("/");
+      const startInfoMonth = splittedStartInfo[0];
+      const startInfoYear = splittedStartInfo[2];
+      const startDate = new Date(startInfoYear, startInfoMonth - 1, 1);
+      startPart = checkDate >= startDate;
+    }
+
+    if (endInfoDate) {
+      endInfo = shortTimeConverter(endInfoDate);
+      const splittedEndInfo = endInfo.split("/");
+      const endInfoMonth = splittedEndInfo[0];
+      const endInfoYear = splittedEndInfo[2];
+      const endDate = new Date(endInfoYear, endInfoMonth - 1, 1);
+      endPart = checkDate <= endDate;
+    }
   }
+
+  return startPart && endPart;
 };
 
 const isDateAfterStartDate = (key, startInfo, stepType, durationHours) => {
@@ -269,9 +286,7 @@ const isDateAfterStartDate = (key, startInfo, stepType, durationHours) => {
     return timeConverter(key) >= startInfo;
   } else if (stepType == "days") {
     startInfo = shortTimeConverter(startInfoDate);
-    return (
-      shortTimeConverter(key) >= startInfo
-    );
+    return shortTimeConverter(key) >= startInfo;
   } else {
     startInfo = shortTimeConverter(startInfoDate);
 

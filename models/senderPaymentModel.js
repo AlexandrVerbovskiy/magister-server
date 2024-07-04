@@ -418,8 +418,8 @@ class SenderPayment extends Model {
     return result[0];
   };
 
-  getSendersByDuration = async (dateStart, dateEnd) => {
-    return await db(SENDER_PAYMENTS_TABLE)
+  baseGetSendersByDuration = (dateStart, dateEnd) => {
+    return db(SENDER_PAYMENTS_TABLE)
       .join(
         ORDERS_TABLE,
         `${ORDERS_TABLE}.id`,
@@ -450,6 +450,17 @@ class SenderPayment extends Model {
         `${SENDER_PAYMENTS_TABLE}.type as transactionId`,
         `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
       ]);
+  };
+
+  getSendersByDuration = async (dateStart, dateEnd) => {
+    return await this.baseGetSendersByDuration(dateStart, dateEnd);
+  };
+
+  getUserSendersByDuration = async (dateStart, dateEnd, userId) => {
+    return await this.baseGetSendersByDuration(dateStart, dateEnd).where(
+      `${SENDER_PAYMENTS_TABLE}.user_id`,
+      userId
+    );
   };
 
   getTransferTypesCount = async ({ filter, timeInfos, status }) => {
