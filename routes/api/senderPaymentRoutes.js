@@ -53,14 +53,14 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/approve-credit-card-transaction",
+    "/approve-bank-transfer-transaction",
     isAuth,
     approveCreditCardTransactionValidation,
     senderPaymentController.approveTransaction
   );
 
   router.post(
-    "/reject-credit-card-transaction",
+    "/reject-bank-transfer-transaction",
     isAuth,
     rejectCreditCardTransactionValidation,
     senderPaymentController.rejectTransaction

@@ -208,7 +208,13 @@ class RecipientPayment extends Model {
   };
 
   baseListTypeSelect = (query, type) => {
-    if (["paypal", "card"].includes(type)) {
+    if (
+      [
+        STATIC.PAYMENT_TYPES.PAYPAL,
+        STATIC.PAYMENT_TYPES.CREDIT_CARD,
+        STATIC.PAYMENT_TYPES.BANK_TRANSFER,
+      ].includes(type)
+    ) {
       query.where(`${RECIPIENT_PAYMENTS_TABLE}.type`, type);
     }
 
@@ -360,7 +366,7 @@ class RecipientPayment extends Model {
         failed_details: "",
         user_id: userId,
         order_id: orderId,
-        type: "paypal",
+        type: STATIC.PAYMENT_TYPES.PAYPAL,
         data: JSON.stringify({ paypalId: "-" }),
       });
     });
@@ -387,7 +393,7 @@ class RecipientPayment extends Model {
       )
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
       .where("planned_time", "<=", currentDate)
-      .where("type", "paypal")
+      .where("type", STATIC.PAYMENT_TYPES.PAYPAL)
       .limit(limit)
       .offset(start)
       .select([
@@ -462,7 +468,10 @@ class RecipientPayment extends Model {
       `${RECIPIENT_PAYMENTS_TABLE}.received_type`,
       STATIC.RECIPIENT_TYPES.REFUND
     );
-    query = query.where(`${RECIPIENT_PAYMENTS_TABLE}.type`, "card");
+    query = query.where(
+      `${RECIPIENT_PAYMENTS_TABLE}.type`,
+      STATIC.PAYMENT_TYPES.BANK_TRANSFER
+    );
     return query;
   };
 

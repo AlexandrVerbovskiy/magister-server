@@ -382,9 +382,11 @@ class OrderModel extends Model {
         `LEFT JOIN ${CHAT_TABLE} as dispute_chats ON (dispute_chats.entity_id = ${DISPUTES_TABLE}.id AND dispute_chats.entity_type='${STATIC.CHAT_TYPES.DISPUTE}')`
       )
       .joinRaw(
-        `LEFT JOIN ${CHAT_RELATION_TABLE} ON (${CHAT_RELATION_TABLE}.user_id = ${userId} AND dispute_chats.id = ${CHAT_RELATION_TABLE}.chat_id)`
+        `LEFT JOIN ${CHAT_RELATION_TABLE} as dispute_chat_relations ON (dispute_chat_relations.user_id = ${userId} AND dispute_chats.id = dispute_chat_relations.chat_id)`
       )
-      .where(`${CHAT_RELATION_TABLE}.user_id`, "=", userId);
+      .whereRaw(
+        `(dispute_chat_relations.user_id = ${userId} OR dispute_chats.id IS NULL)`
+      );
   };
 
   commentsInfoJoin = (query) => {
@@ -684,11 +686,15 @@ class OrderModel extends Model {
   };
 
   getByWhereWithDisputeChat = async (key, value, needList = false, userId) => {
+    const visibleFields = this.commentsVisibleFields(this.fullVisibleFields);
+
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
     query = this.disputeChatInfoJoin(query, userId);
+    query = this.commentsInfoJoin(query);
+
     query = query
-      .select(this.disputeChatsVisibleFields(this.fullVisibleFields))
+      .select(this.disputeChatsVisibleFields(visibleFields))
       .where(key, value);
 
     if (needList) {
@@ -856,9 +862,10 @@ class OrderModel extends Model {
   getOrdersExtends = async (orderIds) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
+
     return await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
-      .select(this.fullVisibleFields);
+      .select([...this.fullVisibleFields]);
   };
 
   getConflictOrders = async (orderIds) => {
@@ -1147,7 +1154,13 @@ class OrderModel extends Model {
 
   getUnfinishedListingCount = async (listingId) => {
     const { count } = await db(ORDERS_TABLE)
-      .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
+      .where((builder) => {
+        builder
+          .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
+          .whereRaw(
+            `${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}'`
+          );
+      })
       .where("listing_id", listingId)
       .count("* as count")
       .first();

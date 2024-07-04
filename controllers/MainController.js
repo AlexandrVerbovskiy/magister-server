@@ -977,8 +977,9 @@ class MainController extends Controller {
     );
 
     const transactionsDetailInfo = {
-      paypal: { amount: 0, count: 0 },
-      bankTransfer: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.PAYPAL]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.CREDIT_CARD]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.BANK_TRANSFER]: { amount: 0, count: 0 },
     };
 
     incrementDateCounts(transactionDatesCount, transactionInfos, (key, info) =>
@@ -1005,12 +1006,8 @@ class MainController extends Controller {
       (info) => {
         const sum =
           getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
-        transactionsDetailInfo[
-          info.type === "paypal" ? "paypal" : "bankTransfer"
-        ].amount += sum;
-        transactionsDetailInfo[
-          info.type === "paypal" ? "paypal" : "bankTransfer"
-        ].count += 1;
+        transactionsDetailInfo[info.type].amount += sum;
+        transactionsDetailInfo[info.type].count += 1;
         return sum;
       }
     );
@@ -1150,8 +1147,9 @@ class MainController extends Controller {
       );
 
     const transactionsDetailInfo = {
-      paypal: { amount: 0, count: 0 },
-      bankTransfer: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.PAYPAL]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.CREDIT_CARD]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.BANK_TRANSFER]: { amount: 0, count: 0 },
     };
 
     incrementDateCounts(transactionDatesCount, transactionInfos, (key, info) =>
@@ -1178,12 +1176,8 @@ class MainController extends Controller {
       (info) => {
         const sum =
           getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
-        transactionsDetailInfo[
-          info.type === "paypal" ? "paypal" : "bankTransfer"
-        ].amount += sum;
-        transactionsDetailInfo[
-          info.type === "paypal" ? "paypal" : "bankTransfer"
-        ].count += 1;
+        transactionsDetailInfo[info.type].amount += sum;
+        transactionsDetailInfo[info.type].count += 1;
         return sum;
       }
     );

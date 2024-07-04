@@ -100,7 +100,7 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/unpaid-order-transaction-credit-card",
+    "/unpaid-order-transaction-bank-transfer",
     upload.single("proof"),
     isFileLimit,
     isAuth,

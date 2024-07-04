@@ -90,11 +90,21 @@ class SenderPayment extends Model {
     payerCardLastDigits,
     payerCardLastBrand,
     proofUrl,
-  }) =>
-    this.create({
+    type,
+  }) => {
+    if (
+      ![STATIC.PAYMENT_TYPES.PAYPAL, STATIC.PAYMENT_TYPES.CREDIT_CARD].includes(
+        type
+      )
+    ) {
+      type = STATIC.PAYMENT_TYPES.PAYPAL;
+    }
+
+    return this.create({
       money,
       userId,
       orderId,
+      type,
       payedProof: proofUrl,
       data: JSON.stringify({
         paypalSenderId,
@@ -104,10 +114,10 @@ class SenderPayment extends Model {
         payerCardLastBrand,
       }),
       adminApproved: true,
-      type: "paypal",
       dueAt: db.raw("CURRENT_TIMESTAMP"),
       waitingApproved: false,
     });
+  };
 
   getInfoAboutOrdersPayments = async (orderIds) => {
     const payments = await db(SENDER_PAYMENTS_TABLE)
@@ -147,7 +157,7 @@ class SenderPayment extends Model {
       payedProof: proofUrl,
       data: JSON.stringify({}),
       adminApproved: false,
-      type: "credit-card",
+      type: STATIC.PAYMENT_TYPES.BANK_TRANSFER,
       waitingApproved: true,
     });
 
@@ -159,7 +169,8 @@ class SenderPayment extends Model {
     if (!result) {
       canProof = false;
     } else {
-      canProof = result.type === "credit-card" && !adminApproved;
+      canProof =
+        result.type === STATIC.PAYMENT_TYPES.BANK_TRANSFER && !adminApproved;
     }
 
     return canProof;
@@ -167,7 +178,7 @@ class SenderPayment extends Model {
 
   updateCreditCardTransactionProof = async (orderId, proof) => {
     await db(SENDER_PAYMENTS_TABLE)
-      .where({ order_id: orderId, type: "credit-card" })
+      .where({ order_id: orderId, type: STATIC.PAYMENT_TYPES.BANK_TRANSFER })
       .update({
         payed_proof: proof,
         waiting_approved: true,
@@ -222,14 +233,15 @@ class SenderPayment extends Model {
       );
 
   baseTypeWhere = (query, type) => {
-    if (type == "paypal") {
-      query = query.where("type", "paypal");
+    if (
+      [
+        STATIC.PAYMENT_TYPES.PAYPAL,
+        STATIC.PAYMENT_TYPES.CREDIT_CARD,
+        STATIC.PAYMENT_TYPES.BANK_TRANSFER,
+      ].includes(type)
+    ) {
+      query = query.where("type", type);
     }
-
-    if (type == "bank-transfer") {
-      query = query.where("type", "credit-card");
-    }
-
     return query;
   };
 
@@ -484,7 +496,7 @@ class SenderPayment extends Model {
           `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'paypal' THEN 1 ELSE 0 END) AS "paypalCount"`
         ),
         db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'credit-card' THEN 1 ELSE 0 END) AS "bankTransferCount"`
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'bank-transfer' THEN 1 ELSE 0 END) AS "bankTransferCount"`
         )
       )
       .first();

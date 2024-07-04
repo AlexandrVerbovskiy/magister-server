@@ -2,6 +2,7 @@ const STATIC = require("../static");
 const {
   sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
+  isPayedUsedPaypal,
 } = require("../utils");
 const Controller = require("./Controller");
 
@@ -113,17 +114,17 @@ class RecipientPaymentController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      if (type == "card") {
+      if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
         data["cardNumber"] = cardNumber;
         await this.recipientPaymentModel.updateRefundPayment({
           id,
-          type: "card",
+          type: STATIC.PAYMENT_TYPES.BANK_TRANSFER,
           data,
           status: STATIC.RECIPIENT_STATUSES.WAITING,
         });
       }
 
-      if (type == "paypal") {
+      if (isPayedUsedPaypal(STATIC.PAYMENT_TYPES.PAYPAL)) {
         data["paypalId"] = paypalId;
 
         try {
@@ -147,14 +148,14 @@ class RecipientPaymentController extends Controller {
 
           await this.recipientPaymentModel.updateRefundPayment({
             id,
-            type: "paypal",
+            type: STATIC.PAYMENT_TYPES.PAYPAL,
             data,
             status: STATIC.RECIPIENT_STATUSES.COMPLETED,
           });
         } catch (e) {
           await this.recipientPaymentModel.updateRefundPayment({
             id,
-            type: "paypal",
+            type: STATIC.PAYMENT_TYPES.PAYPAL,
             data,
             status: STATIC.RECIPIENT_STATUSES.FAILED,
             failedDescription: e.message,

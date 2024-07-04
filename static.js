@@ -229,4 +229,9 @@ module.exports = {
     "webp",
   ],
   CHAT_TYPES: { DISPUTE: "dispute", ORDER: "order" },
+  PAYMENT_TYPES: {
+    PAYPAL: "paypal",
+    CREDIT_CARD: "credit-card",
+    BANK_TRANSFER: "bank-transfer",
+  },
 };

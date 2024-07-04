@@ -36,9 +36,15 @@ const incrementDateSums = (sums, infos, checkFn, sumFn) => {
   });
 };
 
+const isPayedUsedPaypal = (type) =>
+  [STATIC.PAYMENT_TYPES.PAYPAL, STATIC.PAYMENT_TYPES.CREDIT_CARD].includes(
+    type
+  );
+
 module.exports = {
   indicateMediaTypeByExtension,
   determineStepType,
   incrementDateCounts,
   incrementDateSums,
+  isPayedUsedPaypal,
 };
