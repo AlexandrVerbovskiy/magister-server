@@ -31,13 +31,18 @@ class ChatController extends Controller {
     await this.userChatRelationSendMessage(userId, "opponent-online");
   };
 
+  onStopEvents = async (data, sessionInfo) => {
+    const userId = sessionInfo.userId;
+    await this.stopAllUserActions(userId);
+  };
+
   onDisconnect = async (data, sessionInfo) => {
     const userId = sessionInfo.userId;
     const socket = sessionInfo.socket;
 
     await this.userModel.updateOnline(userId, false);
     await this.socketModel.disconnect(socket);
-    await this.stopAllUserActions(userId);
+    await this.onStopEvents(data, sessionInfo);
 
     await this.userChatRelationSendMessage(userId, "opponent-offline");
   };
@@ -313,6 +318,7 @@ class ChatController extends Controller {
         chat.entityId,
         userId
       );
+
       entity["childrenList"] = await this.orderModel.getChildrenList(
         chat.entityId
       );

@@ -503,7 +503,7 @@ class MainController extends Controller {
   getAdminListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
-        await this.listingController.baseListingWithStatusesList(req);
+        await this.listingController.baseListingWithApprovedWaitedStatusesList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
