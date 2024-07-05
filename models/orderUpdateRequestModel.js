@@ -8,6 +8,7 @@ const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 class OrderUpdateRequestModel extends Model {
   visibleFields = [
     `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.fee as newFee`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.order_id as orderId`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,

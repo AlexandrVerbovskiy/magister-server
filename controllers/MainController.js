@@ -591,6 +591,7 @@ class MainController extends Controller {
         perPage,
         filter
       );
+      
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { list });
     });
 
