@@ -467,19 +467,18 @@ class OrderModel extends Model {
     }
 
     if (type == "canceled") {
-      query = query.where(
-        `${ORDERS_TABLE}.cancel_status`,
-        STATIC.ORDER_CANCELATION_STATUSES.CANCELLED
-      );
+      query = query
+        .where(
+          `${ORDERS_TABLE}.cancel_status`,
+          STATIC.ORDER_CANCELATION_STATUSES.CANCELLED
+        )
+        .orWhere(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
     }
 
     if (type == "in-dispute") {
       query = query
-        .whereNotNull(`${ORDERS_TABLE}.cancel_status`)
-        .whereNot(
-          `${ORDERS_TABLE}.cancel_status`,
-          STATIC.ORDER_CANCELATION_STATUSES.CANCELLED
-        );
+        .whereNotNull(`${DISPUTES_TABLE}.id`)
+        .whereNot(`${DISPUTES_TABLE}.status`, STATIC.DISPUTE_STATUSES.SOLVED);
     }
 
     if (type == "accepted") {
@@ -493,7 +492,10 @@ class OrderModel extends Model {
 
     if (type == "active") {
       query = query
-        .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+        .whereNotIn(`${ORDERS_TABLE}.status`, [
+          STATIC.ORDER_STATUSES.FINISHED,
+          STATIC.ORDER_STATUSES.REJECTED,
+        ])
         .whereNull(`${ORDERS_TABLE}.cancel_status`);
     }
 
@@ -1310,13 +1312,20 @@ class OrderModel extends Model {
 
   getOrderStatusesCount = async ({ timeInfos, filter }) => {
     let query = db(ORDERS_TABLE);
-    query = query.joinRaw(
-      `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+    query = query
+      .joinRaw(
+        `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
        ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
-    );
+      )
+      .leftJoin(
+        `${DISPUTES_TABLE} as disputes`,
+        `${DISPUTES_TABLE}.order_id`,
+        "=",
+        `${ORDERS_TABLE}.id`
+      );
 
-    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    query = this.orderCreatedTimeFilterWrap(query, timeInfos);
     query = query.whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
@@ -1326,25 +1335,24 @@ class OrderModel extends Model {
         db.raw(`COUNT(*) AS "allCount"`),
         db.raw(
           `SUM(CASE 
-            WHEN ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.FINISHED}' 
-            AND ${ORDERS_TABLE}.cancel_status IS NULL
+            WHEN (${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.FINISHED}' 
+            AND ${ORDERS_TABLE}.cancel_status IS NULL)
             THEN 1 ELSE 0 END) AS "finishedCount"`
         ),
         db.raw(
           `SUM(CASE 
-            WHEN ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' 
+            WHEN (${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' OR ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}') 
             THEN 1 ELSE 0 END) AS "canceledCount"`
         ),
         db.raw(
           `SUM(CASE 
-            WHEN ${ORDERS_TABLE}.cancel_status IS NOT NULL
-            AND ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' 
+            WHEN (${DISPUTES_TABLE}.id IS NOT NULL AND ${DISPUTES_TABLE}.status != '${STATIC.DISPUTE_STATUSES.SOLVED}') 
             THEN 1 ELSE 0 END) AS "disputeCount"`
         ),
         db.raw(
           `SUM(CASE 
-            WHEN ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.FINISHED}' 
-            AND ${ORDERS_TABLE}.cancel_status IS NULL
+            WHEN (${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.FINISHED}' AND ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
+            AND ${ORDERS_TABLE}.cancel_status IS NULL)
             THEN 1 ELSE 0 END) AS "activeCount"`
         )
       )
