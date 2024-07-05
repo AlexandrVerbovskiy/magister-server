@@ -733,11 +733,7 @@ class ListingsModel extends Model {
     return count;
   };
 
-  totalCountWithLastRequests = async (
-    filter,
-    userId = null,
-    { active = null, approved = null }
-  ) => {
+  baseTotalCountWithLastRequestsQuery = (filter, userId = null) => {
     const subquery = db
       .select("id")
       .from(LISTING_APPROVAL_REQUESTS_TABLE)
@@ -751,7 +747,12 @@ class ListingsModel extends Model {
           `${LISTING_APPROVAL_REQUESTS_TABLE}.listing_id`,
           "=",
           `${LISTINGS_TABLE}.id`
-        ).andOn(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "=", subquery);
+        ).andOnIn(
+          `${LISTING_APPROVAL_REQUESTS_TABLE}.id`,
+          db.raw(
+            `(select max(id) from ${LISTING_APPROVAL_REQUESTS_TABLE} group by listing_id)`
+          )
+        );
       })
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .whereRaw(
@@ -765,9 +766,29 @@ class ListingsModel extends Model {
       query = query.where({ owner_id: userId });
     }
 
+    return query;
+  };
+
+  totalCountWithLastRequestsByApprovedWaited = async (
+    filter,
+    userId = null,
+    { active = null, approved = null }
+  ) => {
+    let query = this.baseTotalCountWithLastRequestsQuery(filter, userId);
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
 
+    const { count } = await query.count("* as count").first();
+    return count;
+  };
+
+  totalCountWithLastRequestsByStatus = async (
+    filter,
+    userId = null,
+    { status = null }
+  ) => {
+    let query = this.baseTotalCountWithLastRequestsQuery(filter, userId);
+    query = this.queryByStatus(query, status);
     const { count } = await query.count("* as count").first();
     return count;
   };
@@ -881,9 +902,8 @@ class ListingsModel extends Model {
       .offset(start);
   };
 
-  listWithLastRequests = async (props) => {
-    const { filter, start, count, active = null, approved = null } = props;
-    const { order, orderType } = this.getOrderInfo(props);
+  baseListWithLastRequestsQuery = (props) => {
+    const { filter } = props;
 
     let query = db(LISTINGS_TABLE)
       .select([
@@ -930,8 +950,12 @@ class ListingsModel extends Model {
       query = query.where({ owner_id: props.userId });
     }
 
-    query = this.queryByActive(query, active);
-    query = this.queryByApproved(query, approved);
+    return query;
+  };
+
+  baseListWithLastRequestsSelect = async (query, props) => {
+    const { start, count } = props;
+    const { order, orderType } = this.getOrderInfo(props);
 
     return await query
       .groupBy([
@@ -948,6 +972,23 @@ class ListingsModel extends Model {
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
+  };
+
+  listWithLastRequestsByApprovedWaited = async (props) => {
+    const { active = null, approved = null } = props;
+
+    let query = this.baseListWithLastRequestsQuery(props);
+    query = this.queryByActive(query, active);
+    query = this.queryByApproved(query, approved);
+
+    return this.baseListWithLastRequestsSelect(query, props);
+  };
+
+  listWithLastRequestsByStatus = async (props) => {
+    const { status = null } = props;
+    let query = this.baseListWithLastRequestsQuery(props);
+    query = this.queryByStatus(query, status);
+    return this.baseListWithLastRequestsSelect(query, props);
   };
 
   changeApprove = async (id) => {
