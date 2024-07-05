@@ -694,6 +694,8 @@ class ListingsModel extends Model {
   getOwnerCountListings = async (userId) => {
     const { count } = await db(LISTINGS_TABLE)
       .where({ owner_id: userId })
+      .where({ active: true })
+      .where({ approved: true })
       .count(`${LISTINGS_TABLE}.id as count`)
       .first();
     return count;
