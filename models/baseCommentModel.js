@@ -3,7 +3,6 @@ const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
-const USERS_TABLE = STATIC.TABLES.USERS;
 
 class BaseCommentModel extends Model {
   approve = async (commentId) => {
