@@ -3,6 +3,7 @@ const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const USERS_TABLE = STATIC.TABLES.USERS;
 
 class BaseCommentModel extends Model {
   approve = async (commentId) => {
@@ -74,7 +75,6 @@ class BaseCommentModel extends Model {
     const subquery = db(this.table)
       .select(db.raw(`MAX(${this.table}.id) AS latest_comment_id`))
       .innerJoin(ORDERS_TABLE, `${ORDERS_TABLE}.id`, `${this.table}.order_id`)
-      .where(`${this.table}.approved`, "=", true)
       .where(this.keyField, entityId);
 
     let query = db(this.table);
