@@ -55,6 +55,8 @@ module.exports = (io) => {
     bindFuncToEvent("admin-stop-file-upload", chatController.onStopFileUpload);
 
     bindFuncToEvent("disconnect", chatController.onDisconnect);
+    bindFuncToEvent("stop-actions", chatController.onStopEvents);
+    bindFuncToEvent("admin-stop-actions", chatController.onStopEvents);
   };
 
   io.on("connection", onConnection);
