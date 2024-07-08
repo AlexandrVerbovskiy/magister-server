@@ -41,10 +41,13 @@ const isPayedUsedPaypal = (type) =>
     type
   );
 
+const removeDuplicates = (arr) => [...new Set(arr)];
+
 module.exports = {
   indicateMediaTypeByExtension,
   determineStepType,
   incrementDateCounts,
   incrementDateSums,
   isPayedUsedPaypal,
+  removeDuplicates,
 };
