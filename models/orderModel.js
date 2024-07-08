@@ -792,8 +792,8 @@ class OrderModel extends Model {
     const blockedDatesObj = {};
 
     orders.forEach((order) => {
-      let startDate = new Date(order["startDate"]);
-      let endDate = new Date(order["endDate"]);
+      let startDate = new Date(order["offerStartDate"]);
+      let endDate = new Date(order["offerEndDate"]);
 
       if (order["newStartDate"] && order["newEndDate"]) {
         startDate = new Date(order["newStartDate"]);
@@ -807,7 +807,7 @@ class OrderModel extends Model {
     return Object.keys(blockedDatesObj);
   };
 
-  getBlockedListingsDatesForUser = async (listingIds, userId) => {
+  getBlockedListingsDatesForListings = async (listingIds, tenantId = null) => {
     const currentDate = separateDate(new Date());
 
     const orders = await db(ORDERS_TABLE)
@@ -821,21 +821,26 @@ class OrderModel extends Model {
         [currentDate, currentDate]
       )
       .where(function () {
-        this.where(function () {
-          this.whereNot("status", STATIC.ORDER_STATUSES.PENDING_OWNER).orWhere(
-            "tenant_id",
-            userId
-          );
-        })
-          .whereRaw(
-            `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
-          )
-          .whereNot("status", STATIC.ORDER_STATUSES.REJECTED)
-          .whereNot("status", STATIC.ORDER_STATUSES.FINISHED);
+        if (tenantId) {
+          this.where(function () {
+            this.whereNot(
+              "status",
+              STATIC.ORDER_STATUSES.PENDING_OWNER
+            ).orWhere("tenant_id", tenantId);
+          });
+        }
+
+        this.whereRaw(
+          `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
+        ).whereNotIn("status", [
+          STATIC.ORDER_STATUSES.PENDING_TENANT,
+          STATIC.ORDER_STATUSES.REJECTED,
+          STATIC.ORDER_STATUSES.FINISHED,
+        ]);
       })
       .select([
-        "end_date as endDate",
-        "start_date as startDate",
+        "start_date as offerStartDate",
+        "end_date as offerEndDate",
         "listing_id as listingId",
         "new_end_date as newEndDate",
         "new_start_date as newStartDate",
@@ -958,11 +963,14 @@ class OrderModel extends Model {
           )
         )`
       )
-      .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.PENDING_OWNER)
+      .whereNotIn(`${ORDERS_TABLE}.status`, [
+        STATIC.ORDER_STATUSES.PENDING_OWNER,
+        STATIC.ORDER_STATUSES.FINISHED,
+        STATIC.ORDER_STATUSES.REJECTED,
+      ])
       .whereRaw(
         `NOT (${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
-      )
-      .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
+      );
 
     const conflictOrders = await query
       .groupBy(this.fullGroupBy)
