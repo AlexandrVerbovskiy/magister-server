@@ -1,12 +1,12 @@
 const STATIC = require("../static");
 const {
-  generateDatesBetween,
   getPaypalOrderInfo,
   capturePaypalOrder,
   sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
   getDaysDifference,
   isPayedUsedPaypal,
+  removeDuplicates,
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
@@ -64,20 +64,14 @@ class OrderController extends Controller {
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
     const blockedDatesListings =
-      await this.orderModel.getBlockedListingsDatesForUser(
+      await this.orderModel.getBlockedListingsDatesForListings(
         [listingId],
         tenantId
       );
 
     const blockedDates = blockedDatesListings[listingId];
 
-    const selectedDates = generateDatesBetween(startDate, endDate);
-
-    const hasBlockedDate = selectedDates.find((selectedDate) =>
-      blockedDates.includes(selectedDate)
-    );
-
-    if (hasBlockedDate) {
+    if (checkStartEndHasConflict(startDate, endDate, blockedDates)) {
       throw new Error("The selected date is not available for booking");
     }
 
@@ -258,26 +252,23 @@ class OrderController extends Controller {
     const paymentInfos =
       await this.senderPaymentModel.getInfoAboutOrdersPayments(orderIds);
 
-    const orderListingIds = Array.from(
-      new Set(requestsWithImages.map((request) => request.listingId))
+    const orderListingIds = removeDuplicates(
+      requestsWithImages.map((request) => request.listingId)
     );
 
+    const tenantId = type == "tenant" ? userId : null;
+
     const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForUser(
+      await this.orderModel.getBlockedListingsDatesForListings(
         orderListingIds,
-        userId
+        tenantId
       );
 
     requestsWithImages.forEach((request, index) => {
       const currentOrderConflicts = conflictOrders[request.id];
       requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
-
       requestsWithImages[index]["blockedDates"] =
-        this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
-
-      requestsWithImages[index]["blockedForRentalDates"] =
         blockedListingsDates[request.listingId];
-
       requestsWithImages[index]["paymentInfo"] = paymentInfos[request.id];
     });
 
@@ -305,9 +296,6 @@ class OrderController extends Controller {
     orderExtends.forEach((request, index) => {
       const currentOrderConflicts = conflictOrders[request.orderParentId];
       orderExtends[index]["conflictOrders"] = currentOrderConflicts;
-
-      orderExtends[index]["blockedDates"] =
-        this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
 
       orderExtends[index]["blockedForRentalDates"] =
         blockedListingsDates[request.listingId];
@@ -540,7 +528,7 @@ class OrderController extends Controller {
 
       const conflictOrders = await this.orderModel.getConflictOrders([id]);
 
-      if (conflictOrders[`${id}`].length > 0) {
+      if (conflictOrders[id].length > 0) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.FORBIDDEN,
@@ -1301,24 +1289,24 @@ class OrderController extends Controller {
       order.id,
     ]);
 
-    order["extendOrders"] = await this.orderModel.getOrdersExtends([order.id]);
-
     const conflictOrders = resGetConflictOrders[order.id];
-    order["blockedDates"] =
-      this.orderModel.generateBlockedDatesByOrders(conflictOrders);
+    const tenantId = order.tenantId == userId ? userId : null;
 
     const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForUser(
+      await this.orderModel.getBlockedListingsDatesForListings(
         [order.listingId],
-        userId
+        tenantId
       );
 
-    order["blockedForRentalDates"] = blockedListingsDates[order.listingId];
+    order["blockedDates"] = blockedListingsDates[order.listingId];
+    order["extendOrders"] = await this.orderModel.getOrdersExtends([order.id]);
 
-    if (userId == order.ownerId) {
+    if (userId != order.tenantId) {
       order["conflictOrders"] = conflictOrders;
       order["ownerAcceptListingQrcode"] = null;
-    } else {
+    }
+
+    if (userId != order.ownerId) {
       order["tenantAcceptListingQrcode"] = null;
     }
 

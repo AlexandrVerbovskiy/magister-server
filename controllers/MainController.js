@@ -24,6 +24,7 @@ const {
   incrementDateCounts,
   incrementDateSums,
   determineStepType,
+  removeDuplicates,
 } = require("../utils");
 const TenantCommentController = require("./TenantCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
@@ -307,7 +308,7 @@ class MainController extends Controller {
 
       if (userId) {
         const blockedDates =
-          await this.orderModel.getBlockedListingsDatesForUser(
+          await this.orderModel.getBlockedListingsDatesForListings(
             [listing.id],
             userId
           );
@@ -399,9 +400,37 @@ class MainController extends Controller {
       const paymentInfo =
         await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
 
+      let blockedDates = [];
+
+      const conflictOrdersList = await this.orderModel.getConflictOrders([
+        order.id,
+      ]);
+
+      const conflictOrders = conflictOrdersList[order.id];
+
+      if (
+        !order.cancelStatus &&
+        [
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
+          STATIC.ORDER_STATUSES.PENDING_TENANT,
+        ].includes(order.status)
+      ) {
+        const tenantId = order.tenantId == userId ? userId : null;
+
+        const listingsConflictDates =
+          await this.orderModel.getBlockedListingsDatesForListings(
+            [order.listingId],
+            tenantId
+          );
+
+        blockedDates = listingsConflictDates[order.listingId];
+      }
+
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
         paymentInfo,
+        blockedDates,
+        conflictOrders,
       };
     };
 
@@ -503,7 +532,9 @@ class MainController extends Controller {
   getAdminListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
-        await this.listingController.baseListingWithApprovedWaitedStatusesList(req);
+        await this.listingController.baseListingWithApprovedWaitedStatusesList(
+          req
+        );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
@@ -591,7 +622,7 @@ class MainController extends Controller {
         perPage,
         filter
       );
-      
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { list });
     });
 

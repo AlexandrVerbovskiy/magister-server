@@ -1,4 +1,5 @@
 const STATIC = require("../static");
+const { generateDatesBetween, checkStartEndHasConflict } = require("../utils");
 const Controller = require("./Controller");
 
 class OrderUpdateRequestController extends Controller {
@@ -26,12 +27,34 @@ class OrderUpdateRequestController extends Controller {
         orderId
       );
 
+      const blockedListingsDates =
+        await this.orderModel.getBlockedListingsDatesForListings(
+          [order.listingId],
+          tenantId == senderId ? senderId : null
+        );
+
+      const currentListingBlockedDates = blockedListingsDates[order.listingId];
+
+      if (
+        checkStartEndHasConflict(
+          newStartDate,
+          newEndDate,
+          currentListingBlockedDates
+        )
+      ) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Order has conflict orders"
+        );
+      }
+
       if (lastInfo) {
         if (lastInfo.senderId == senderId) {
           return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-        } else {
-          await this.orderUpdateRequestModel.closeLast(orderId);
         }
+
+        await this.orderUpdateRequestModel.closeLast(orderId);
       }
 
       let newStatus = null;

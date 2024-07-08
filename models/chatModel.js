@@ -5,6 +5,7 @@ const Model = require("./Model");
 const chatRelationModel = require("./chatRelationModel");
 const chatMessageModel = require("./chatMessageModel");
 const { query } = require("express");
+const { removeDuplicates } = require("../utils");
 
 const CHAT_TABLE = STATIC.TABLES.CHATS;
 const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
@@ -585,7 +586,7 @@ class ChatModel extends Model {
       .select(`${SOCKET_TABLE}.socket`);
 
     const sockets = userInfos.map((row) => row.socket);
-    const uniqueSockets = [...new Set(sockets)];
+    const uniqueSockets = removeDuplicates(sockets);
     return uniqueSockets;
   };
 

@@ -1,12 +1,12 @@
 const STATIC = require("../static");
+const { removeDuplicates } = require("../utils");
 const Controller = require("./Controller");
 const lodash = require("lodash");
 
 class ListingCategoriesController extends Controller {
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const groupedList =
-        await this.listingCategoryModel.listGroupedByLevel();
+      const groupedList = await this.listingCategoryModel.listGroupedByLevel();
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
@@ -52,9 +52,9 @@ class ListingCategoriesController extends Controller {
     await this.searchedWordModel.setCategoryByName(categoryName, categoryId);
 
     const toDeleteIds = notificationInfos.map((info) => info.id);
-    const toSentMessageEmails = [
-      ...new Set(notificationInfos.map((info) => info.userEmail)),
-    ];
+    const toSentMessageEmails = removeDuplicates(
+      notificationInfos.map((info) => info.userEmail)
+    );
 
     toSentMessageEmails.forEach((email) =>
       this.sendCreatedListingCategory(email, categoryName)
@@ -110,8 +110,7 @@ class ListingCategoriesController extends Controller {
         categoriesToSave[level][index]["image"] = filePath;
       });
 
-      const groupedList =
-        await this.listingCategoryModel.listGroupedByLevel();
+      const groupedList = await this.listingCategoryModel.listGroupedByLevel();
 
       const toDelete = { firstLevel: [], secondLevel: [], thirdLevel: [] };
       const toCreate = { firstLevel: [], secondLevel: [], thirdLevel: [] };
