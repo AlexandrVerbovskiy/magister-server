@@ -13,8 +13,6 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const LISTING_APPROVAL_REQUESTS_TABLE = STATIC.TABLES.LISTING_APPROVAL_REQUESTS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
-const LISTING_DEFECT_RELATIONS_TABLE = STATIC.TABLES.LISTING_DEFECT_RELATIONS;
-const LISTING_DEFECTS_TABLE = STATIC.TABLES.LISTING_DEFECTS;
 
 class ListingsModel extends Model {
   baseGroupedFields = [
@@ -35,9 +33,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat`,
     `${LISTINGS_TABLE}.rental_lng`,
     `${LISTINGS_TABLE}.rental_radius`,
-    `${LISTINGS_TABLE}.rental_terms`,
     `${LISTINGS_TABLE}.key_words`,
-    `${LISTINGS_TABLE}.dop_defect`,
     `${LISTINGS_TABLE}.background_photo`,
   ];
 
@@ -59,9 +55,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat as rentalLat`,
     `${LISTINGS_TABLE}.rental_lng as rentalLng`,
     `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
-    `${LISTINGS_TABLE}.rental_terms as rentalTerms`,
     `${LISTINGS_TABLE}.key_words as keyWords`,
-    `${LISTINGS_TABLE}.dop_defect as dopDefect`,
     `${LISTINGS_TABLE}.background_photo as backgroundPhoto`,
   ];
 
@@ -155,17 +149,14 @@ class ListingsModel extends Model {
     rentalLat,
     rentalLng,
     rentalRadius,
-    rentalTerms = "",
     ownerId,
     keyWords = "",
     approved = false,
     minRentalDays = null,
     listingImages = [],
-    defects = [],
     city,
     backgroundPhoto = null,
     active = true,
-    dopDefect = "",
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -180,7 +171,6 @@ class ListingsModel extends Model {
         approved,
         rental_lat: Number(rentalLat),
         rental_lng: Number(rentalLng),
-        rental_terms: rentalTerms,
         rental_radius: rentalRadius,
         category_id: categoryId,
         price_per_day: pricePerDay,
@@ -191,7 +181,6 @@ class ListingsModel extends Model {
         key_words: keyWords,
         city,
         active,
-        dop_defect: dopDefect,
         background_photo: backgroundPhoto,
       })
       .returning("id");
@@ -209,12 +198,9 @@ class ListingsModel extends Model {
 
     const currentListingImages = await this.getListingImages(listingId);
 
-    const createdDefects = await this.saveDefects(defects, listingId);
-
     return {
       listingId,
       listingImages: currentListingImages,
-      defects: createdDefects,
     };
   };
 
@@ -236,9 +222,8 @@ class ListingsModel extends Model {
     if (!listing) return null;
 
     const listingImages = await this.getListingImages(id);
-    const defects = await this.getDefects(id);
 
-    return { ...listing, listingImages, defects };
+    return { ...listing, listingImages };
   };
 
   getBackgroundPhoto = async (id) => {
@@ -301,12 +286,11 @@ class ListingsModel extends Model {
     const categoryInfo = await listingCategoryModel.getRecursiveCategoryList(
       listing["categoryId"]
     );
-    const defects = await this.getDefects(id);
     listing["userCountItems"] = await this.getOwnerCountListings(
       listing.userId
     );
 
-    return { ...listing, listingImages, categoryInfo, defects };
+    return { ...listing, listingImages, categoryInfo };
   };
 
   updateById = async ({
@@ -322,7 +306,6 @@ class ListingsModel extends Model {
     rentalLat,
     rentalLng,
     rentalRadius,
-    rentalTerms,
     minRentalDays = null,
     listingImages = [],
     keyWords = "",
@@ -330,8 +313,6 @@ class ListingsModel extends Model {
     ownerId,
     address,
     active,
-    dopDefect = "",
-    defects = [],
     backgroundPhoto = null,
   }) => {
     if (!minRentalDays) {
@@ -346,7 +327,6 @@ class ListingsModel extends Model {
       approved,
       rental_lat: Number(rentalLat),
       rental_lng: Number(rentalLng),
-      rental_terms: rentalTerms,
       rental_radius: rentalRadius,
       category_id: categoryId,
       price_per_day: pricePerDay,
@@ -357,7 +337,6 @@ class ListingsModel extends Model {
       owner_id: ownerId,
       address,
       active,
-      dop_defect: dopDefect,
     };
 
     if (backgroundPhoto) {
@@ -408,11 +387,9 @@ class ListingsModel extends Model {
         })
     );
 
-    const createdDefects = await this.saveDefects(defects, id);
     const currentListingImages = await this.getListingImages(id);
     return {
       listingImages: currentListingImages,
-      defects: createdDefects,
     };
   };
 
@@ -1057,49 +1034,6 @@ class ListingsModel extends Model {
     });
 
     return listingsWithImages;
-  };
-
-  getDefects = async (listingId) => {
-    return await db(LISTING_DEFECT_RELATIONS_TABLE)
-      .join(
-        LISTING_DEFECTS_TABLE,
-        `${LISTING_DEFECTS_TABLE}.id`,
-        "=",
-        `${LISTING_DEFECT_RELATIONS_TABLE}.listing_defect_id`
-      )
-      .where("listing_id", listingId)
-      .select([
-        `${LISTING_DEFECT_RELATIONS_TABLE}.id`,
-        `${LISTING_DEFECTS_TABLE}.id as defectId`,
-        `${LISTING_DEFECTS_TABLE}.name as defectName`,
-        `${LISTING_DEFECTS_TABLE}.order_index as orderIndex`,
-      ]);
-  };
-
-  saveDefects = async (defectIds, listingId) => {
-    await db(LISTING_DEFECT_RELATIONS_TABLE)
-      .where("listing_id", listingId)
-      .whereNotIn("listing_defect_id", defectIds)
-      .delete();
-
-    const prevDefectInfos = await db(LISTING_DEFECT_RELATIONS_TABLE)
-      .where("listing_id", listingId)
-      .whereIn("listing_defect_id", defectIds)
-      .select([`listing_defect_id as defectId`]);
-
-    const dbIds = prevDefectInfos.map((info) => info.defectId);
-
-    const idsToSave = defectIds.filter((id) => !dbIds.includes(id));
-    const relationsToSave = idsToSave.map((defectId) => ({
-      listing_defect_id: defectId,
-      listing_id: listingId,
-    }));
-
-    if (relationsToSave.length > 0) {
-      await db(LISTING_DEFECT_RELATIONS_TABLE).insert(relationsToSave);
-    }
-
-    return await this.getDefects(listingId);
   };
 
   priceLimits = async () => {

@@ -104,8 +104,6 @@ app.use(
 );
 
 app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes(io));
-app.use("/api/listing-defects", apiRoutes.listingDefectRoutes(io));
-app.use("/api/listing-defect-questions", apiRoutes.listingDefectQuestionRoutes(io));
 app.use("/api/listings", apiRoutes.listingRoutes(io));
 app.use("/api/orders", apiRoutes.orderRoutes(io));
 app.use("/api/order-update-requests", apiRoutes.orderUpdateRequestRoutes(io));

@@ -40,8 +40,6 @@ const {
   orderUpdateRequestModel,
   senderPaymentModel,
   recipientPaymentModel,
-  listingDefectModel,
-  listingDefectQuestionModel,
   listingCommentModel,
   ownerCommentModel,
   tenantCommentModel,
@@ -79,7 +77,6 @@ class Controller {
     this.searchedWordModel = searchedWordModel;
 
     this.listingModel = listingModel;
-    this.listingDefectModel = listingDefectModel;
 
     this.orderModel = orderModel;
     this.orderUpdateRequestModel = orderUpdateRequestModel;
@@ -88,7 +85,6 @@ class Controller {
     this.listingApprovalRequestModel = listingApprovalRequestModel;
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
-    this.listingDefectQuestionModel = listingDefectQuestionModel;
 
     this.listingCommentModel = listingCommentModel;
     this.ownerCommentModel = ownerCommentModel;

@@ -25,11 +25,6 @@ module.exports = [
     required: false,
   }),
   ...validateBigStringBody({
-    field: "rentalTerms",
-    fieldName: "Rental terms",
-    required: false,
-  }),
-  ...validateBigStringBody({
     field: "keyWords",
     fieldName: "Key words",
     required: false,
