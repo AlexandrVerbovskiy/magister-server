@@ -292,20 +292,6 @@ module.exports = (io) => {
   );
 
   router.get(
-    "/admin-listing-defects-edit-options",
-    isAuth,
-    isAdmin,
-    mainController.getAdminListingDefectsEditOptions
-  );
-
-  router.get(
-    "/admin-listing-defect-questions-edit-options",
-    isAuth,
-    isAdmin,
-    mainController.getAdminListingDefectQuestionsEditOptions
-  );
-
-  router.get(
     "/get-order-invoice-options/:id",
     isAuth,
     isVerified,

@@ -57,10 +57,6 @@ class MainController extends Controller {
   getNavigationCategories = () =>
     this.listingCategoryModel.listGroupedByLevel();
 
-  getListingDefects = () => this.listingDefectModel.getAll();
-
-  getListingDefectQuestions = () => this.listingDefectQuestionModel.getAll();
-
   getViewPageWithCategoriesOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.listingCategoryModel.getFullInfoList();
@@ -108,11 +104,9 @@ class MainController extends Controller {
   getCreateListingPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
-        defects,
       });
     });
 
@@ -139,14 +133,12 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         listing,
         lastRequestInfo,
         canChange: !countUnfinishedListingOrders,
-        defects,
       });
     });
 
@@ -478,17 +470,11 @@ class MainController extends Controller {
       };
     };
 
-    const getDopOptions = async () => {
-      const questions = await this.getListingDefectQuestions();
-      return { questions };
-    };
-
     return this.baseGetFullOrderInfo(
       req,
       res,
       getOrderByRequest,
       getDopOrderOptions,
-      getDopOptions
     );
   };
 
@@ -515,17 +501,11 @@ class MainController extends Controller {
       };
     };
 
-    const getDopOptions = async () => {
-      const questions = await this.getListingDefectQuestions();
-      return { questions };
-    };
-
     return this.baseGetFullOrderInfo(
       req,
       res,
       getOrderByRequest,
       getDopOrderOptions,
-      getDopOptions
     );
   };
 
@@ -586,11 +566,9 @@ class MainController extends Controller {
   getAdminListingCreatePageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
-        defects,
       });
     });
 
@@ -604,12 +582,10 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         listing,
-        defects,
       });
     });
 
@@ -851,24 +827,6 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         payment,
-      });
-    });
-
-  getAdminListingDefectsEditOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const defects = await this.getListingDefects();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        defects,
-      });
-    });
-
-  getAdminListingDefectQuestionsEditOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const questions = await this.getListingDefectQuestions();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        questions,
       });
     });
 
