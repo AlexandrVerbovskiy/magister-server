@@ -16,8 +16,6 @@ const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
-const LISTING_DEFECT_QUESTION_RELATIONS_TABLE =
-  STATIC.TABLES.LISTING_DEFECT_QUESTION_RELATIONS;
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
@@ -76,14 +74,12 @@ class OrderModel extends Model {
   fullVisibleFields = [
     ...this.lightVisibleFields,
     `${LISTINGS_TABLE}.description as listingDescription`,
-    `${LISTINGS_TABLE}.rental_terms as listingRentalTerms`,
     `${LISTINGS_TABLE}.address as listingAddress`,
     `${LISTINGS_TABLE}.postcode as listingPostcode`,
     `${LISTINGS_TABLE}.rental_lat as listingRentalLat`,
     `${LISTINGS_TABLE}.rental_lng as listingRentalLng`,
     `${LISTINGS_TABLE}.rental_radius as listingRentalRadius`,
     `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
-    `${LISTINGS_TABLE}.dop_defect as listingDopDefect`,
     `${ORDERS_TABLE}.tenant_accept_listing_qrcode as tenantAcceptListingQrcode`,
     `${ORDERS_TABLE}.owner_accept_listing_qrcode as ownerAcceptListingQrcode`,
     `tenants.phone as tenantPhone`,
@@ -98,6 +94,8 @@ class OrderModel extends Model {
     `tenants.facebook_url as tenantFacebookUrl`,
     `tenants.linkedin_url as tenantLinkedinUrl`,
     `tenants.instagram_url as tenantInstagramUrl`,
+    `${ORDERS_TABLE}.defect_description_by_tenant as defectDescriptionByTenant`,
+    `${ORDERS_TABLE}.defect_description_by_owner as defectDescriptionByOwner`,
   ];
 
   selectPartPayedInfo = [
@@ -139,7 +137,6 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.category_id`,
     `${LISTING_CATEGORIES_TABLE}.name`,
     `${LISTINGS_TABLE}.description`,
-    `${LISTINGS_TABLE}.rental_terms`,
     `${LISTINGS_TABLE}.address`,
     `${LISTINGS_TABLE}.postcode`,
     `${LISTINGS_TABLE}.rental_lat`,
@@ -669,6 +666,8 @@ class OrderModel extends Model {
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
         parent_id: orderParentId,
+        defect_description_by_tenant: "",
+        defect_description_by_owner: "",
       })
       .returning("id");
 
@@ -745,8 +744,6 @@ class OrderModel extends Model {
       order["listingImages"] = await listingModel.getListingImages(
         order["listingId"]
       );
-
-      order["defects"] = await listingModel.getDefects(order["listingId"]);
 
       order["categoryInfo"] =
         await listingCategoryModel.getRecursiveCategoryList(
@@ -1197,54 +1194,43 @@ class OrderModel extends Model {
     return status;
   };
 
-  orderTenantGotListing = async (orderId, { token, qrCode }) => {
+  orderTenantGotListing = async (
+    orderId,
+    { token, qrCode, defectDescription }
+  ) => {
     const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER;
+
+    if (!defectDescription) {
+      defectDescription = "";
+    }
 
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       owner_accept_listing_token: token,
       owner_accept_listing_qrcode: qrCode,
       status,
+      defect_description_by_tenant: defectDescription,
     });
 
     return status;
   };
 
-  orderFinished = async (token) => {
+  orderFinished = async (token, { defectDescription }) => {
     const status = STATIC.ORDER_STATUSES.FINISHED;
+
+    if (!defectDescription) {
+      defectDescription = "";
+    }
 
     await db(ORDERS_TABLE)
       .where({ owner_accept_listing_token: token })
       .update({
         status,
         finished_at: db.raw("CURRENT_TIMESTAMP"),
+        defect_description_by_owner: defectDescription,
       });
 
     return status;
   };
-
-  generateDefectQuestionList = async ({ questionInfos, type, orderId }) => {
-    const toInsert = [];
-
-    questionInfos.forEach((questionInfo) =>
-      toInsert.push({
-        question: questionInfo.question,
-        answer: questionInfo.answer,
-        description: questionInfo.description,
-        type,
-        order_id: orderId,
-      })
-    );
-
-    if (questionInfos.length > 0) {
-      await db.batchInsert(LISTING_DEFECT_QUESTION_RELATIONS_TABLE, toInsert);
-    }
-  };
-
-  generateDefectFromOwnerQuestionList = (questionInfos, orderId) =>
-    this.generateDefectQuestionList({ questionInfos, orderId, type: "owner" });
-
-  generateDefectFromTenantQuestionList = (questionInfos, orderId) =>
-    this.generateDefectQuestionList({ questionInfos, orderId, type: "tenant" });
 
   getUserTotalCountOrders = async (userId) => {
     const resultSelect = await db(ORDERS_TABLE)
@@ -1373,23 +1359,6 @@ class OrderModel extends Model {
       disputeCount: result["disputeCount"] ?? 0,
       activeCount: result["activeCount"] ?? 0,
     };
-  };
-
-  orderCheckListByIds = async (ids) => {
-    const checkLists = {};
-    ids.forEach((id) => (checkLists[id] = []));
-
-    const requestResult = await db(LISTING_DEFECT_QUESTION_RELATIONS_TABLE)
-      .where(`type`, "tenant")
-      .whereIn("order_id", ids)
-      .where("answer", true)
-      .select("question", `order_id as orderId`);
-
-    requestResult.forEach((request) =>
-      checkLists[request.orderId].push(request.question)
-    );
-
-    return checkLists;
   };
 }
 

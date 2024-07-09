@@ -344,11 +344,7 @@ class ListingController extends Controller {
 
     dataToSave["listingImages"] = this.localGetFiles(req);
 
-    dataToSave["defects"] = dataToSave["defects"]
-      ? JSON.parse(dataToSave["defects"])
-      : [];
-
-    const { defects, listingId, listingImages } =
+    const { listingId, listingImages } =
       await this.listingModel.create(dataToSave);
 
     dataToSave["userVerified"] = true;
@@ -370,7 +366,6 @@ class ListingController extends Controller {
           id: listingId,
           listingId,
           listingImages,
-          defects,
         },
         createdVerifiedRequest,
       }
@@ -434,13 +429,10 @@ class ListingController extends Controller {
     }
 
     dataToSave["listingImages"] = this.localGetFiles(req);
-    dataToSave["defects"] = dataToSave["defects"]
-      ? JSON.parse(dataToSave["defects"])
-      : [];
 
     dataToSave["active"] = dataToSave["active"] == "true";
 
-    const { defects, listingImages: listingImagesToRes } =
+    const { listingImages: listingImagesToRes } =
       await this.listingModel.updateById(dataToSave);
 
     if (canApprove && dataToSave["approved"] === "true") {
@@ -471,7 +463,7 @@ class ListingController extends Controller {
       STATIC.SUCCESS.OK,
       "Updated successfully",
       {
-        listing: { ...dataToSave, listingId, listingImagesToRes, defects },
+        listing: { ...dataToSave, listingId, listingImagesToRes },
         createdVerifiedRequest,
       }
     );

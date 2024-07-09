@@ -351,16 +351,10 @@ class OrderController extends Controller {
 
   baseAdminOptionsAdd = async (orders) => {
     const listingIds = orders.map((order) => order.listingId);
-
     const listingCounts = await this.listingModel.timeRentedByIds(listingIds);
-
-    const orderIds = orders.map((order) => order.id);
-
-    const orderCheckLists = await this.orderModel.orderCheckListByIds(orderIds);
 
     orders.forEach((order, index) => {
       orders[index]["listingRentalCount"] = listingCounts[order.listingId];
-      orders[index]["orderCheckLists"] = orderCheckLists[order.id];
     });
 
     return orders;
@@ -805,7 +799,7 @@ class OrderController extends Controller {
 
   approveClientGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { token, questions } = req.body;
+      const { token, defectDescription } = req.body;
       const { userId } = req.userData;
 
       const orderInfo = await this.orderModel.getFullByTenantListingToken(
@@ -834,16 +828,12 @@ class OrderController extends Controller {
       const { token: ownerToken, image: generatedImage } =
         await this.generateQrCodeInfo(STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL);
 
-      await this.orderModel.generateDefectFromTenantQuestionList(
-        questions,
-        orderInfo.id
-      );
-
       const newStatus = await this.orderModel.orderTenantGotListing(
         orderInfo.id,
         {
           token: ownerToken,
           qrCode: generatedImage,
+          defectDescription,
         }
       );
 
@@ -1207,7 +1197,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      const { token, questions } = req.body;
+      const { token, defectDescription = null } = req.body;
 
       const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
@@ -1235,12 +1225,9 @@ class OrderController extends Controller {
         );
       }
 
-      await this.orderModel.generateDefectFromOwnerQuestionList(
-        questions,
-        orderInfo.id
-      );
-
-      const newStatus = await this.orderModel.orderFinished(token);
+      const newStatus = await this.orderModel.orderFinished(token, {
+        defectDescription,
+      });
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: orderInfo.chatId,
