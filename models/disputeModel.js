@@ -50,6 +50,7 @@ class DisputeModel extends Model {
     `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
+    `${LISTINGS_TABLE}.other_category as listingOtherCategory`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
     `${CHATS_TABLE}.id as chatId`,
   ];
@@ -80,7 +81,7 @@ class DisputeModel extends Model {
         "=",
         `${ORDERS_TABLE}.listing_id`
       )
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
@@ -210,8 +211,8 @@ class DisputeModel extends Model {
     );
     query = this.baseTypeWhere(type, query);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {

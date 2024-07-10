@@ -48,6 +48,7 @@ class ListingController extends Controller {
     const maxPrice = req.body.maxPrice ?? null;
     const lat = req.body.lat ?? null;
     const lng = req.body.lng ?? null;
+    const othersCategories = req.body.othersCategories ?? false;
 
     const timeInfos = await this.listTimeOption({
       req,
@@ -69,6 +70,7 @@ class ListingController extends Controller {
         maxPrice,
         lat,
         lng,
+        othersCategories,
       })
     );
 
@@ -86,6 +88,7 @@ class ListingController extends Controller {
       distance,
       minPrice,
       maxPrice,
+      othersCategories,
     };
   };
 
@@ -99,6 +102,7 @@ class ListingController extends Controller {
       distance,
       minPrice,
       maxPrice,
+      othersCategories,
     } = await this.baseCountListings(req, userId);
 
     const sessionUserId = req.userData.userId;
@@ -109,6 +113,7 @@ class ListingController extends Controller {
     options["distance"] = distance;
     options["minPrice"] = minPrice;
     options["maxPrice"] = maxPrice;
+    options["othersCategories"] = othersCategories;
 
     options["searchCity"] = req.body.searchCity ?? null;
     options["searchCategory"] = req.body.searchCategory ?? null;
@@ -344,8 +349,9 @@ class ListingController extends Controller {
 
     dataToSave["listingImages"] = this.localGetFiles(req);
 
-    const { listingId, listingImages } =
-      await this.listingModel.create(dataToSave);
+    const { listingId, listingImages } = await this.listingModel.create(
+      dataToSave
+    );
 
     dataToSave["userVerified"] = true;
 

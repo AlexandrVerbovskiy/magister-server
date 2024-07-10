@@ -293,10 +293,10 @@ class SenderPayment extends Model {
     }
 
     query = this.baseTypeWhere(query, type);
-
     query = this.baseStatusWhere(query, status);
-    const { count } = await query.count("* as count").first();
-    return count;
+    
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   baseSenderList = async ({ props, dopWhere = null, select = null }) => {

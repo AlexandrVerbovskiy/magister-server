@@ -55,6 +55,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
+    `${LISTINGS_TABLE}.other_category as listingOtherCategory`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
     `${DISPUTES_TABLE}.id as disputeId`,
     `${DISPUTES_TABLE}.status as disputeStatus`,
@@ -135,6 +136,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.price_per_day`,
     `${LISTINGS_TABLE}.min_rental_days`,
     `${LISTINGS_TABLE}.category_id`,
+    `${LISTINGS_TABLE}.other_category`,
     `${LISTING_CATEGORIES_TABLE}.name`,
     `${LISTINGS_TABLE}.description`,
     `${LISTINGS_TABLE}.address`,
@@ -242,7 +244,7 @@ class OrderModel extends Model {
         "=",
         `${ORDERS_TABLE}.listing_id`
       )
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
@@ -507,8 +509,8 @@ class OrderModel extends Model {
     query = this.fullBaseGetQuery(filter);
     query = this.orderTimeFilterWrap(query, timeInfos);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   fullList = async (props) => {
@@ -532,8 +534,8 @@ class OrderModel extends Model {
 
     query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   baseOwnerTotalCount = async (filter, timeInfos, ownerId) => {
@@ -543,8 +545,8 @@ class OrderModel extends Model {
 
     query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   baseTenantList = async (props) => {
@@ -620,8 +622,8 @@ class OrderModel extends Model {
 
     query = this.baseQueryListByType(query, type);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   allOrderList = async (props) => {
@@ -1122,18 +1124,18 @@ class OrderModel extends Model {
   };
 
   getUnfinishedTenantCount = async (tenantId) => {
-    const { count } = await db(ORDERS_TABLE)
+    const result = await db(ORDERS_TABLE)
       .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
       .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .where("tenant_id", tenantId)
       .count("* as count")
       .first();
 
-    return count;
+    return +result?.count;
   };
 
   getUnfinishedOwnerCount = async (ownerId) => {
-    const { count } = await db(ORDERS_TABLE)
+    const result = await db(ORDERS_TABLE)
       .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
       .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .leftJoin(
@@ -1145,7 +1147,7 @@ class OrderModel extends Model {
       .count("* as count")
       .first();
 
-    return count;
+    return +result?.count;
   };
 
   getUnfinishedUserCount = async (userId) => {
@@ -1160,7 +1162,7 @@ class OrderModel extends Model {
   };
 
   getUnfinishedListingCount = async (listingId) => {
-    const { count } = await db(ORDERS_TABLE)
+    const result = await db(ORDERS_TABLE)
       .where((builder) => {
         builder
           .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
@@ -1172,7 +1174,7 @@ class OrderModel extends Model {
       .count("* as count")
       .first();
 
-    return +count;
+    return +result?.count;
   };
 
   delete = async (orderId) => {

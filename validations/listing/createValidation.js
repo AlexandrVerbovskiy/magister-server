@@ -8,7 +8,22 @@ const {
 
 module.exports = [
   ...validateSmallStringBody({ field: "name", fieldName: "Name" }),
-  ...validateIntegerBody({ field: "categoryId", fieldName: "Category id" }),
+  body("otherCategory").custom((value, { req }) => {
+    if (value && value.length > 0) {
+      req.skipCategoryId = true;
+      return true;
+    }
+    req.skipCategoryId = false;
+    return true;
+  }),
+
+  body("categoryId")
+    .if((value, { req }) => !req.skipCategoryId)
+    .exists()
+    .withMessage("Category id is required")
+    .bail()
+    .isInt()
+    .withMessage("Category id must be an integer"),
 
   ...validateIntegerBody({
     field: "countStoredItems",
@@ -28,6 +43,10 @@ module.exports = [
     field: "keyWords",
     fieldName: "Key words",
     required: false,
+  }),
+  ...validateSmallStringBody({
+    field: "otherCategory",
+    fieldName: "Other Category",
   }),
   ...validateSmallStringBody({ field: "rentalLat", fieldName: "Rental lat" }),
   ...validateSmallStringBody({ field: "rentalLng", fieldName: "Rental lng" }),
