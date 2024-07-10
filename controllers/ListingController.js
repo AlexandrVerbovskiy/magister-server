@@ -159,25 +159,7 @@ class ListingController extends Controller {
     };
   };
 
-  baseListingWithStatusesList = async (req, userId = null) => {
-    const active = req.body.active ?? "all";
-    const approved = req.body.approved ?? "all";
-
-    const { options, countItems } = await this.baseList(
-      req,
-      ({ filter = "" }) =>
-        this.listingModel.totalCountWithLastRequests(filter, userId, {
-          active,
-          approved,
-        })
-    );
-
-    options["userId"] = userId;
-    options["active"] = active;
-    options["approved"] = approved;
-
-    const listings = await this.listingModel.listWithLastRequests(options);
-
+  wrapListingList = async (listings) => {
     const listingsWithImages = await this.listingModel.listingsBindImages(
       listings
     );
@@ -198,8 +180,62 @@ class ListingController extends Controller {
         }
       );
 
+    return ratingListingsOwnersWithImages;
+  };
+
+  baseListingWithApprovedWaitedStatusesList = async (req, userId = null) => {
+    const active = req.body.active ?? "all";
+    const approved = req.body.approved ?? "all";
+
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.listingModel.totalCountWithLastRequestsByApprovedWaited(
+          filter,
+          userId,
+          {
+            active,
+            approved,
+          }
+        )
+    );
+
+    options["userId"] = userId;
+    options["active"] = active;
+    options["approved"] = approved;
+
+    const listings =
+      await this.listingModel.listWithLastRequestsByApprovedWaited(options);
+    const wrappedListings = await this.wrapListingList(listings);
+
     return {
-      items: ratingListingsOwnersWithImages,
+      items: wrappedListings,
+      options,
+      countItems,
+    };
+  };
+
+  baseListingWithStatusesList = async (req, userId = null) => {
+    const status = req.body.status ?? "all";
+
+    const { options, countItems } = await this.baseList(
+      req,
+      ({ filter = "" }) =>
+        this.listingModel.totalCountWithLastRequestsByStatus(filter, userId, {
+          status,
+        })
+    );
+
+    options["userId"] = userId;
+    options["status"] = status;
+
+    const listings = await this.listingModel.listWithLastRequestsByStatus(
+      options
+    );
+    const wrappedListings = await this.wrapListingList(listings);
+
+    return {
+      items: wrappedListings,
       options,
       countItems,
     };
@@ -220,7 +256,7 @@ class ListingController extends Controller {
 
   adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseListingWithStatusesList(req);
+      const result = await this.baseListingWithApprovedWaitedStatusesList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -308,11 +344,7 @@ class ListingController extends Controller {
 
     dataToSave["listingImages"] = this.localGetFiles(req);
 
-    dataToSave["defects"] = dataToSave["defects"]
-      ? JSON.parse(dataToSave["defects"])
-      : [];
-
-    const { defects, listingId, listingImages } =
+    const { listingId, listingImages } =
       await this.listingModel.create(dataToSave);
 
     dataToSave["userVerified"] = true;
@@ -334,7 +366,6 @@ class ListingController extends Controller {
           id: listingId,
           listingId,
           listingImages,
-          defects,
         },
         createdVerifiedRequest,
       }
@@ -398,13 +429,10 @@ class ListingController extends Controller {
     }
 
     dataToSave["listingImages"] = this.localGetFiles(req);
-    dataToSave["defects"] = dataToSave["defects"]
-      ? JSON.parse(dataToSave["defects"])
-      : [];
 
     dataToSave["active"] = dataToSave["active"] == "true";
 
-    const { defects, listingImages: listingImagesToRes } =
+    const { listingImages: listingImagesToRes } =
       await this.listingModel.updateById(dataToSave);
 
     if (canApprove && dataToSave["approved"] === "true") {
@@ -435,7 +463,7 @@ class ListingController extends Controller {
       STATIC.SUCCESS.OK,
       "Updated successfully",
       {
-        listing: { ...dataToSave, listingId, listingImagesToRes, defects },
+        listing: { ...dataToSave, listingId, listingImagesToRes },
         createdVerifiedRequest,
       }
     );

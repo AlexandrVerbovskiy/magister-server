@@ -1,4 +1,5 @@
 const STATIC = require("../static");
+const { generateDatesBetween, checkStartEndHasConflict } = require("../utils");
 const Controller = require("./Controller");
 
 class OrderUpdateRequestController extends Controller {
@@ -8,8 +9,9 @@ class OrderUpdateRequestController extends Controller {
       const senderId = req.userData.userId;
 
       const order = await this.orderModel.getFullById(orderId);
+      const { tenantId, ownerId, chatId } = order;
 
-      if (order.tenantId != senderId && order.ownerId != senderId) {
+      if (tenantId != senderId && ownerId != senderId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -25,20 +27,44 @@ class OrderUpdateRequestController extends Controller {
         orderId
       );
 
+      const blockedListingsDates =
+        await this.orderModel.getBlockedListingsDatesForListings(
+          [order.listingId],
+          tenantId == senderId ? senderId : null
+        );
+
+      const currentListingBlockedDates = blockedListingsDates[order.listingId];
+
+      if (
+        checkStartEndHasConflict(
+          newStartDate,
+          newEndDate,
+          currentListingBlockedDates
+        )
+      ) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Order has conflict orders"
+        );
+      }
+
       if (lastInfo) {
         if (lastInfo.senderId == senderId) {
           return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-        } else {
-          await this.orderUpdateRequestModel.closeLast(orderId);
         }
+
+        await this.orderUpdateRequestModel.closeLast(orderId);
       }
 
-      if (order.tenantId == senderId) {
-        await this.orderModel.setPendingOwnerStatus(orderId);
+      let newStatus = null;
+
+      if (tenantId == senderId) {
+        newStatus = await this.orderModel.setPendingOwnerStatus(orderId);
       }
 
-      if (order.ownerId == senderId) {
-        await this.orderModel.setPendingTenantStatus(orderId);
+      if (ownerId == senderId) {
+        newStatus = await this.orderModel.setPendingTenantStatus(orderId);
       }
 
       const fee = await this.systemOptionModel.getTenantBaseCommissionPercent();
@@ -56,11 +82,33 @@ class OrderUpdateRequestController extends Controller {
         createdRequestId
       );
 
+      const firstImage = order.listingImages[0];
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {
+          requestId: request.id,
+          listingName: order.listingName,
+          offerPrice: newPricePerDay,
+          listingPhotoPath: firstImage?.link,
+          listingPhotoType: firstImage?.type,
+          offerDateStart: newStartDate,
+          offerDateEnd: newEndDate,
+        },
+        senderId,
+        createMessageFunc: this.chatMessageModel.createUpdateOrderMessage,
+        orderPart: {
+          id: order.id,
+          status: newStatus,
+          actualUpdateRequest: request,
+        },
+      });
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
         "Created successfully",
-        request
+        { request, chatMessage }
       );
     });
 }

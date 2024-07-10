@@ -177,9 +177,18 @@ module.exports = {
     IMAGE: "image",
     NEW_ORDER: "new-order",
     UPDATE_ORDER: "update-order",
+    ACCEPTED_ORDER: "accepted-order",
+    REJECTED_ORDER: "rejected-order",
+    TENANT_PAYED: "tenant-payed",
+    PENDED_TO_CLIENT: "pending_item_to_client",
+    FINISHED: "finished",
+    CANCELED_ORDER: "canceled-order",
+    CREATED_CANCEL_REQUEST: "created-cancel",
+    ACCEPTED_CANCEL_REQUEST: "accepted-cancel",
     LISTING_REVIEW: "listing-review",
     USER_REVIEW: "user-review",
     STARTED_DISPUTE: "started-dispute",
+    RESOLVED_DISPUTE: "resolved-dispute",
   },
   VIDEO_EXTENSIONS: [
     "mp4",
@@ -220,4 +229,9 @@ module.exports = {
     "webp",
   ],
   CHAT_TYPES: { DISPUTE: "dispute", ORDER: "order" },
+  PAYMENT_TYPES: {
+    PAYPAL: "paypal",
+    CREDIT_CARD: "credit-card",
+    BANK_TRANSFER: "bank-transfer",
+  },
 };

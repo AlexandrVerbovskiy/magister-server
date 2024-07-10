@@ -225,16 +225,22 @@ module.exports = (io) => {
     mainController.getFullOrderByIdPageOption
   );
 
-  router.get(
+  router.post(
     "/user-profile-edit-options",
     isAuth,
     mainController.getUserProfileEditPageOptions
   );
 
-  router.get(
-    "/settings-options",
+  router.post(
+    "/dashboard-page-options",
     isAuth,
-    mainController.getSettingsPageOptions
+    mainController.getUserDashboardPageOptions
+  );
+
+  router.post(
+    "/dashboard-options",
+    isAuth,
+    mainController.getUserDashboardOptions
   );
 
   router.post(
@@ -286,20 +292,6 @@ module.exports = (io) => {
   );
 
   router.get(
-    "/admin-listing-defects-edit-options",
-    isAuth,
-    isAdmin,
-    mainController.getAdminListingDefectsEditOptions
-  );
-
-  router.get(
-    "/admin-listing-defect-questions-edit-options",
-    isAuth,
-    isAdmin,
-    mainController.getAdminListingDefectQuestionsEditOptions
-  );
-
-  router.get(
     "/get-order-invoice-options/:id",
     isAuth,
     isVerified,
@@ -329,11 +321,19 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/get-admin-index-page-option",
+    "/get-admin-dashboard-page-option",
     isAuth,
     isSupport,
     adminIndexPageOptionsValidation,
-    mainController.getAdminIndexPageOptions
+    mainController.getAdminDashboardPageOptions
+  );
+
+  router.post(
+    "/get-admin-dashboard-option",
+    isAuth,
+    isSupport,
+    adminIndexPageOptionsValidation,
+    mainController.getAdminDashboardOptions
   );
 
   router.get(
@@ -417,7 +417,6 @@ module.exports = (io) => {
     mainController.getAdminOrderChatOptions
   );
 
-  router.get("/test", mainController.test);
-
+  router.get("/auth/paypal/callback", mainController.test);
   return router;
 };

@@ -63,8 +63,14 @@ class DisputeController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
+      const tenantId = +order.tenantId;
+      const ownerId = +order.ownerId;
+
+      const isOwnerCreatedDispute = userId == ownerId;
+      const isTenantCreatedDispute = userId == tenantId;
+
       if (
-        (order.ownerId != userId && order.tenantId != userId) ||
+        (!isTenantCreatedDispute && !isOwnerCreatedDispute) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         [
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
@@ -83,16 +89,105 @@ class DisputeController extends Controller {
         orderId,
       });
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
+      const senderName = isOwnerCreatedDispute ? order.ownerId : order.tenantId;
+
+      const createdMessages = await this.chatModel.createForDispute({
+        orderId,
         disputeId,
+        userIds: [tenantId, ownerId],
+        data: { senderId: userId, senderName, description, type },
+      });
+
+      if (isOwnerCreatedDispute) {
+        await this.sendSocketMessageToUser(tenantId, "get-message", {
+          message: createdMessages[tenantId],
+        });
+      }
+
+      if (isTenantCreatedDispute) {
+        await this.sendSocketMessageToUser(ownerId, "get-message", {
+          message: createdMessages[ownerId],
+        });
+      }
+
+      const ownerDisputeChatId = createdMessages[ownerId].chatId;
+      const tenantDisputeChatId = createdMessages[tenantId].chatId;
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: { description, type },
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createStartedDisputeMessage,
+        orderPart: {
+          id: order.id,
+          disputeId,
+          disputeStatus,
+          disputeType: type,
+          disputeDescription: description,
+          disputeChatId: isOwnerCreatedDispute
+            ? tenantDisputeChatId
+            : ownerDisputeChatId,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: {
+          id: order.id,
+          disputeId,
+          disputeStatus,
+          disputeType: type,
+          disputeDescription: description,
+          disputeChatId: isOwnerCreatedDispute
+            ? ownerDisputeChatId
+            : tenantDisputeChatId,
+        },
       });
     });
 
   solve = async (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { disputeId, solution } = req.body;
-      await this.disputeModel.solve(solution, disputeId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const disputeStatus = await this.disputeModel.solve(solution, disputeId);
+      const orderChatId = await this.disputeModel.getOrderChatId(disputeId);
+
+      const createdMessages = [];
+
+      const chatMessage =
+        await this.chatMessageModel.createResolvedDisputeMessage({
+          chatId: orderChatId,
+        });
+
+      this.sendSocketMessageToChatUsers(orderChatId, "get-message", {
+        message: chatMessage,
+        orderPart: { disputeStatus },
+      });
+
+      createdMessages.push(chatMessage);
+
+      const disputeChats = await this.disputeModel.getDisputeChatIds(disputeId);
+
+      for (let i = 0; i < disputeChats.length; i++) {
+        const disputeChatId = disputeChats[i];
+
+        const chatMessage =
+          await this.chatMessageModel.createResolvedDisputeMessage({
+            chatId: disputeChatId,
+          });
+
+        this.sendSocketMessageToChatUsers(disputeChatId, "get-message", {
+          message: chatMessage,
+          orderPart: { disputeStatus },
+        });
+
+        createdMessages.push(chatMessage);
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        messages: createdMessages,
+        orderPart: { disputeStatus },
+      });
     });
 
   unsolve = async (req, res) =>

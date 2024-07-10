@@ -1,16 +1,33 @@
 const STATIC = require("../static");
 const {
-  generateDatesBetween,
   getPaypalOrderInfo,
   capturePaypalOrder,
   sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
   getDaysDifference,
+  isPayedUsedPaypal,
+  removeDuplicates,
+  checkStartEndHasConflict,
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
 
 class OrderController extends Controller {
+  sendMessageForNewOrder = async ({ message, senderId }) => {
+    const chatId = message.chatId;
+    const sender = await this.userModel.getById(senderId);
+
+    await this.sendSocketMessageToUserOpponent(
+      chatId,
+      senderId,
+      "get-message",
+      {
+        message,
+        opponent: sender,
+      }
+    );
+  };
+
   getFullById = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
@@ -39,7 +56,6 @@ class OrderController extends Controller {
     endDate,
     listingId,
     feeActive,
-    message,
     tenantId,
     orderParentId = null,
   }) => {
@@ -49,20 +65,14 @@ class OrderController extends Controller {
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
     const blockedDatesListings =
-      await this.orderModel.getBlockedListingsDatesForUser(
+      await this.orderModel.getBlockedListingsDatesForListings(
         [listingId],
         tenantId
       );
 
     const blockedDates = blockedDatesListings[listingId];
 
-    const selectedDates = generateDatesBetween(startDate, endDate);
-
-    const hasBlockedDate = selectedDates.find((selectedDate) =>
-      blockedDates.includes(selectedDate)
-    );
-
-    if (hasBlockedDate) {
+    if (checkStartEndHasConflict(startDate, endDate, blockedDates)) {
       throw new Error("The selected date is not available for booking");
     }
 
@@ -75,7 +85,6 @@ class OrderController extends Controller {
       ownerFee: ownerFee,
       tenantFee: tenantFee,
       feeActive,
-      message,
       orderParentId,
     });
   };
@@ -92,7 +101,6 @@ class OrderController extends Controller {
         endDate,
         listingId,
         feeActive,
-        message,
         tenantId,
       });
 
@@ -118,7 +126,10 @@ class OrderController extends Controller {
         },
       });
 
-      await this.sendMessageForOrder(createdMessages[ownerId], tenantId);
+      await this.sendMessageForNewOrder({
+        message: createdMessages[ownerId],
+        senderId: tenantId,
+      });
 
       return this.sendSuccessResponse(
         res,
@@ -162,7 +173,6 @@ class OrderController extends Controller {
         endDate,
         listingId,
         feeActive,
-        message,
         tenantId,
       };
 
@@ -174,12 +184,43 @@ class OrderController extends Controller {
 
       const createdOrderId = await this.baseCreate(dataToCreate);
 
+      const listing = await this.listingModel.getFullById(listingId);
+
+      this.sendBookingApprovalRequestMail(listing.userEmail);
+
+      const firstImage = listing.listingImages[0];
+      const ownerId = listing.ownerId;
+
+      const createdMessages = await this.chatModel.createForOrder({
+        ownerId,
+        tenantId,
+        orderInfo: {
+          orderId: createdOrderId,
+          listingName: listing.name,
+          offerPrice: pricePerDay,
+          listingPhotoPath: firstImage?.link,
+          listingPhotoType: firstImage?.type,
+          offerDateStart: startDate,
+          offerDateEnd: endDate,
+          description: message,
+        },
+      });
+
+      await this.sendMessageForNewOrder({
+        message: createdMessages[ownerId],
+        senderId: tenantId,
+      });
+
+      const opponent = await this.userModel.getById(ownerId);
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
         "Created successfully",
         {
           id: createdOrderId,
+          chatMessage: createdMessages[tenantId],
+          opponent,
         }
       );
     });
@@ -212,26 +253,23 @@ class OrderController extends Controller {
     const paymentInfos =
       await this.senderPaymentModel.getInfoAboutOrdersPayments(orderIds);
 
-    const orderListingIds = Array.from(
-      new Set(requestsWithImages.map((request) => request.listingId))
+    const orderListingIds = removeDuplicates(
+      requestsWithImages.map((request) => request.listingId)
     );
 
+    const tenantId = type == "tenant" ? userId : null;
+
     const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForUser(
+      await this.orderModel.getBlockedListingsDatesForListings(
         orderListingIds,
-        userId
+        tenantId
       );
 
     requestsWithImages.forEach((request, index) => {
       const currentOrderConflicts = conflictOrders[request.id];
       requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
-
       requestsWithImages[index]["blockedDates"] =
-        this.orderModel.generateBlockedDatesByOrders(currentOrderConflicts);
-
-      requestsWithImages[index]["blockedForRentalDates"] =
         blockedListingsDates[request.listingId];
-
       requestsWithImages[index]["paymentInfo"] = paymentInfos[request.id];
     });
 
@@ -246,9 +284,31 @@ class OrderController extends Controller {
     });
 
     const orderIdsNeedExtendInfo = Object.keys(orderIdsNeedExtendInfoObj);
+
     const orderExtends = await this.orderModel.getOrdersExtends(
       orderIdsNeedExtendInfo
     );
+
+    const extendOrderIds = orderExtends.map((request) => request.id);
+
+    const extendPaymentInfos =
+      await this.senderPaymentModel.getInfoAboutOrdersPayments(extendOrderIds);
+
+    orderExtends.forEach((request, index) => {
+      const currentOrderConflicts = conflictOrders[request.orderParentId];
+      orderExtends[index]["conflictOrders"] = currentOrderConflicts;
+
+      orderExtends[index]["blockedForRentalDates"] =
+        blockedListingsDates[request.listingId];
+
+      orderExtends[index]["paymentInfo"] = extendPaymentInfos[request.id];
+
+      orderExtends[index]["canFastCancelPayed"] =
+        this.orderModel.canFastCancelPayedOrder(request);
+
+      orderExtends[index]["canFinalization"] =
+        this.orderModel.canFinalizationOrder(request);
+    });
 
     requestsWithImages.forEach((request, index) => {
       requestsWithImages[index]["canFastCancelPayed"] =
@@ -291,16 +351,10 @@ class OrderController extends Controller {
 
   baseAdminOptionsAdd = async (orders) => {
     const listingIds = orders.map((order) => order.listingId);
-
     const listingCounts = await this.listingModel.timeRentedByIds(listingIds);
-
-    const orderIds = orders.map((order) => order.id);
-
-    const orderCheckLists = await this.orderModel.orderCheckListByIds(orderIds);
 
     orders.forEach((order, index) => {
       orders[index]["listingRentalCount"] = listingCounts[order.listingId];
-      orders[index]["orderCheckLists"] = orderCheckLists[order.id];
     });
 
     return orders;
@@ -469,7 +523,7 @@ class OrderController extends Controller {
 
       const conflictOrders = await this.orderModel.getConflictOrders([id]);
 
-      if (conflictOrders[`${id}`].length > 0) {
+      if (conflictOrders[id].length > 0) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.FORBIDDEN,
@@ -508,7 +562,23 @@ class OrderController extends Controller {
         await this.orderModel.acceptOrder(id);
       }
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const newStatus = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createAcceptedOrderMessage,
+        orderPart: {
+          id: order.id,
+          status: newStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        status: newStatus,
+      });
     });
 
   rejectBooking = (req, res) =>
@@ -558,15 +628,37 @@ class OrderController extends Controller {
         };
       }
 
+      let newStatus = null;
+      let newCancelStatus = null;
+
       if (order.tenantId == userId) {
         await this.orderModel.successCancelled(id, newData);
+        newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
       } else {
         await this.orderModel.rejectOrder(id, newData);
+        newCancelStatus = STATIC.ORDER_STATUSES.REJECTED;
+        newStatus = order.status;
       }
 
       await this.orderUpdateRequestModel.closeLast(id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createRejectedOrderMessage,
+        orderPart: {
+          id: order.id,
+          status: newStatus,
+          cancelStatus: newCancelStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        status: newStatus,
+        cancelStatus: newCancelStatus,
+      });
     });
 
   delete = (req, res) =>
@@ -580,7 +672,7 @@ class OrderController extends Controller {
   paypalOrderPayed = async (req, res) =>
     this.baseWrapper(res, res, async () => {
       const { userId } = req.userData;
-      const { orderId: paypalOrderId } = req.body;
+      const { orderId: paypalOrderId, type: paypalType } = req.body;
 
       await capturePaypalOrder(paypalOrderId);
 
@@ -591,7 +683,7 @@ class OrderController extends Controller {
       const payerCardLastBrand = paypalOrderInfo.payment_source?.card?.brand;
 
       const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
-      const orderId = paypalOrderInfo.purchase_units[0].items[0].sku;
+      const orderId = +paypalOrderInfo.purchase_units[0].items[0].sku;
 
       const order = await this.orderModel.getById(orderId);
 
@@ -610,13 +702,15 @@ class OrderController extends Controller {
           : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
+      let newStatus = null;
+
       if (order.orderParentId) {
-        await this.orderModel.orderTenantGotListing(orderId, {
+        newStatus = await this.orderModel.orderTenantGotListing(orderId, {
           token,
           qrCode: generatedImage,
         });
       } else {
-        await this.orderModel.orderTenantPayed(orderId, {
+        newStatus = await this.orderModel.orderTenantPayed(orderId, {
           token,
           qrCode: generatedImage,
         });
@@ -632,9 +726,27 @@ class OrderController extends Controller {
         payerCardLastDigits,
         payerCardLastBrand,
         proofUrl: "",
+        type: paypalType,
       });
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createTenantPayedOrderMessage,
+        orderPart: {
+          status: newStatus,
+          id: orderId,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: {
+          status: newStatus,
+          id: orderId,
+        },
+      });
     });
 
   unpaidTransactionByCreditCard = async (req, res) => {
@@ -687,7 +799,7 @@ class OrderController extends Controller {
 
   approveClientGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { token, questions } = req.body;
+      const { token, defectDescription } = req.body;
       const { userId } = req.userData;
 
       const orderInfo = await this.orderModel.getFullByTenantListingToken(
@@ -716,15 +828,14 @@ class OrderController extends Controller {
       const { token: ownerToken, image: generatedImage } =
         await this.generateQrCodeInfo(STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL);
 
-      await this.orderModel.generateDefectFromTenantQuestionList(
-        questions,
-        orderInfo.id
+      const newStatus = await this.orderModel.orderTenantGotListing(
+        orderInfo.id,
+        {
+          token: ownerToken,
+          qrCode: generatedImage,
+          defectDescription,
+        }
       );
-
-      await this.orderModel.orderTenantGotListing(orderInfo.id, {
-        token: ownerToken,
-        qrCode: generatedImage,
-      });
 
       await this.recipientPaymentModel.paypalPaymentPlanGeneration({
         startDate: orderInfo.offerStartDate,
@@ -735,7 +846,21 @@ class OrderController extends Controller {
         fee: orderInfo.ownerFee,
       });
 
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: orderInfo.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc:
+          this.chatMessageModel.createPendedToClientOrderMessage,
+        orderPart: {
+          id: orderInfo.id,
+          status: newStatus,
+        },
+      });
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: { status: newStatus, id: orderInfo.id },
         qrCode: generatedImage,
       });
     });
@@ -746,6 +871,7 @@ class OrderController extends Controller {
     userId,
     userType,
     cancelFunc,
+    createMessageFunc,
     availableStatusesToCancel = [],
   }) => {
     const { id } = req.body;
@@ -782,8 +908,23 @@ class OrderController extends Controller {
       );
     }
 
-    const funcResult = await cancelFunc(id, orderInfo);
-    return funcResult ?? this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    const cancelStatus = await cancelFunc(id, orderInfo);
+
+    const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+      chatId: orderInfo.chatId,
+      messageData: {},
+      senderId: userId,
+      createMessageFunc: createMessageFunc,
+      orderPart: {
+        id: orderInfo.id,
+        cancelStatus,
+      },
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      chatMessage,
+      orderPart: { cancelStatus, id: orderInfo.id },
+    });
   };
 
   acceptCancelOrder = async (req, res, userId, userType) => {
@@ -842,9 +983,23 @@ class OrderController extends Controller {
       });
     }*/
 
-    await this.orderModel.successCancelled(id);
+    const newCancelStatus = await this.orderModel.successCancelled(id);
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+      chatId: orderInfo.chatId,
+      messageData: {},
+      senderId: userId,
+      createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+      orderPart: {
+        id: orderInfo.id,
+        cancelStatus: newCancelStatus,
+      },
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      chatMessage,
+      orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
+    });
   };
 
   cancelByTenant = (req, res) =>
@@ -861,6 +1016,8 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
         cancelFunc: this.orderModel.startCancelByTenant,
+        createMessageFunc:
+          this.chatMessageModel.createCancelOrderRequestMessage,
       });
     });
 
@@ -878,6 +1035,8 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
         cancelFunc: this.orderModel.startCancelByOwner,
+        createMessageFunc:
+          this.chatMessageModel.createCancelOrderRequestMessage,
       });
     });
 
@@ -958,7 +1117,7 @@ class OrderController extends Controller {
       const factTotalPriceWithoutCommission =
         (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
 
-      if (type == "paypal") {
+      if (isPayedUsedPaypal(type)) {
         try {
           await sendMoneyToPaypalByPaypalID(
             paypalId,
@@ -969,7 +1128,7 @@ class OrderController extends Controller {
             money: factTotalPriceWithoutCommission,
             userId: userId,
             orderId: id,
-            type: "paypal",
+            type: STATIC.PAYMENT_TYPES.PAYPAL,
             data: { paypalId: paypalId },
             status: STATIC.RECIPIENT_STATUSES.COMPLETED,
           });
@@ -978,7 +1137,7 @@ class OrderController extends Controller {
             money: factTotalPriceWithoutCommission,
             userId: userId,
             orderId: id,
-            type: "paypal",
+            type: STATIC.PAYMENT_TYPES.PAYPAL,
             data: { paypalId: paypalId },
             status: STATIC.RECIPIENT_STATUSES.FAILED,
             failedDescription: e.message,
@@ -986,20 +1145,34 @@ class OrderController extends Controller {
         }
       }
 
-      if (type == "card") {
+      if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
         await this.recipientPaymentModel.createRefundPayment({
           money: factTotalPriceWithoutCommission,
           userId: userId,
           orderId: id,
-          type: "card",
+          type: STATIC.PAYMENT_TYPES.BANK_TRANSFER,
           data: { cardNumber: cardNumber },
           status: STATIC.RECIPIENT_STATUSES.WAITING,
         });
       }
 
-      await this.orderModel.successCancelled(id);
+      const newCancelStatus = await this.orderModel.successCancelled(id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: orderInfo.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+        orderPart: {
+          id: orderInfo.id,
+          cancelStatus: newCancelStatus,
+        },
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
+      });
     });
 
   fullCancel = (req, res) =>
@@ -1016,6 +1189,7 @@ class OrderController extends Controller {
           STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
         ],
         cancelFunc: this.orderModel.successCancelled,
+        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
       });
     });
 
@@ -1023,7 +1197,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      const { token, questions } = req.body;
+      const { token, defectDescription = null } = req.body;
 
       const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
@@ -1051,14 +1225,25 @@ class OrderController extends Controller {
         );
       }
 
-      await this.orderModel.generateDefectFromOwnerQuestionList(
-        questions,
-        orderInfo.id
-      );
+      const newStatus = await this.orderModel.orderFinished(token, {
+        defectDescription,
+      });
 
-      await this.orderModel.orderFinished(token);
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId: orderInfo.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc: this.chatMessageModel.createFinishedOrderMessage,
+        orderPart: {
+          id: orderInfo.id,
+          status: newStatus,
+        },
+      });
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        chatMessage,
+        orderPart: { status: newStatus, id: orderInfo.id },
+      });
     });
 
   generateInvoicePdf = (req, res) =>
@@ -1092,24 +1277,24 @@ class OrderController extends Controller {
       order.id,
     ]);
 
-    order["extendOrders"] = await this.orderModel.getOrdersExtends([order.id]);
-
     const conflictOrders = resGetConflictOrders[order.id];
-    order["blockedDates"] =
-      this.orderModel.generateBlockedDatesByOrders(conflictOrders);
+    const tenantId = order.tenantId == userId ? userId : null;
 
     const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForUser(
+      await this.orderModel.getBlockedListingsDatesForListings(
         [order.listingId],
-        userId
+        tenantId
       );
 
-    order["blockedForRentalDates"] = blockedListingsDates[order.listingId];
+    order["blockedDates"] = blockedListingsDates[order.listingId];
+    order["extendOrders"] = await this.orderModel.getOrdersExtends([order.id]);
 
-    if (userId == order.ownerId) {
+    if (userId != order.tenantId) {
       order["conflictOrders"] = conflictOrders;
       order["ownerAcceptListingQrcode"] = null;
-    } else {
+    }
+
+    if (userId != order.ownerId) {
       order["tenantAcceptListingQrcode"] = null;
     }
 

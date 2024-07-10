@@ -40,8 +40,6 @@ const {
   orderUpdateRequestModel,
   senderPaymentModel,
   recipientPaymentModel,
-  listingDefectModel,
-  listingDefectQuestionModel,
   listingCommentModel,
   ownerCommentModel,
   tenantCommentModel,
@@ -79,7 +77,6 @@ class Controller {
     this.searchedWordModel = searchedWordModel;
 
     this.listingModel = listingModel;
-    this.listingDefectModel = listingDefectModel;
 
     this.orderModel = orderModel;
     this.orderUpdateRequestModel = orderUpdateRequestModel;
@@ -88,7 +85,6 @@ class Controller {
     this.listingApprovalRequestModel = listingApprovalRequestModel;
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
-    this.listingDefectQuestionModel = listingDefectQuestionModel;
 
     this.listingCommentModel = listingCommentModel;
     this.ownerCommentModel = ownerCommentModel;
@@ -769,19 +765,51 @@ class Controller {
     );
   };
 
-  sendMessageForOrder = async (message, senderId) => {
-    const chatId = message.chatId;
+  sendSocketMessageToAdmins = async (messageKey, message) => {
+    const sockets = await this.socketModel.getAdminsSockets();
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, messageKey, message)
+    );
+  };
+
+  sendSocketMessageToChatUsers = async (chatId, messageKey, message) => {
+    const sockets = await this.chatModel.getChatUsersSockets(chatId);
+    sockets.forEach((socket) =>
+      this.sendSocketIoMessage(socket, messageKey, message)
+    );
+  };
+
+  createAndSendMessageForUpdatedOrder = async ({
+    chatId,
+    senderId,
+    orderPart,
+    createMessageFunc,
+    messageData = {},
+  }) => {
+    if (!chatId) {
+      return { chatMessage: null };
+    }
+
+    const message = await createMessageFunc({
+      chatId,
+      senderId,
+      data: messageData,
+    });
+
     const sender = await this.userModel.getById(senderId);
 
     await this.sendSocketMessageToUserOpponent(
       chatId,
       senderId,
-      "get-message",
+      "update-order-message",
       {
         message,
         opponent: sender,
+        orderPart,
       }
     );
+
+    return { chatMessage: message };
   };
 }
 

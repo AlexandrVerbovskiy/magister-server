@@ -26,8 +26,7 @@ class ChatMessageModel extends Model {
     `${CHAT_MESSAGE_CONTENT_TABLE}.created_at as updatedAt`,
   ];
 
-  fullVisibleFieldsWithUser = [
-    ...this.fullVisibleFields,
+  userFields = [
     `${CHAT_TABLE}.entity_id as entityId`,
     `${CHAT_TABLE}.entity_type as entityType`,
     `${CHAT_TABLE}.name as chatName`,
@@ -35,6 +34,10 @@ class ChatMessageModel extends Model {
     `${USER_TABLE}.name as senderName`,
     `${USER_TABLE}.online as senderOnline`,
   ];
+
+  fullVisibleFieldsWithUser = [...this.fullVisibleFields, ...this.userFields];
+
+  visibleFieldsWithUser = [...this.visibleFields, ...this.userFields];
 
   contentJoin = (query) => {
     return query
@@ -50,7 +53,7 @@ class ChatMessageModel extends Model {
   };
 
   userInfoJoin = (query) => {
-    return query.join(
+    return query.leftJoin(
       USER_TABLE,
       `${USER_TABLE}.id`,
       "=",
@@ -145,9 +148,11 @@ class ChatMessageModel extends Model {
     chatId,
     senderId,
     data: {
+      requestId,
       listingName,
       offerPrice,
       listingPhotoPath,
+      listingPhotoType,
       offerDateStart,
       offerDateEnd,
     },
@@ -158,12 +163,88 @@ class ChatMessageModel extends Model {
       isAdminSender: false,
       senderId,
       content: {
+        requestId,
         listingName,
         offerPrice,
         listingPhotoPath,
+        listingPhotoType,
         offerDateStart,
         offerDateEnd,
       },
+    });
+  };
+
+  createUpdatedTypeMessage = async ({ chatId, senderId, type }) => {
+    return await this.create({
+      chatId,
+      type,
+      isAdminSender: false,
+      senderId,
+      content: {},
+    });
+  };
+
+  createAcceptedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.ACCEPTED_ORDER,
+      senderId,
+    });
+  };
+
+  createRejectedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.REJECTED_ORDER,
+      senderId,
+    });
+  };
+
+  createTenantPayedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.TENANT_PAYED,
+      senderId,
+    });
+  };
+
+  createPendedToClientOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.PENDED_TO_CLIENT,
+      senderId,
+    });
+  };
+
+  createFinishedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.FINISHED,
+      senderId,
+    });
+  };
+
+  createCanceledOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.CANCELED_ORDER,
+      senderId,
+    });
+  };
+
+  createCancelOrderRequestMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.CREATED_CANCEL_REQUEST,
+      senderId,
+    });
+  };
+
+  createAcceptOrderRequestMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.ACCEPTED_CANCEL_REQUEST,
+      senderId,
     });
   };
 
@@ -208,6 +289,8 @@ class ChatMessageModel extends Model {
       performance,
       location,
       leaveFeedback,
+      description,
+      type,
     },
   }) => {
     return await this.create({
@@ -223,11 +306,17 @@ class ChatMessageModel extends Model {
         performance,
         location,
         leaveFeedback,
+        description,
+        type,
       },
     });
   };
 
-  createStartedDisputeMessage = async ({ chatId, senderId, description }) => {
+  createStartedDisputeMessage = async ({
+    chatId,
+    senderId,
+    data: { description, type },
+  }) => {
     return await this.create({
       chatId,
       type: STATIC.MESSAGE_TYPES.STARTED_DISPUTE,
@@ -235,8 +324,43 @@ class ChatMessageModel extends Model {
       senderId,
       content: {
         description,
+        type,
       },
     });
+  };
+
+  createNewDisputeMessage = async ({
+    chatId,
+    data: { description, type, senderId, senderName },
+  }) => {
+    return await this.create({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.STARTED_DISPUTE,
+      isAdminSender: false,
+      senderId: null,
+      content: {
+        description,
+        type,
+        senderName,
+        senderId,
+      },
+    });
+  };
+
+  createResolvedDisputeMessage = async ({ chatId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.RESOLVED_DISPUTE,
+      senderId: null,
+    });
+  };
+
+  checkAuthor = async (messageId, userId) => {
+    const message = await this.getFullById(messageId);
+
+    if (message.senderId !== userId) {
+      throw new Error(STATIC.ERRORS.FORBIDDEN.DEFAULT_MESSAGE);
+    }
   };
 
   delete = async (messageId) => {
@@ -245,16 +369,19 @@ class ChatMessageModel extends Model {
       .update({ hidden: true });
   };
 
+  deleteIfAuthor = async (messageId, userId) => {
+    await this.checkAuthor(messageId, userId);
+    return await this.delete(messageId);
+  };
+
   update = async (messageId, text) => {
     await chatMessageContentModel.create(messageId, { text });
     return await this.getFullById(messageId);
   };
 
-  getShortById = async (id) => {
-    return await db(CHAT_MESSAGE_TABLE)
-      .where("id", id)
-      .select(this.visibleFields)
-      .first();
+  updateIfAuthor = async (messageId, text, userId) => {
+    await this.checkAuthor(messageId, userId);
+    return await this.update(messageId, text);
   };
 
   getFullById = async (id) => {
@@ -278,9 +405,13 @@ class ChatMessageModel extends Model {
     return referenceItem.createdAt;
   };
 
-  getList = async ({ chatId, count = 50, lastMessageId = null }) => {
-    let query = this.getListBaseQuery();
-
+  baseGetList = async ({
+    query,
+    visibleFields,
+    chatId,
+    count = 50,
+    lastMessageId = null,
+  }) => {
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
 
     if (lastMessageId) {
@@ -298,13 +429,44 @@ class ChatMessageModel extends Model {
       .limit(count)
       .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
 
-    const messages = await query.select(this.fullVisibleFieldsWithUser);
+    const messages = await query.select(visibleFields);
     return messages.reverse();
   };
 
-  getBeforeMessageInChat = async ({ messageCreatedAt, chatId }) => {
+  getList = async ({ chatId, count = 50, lastMessageId = null }) => {
+    return await this.baseGetList({
+      query: this.getListBaseQuery(),
+      visibleFields: this.fullVisibleFieldsWithUser,
+      chatId,
+      count,
+      lastMessageId,
+    });
+  };
+
+  getFullList = async ({ chatId, count = 50, lastMessageId = null }) => {
+    const messages = await this.baseGetList({
+      query: this.baseJoinQuery(db(CHAT_MESSAGE_TABLE)),
+      visibleFields: this.fullVisibleFieldsWithUser,
+      chatId,
+      count,
+      lastMessageId,
+    });
+
+    return messages;
+  };
+
+  getBeforeMessageInChat = async ({
+    messageCreatedAt,
+    chatId,
+    full = false,
+  }) => {
     let query = this.getListBaseQuery();
     query = query.where(`${CHAT_MESSAGE_TABLE}.chat_id`, "=", chatId);
+
+    if (!full) {
+      query = query.where(`${CHAT_MESSAGE_TABLE}.hidden`, "=", false);
+    }
+
     query = query
       .where(`${CHAT_MESSAGE_TABLE}.created_at`, "<", messageCreatedAt)
       .orderBy(`${CHAT_MESSAGE_TABLE}.id`, "desc")
@@ -332,7 +494,7 @@ class ChatMessageModel extends Model {
       .offset(offset);
 
     const messageInfo = await query.select(`${CHAT_MESSAGE_TABLE}.id`).first();
-    const id = messageInfo.id;
+    const id = messageInfo?.id;
 
     if (!id) {
       return null;
@@ -345,6 +507,16 @@ class ChatMessageModel extends Model {
     const id = await this.getBeforeMessageInChat({
       messageCreatedAt,
       chatId,
+    });
+
+    return !!id;
+  };
+
+  checkHasFullMore = async ({ messageCreatedAt, chatId }) => {
+    const id = await this.getBeforeMessageInChat({
+      messageCreatedAt,
+      chatId,
+      full: true,
     });
 
     return !!id;

@@ -20,6 +20,11 @@ const {
   checkDateInDuration,
   getDaysDifference,
   isDateAfterStartDate,
+  getUserPaypalId,
+  incrementDateCounts,
+  incrementDateSums,
+  determineStepType,
+  removeDuplicates,
 } = require("../utils");
 const TenantCommentController = require("./TenantCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
@@ -52,10 +57,6 @@ class MainController extends Controller {
   getNavigationCategories = () =>
     this.listingCategoryModel.listGroupedByLevel();
 
-  getListingDefects = () => this.listingDefectModel.getAll();
-
-  getListingDefectQuestions = () => this.listingDefectQuestionModel.getAll();
-
   getViewPageWithCategoriesOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.listingCategoryModel.getFullInfoList();
@@ -72,18 +73,18 @@ class MainController extends Controller {
 
       /* const topListings = await this.listingModel.getTopListings();
 
-      if (!userId) {
-        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          topListings,
-          categories,
-        });
-      }
+            if (!userId) {
+              return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+                topListings,
+                categories,
+              });
+            }
 
-      const ratingListingsWithImagesFavorites =
-        await this.userListingFavoriteModel.bindUserListingListFavorite(
-          topListings,
-          userId
-        );*/
+            const ratingListingsWithImagesFavorites =
+              await this.userListingFavoriteModel.bindUserListingListFavorite(
+                topListings,
+                userId
+              );*/
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
@@ -103,11 +104,9 @@ class MainController extends Controller {
   getCreateListingPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
-        defects,
       });
     });
 
@@ -134,14 +133,12 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         listing,
         lastRequestInfo,
         canChange: !countUnfinishedListingOrders,
-        defects,
       });
     });
 
@@ -303,7 +300,7 @@ class MainController extends Controller {
 
       if (userId) {
         const blockedDates =
-          await this.orderModel.getBlockedListingsDatesForUser(
+          await this.orderModel.getBlockedListingsDatesForListings(
             [listing.id],
             userId
           );
@@ -386,16 +383,46 @@ class MainController extends Controller {
 
   getOrderFullByIdOptions = (req, res) => {
     const { id } = req.params;
+    const userId = req.userData.userId;
 
-    const getOrderByRequest = () => this.orderModel.getFullWithCommentsById(id);
+    const getOrderByRequest = () =>
+      this.orderModel.getFullWithCommentsById(id, userId);
 
     const getDopOrderOptions = async (order) => {
       const paymentInfo =
         await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
 
+      let blockedDates = [];
+
+      const conflictOrdersList = await this.orderModel.getConflictOrders([
+        order.id,
+      ]);
+
+      const conflictOrders = conflictOrdersList[order.id];
+
+      if (
+        !order.cancelStatus &&
+        [
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
+          STATIC.ORDER_STATUSES.PENDING_TENANT,
+        ].includes(order.status)
+      ) {
+        const tenantId = order.tenantId == userId ? userId : null;
+
+        const listingsConflictDates =
+          await this.orderModel.getBlockedListingsDatesForListings(
+            [order.listingId],
+            tenantId
+          );
+
+        blockedDates = listingsConflictDates[order.listingId];
+      }
+
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
         paymentInfo,
+        blockedDates,
+        conflictOrders,
       };
     };
 
@@ -443,17 +470,11 @@ class MainController extends Controller {
       };
     };
 
-    const getDopOptions = async () => {
-      const questions = await this.getListingDefectQuestions();
-      return { questions };
-    };
-
     return this.baseGetFullOrderInfo(
       req,
       res,
       getOrderByRequest,
       getDopOrderOptions,
-      getDopOptions
     );
   };
 
@@ -480,24 +501,20 @@ class MainController extends Controller {
       };
     };
 
-    const getDopOptions = async () => {
-      const questions = await this.getListingDefectQuestions();
-      return { questions };
-    };
-
     return this.baseGetFullOrderInfo(
       req,
       res,
       getOrderByRequest,
       getDopOrderOptions,
-      getDopOptions
     );
   };
 
   getAdminListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const listingListOptions =
-        await this.listingController.baseListingWithStatusesList(req);
+        await this.listingController.baseListingWithApprovedWaitedStatusesList(
+          req
+        );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...listingListOptions,
@@ -549,11 +566,9 @@ class MainController extends Controller {
   getAdminListingCreatePageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
-        defects,
       });
     });
 
@@ -567,12 +582,10 @@ class MainController extends Controller {
       }
 
       const categories = await this.getNavigationCategories();
-      const defects = await this.getListingDefects();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         listing,
-        defects,
       });
     });
 
@@ -585,6 +598,7 @@ class MainController extends Controller {
         perPage,
         filter
       );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { list });
     });
 
@@ -633,19 +647,31 @@ class MainController extends Controller {
 
   getUserProfileEditPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
+      const paypalCode = req.body.paypalCode;
+      const userId = req.userData.userId;
+
+      let newPaypalId = null;
+
+      if (paypalCode) {
+        const result = await getUserPaypalId(paypalCode);
+
+        if (result.error) {
+          return this.sendErrorResponse(
+            res,
+            STATIC.ERRORS.BAD_REQUEST,
+            result.error
+          );
+        } else {
+          newPaypalId = result.paypalId;
+          await this.userModel.setPaypalId(userId, newPaypalId);
+        }
+      }
+
       const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
-      });
-    });
-
-  getSettingsPageOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const categories = await this.getNavigationCategories();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        categories,
+        newPaypalId,
       });
     });
 
@@ -804,24 +830,6 @@ class MainController extends Controller {
       });
     });
 
-  getAdminListingDefectsEditOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const defects = await this.getListingDefects();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        defects,
-      });
-    });
-
-  getAdminListingDefectQuestionsEditOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const questions = await this.getListingDefectQuestions();
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        questions,
-      });
-    });
-
   getWalletInfoOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const categories = await this.getNavigationCategories();
@@ -899,180 +907,297 @@ class MainController extends Controller {
       });
     });
 
-  getAdminIndexPageOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const {
-        timeFilterType,
-        clientFromTime,
-        serverFromTime,
-        clientToTime,
-        serverToTime,
-        clientServerHoursDiff,
-      } = await this.listTimeNameOption(req);
+  baseGetAdminDashboardOptions = async (req) => {
+    const {
+      timeFilterType,
+      clientFromTime,
+      serverFromTime,
+      clientToTime,
+      serverToTime,
+      clientServerHoursDiff,
+    } = await this.listTimeNameOption(req);
 
-      let stepType = "days";
+    const stepType = determineStepType(timeFilterType);
 
-      if (timeFilterType === "last-year") {
-        stepType = "months";
+    const generatedDates = generateDatesByTypeBetween(
+      clientFromTime,
+      clientToTime,
+      stepType
+    );
+
+    const rentListingCounts = cloneObject(generatedDates);
+    const transactionDatesCount = cloneObject(generatedDates);
+    const transactionDatesSum = cloneObject(generatedDates);
+    const userRegisterDatesCount = cloneObject(generatedDates);
+    const userInactiveRegisterDatesCount = cloneObject(generatedDates);
+    const userTotalDatesCount = cloneObject(generatedDates);
+    const disputeTotalDatesCount = cloneObject(generatedDates);
+
+    const rentListingInfos = await this.orderModel.getInUseListings(
+      clientFromTime,
+      clientToTime
+    );
+
+    incrementDateCounts(rentListingCounts, rentListingInfos, (key, info) =>
+      checkDateInDuration(key, info.startDate, info.endDate, stepType)
+    );
+
+    const disputeInfos = await this.disputeModel.getInDuration(
+      clientFromTime,
+      clientToTime
+    );
+
+    const disputeStatisticInfo = {
+      allDisputes: disputeInfos.length,
+      allActiveDisputes: disputeInfos.filter(
+        (d) => d.status != STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+      allSolvedDisputes: disputeInfos.filter(
+        (d) => d.status == STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+    };
+
+    incrementDateCounts(disputeTotalDatesCount, disputeInfos, (key, info) =>
+      checkDateInDuration(key, info.createdAt, info.solvedAt, stepType)
+    );
+
+    const transactionInfos = await this.senderPaymentModel.getSendersByDuration(
+      serverFromTime,
+      serverToTime
+    );
+
+    const transactionsDetailInfo = {
+      [STATIC.PAYMENT_TYPES.PAYPAL]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.CREDIT_CARD]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.BANK_TRANSFER]: { amount: 0, count: 0 },
+    };
+
+    incrementDateCounts(transactionDatesCount, transactionInfos, (key, info) =>
+      checkDateInDuration(
+        key,
+        info.createdAt,
+        info.createdAt,
+        stepType,
+        clientServerHoursDiff
+      )
+    );
+
+    incrementDateSums(
+      transactionDatesSum,
+      transactionInfos,
+      (key, info) =>
+        checkDateInDuration(
+          key,
+          info.createdAt,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        ),
+      (info) => {
+        const sum =
+          getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
+        transactionsDetailInfo[info.type].amount += sum;
+        transactionsDetailInfo[info.type].count += 1;
+        return sum;
       }
+    );
 
-      if (timeFilterType === "last-day") {
-        stepType = "hours";
-      }
+    const totalUsersAtStart = await this.userModel.getTotalCountBeforeDate(
+      serverFromTime
+    );
 
-      const generatedDates = generateDatesByTypeBetween(
-        clientFromTime,
-        clientToTime,
-        stepType
-      );
+    Object.keys(userTotalDatesCount).forEach(
+      (date) => (userTotalDatesCount[date] = totalUsersAtStart)
+    );
 
-      const rentListingCounts = cloneObject(generatedDates);
+    const userRegisterInfos = await this.userModel.getRegisteredByDuration(
+      serverFromTime,
+      serverToTime
+    );
 
-      const rentListingInfos = await this.orderModel.getInUseListings(
-        clientFromTime,
-        clientToTime
-      );
-
-      rentListingInfos.forEach((info) => {
-        Object.keys(rentListingCounts).forEach((key) => {
-          const startInfo = info["startDate"];
-          const endInfo = info["endDate"];
-
-          if (checkDateInDuration(key, startInfo, endInfo, stepType)) {
-            rentListingCounts[key]++;
-          }
-        });
-      });
-
-      const transactionDatesCount = cloneObject(generatedDates);
-      const transactionDatesSum = cloneObject(generatedDates);
-
-      const transactionInfos =
-        await this.senderPaymentModel.getSendersByDuration(
-          serverFromTime,
-          serverToTime
-        );
-
-      const transactionsDetailInfo = {
-        paypal: { amount: 0, count: 0 },
-        bankTransfer: { amount: 0, count: 0 },
-      };
-
-      transactionInfos.forEach((info) => {
-        Object.keys(transactionDatesCount).forEach((key) => {
-          if (
-            checkDateInDuration(
-              key,
-              info["createdAt"],
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            transactionDatesCount[key]++;
-          }
-        });
-
-        Object.keys(transactionDatesSum).forEach((key) => {
-          if (
-            checkDateInDuration(
-              key,
-              info["createdAt"],
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            const sum =
-              getDaysDifference(info["startDate"], info["endDate"]) *
-              info["pricePerDay"];
-            transactionDatesSum[key] += sum;
-
-            const payType =
-              info["type"] == "paypal" ? "paypal" : "bankTransfer";
-
-            transactionsDetailInfo[payType]["amount"] += sum;
-            transactionsDetailInfo[payType]["count"] += 1;
-          }
-        });
-      });
-
-      const userRegisterDatesCount = cloneObject(generatedDates);
-      const userInactiveRegisterDatesCount = cloneObject(generatedDates);
-      const userTotalDatesCount = cloneObject(generatedDates);
-
-      const totalUsersAtStart = await this.userModel.getTotalCountBeforeDate(
-        serverFromTime
-      );
-
-      Object.keys(userTotalDatesCount).forEach(
-        (date) => (userTotalDatesCount[date] = totalUsersAtStart)
-      );
-
-      const userRegisterInfos = await this.userModel.getRegisteredByDuration(
+    const userInactiveInfos =
+      await this.userModel.getInactiveRegisteredByDuration(
         serverFromTime,
         serverToTime
       );
 
-      const userInactiveInfos =
-        await this.userModel.getInactiveRegisteredByDuration(
-          serverFromTime,
-          serverToTime
-        );
+    incrementDateCounts(
+      userInactiveRegisterDatesCount,
+      userInactiveInfos,
+      (key, info) =>
+        isDateAfterStartDate(
+          key,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        )
+    );
 
-      userInactiveInfos.forEach((info) => {
-        Object.keys(userInactiveRegisterDatesCount).forEach((key) => {
-          if (
-            isDateAfterStartDate(
-              key,
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            userInactiveRegisterDatesCount[key] += 1;
-          }
-        });
-      });
+    incrementDateCounts(
+      userRegisterDatesCount,
+      userRegisterInfos,
+      (key, info) =>
+        isDateAfterStartDate(
+          key,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        )
+    );
 
-      userRegisterInfos.forEach((info) => {
-        Object.keys(userRegisterDatesCount).forEach((key) => {
-          if (
-            isDateAfterStartDate(
-              key,
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            userRegisterDatesCount[key] += 1;
-          }
-        });
+    incrementDateCounts(userTotalDatesCount, userRegisterInfos, (key, info) =>
+      isDateAfterStartDate(key, info.createdAt, stepType, clientServerHoursDiff)
+    );
 
-        Object.keys(userTotalDatesCount).forEach((key) => {
-          if (
-            isDateAfterStartDate(
-              key,
-              info["createdAt"],
-              stepType,
-              clientServerHoursDiff
-            )
-          ) {
-            userTotalDatesCount[key] += 1;
-          }
-        });
-      });
+    return {
+      timeFilterType,
+      userRegisterDatesCount,
+      userInactiveRegisterDatesCount,
+      userTotalDatesCount,
+      transactionDatesCount,
+      transactionDatesSum,
+      rentListingCounts,
+      transactionsDetailInfo,
+      disputeTotalDatesCount,
+      disputeStatisticInfo,
+    };
+  };
+
+  getAdminDashboardPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetAdminDashboardOptions(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, options);
+    });
+
+  getAdminDashboardOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetAdminDashboardOptions(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, options);
+    });
+
+  baseGetUserDashboardOptions = async (req) => {
+    const userId = req.userData.userId;
+    const {
+      timeFilterType,
+      clientFromTime,
+      serverFromTime,
+      clientToTime,
+      serverToTime,
+      clientServerHoursDiff,
+    } = await this.listTimeNameOption(req);
+
+    const stepType = determineStepType(timeFilterType);
+
+    const generatedDates = generateDatesByTypeBetween(
+      clientFromTime,
+      clientToTime,
+      stepType
+    );
+
+    const rentListingCounts = cloneObject(generatedDates);
+    const transactionDatesCount = cloneObject(generatedDates);
+    const transactionDatesSum = cloneObject(generatedDates);
+    const disputeTotalDatesCount = cloneObject(generatedDates);
+
+    const rentListingInfos = await this.orderModel.getInUseUserListings(
+      clientFromTime,
+      clientToTime,
+      userId
+    );
+
+    const disputeInfos = await this.disputeModel.getUserInDuration(
+      clientFromTime,
+      clientToTime,
+      userId
+    );
+
+    const disputeStatisticInfo = {
+      allDisputes: disputeInfos.length,
+      allActiveDisputes: disputeInfos.filter(
+        (d) => d.status != STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+      allSolvedDisputes: disputeInfos.filter(
+        (d) => d.status == STATIC.DISPUTE_STATUSES.SOLVED
+      ).length,
+    };
+
+    incrementDateCounts(disputeTotalDatesCount, disputeInfos, (key, info) =>
+      checkDateInDuration(key, info.createdAt, info.solvedAt, stepType)
+    );
+
+    incrementDateCounts(rentListingCounts, rentListingInfos, (key, info) =>
+      checkDateInDuration(key, info.startDate, info.endDate, stepType)
+    );
+
+    const transactionInfos =
+      await this.senderPaymentModel.getUserSendersByDuration(
+        serverFromTime,
+        serverToTime,
+        userId
+      );
+
+    const transactionsDetailInfo = {
+      [STATIC.PAYMENT_TYPES.PAYPAL]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.CREDIT_CARD]: { amount: 0, count: 0 },
+      [STATIC.PAYMENT_TYPES.BANK_TRANSFER]: { amount: 0, count: 0 },
+    };
+
+    incrementDateCounts(transactionDatesCount, transactionInfos, (key, info) =>
+      checkDateInDuration(
+        key,
+        info.createdAt,
+        info.createdAt,
+        stepType,
+        clientServerHoursDiff
+      )
+    );
+
+    incrementDateSums(
+      transactionDatesSum,
+      transactionInfos,
+      (key, info) =>
+        checkDateInDuration(
+          key,
+          info.createdAt,
+          info.createdAt,
+          stepType,
+          clientServerHoursDiff
+        ),
+      (info) => {
+        const sum =
+          getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
+        transactionsDetailInfo[info.type].amount += sum;
+        transactionsDetailInfo[info.type].count += 1;
+        return sum;
+      }
+    );
+
+    return {
+      timeFilterType,
+      transactionDatesCount,
+      transactionDatesSum,
+      rentListingCounts,
+      transactionsDetailInfo,
+      disputeStatisticInfo,
+      disputeTotalDatesCount,
+    };
+  };
+
+  getUserDashboardPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetUserDashboardOptions(req);
+      const categories = await this.getNavigationCategories();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        timeFilterType,
-        userRegisterDatesCount,
-        userInactiveRegisterDatesCount,
-        userTotalDatesCount,
-        transactionDatesCount,
-        transactionDatesSum,
-        rentListingCounts,
-        transactionsDetailInfo,
+        ...options,
+        categories,
       });
+    });
+
+  getUserDashboardOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const options = await this.baseGetUserDashboardOptions(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, options);
     });
 
   getOrderReviewByTenantOptions = (req, res) =>
@@ -1156,7 +1281,8 @@ class MainController extends Controller {
     });
 
   createOwnerComment = async (req, res) => {
-    const { ownerCommentInfo, listingCommentInfo, orderId } = req.body;
+    const { userCommentInfo, listingCommentInfo, orderId } = req.body;
+    const senderId = req.userData.userId;
 
     const orderHasOwnerComment =
       await this.ownerCommentModel.checkOrderHasComment(orderId);
@@ -1173,13 +1299,41 @@ class MainController extends Controller {
     }
 
     const ownerCommentId = await this.ownerCommentModel.create({
-      ...ownerCommentInfo,
+      ...userCommentInfo,
       orderId,
     });
 
     const listingCommentId = await this.listingCommentModel.create({
       ...listingCommentInfo,
       orderId,
+    });
+
+    const order = await this.orderModel.getById(orderId);
+    const chatId = order.chatId;
+
+    const listingMessage =
+      await this.chatMessageModel.createListingReviewMessage({
+        chatId,
+        senderId,
+        data: listingCommentInfo,
+      });
+
+    const ownerMessage = await this.chatMessageModel.createUserReviewMessage({
+      chatId,
+      senderId,
+      data: { ...userCommentInfo, type: "owner" },
+    });
+
+    const sender = await this.userModel.getById(senderId);
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: listingMessage,
+      opponent: sender,
+    });
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: ownerMessage,
+      opponent: sender,
     });
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1189,7 +1343,8 @@ class MainController extends Controller {
   };
 
   createTenantComment = async (req, res) => {
-    const { tenantCommentInfo, orderId } = req.body;
+    const { userCommentInfo, orderId } = req.body;
+    const senderId = req.userData.userId;
 
     const orderHasTenantComment =
       await this.tenantCommentModel.checkOrderHasComment(orderId);
@@ -1199,8 +1354,24 @@ class MainController extends Controller {
     }
 
     const tenantCommentId = await this.tenantCommentModel.create({
-      ...tenantCommentInfo,
+      ...userCommentInfo,
       orderId,
+    });
+
+    const order = await this.orderModel.getById(orderId);
+    const chatId = order.chatId;
+
+    const tenantMessage = await this.chatMessageModel.createUserReviewMessage({
+      chatId,
+      senderId,
+      data: { ...userCommentInfo, type: "tenant" },
+    });
+
+    const sender = await this.userModel.getById(senderId);
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: tenantMessage,
+      opponent: sender,
     });
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1214,11 +1385,18 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  getUserChatOptions = (req, res) =>
+  baseGetChatOptions = ({
+    req,
+    res,
+    getChatList,
+    getMessageList,
+    getEntityInfo,
+    defaultEntityRes,
+  }) =>
     this.baseWrapper(req, res, async () => {
       const chatId = req.body.id;
       const userId = req.userData.userId;
-      const chatRes = await this.chatController.baseGetChatList(req, res);
+      const chatRes = await getChatList(req, res);
 
       if (chatRes.error) {
         return this.sendErrorResponse(res, chatRes.error);
@@ -1234,24 +1412,17 @@ class MainController extends Controller {
       };
 
       if (chatId) {
-        messageRes = await this.chatController.baseGetChatMessageList(req, res);
+        messageRes = await getMessageList(req, res);
       }
 
       if (messageRes.error) {
         return this.sendErrorResponse(res, messageRes.error);
       }
 
-      let entity = null;
-      let dopEntityInfo = {};
+      let entityInfoRes = defaultEntityRes;
 
       if (chatId) {
-        const entityInfoRes = await this.chatController.baseGetChatEntityInfo(
-          chatId,
-          userId
-        );
-
-        entity = entityInfoRes.entity;
-        dopEntityInfo = entityInfoRes.dopEntityInfo;
+        entityInfoRes = await getEntityInfo(chatId, userId);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1261,25 +1432,50 @@ class MainController extends Controller {
         options: { ...chatRes.options, ...messageRes.options },
         messages: messageRes.list,
         messagesCanShowMore: messageRes.canShowMore,
-        entity,
-        dopEntityInfo,
+        ...entityInfoRes,
+        ...chatRes.dopInfo,
       });
     });
+
+  getUserChatOptions = (req, res) => {
+    const chatId = req.body.id;
+    const userId = req.userData.userId;
+
+    const getEntityInfo = () =>
+      this.chatController.baseGetChatEntityInfo(chatId, userId);
+
+    return this.baseGetChatOptions({
+      req,
+      res,
+      getChatList: this.chatController.baseGetChatList,
+      getMessageList: this.chatController.baseGetChatMessageList,
+      getEntityInfo,
+      defaultEntityRes: { entity: null, dopEntityInfo: {} },
+    });
+  };
+
+  getAdminChatOptions = (req, res) => {
+    const chatId = req.body.id;
+
+    const getEntityInfo = () =>
+      this.chatController.baseGetChatDisputeInfo(chatId);
+
+    return this.baseGetChatOptions({
+      req,
+      res,
+      getChatList: this.chatController.baseGetAdminChatList,
+      getMessageList: this.chatController.baseGetAdminChatMessageList,
+      getEntityInfo,
+      defaultEntityRes: { order: null, dispute: null, dopInfo: {} },
+    });
+  };
 
   getAdminOrderChatOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
     });
 
-  getAdminChatOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
-    });
-
-  test = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, req.params);
-    });
+  test = async (req, res) => this.baseWrapper(req, res, async () => {});
 }
 
 module.exports = MainController;

@@ -222,6 +222,83 @@ const getPaypalOrderInfo = async (orderId) => {
   return await response.json();
 };
 
+const getProfileData = async (code) => {
+  try {
+    const response = await fetch(
+      "https://api-m.sandbox.paypal.com/v1/oauth2/token",
+      {
+        method: "POST",
+        headers: {
+          Authorization:
+            "Basic " +
+            Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET_KEY}`).toString(
+              "base64"
+            ),
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      if(response.status){
+        throw new Error(`Paypal Api error! status: ${response.status}`);
+      }else if(response.statusText){
+        throw new Error(`Paypal Api error! ${response.statusText}`);
+      }else{
+        throw new Error(`Paypal Api unknown error! PaypalApi line 252`);
+      }
+    }
+
+    const data = await response.json();
+    return { error: null, data };
+  } catch (error) {
+    return {
+      error: error.response ? error.response.data : error.message,
+      data: null,
+    };
+  }
+};
+
+const getUserPaypalId = async (code) => {
+  try {
+    const profileData = await getProfileData(code);
+
+    if (profileData.error) {
+      throw new Error(profileData.error);
+    }
+
+    const response = await fetch(
+      "https://api.sandbox.paypal.com/v1/identity/oauth2/userinfo?schema",
+      {
+        headers: {
+          Authorization: `Bearer ${profileData.data.access_token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if(response.status){
+        throw new Error(`Paypal Api error! status: ${response.statusText}`);
+      }else if(response.statusText){
+        throw new Error(`Paypal Api error! ${response.status}`);
+      }else{
+        throw new Error(`Paypal Api unknown error! PaypalApi line 252`);
+      }
+    }
+
+    const result = await response.json();
+
+    return { error: null, paypalId: result.payer_id };
+  } catch (e) {
+    return { error: e.message, paypalId: null };
+  }
+};
+
 module.exports = {
   capturePaypalOrder,
   createPaypalOrder,
@@ -230,4 +307,6 @@ module.exports = {
   sendMoneyToPaypalByPaypalID,
   getPaypalOrderInfo,
   refundPaypalOrderCapture,
+  getProfileData,
+  getUserPaypalId
 };
