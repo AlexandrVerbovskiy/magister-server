@@ -53,11 +53,10 @@ class UserEventLogModel extends Model {
     );
 
     query = this.baseListTimeFilter(timeInfos, query);
-
     query = this.baseTypeWhere(query, type);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {

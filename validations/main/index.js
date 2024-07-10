@@ -6,6 +6,7 @@ module.exports = {
   adminUserEventLogListOptionsValidation: require("./adminUserEventLogListOptionsValidation"),
   adminUserVerifyRequestListOptionsValidation: require("./adminUserVerifyRequestListOptionsValidation"),
   adminSearchedWordListOptionsValidation: require("./adminSearchedWordListOptionsValidation"),
+  adminOthersListingCategoriesOptionsValidation: require("./adminOthersListingCategoriesOptionsValidation"),
   userListingListOptionsValidation: require("./userListingListOptionsValidation"),
   adminListingListOptionsValidation: require("./adminListingListOptionsValidation"),
   listingListOptionsValidation: require("./listingListOptionsValidation"),

@@ -75,7 +75,7 @@ class SearchedWordController extends Controller {
 
   createCategory = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { name, level, parentId = null, searchedWordId } = req.body;
+      const { name, level, parentId = null } = req.body;
 
       let image = null;
 
@@ -91,7 +91,7 @@ class SearchedWordController extends Controller {
         image,
       });
 
-      await this.listingCategoriesController.onCreateCategory(name, createdId);
+      this.onCreateCategory(name, createdId);
 
       this.saveUserAction(
         req,

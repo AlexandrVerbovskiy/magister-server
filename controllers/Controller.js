@@ -20,6 +20,7 @@ const {
   getStartAndEndOfLastMonth,
   getStartAndEndOfLastYear,
   getStartAndEndOfYesterday,
+  removeDuplicates,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -333,7 +334,7 @@ class Controller {
 
   sendListingVerifiedMail = async (email, name, id) => {
     const title = "Asset Registration Approved";
-    const link = CLIENT_URL + "/listing/" + id;
+    const link = CLIENT_URL + "/listings/" + id;
 
     await this.sendMail(email, title, "listingVerified", {
       link,
@@ -810,6 +811,28 @@ class Controller {
     );
 
     return { chatMessage: message };
+  };
+
+  onCreateCategory = async (categoryName, categoryId) => {
+    const notificationInfos =
+      await this.listingCategoryCreateNotificationModel.getForCategoryName(
+        categoryName
+      );
+
+    await this.searchedWordModel.setCategoryByName(categoryName, categoryId);
+
+    const successSentIds = notificationInfos.map((info) => info.id);
+    const toSentMessageEmails = removeDuplicates(
+      notificationInfos.map((info) => info.userEmail)
+    );
+
+    toSentMessageEmails.forEach((email) =>
+      this.sendCreatedListingCategory(email, categoryName)
+    );
+
+    await this.listingCategoryCreateNotificationModel.markAsSent(
+      successSentIds
+    );
   };
 }
 

@@ -20,15 +20,16 @@ class ListingCategoryCreateNotificationModel extends Model {
     return res[0]["id"];
   };
 
-  deleteList = async (ids) => {
+  markAsSent = async (ids) => {
     await db(LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE)
       .whereIn("id", ids)
-      .delete();
+      .update({ sent_success: false, sent_at: db.raw("CURRENT_TIMESTAMP") });
   };
 
   getForCategoryName = async (name) => {
     const res = await db(LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE)
       .whereRaw("LOWER(category_name) = ?", [name.toLowerCase()])
+      .where("sent_success", false)
       .join(
         USERS_TABLE,
         `${USERS_TABLE}.id`,
@@ -47,6 +48,7 @@ class ListingCategoryCreateNotificationModel extends Model {
     const res = await db(LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE)
       .where("user_id", userId)
       .whereRaw("LOWER(category_name) = ?", [categoryName.toLowerCase()])
+      .where("sent_success", false)
       .select([`${LISTING_CATEGORY_CREATE_NOTIFICATIONS_TABLE}.id`]);
 
     return res[0]?.id;

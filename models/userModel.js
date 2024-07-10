@@ -398,8 +398,8 @@ class UserModel extends Model {
     query = this.queryByVerified(query, verified);
     query = this.queryByRole(query, role);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {

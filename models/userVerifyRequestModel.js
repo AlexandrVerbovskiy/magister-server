@@ -115,8 +115,8 @@ class UserVerifyRequestModel extends Model {
 
     query = this.queryByStatus(query, status);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {
@@ -158,12 +158,12 @@ class UserVerifyRequestModel extends Model {
   };
 
   checkUserHasUnansweredRequest = async (userId) => {
-    const { count } = await db(USER_VERIFY_REQUESTS_TABLE)
+    const result = await db(USER_VERIFY_REQUESTS_TABLE)
       .where({ user_id: userId, has_response: false })
       .count("* as count")
       .first();
 
-    return Number(count);
+    return +result?.count;
   };
 
   getLastUserAnsweredRequest = async (userId) => {

@@ -12,6 +12,7 @@ const ListingApprovalRequestController = require("./ListingApprovalRequestContro
 const OrderController = require("./OrderController");
 const SenderPaymentController = require("./SenderPaymentController");
 const RecipientPaymentController = require("./RecipientPaymentController");
+const ListingCategoriesController = require("./ListingCategoriesController");
 
 const coordsByIp = require("../utils/coordsByIp");
 const {
@@ -52,6 +53,7 @@ class MainController extends Controller {
     this.listingCommentController = new ListingCommentController(io);
     this.disputeController = new DisputeController(io);
     this.chatController = new ChatController(io);
+    this.listingCategoriesController = new ListingCategoriesController(io);
   }
 
   getNavigationCategories = () =>
@@ -204,10 +206,20 @@ class MainController extends Controller {
       });
     });
 
+  getAdminOthersListingCategoriesOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const othersCategoriesListOptions =
+        await this.listingCategoriesController.baseGetOtherCategories(req);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...othersCategoriesListOptions,
+      });
+    });
+
   baseGetListingListPageOptions = async (req, res, ownerId = null) => {
     const searchCategories = cloneObject(req.body.categories) ?? [];
     let needSubscriptionNewCategory = false;
-    let hasListings = false;
+    let hasListings = true;
     const userId = req.userData.userId;
 
     if (req.body.searchCategory) {
@@ -233,13 +245,12 @@ class MainController extends Controller {
       }
     }
 
-    if (searchCategories.length != 1 || !needSubscriptionNewCategory) {
-      const { countItems } = await this.listingController.baseCountListings(
-        req,
-        ownerId
-      );
-      hasListings = countItems > 0;
-    }
+    const { countItems } = await this.listingController.baseCountListings(
+      req,
+      ownerId
+    );
+    
+    hasListings = countItems > 0;
 
     const categories = await this.getNavigationCategories();
 
@@ -474,7 +485,7 @@ class MainController extends Controller {
       req,
       res,
       getOrderByRequest,
-      getDopOrderOptions,
+      getDopOrderOptions
     );
   };
 
@@ -505,7 +516,7 @@ class MainController extends Controller {
       req,
       res,
       getOrderByRequest,
-      getDopOrderOptions,
+      getDopOrderOptions
     );
   };
 
@@ -1473,6 +1484,16 @@ class MainController extends Controller {
   getAdminOrderChatOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {});
+    });
+
+  getAdminCreateCategoryByOtherOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const groupedCategories =
+        await this.listingCategoryModel.listGroupedByLevel();
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        groupedCategories,
+      });
     });
 
   test = async (req, res) => this.baseWrapper(req, res, async () => {});

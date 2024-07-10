@@ -90,8 +90,8 @@ class SearchedWord extends Model {
 
     query = this.getListInfoQueryUpdate(accepted, viewed, query);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {

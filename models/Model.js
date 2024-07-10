@@ -9,7 +9,8 @@ class Model {
   getOrderInfo = (
     props,
     defaultOrderField = this.orderFields[0] ?? "id",
-    defaultOrderType = "desc"
+    defaultOrderType = "desc",
+    orderFields = this.orderFields ?? []
   ) => {
     let { order, orderType } = props;
 
@@ -17,7 +18,7 @@ class Model {
     if (!orderType) orderType = defaultOrderType;
 
     orderType = orderType.toLowerCase() === "asc" ? "asc" : "desc";
-    order = this.orderFields.includes(order.toLowerCase())
+    order = orderFields.includes(order.toLowerCase())
       ? order
       : defaultOrderField;
 
@@ -69,7 +70,7 @@ class Model {
     db.raw(`CONCAT(DATE(${fieldName}), ' 23:59:59')`);
 
   filterIdLikeString = (value, field = "id") => {
-   return db.raw(`${field}::text LIKE ?`, `%${value}%`);
+    return db.raw(`${field}::text LIKE ?`, `%${value}%`);
   };
 }
 

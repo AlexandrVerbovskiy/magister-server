@@ -1,5 +1,4 @@
 const STATIC = require("../static");
-const { removeDuplicates } = require("../utils");
 const Controller = require("./Controller");
 const lodash = require("lodash");
 
@@ -41,26 +40,6 @@ class ListingCategoriesController extends Controller {
     const level = match[1];
     const index = parseInt(match[2]);
     return { level, index };
-  };
-
-  onCreateCategory = async (categoryName, categoryId) => {
-    const notificationInfos =
-      await this.listingCategoryCreateNotificationModel.getForCategoryName(
-        categoryName
-      );
-
-    await this.searchedWordModel.setCategoryByName(categoryName, categoryId);
-
-    const toDeleteIds = notificationInfos.map((info) => info.id);
-    const toSentMessageEmails = removeDuplicates(
-      notificationInfos.map((info) => info.userEmail)
-    );
-
-    toSentMessageEmails.forEach((email) =>
-      this.sendCreatedListingCategory(email, categoryName)
-    );
-
-    await this.listingCategoryCreateNotificationModel.deleteList(toDeleteIds);
   };
 
   saveList = (req, res) =>
@@ -304,6 +283,64 @@ class ListingCategoriesController extends Controller {
         resList
       );
     });
+
+  createByOthersCategory = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { baseName, name, level, parentId = null } = req.body;
+
+      let image = null;
+
+      if (req.file) {
+        image = this.moveUploadsFileToFolder(req.file, "listingCategories");
+      }
+
+      const createdId = await this.listingCategoryModel.create({
+        name,
+        level,
+        parentId,
+        popular: false,
+        image,
+      });
+
+      await this.listingModel.updateOtherCategoryToNormal({
+        prevCategoryName: baseName,
+        newCategoryId: createdId,
+      });
+
+      this.onCreateCategory(name, createdId);
+
+      this.saveUserAction(
+        req,
+        `Created a listing category by searched request '${name}'`
+      );
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        id: createdId,
+        name,
+        level,
+        parentId,
+        popular: false,
+      });
+    });
+
+  baseGetOtherCategories = async (req) => {
+    let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
+      this.listingCategoryModel.totalOthersCount({ filter })
+    );
+
+    let otherCategories = await this.listingCategoryModel.othersList(options);
+
+    return {
+      items: otherCategories,
+      options,
+      countItems,
+    };
+  };
+
+  getOtherCategories = async (req, res) => {
+    const result = await this.baseGetOtherCategories(req);
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+  };
 }
 
 module.exports = ListingCategoriesController;

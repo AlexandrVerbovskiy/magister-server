@@ -51,6 +51,7 @@ class ListingCommentModel extends BaseCommentModel {
     `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
     `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
+    `${LISTINGS_TABLE}.other_category as listingOtherCategory`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
   ];
 
@@ -83,7 +84,7 @@ class ListingCommentModel extends BaseCommentModel {
         "=",
         `${ORDERS_TABLE}.listing_id`
       )
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
