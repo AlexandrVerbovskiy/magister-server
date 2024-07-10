@@ -181,6 +181,51 @@ class ListingCategoryModel extends Model {
       .select(this.visibleFields)
       .first();
   };
+
+  globalOthersGroupName = () =>
+    db.raw("LOWER(??)", [`${LISTING_TABLE}.other_category`]);
+
+  baseSelectOthers = ({ filter }) => {
+    return db(LISTING_TABLE)
+      .whereRaw(
+        `${LISTING_TABLE}.other_category IS NOT NULL AND LOWER(${LISTING_TABLE}.other_category) LIKE ?`,
+        [`%${filter.toLowerCase()}%`]
+      )
+      .groupBy(this.globalOthersGroupName());
+  };
+
+  totalOthersCount = async ({ filter }) => {
+    const subquery = this.baseSelectOthers({ filter }).select(
+      this.globalOthersGroupName()
+    );
+
+    const result = await db.raw(`SELECT COUNT(*) as count FROM (?) as sub`, [
+      subquery,
+    ]);
+
+    return +result.rows[0]?.count;
+  };
+
+  othersList = async (props) => {
+    const { filter, count } = props;
+
+    const order =
+      props.order == "count"
+        ? db.raw(`COUNT(*)`)
+        : this.globalOthersGroupName();
+
+    const orderType = props.orderType ?? "desc";
+
+    return await this.baseSelectOthers({ filter })
+      .orderBy(order, orderType)
+      .select(
+        db.raw(`LOWER(??) as "otherCategoryName"`, [
+          `${LISTING_TABLE}.other_category`,
+        ]),
+        db.raw(`COUNT(*) as "listingsCount"`)
+      )
+      .limit(count);
+  };
 }
 
 module.exports = new ListingCategoryModel();

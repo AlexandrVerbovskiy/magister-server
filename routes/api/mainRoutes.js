@@ -29,14 +29,13 @@ const {
   orderFullByTokenOptionsValidation,
   orderListOptionsValidation,
   adminOrderListOptionsValidation,
-  recipientPaymentListValidation,
-  senderPaymentListValidation,
   adminIndexPageOptionsValidation,
   adminCommentListOptionsValidation,
   adminDisputeListOptionsValidation,
   createOwnerCommentValidation,
   createUserCommentValidation,
   chatOptionsValidation,
+  adminOthersListingCategoriesOptionsValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
@@ -123,6 +122,14 @@ module.exports = (io) => {
     isAdmin,
     adminSearchedWordListOptionsValidation,
     mainController.getAdminSearchedWordListPageOptions
+  );
+
+  router.post(
+    "/admin-searched-others-categories-list-options",
+    isAuth,
+    isAdmin,
+    adminOthersListingCategoriesOptionsValidation,
+    mainController.getAdminOthersListingCategoriesOptions
   );
 
   router.post(
@@ -415,6 +422,13 @@ module.exports = (io) => {
     isAuth,
     chatOptionsValidation,
     mainController.getAdminOrderChatOptions
+  );
+
+  router.get(
+    "/admin-create-category-by-others-options",
+    isAuth,
+    isAdmin,
+    mainController.getAdminCreateCategoryByOtherOptions
   );
 
   router.get("/auth/paypal/callback", mainController.test);

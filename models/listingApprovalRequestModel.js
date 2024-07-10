@@ -24,7 +24,8 @@ class ListingApprovalRequestModel extends Model {
     `${USERS_TABLE}.photo as userPhoto`,
     `${USERS_TABLE}.id as userId`,
     `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
-    `${LISTING_CATEGORIES_TABLE}.id as categoryId`,
+    `${LISTINGS_TABLE}.category_id as categoryId`,
+    `${LISTINGS_TABLE}.other_category as otherCategory`,
     `${LISTING_APPROVAL_REQUESTS_TABLE}.approved as approved`,
     `${LISTING_APPROVAL_REQUESTS_TABLE}.created_at as createdAt`,
   ];
@@ -105,7 +106,7 @@ class ListingApprovalRequestModel extends Model {
         `${LISTING_APPROVAL_REQUESTS_TABLE}.listing_id`
       )
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
@@ -130,8 +131,8 @@ class ListingApprovalRequestModel extends Model {
       query = query.where({ owner_id: userId });
     }
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {

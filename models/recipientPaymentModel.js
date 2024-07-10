@@ -273,8 +273,8 @@ class RecipientPayment extends Model {
       query = this.baseListTypeSelect(query, type);
     }
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {
