@@ -759,16 +759,9 @@ class UserController extends Controller {
   updateMyDocuments = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      let proofOfAddress = this.getFileByName(req, "proofOfAddress");
-      let reputableBankId = this.getFileByName(req, "reputableBankId");
-      let utility = this.getFileByName(req, "utility");
-      let hmrc = this.getFileByName(req, "hmrc");
-      let councilTaxBill = this.getFileByName(req, "councilTaxBill");
-      let passportOrDrivingId = this.getFileByName(req, "passportOrDrivingId");
-      let confirmMoneyLaunderingChecksAndCompliance = this.getFileByName(
-        req,
-        "confirmMoneyLaunderingChecksAndCompliance"
-      );
+      let userPhoto = this.getFileByName(req, "userPhoto");
+      let documentFront = this.getFileByName(req, "documentFront");
+      let documentBack = this.getFileByName(req, "documentBack");
 
       const countUnfinishedUserOrders =
         await this.orderModel.getUnfinishedUserCount(userId);
@@ -784,47 +777,19 @@ class UserController extends Controller {
       const dataToSave = {};
       const folder = "documents/" + userId;
 
-      if (proofOfAddress) {
-        proofOfAddress = this.moveUploadsFileToFolder(proofOfAddress, folder);
-        dataToSave["proofOfAddressLink"] = proofOfAddress;
+      if (userPhoto) {
+        userPhoto = this.moveUploadsFileToFolder(userPhoto, folder);
+        dataToSave["userPhoto"] = userPhoto;
       }
 
-      if (reputableBankId) {
-        reputableBankId = this.moveUploadsFileToFolder(reputableBankId, folder);
-        dataToSave["newReputableBankIdLink"] = reputableBankId;
+      if (documentFront) {
+        documentFront = this.moveUploadsFileToFolder(documentFront, folder);
+        dataToSave["documentFront"] = documentFront;
       }
 
-      if (utility) {
-        utility = this.moveUploadsFileToFolder(utility, folder);
-        dataToSave["utilityLink"] = utility;
-      }
-
-      if (hmrc) {
-        hmrc = this.moveUploadsFileToFolder(hmrc, folder);
-        dataToSave["hmrcLink"] = hmrc;
-      }
-
-      if (councilTaxBill) {
-        councilTaxBill = this.moveUploadsFileToFolder(councilTaxBill, folder);
-        dataToSave["councilTaxBillLink"] = councilTaxBill;
-      }
-
-      if (passportOrDrivingId) {
-        passportOrDrivingId = this.moveUploadsFileToFolder(
-          passportOrDrivingId,
-          folder
-        );
-        dataToSave["passportOrDrivingIdLink"] = passportOrDrivingId;
-      }
-
-      if (confirmMoneyLaunderingChecksAndCompliance) {
-        confirmMoneyLaunderingChecksAndCompliance =
-          this.moveUploadsFileToFolder(
-            confirmMoneyLaunderingChecksAndCompliance,
-            folder
-          );
-        dataToSave["confirmMoneyLaunderingChecksAndComplianceLink"] =
-          confirmMoneyLaunderingChecksAndCompliance;
+      if (documentBack) {
+        documentBack = this.moveUploadsFileToFolder(documentBack, folder);
+        dataToSave["documentBack"] = documentBack;
       }
 
       if (Object.keys(dataToSave).length > 0) {
