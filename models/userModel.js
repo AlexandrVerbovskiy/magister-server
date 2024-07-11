@@ -53,14 +53,10 @@ class UserModel extends Model {
 
   documentFields = [
     `${USER_DOCUMENTS_TABLE}.user_id as userId`,
-    "proof_of_address_link as proofOfAddressLink",
-    "reputable_bank_id_link as reputableBankIdLink",
-    "utility_link as utilityLink",
-    "hmrc_link as hmrcLink",
-    "council_tax_bill_link as councilTaxBillLink",
-    "passport_or_driving_id_link as passportOrDrivingIdLink",
-    "confirm_money_laundering_checks_and_compliance_link as confirmMoneyLaunderingChecksAndComplianceLink",
-  ];
+    "user_photo as userPhoto",
+    "document_front as documentFront",
+    "document_back as documentBack",
+    ];
 
   strFilterFields = ["name", "email", "phone"];
 
@@ -546,13 +542,9 @@ class UserModel extends Model {
     ids.forEach(
       (id) =>
         (documentsByUserId[id] = {
-          proofOfAddressLink: null,
-          reputableBankIdLink: null,
-          utilityLink: null,
-          hmrcLink: null,
-          councilTaxBillLink: null,
-          passportOrDrivingIdLink: null,
-          confirmMoneyLaunderingChecksAndComplianceLink: null,
+          userPhoto: null,
+          documentFront: null,
+          documentBack: null,
         })
     );
 
@@ -599,33 +591,16 @@ class UserModel extends Model {
   convertDocumentLinksToSql = (links) => {
     const res = {};
 
-    if (links["proofOfAddressLink"]) {
-      res["proof_of_address_link"] = links["proofOfAddressLink"];
+    if (links["userPhoto"]) {
+      res["user_photo"] = links["userPhoto"];
     }
 
-    if (links["newReputableBankIdLink"]) {
-      res["reputable_bank_id_link"] = links["newReputableBankIdLink"];
+    if (links["documentFront"]) {
+      res["document_front"] = links["documentFront"];
     }
 
-    if (links["utilityLink"]) {
-      res["utility_link"] = links["utilityLink"];
-    }
-
-    if (links["hmrcLink"]) {
-      res["hmrc_link"] = links["hmrcLink"];
-    }
-
-    if (links["councilTaxBillLink"]) {
-      res["council_tax_bill_link"] = links["councilTaxBillLink"];
-    }
-
-    if (links["passportOrDrivingIdLink"]) {
-      res["passport_or_driving_id_link"] = links["passportOrDrivingIdLink"];
-    }
-
-    if (links["confirmMoneyLaunderingChecksAndComplianceLink"]) {
-      res["confirm_money_laundering_checks_and_compliance_link"] =
-        links["confirmMoneyLaunderingChecksAndComplianceLink"];
+    if (links["documentBack"]) {
+      res["document_back"] = links["documentBack"];
     }
 
     return res;
