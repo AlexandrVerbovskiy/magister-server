@@ -48,8 +48,8 @@ class BaseCommentModel extends Model {
 
     query = this.queryByType(query, type);
 
-    const result = await query.count("* as count").first();
-    return +result?.count;
+    const { count } = await query.count("* as count").first();
+    return count;
   };
 
   list = async (props) => {
