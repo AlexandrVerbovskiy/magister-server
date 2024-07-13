@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const { OrderUpdateRequestController } = require("../../controllers");
-const { isAuth, isVerified } = require("../../middlewares");
+const { isAuth } = require("../../middlewares");
 const { createValidation } = require("../../validations/orderUpdateRequest");
 
 module.exports = (io) => {
@@ -10,7 +10,6 @@ module.exports = (io) => {
   router.post(
     "/create",
     isAuth,
-    isVerified,
     createValidation,
     orderUpdateRequestController.create
   );

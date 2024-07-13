@@ -29,7 +29,6 @@ module.exports = (io) => {
   router.post(
     "/create",
     isAuth,
-    isVerified,
     createValidation,
     orderController.create
   );
@@ -37,7 +36,6 @@ module.exports = (io) => {
   router.post(
     "/extend",
     isAuth,
-    isVerified,
     extendValidation,
     orderController.extend
   );
@@ -45,7 +43,6 @@ module.exports = (io) => {
   router.get(
     "/get-full-by-id/:id",
     isAuth,
-    isVerified,
     idParamValidation,
     orderController.getFullById
   );
@@ -53,7 +50,6 @@ module.exports = (io) => {
   router.post(
     "/accept-booking",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.acceptBooking
   );
@@ -61,8 +57,6 @@ module.exports = (io) => {
   router.post(
     "/reject-booking",
     isAuth,
-    isVerified,
-    isVerified,
     idBodyValidation,
     orderController.rejectBooking
   );
@@ -70,7 +64,6 @@ module.exports = (io) => {
   router.post(
     "/order-list",
     isAuth,
-    isVerified,
     listValidation,
     orderController.orderList
   );
@@ -112,7 +105,6 @@ module.exports = (io) => {
   router.post(
     "/approve-client-got-listing",
     isAuth,
-    isVerified,
     approveClientGotListingValidation,
     orderController.approveClientGotListing
   );
@@ -120,7 +112,6 @@ module.exports = (io) => {
   router.post(
     "/cancel-by-tenant",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.cancelByTenant
   );
@@ -128,7 +119,6 @@ module.exports = (io) => {
   router.post(
     "/cancel-by-owner",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.cancelByOwner
   );
@@ -136,7 +126,6 @@ module.exports = (io) => {
   router.post(
     "/finished-by-owner",
     isAuth,
-    isVerified,
     finishOrderByOwnerValidation,
     orderController.finishedByOwner
   );
@@ -144,7 +133,6 @@ module.exports = (io) => {
   router.post(
     "/accept-cancel-by-tenant",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.acceptCancelByTenant
   );
@@ -152,7 +140,6 @@ module.exports = (io) => {
   router.post(
     "/accept-cancel-by-owner",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.acceptCancelByOwner
   );
@@ -160,7 +147,6 @@ module.exports = (io) => {
   router.post(
     "/full-cancel-payed",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.fullCancelPayed
   );
@@ -168,7 +154,6 @@ module.exports = (io) => {
   router.post(
     "/full-cancel",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.fullCancel
   );
