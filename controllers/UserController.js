@@ -762,18 +762,7 @@ class UserController extends Controller {
       let userPhoto = this.getFileByName(req, "userPhoto");
       let documentFront = this.getFileByName(req, "documentFront");
       let documentBack = this.getFileByName(req, "documentBack");
-
-      const countUnfinishedUserOrders =
-        await this.orderModel.getUnfinishedUserCount(userId);
-
-      if (countUnfinishedUserOrders) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You have an unfinished booking or order. Please finish all your orders and bookings before updating"
-        );
-      }
-
+      
       const dataToSave = {};
       const folder = "documents/" + userId;
 

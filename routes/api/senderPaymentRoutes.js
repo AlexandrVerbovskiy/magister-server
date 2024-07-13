@@ -4,7 +4,6 @@ const { SenderPaymentController } = require("../../controllers");
 const {
   isAuth,
   isAdmin,
-  isVerified,
   isFileLimit,
 } = require("../../middlewares");
 
@@ -32,7 +31,6 @@ module.exports = (io) => {
   router.post(
     "/list",
     isAuth,
-    isVerified,
     listValidation,
     senderPaymentController.userList
   );

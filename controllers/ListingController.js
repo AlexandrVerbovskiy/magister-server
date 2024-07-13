@@ -56,6 +56,7 @@ class ListingController extends Controller {
     });
     const searchCity = req.body.searchCity ?? null;
     const searchCategory = req.body.searchCategory ?? null;
+    const searchListing = req.body.searchListing ?? null;
 
     let { options, countItems } = await this.baseList(req, () =>
       this.listingModel.totalCount({
@@ -71,11 +72,13 @@ class ListingController extends Controller {
         lat,
         lng,
         othersCategories,
+        searchListing,
       })
     );
 
     options["searchCity"] = searchCity;
     options["searchCategory"] = searchCategory;
+    options["searchListing"] = searchListing;
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
@@ -117,6 +120,7 @@ class ListingController extends Controller {
 
     options["searchCity"] = req.body.searchCity ?? null;
     options["searchCategory"] = req.body.searchCategory ?? null;
+    options["searchListing"] = req.body.searchListing ?? null;
 
     options = this.addTimeInfoToOptions(options, timeInfos);
     options["lat"] = req.body.lat;

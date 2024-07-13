@@ -48,6 +48,8 @@ class OrderModel extends Model {
     `owners.email as ownerEmail`,
     `owners.photo as ownerPhoto`,
     `owners.phone as ownerPhone`,
+    `owners.verified as ownerVerified`,
+    `owners.paypal_id as ownerPaypalId`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${LISTINGS_TABLE}.city as listingCity`,

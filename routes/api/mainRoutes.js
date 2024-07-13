@@ -3,7 +3,6 @@ const router = Router();
 const { MainController } = require("../../controllers");
 const {
   isAuth,
-  isVerified,
   isAdmin,
   authId,
   isSupport,
@@ -253,7 +252,6 @@ module.exports = (io) => {
   router.post(
     "/order-list-options",
     isAuth,
-    isVerified,
     orderListOptionsValidation,
     mainController.getOrderListOptions
   );
@@ -301,7 +299,6 @@ module.exports = (io) => {
   router.get(
     "/get-order-invoice-options/:id",
     isAuth,
-    isVerified,
     validateIdParam(),
     mainController.getOrderInvoiceOptions
   );
