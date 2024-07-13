@@ -249,7 +249,7 @@ class MainController extends Controller {
       req,
       ownerId
     );
-    
+
     hasListings = countItems > 0;
 
     const categories = await this.getNavigationCategories();
@@ -289,11 +289,7 @@ class MainController extends Controller {
 
       const listing = await this.listingModel.getFullById(id);
 
-      if (
-        !listing ||
-        ((!listing.userVerified || !listing.approved) &&
-          listing.ownerId != userId)
-      ) {
+      if (!listing || (!listing.approved && listing.ownerId != userId)) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.NOT_FOUND,

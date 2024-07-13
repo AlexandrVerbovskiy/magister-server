@@ -74,6 +74,7 @@ class ListingsModel extends Model {
     `${USERS_TABLE}.twitter_url as userTwitterUrl`,
     `${USERS_TABLE}.place_work as userPlaceWork`,
     `${USERS_TABLE}.verified as userVerified`,
+    `${USERS_TABLE}.paypal_id as userPaypalId`,
     `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
     `${LISTING_CATEGORIES_TABLE}.level as categoryLevel`,
   ];
@@ -602,6 +603,7 @@ class ListingsModel extends Model {
     lat = null,
     lng = null,
     othersCategories = null,
+    searchListing = null,
   }) => {
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
 
@@ -630,6 +632,10 @@ class ListingsModel extends Model {
 
     if (queryCities.length > 0) {
       query.whereRaw(...fieldLowerEqualArray(`city`, queryCities));
+    }
+
+    if (searchListing) {
+      query.whereRaw(...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing));
     }
 
     if (queryCategories.length > 0) {
@@ -808,6 +814,7 @@ class ListingsModel extends Model {
       order = "default",
       searchCity = null,
       searchCategory = null,
+      searchListing = null,
       distance = null,
       minPrice = null,
       maxPrice = null,
@@ -833,7 +840,6 @@ class ListingsModel extends Model {
     query = this.baseListJoin(query);
     query = query
       .where("approved", true)
-      .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
 
@@ -854,6 +860,10 @@ class ListingsModel extends Model {
 
     if (queryCities.length > 0) {
       query.whereRaw(...fieldLowerEqualArray(`city`, queryCities));
+    }
+
+    if (searchListing) {
+      query.whereRaw(...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing));
     }
 
     if (queryCategories.length > 0) {
