@@ -3,10 +3,9 @@ const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
 const {
-  getDaysDifference,
-  listingListDateConverter,
   separateDate,
   formatDateToSQLFormat,
+  getFactOrderDays,
 } = require("../utils");
 
 const RECIPIENT_PAYMENTS_TABLE = STATIC.TABLES.RECIPIENT_PAYMENTS;
@@ -316,7 +315,7 @@ class RecipientPayment extends Model {
     orderId,
     fee,
   }) => {
-    const dateDuration = getDaysDifference(startDate, endDate);
+    const dateDuration = getFactOrderDays(startDate, endDate);
 
     const paymentDays = {};
 
@@ -332,7 +331,7 @@ class RecipientPayment extends Model {
         const lastDay = new Date(year, month + 1, 0);
         const dateDuration =
           iteration === 0
-            ? getDaysDifference(startDate, lastDay)
+            ? getFactOrderDays(startDate, lastDay)
             : lastDay.getDate();
 
         const paymentDate = separateDate(lastDay);

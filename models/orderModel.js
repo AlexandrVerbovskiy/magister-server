@@ -3,7 +3,6 @@ const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
 const {
-  getDaysDifference,
   separateDate,
   generateDatesBetween,
   formatDateToSQLFormat,
@@ -741,6 +740,25 @@ class OrderModel extends Model {
     return await this.getById(id);
   };
 
+  checkOrderHasUnstartedExtension = async (orderId) => {
+    let lastOrderQuery = db(ORDERS_TABLE);
+    lastOrderQuery = this.fullOrdersJoin(lastOrderQuery);
+
+    const lastOrder = await lastOrderQuery
+      .select(this.fullVisibleFields)
+      .where(`${ORDERS_TABLE}.parent_id`, orderId)
+      .whereIn(`${ORDERS_TABLE}.status`, [
+        STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_OWNER,
+        STATIC.ORDER_STATUSES.PENDING_TENANT,
+        STATIC.ORDER_STATUSES.REJECTED,
+      ])
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
+      .first();
+
+    return !!lastOrder;
+  };
+
   getFullByBaseRequest = async (request) => {
     const order = await request();
 
@@ -802,6 +820,7 @@ class OrderModel extends Model {
       }
 
       const datesBetween = generateDatesBetween(startDate, endDate);
+
       datesBetween.forEach((date) => (blockedDatesObj[date] = true));
     });
 
@@ -840,6 +859,7 @@ class OrderModel extends Model {
         ]);
       })
       .select([
+        `${ORDERS_TABLE}.id`,
         "start_date as offerStartDate",
         "end_date as offerEndDate",
         "listing_id as listingId",

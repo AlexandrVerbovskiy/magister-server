@@ -90,7 +90,11 @@ const getDaysDifference = (startDate, endDate) => {
   const start = new Date(startDate).getTime();
   const end = new Date(endDate).getTime();
   const difference = Math.abs(end - start);
-  return Math.ceil(difference / (1000 * 3600 * 24)) + 1;
+  return Math.ceil(difference / (1000 * 3600 * 24));
+};
+
+const getFactOrderDays = (startDate, endDate) => {
+  return getDaysDifference(startDate, endDate) + 1;
 };
 
 const separateDate = (date) => {
@@ -337,4 +341,5 @@ module.exports = {
   checkDateInDuration,
   isDateAfterStartDate,
   checkStartEndHasConflict,
+  getFactOrderDays,
 };

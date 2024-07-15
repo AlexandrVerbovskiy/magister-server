@@ -1,6 +1,5 @@
 require("dotenv").config();
 const STATIC = require("../static");
-const db = require("../database");
 const Controller = require("./Controller");
 const ListingController = require("./ListingController");
 const UserController = require("./UserController");
@@ -19,13 +18,12 @@ const {
   cloneObject,
   generateDatesByTypeBetween,
   checkDateInDuration,
-  getDaysDifference,
   isDateAfterStartDate,
   getUserPaypalId,
   incrementDateCounts,
   incrementDateSums,
   determineStepType,
-  removeDuplicates,
+  getFactOrderDays,
 } = require("../utils");
 const TenantCommentController = require("./TenantCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
@@ -407,13 +405,7 @@ class MainController extends Controller {
 
       const conflictOrders = conflictOrdersList[order.id];
 
-      if (
-        !order.cancelStatus &&
-        [
-          STATIC.ORDER_STATUSES.PENDING_OWNER,
-          STATIC.ORDER_STATUSES.PENDING_TENANT,
-        ].includes(order.status)
-      ) {
+      if (!order.cancelStatus) {
         const tenantId = order.tenantId == userId ? userId : null;
 
         const listingsConflictDates =
@@ -1002,7 +994,7 @@ class MainController extends Controller {
         ),
       (info) => {
         const sum =
-          getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
+          getFactOrderDays(info.startDate, info.endDate) * info.pricePerDay;
         transactionsDetailInfo[info.type].amount += sum;
         transactionsDetailInfo[info.type].count += 1;
         return sum;
@@ -1172,7 +1164,7 @@ class MainController extends Controller {
         ),
       (info) => {
         const sum =
-          getDaysDifference(info.startDate, info.endDate) * info.pricePerDay;
+          getFactOrderDays(info.startDate, info.endDate) * info.pricePerDay;
         transactionsDetailInfo[info.type].amount += sum;
         transactionsDetailInfo[info.type].count += 1;
         return sum;

@@ -15,12 +15,12 @@ const {
   clientServerHoursDifference,
   shortTimeConverter,
   tenantPaymentCalculate,
-  getDaysDifference,
   getStartAndEndOfLastWeek,
   getStartAndEndOfLastMonth,
   getStartAndEndOfLastYear,
   getStartAndEndOfYesterday,
   removeDuplicates,
+  getFactOrderDays,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -711,7 +711,7 @@ class Controller {
     );
 
     const offerSubTotalPrice =
-      getDaysDifference(offerStartDate, offerEndDate) * offerPricePerDay;
+      getFactOrderDays(offerStartDate, offerEndDate) * offerPricePerDay;
 
     const factTotalFee = (offerSubTotalPrice * payment.tenantFee) / 100;
 
@@ -833,6 +833,18 @@ class Controller {
     await this.listingCategoryCreateNotificationModel.markAsSent(
       successSentIds
     );
+  };
+
+  baseListingDatesValidation = (startDate, endDate, minRentalDays) => {
+    if (getFactOrderDays(startDate, endDate) > 350) {
+      return `You can't rent a listing more than 350 days`;
+    }
+
+    if (minRentalDays && getFactOrderDays(startDate, endDate) < minRentalDays) {
+      return `You can rent ads only for a period of more than ${minRentalDays} days`;
+    }
+
+    return null;
   };
 }
 
