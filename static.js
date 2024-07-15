@@ -234,4 +234,5 @@ module.exports = {
     CREDIT_CARD: "credit-card",
     BANK_TRANSFER: "bank-transfer",
   },
+  MAX_RENTAL_DURATION: 350,
 };
