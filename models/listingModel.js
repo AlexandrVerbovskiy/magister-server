@@ -218,16 +218,21 @@ class ListingsModel extends Model {
 
   getListingImages = (listingId) => this.getListingListImages([listingId]);
 
-  getById = async (id) => {
-    const listing = await db(LISTINGS_TABLE)
+  getLightById = async (id) => {
+    return await db(LISTINGS_TABLE)
       .where({ id })
       .select(this.visibleFields)
       .first();
+  };
 
-    if (!listing) return null;
+  getById = async (id) => {
+    const listing = await this.getLightById(id);
+
+    if (!listing) {
+      return null;
+    }
 
     const listingImages = await this.getListingImages(id);
-
     return { ...listing, listingImages };
   };
 
@@ -635,7 +640,9 @@ class ListingsModel extends Model {
     }
 
     if (searchListing) {
-      query.whereRaw(...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing));
+      query.whereRaw(
+        ...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing)
+      );
     }
 
     if (queryCategories.length > 0) {
@@ -863,7 +870,9 @@ class ListingsModel extends Model {
     }
 
     if (searchListing) {
-      query.whereRaw(...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing));
+      query.whereRaw(
+        ...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing)
+      );
     }
 
     if (queryCategories.length > 0) {

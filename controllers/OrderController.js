@@ -45,20 +45,42 @@ class OrderController extends Controller {
         );
       }
 
-      order["extendOrders"] = await this.orderModel.getOrdersExtends([id]);
+      order["extendOrders"] = await this.orderModel.getOrdersExtends([
+        order.orderParentId ?? id,
+      ]);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  baseCreate = async ({
-    pricePerDay,
-    startDate,
-    endDate,
-    listingId,
-    feeActive,
-    tenantId,
-    orderParentId = null,
-  }) => {
+  baseCreate = async (
+    {
+      pricePerDay,
+      startDate,
+      endDate,
+      listingId,
+      feeActive,
+      tenantId,
+      orderParentId = null,
+    },
+    needMinDateVerify = true
+  ) => {
+    let minRentalDays = null;
+
+    if (needMinDateVerify) {
+      const listing = await this.listingModel.getLightById(listingId);
+      minRentalDays = listing.minRentalDays;
+    }
+
+    const dateErrorMessage = this.baseListingDatesValidation(
+      startDate,
+      endDate,
+      minRentalDays
+    );
+
+    if (dateErrorMessage) {
+      return { error: dateErrorMessage, orderId: null };
+    }
+
     const tenantFee =
       await this.systemOptionModel.getTenantBaseCommissionPercent();
     const ownerFee =
@@ -73,10 +95,13 @@ class OrderController extends Controller {
     const blockedDates = blockedDatesListings[listingId];
 
     if (checkStartEndHasConflict(startDate, endDate, blockedDates)) {
-      throw new Error("The selected date is not available for booking");
+      return {
+        error: "The selected date is not available for booking",
+        orderId: null,
+      };
     }
 
-    return await this.orderModel.create({
+    const orderId = await this.orderModel.create({
       pricePerDay,
       startDate,
       endDate,
@@ -87,6 +112,11 @@ class OrderController extends Controller {
       feeActive,
       orderParentId,
     });
+
+    return {
+      error: null,
+      orderId,
+    };
   };
 
   create = (req, res) =>
@@ -95,7 +125,7 @@ class OrderController extends Controller {
         req.body;
       const tenantId = req.userData.userId;
 
-      const createdOrderId = await this.baseCreate({
+      const result = await this.baseCreate({
         pricePerDay,
         startDate,
         endDate,
@@ -103,6 +133,16 @@ class OrderController extends Controller {
         feeActive,
         tenantId,
       });
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          result.error
+        );
+      }
+
+      const createdOrderId = result.orderId;
 
       const listing = await this.listingModel.getFullById(listingId);
 
@@ -154,17 +194,22 @@ class OrderController extends Controller {
       } = req.body;
       const tenantId = req.userData.userId;
 
-      const prevOrder = await this.orderModel.getLastActive(parentOrderId);
+      const hasUnstartedExtension =
+        await this.orderModel.checkOrderHasUnstartedExtension(parentOrderId);
 
-      if (
-        !prevOrder ||
-        prevOrder.tenantId != tenantId ||
-        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER ||
-        prevOrder.disputeStatus
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      if (hasUnstartedExtension) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "The deal has an unconfirmed extension. Confirm it to run the new extension"
+        );
       }
 
+      const prevOrder = await this.orderModel.getLastActive(parentOrderId);
+
+      if (!prevOrder || prevOrder.tenantId != tenantId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
       const prevOrderEndDate = prevOrder.offerEndDate;
 
       const dataToCreate = {
@@ -176,13 +221,27 @@ class OrderController extends Controller {
         tenantId,
       };
 
-      if (getDaysDifference(prevOrderEndDate, startDate) == 2) {
+      let needMinDateVerify = true;
+
+      if (getDaysDifference(prevOrderEndDate, startDate) == 1) {
         dataToCreate["orderParentId"] = prevOrder.orderParentId
           ? prevOrder.orderParentId
           : parentOrderId;
+
+        needMinDateVerify = false;
       }
 
-      const createdOrderId = await this.baseCreate(dataToCreate);
+      const result = await this.baseCreate(dataToCreate, needMinDateVerify);
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          result.error
+        );
+      }
+
+      const createdOrderId = result.orderId;
 
       const listing = await this.listingModel.getFullById(listingId);
 
@@ -542,7 +601,7 @@ class OrderController extends Controller {
           order.offerStartDate
         );
 
-        if (dateDiff != 2) {
+        if (dateDiff != 1) {
           resetParentId = true;
         }
       }
@@ -1287,7 +1346,9 @@ class OrderController extends Controller {
       );
 
     order["blockedDates"] = blockedListingsDates[order.listingId];
-    order["extendOrders"] = await this.orderModel.getOrdersExtends([order.id]);
+    order["extendOrders"] = await this.orderModel.getOrdersExtends([
+      order.orderParentId ?? order.id,
+    ]);
 
     if (userId != order.tenantId) {
       order["conflictOrders"] = conflictOrders;
