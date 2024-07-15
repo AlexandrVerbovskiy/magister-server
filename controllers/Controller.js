@@ -836,8 +836,8 @@ class Controller {
   };
 
   baseListingDatesValidation = (startDate, endDate, minRentalDays) => {
-    if (getFactOrderDays(startDate, endDate) > 350) {
-      return `You can't rent a listing more than 350 days`;
+    if (getFactOrderDays(startDate, endDate) > STATIC.LIMITS.MAX_RENTAL_DURATION) {
+      return `You can't rent a listing more than ${STATIC.LIMITS.MAX_RENTAL_DURATION} days`;
     }
 
     if (minRentalDays && getFactOrderDays(startDate, endDate) < minRentalDays) {
