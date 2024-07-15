@@ -21,10 +21,23 @@ exports.up = function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = function (knex) {
-  return knex.schema
+exports.down = async function (knex) {
+  const firstCategory = await knex(STATIC.TABLES.LISTING_CATEGORIES).first();
+
+  if (!firstCategory) {
+    throw new Error("No categories found in categories table");
+  }
+
+  const defaultCategoryId = firstCategory.id;
+
+  // Оновлюємо значення NULL до значення першої категорії
+  await knex(STATIC.TABLES.LISTINGS).whereNull("category_id").update({
+    category_id: defaultCategoryId,
+  });
+
+  return await knex.schema
     .alterTable(STATIC.TABLES.LISTINGS, function (table) {
-      table.dropForeign("other_category");
+      table.dropColumn("other_category");
       table.integer("category_id").unsigned().notNullable().alter();
     })
     .then(function () {
