@@ -1205,7 +1205,25 @@ class MainController extends Controller {
       const { userId } = req.userData;
 
       const categories = await this.getNavigationCategories();
-      const order = await this.orderModel.getFullById(id);
+      let order = await this.orderModel.getFullById(id);
+
+      order = await this.listingCommentModel.bindAverageForKeyEntity(
+        order,
+        "listingId",
+        {
+          commentCountName: "listingCommentCount",
+          averageRatingName: "listingAverageRating",
+        }
+      );
+
+      order = await this.ownerCommentModel.bindAverageForKeyEntity(
+        order,
+        "ownerId",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
 
       order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(
         order.ownerId
@@ -1234,7 +1252,16 @@ class MainController extends Controller {
       const { userId } = req.userData;
 
       const categories = await this.getNavigationCategories();
-      const order = await this.orderModel.getFullById(id);
+      let order = await this.orderModel.getFullById(id);
+
+      order = await this.ownerCommentModel.bindAverageForKeyEntity(
+        order,
+        "tenantId",
+        {
+          commentCountName: "tenantCommentCount",
+          averageRatingName: "tenantAverageRating",
+        }
+      );
 
       order["tenantCountItems"] = await this.listingModel.getOwnerCountListings(
         order.tenantId
