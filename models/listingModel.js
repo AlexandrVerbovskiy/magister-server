@@ -191,15 +191,15 @@ class ListingsModel extends Model {
       .returning("id");
 
     const listingId = res[0]["id"];
-
-    listingImages.forEach(
-      async (image) =>
-        await this.createImage({
-          type: image.type,
-          link: image.link,
-          listingId,
-        })
-    );
+    
+    for (let i = 0; i < listingImages.length; i++) {
+      const image = listingImages[i];
+      await this.createImage({
+        type: image.type,
+        link: image.link,
+        listingId,
+      });
+    }
 
     const currentListingImages = await this.getListingImages(listingId);
 

@@ -356,8 +356,8 @@ class ListingController extends Controller {
     const { listingId, listingImages } = await this.listingModel.create(
       dataToSave
     );
-
-    dataToSave["userVerified"] = true;
+    
+      dataToSave["userVerified"] = true;
 
     let createdVerifiedRequest = false;
 
