@@ -1254,7 +1254,7 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
       let order = await this.orderModel.getFullById(id);
 
-      order = await this.ownerCommentModel.bindAverageForKeyEntity(
+      order = await this.tenantCommentModel.bindAverageForKeyEntity(
         order,
         "tenantId",
         {
