@@ -132,6 +132,22 @@ class BaseCommentModel extends Model {
     return entities;
   };
 
+  bindAverageForKeyEntity = async (
+    entity,
+    entityKey = "id",
+    keyFieldNames = {
+      commentCountName: "commentCount",
+      averageRatingName: "averageRating",
+    }
+  ) => {
+    const entities = await this.bindAverageForKeyEntities(
+      [entity],
+      entityKey,
+      keyFieldNames
+    );
+    return entities[0];
+  };
+
   checkOrderHasComment = async (orderId) => {
     const result = await this.baseSelect()
       .where(`${this.table}.order_id`, orderId)
