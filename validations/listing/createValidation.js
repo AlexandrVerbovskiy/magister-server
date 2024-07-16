@@ -47,6 +47,7 @@ module.exports = [
   ...validateSmallStringBody({
     field: "otherCategory",
     fieldName: "Other Category",
+    required: false,
   }),
   ...validateSmallStringBody({ field: "rentalLat", fieldName: "Rental lat" }),
   ...validateSmallStringBody({ field: "rentalLng", fieldName: "Rental lng" }),

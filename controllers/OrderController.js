@@ -794,16 +794,16 @@ class OrderController extends Controller {
         senderId: userId,
         createMessageFunc: this.chatMessageModel.createTenantPayedOrderMessage,
         orderPart: {
-          status: newStatus,
           id: orderId,
+          status: newStatus,
         },
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         orderPart: {
-          status: newStatus,
           id: orderId,
+          status: newStatus,
         },
       });
     });
@@ -847,6 +847,18 @@ class OrderController extends Controller {
         userId,
         orderId,
         proofUrl,
+      });
+
+      await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc:
+          this.chatMessageModel.createTenantPayedWaitingOrderMessage,
+        orderPart: {
+          id: orderId,
+          paymentInfo,
+        },
       });
     }
 
@@ -919,7 +931,7 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        orderPart: { status: newStatus, id: orderInfo.id },
+        orderPart: { id: orderInfo.id, status: newStatus },
         qrCode: generatedImage,
       });
     });
