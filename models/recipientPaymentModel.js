@@ -399,6 +399,7 @@ class RecipientPayment extends Model {
         `${RECIPIENT_PAYMENTS_TABLE}.id`,
         `${RECIPIENT_PAYMENTS_TABLE}.money`,
         `${RECIPIENT_PAYMENTS_TABLE}.data`,
+        `${USERS_TABLE}.paypal_id as paypalId`,
       ]);
 
     return res;
