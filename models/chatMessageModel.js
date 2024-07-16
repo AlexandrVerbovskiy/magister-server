@@ -208,6 +208,14 @@ class ChatMessageModel extends Model {
     });
   };
 
+  createTenantPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.TENANT_PAYED_WAITING,
+      senderId,
+    });
+  };
+
   createPendedToClientOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,

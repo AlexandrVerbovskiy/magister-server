@@ -5,5 +5,6 @@ module.exports = [
   ...validateBigStringBody({
     field: "defectDescription",
     fieldName: "Defect Description",
+    required: false
   }),
 ];

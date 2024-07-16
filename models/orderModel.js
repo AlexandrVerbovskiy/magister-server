@@ -784,7 +784,7 @@ class OrderModel extends Model {
   getFullWithCommentsById = (id, userId) =>
     this.getFullByBaseRequest(async () => {
       let visibleFields = this.commentsVisibleFields(this.fullVisibleFields);
-      visibleFields = this.disputeChatsVisibleFields(this.fullVisibleFields);
+      visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
       let query = db(ORDERS_TABLE);
 
@@ -1189,7 +1189,7 @@ class OrderModel extends Model {
         builder
           .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
           .whereRaw(
-            `${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}'`
+            `${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}'`
           );
       })
       .where("listing_id", listingId)

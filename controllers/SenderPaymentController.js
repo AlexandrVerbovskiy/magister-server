@@ -198,7 +198,7 @@ class SenderPaymentController extends Controller {
           {
             message,
             opponent: tenant,
-            orderPart: { status: newStatus },
+            orderPart: { id: orderId, status: newStatus },
           }
         );
 
@@ -209,7 +209,7 @@ class SenderPaymentController extends Controller {
           {
             message,
             opponent: owner,
-            orderPart: { status: newStatus },
+            orderPart: { id: orderId, status: newStatus },
           }
         );
       }
@@ -220,7 +220,18 @@ class SenderPaymentController extends Controller {
   rejectTransaction = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { orderId, description } = req.body;
+      const order = await this.orderModel.getById(orderId);
+      const chatId = order.chatId;
+
       await this.senderPaymentModel.rejectTransaction(orderId, description);
+
+      const paymentInfo =
+        await this.senderPaymentModel.getInfoAboutOrderPayment(orderId);
+
+      await this.sendSocketMessageToChatUsers(chatId, "update-order", {
+        orderPart: { id: orderId, paymentInfo },
+      });
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
