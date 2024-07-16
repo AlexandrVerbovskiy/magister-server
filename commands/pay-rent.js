@@ -10,7 +10,7 @@ const main = async () => {
 
     for (let i = 0; i < paymentInfos.length; i++) {
       const payment = paymentInfos[i];
-      const paypalId = payment.data.paypalId;
+      const paypalId = payment.paypalId;
 
       try {
         if (!paypalId || paypalId.length < 1) {
@@ -21,12 +21,14 @@ const main = async () => {
 
         await sendMoneyToPaypalByPaypalID(paypalId, payment.money);
 
-        await recipientPaymentModel.markAsCompletedById(payment.id, paypalId);
+        await recipientPaymentModel.markAsCompletedById(payment.id, {
+          paypalId,
+        });
       } catch (err) {
         console.log(err.message);
         await recipientPaymentModel.markAsFailed(
           payment.id,
-          paypalId,
+          { paypalId },
           err.message
         );
       }
