@@ -166,6 +166,7 @@ module.exports = {
     ACCEPTED_ORDER: "accepted-order",
     REJECTED_ORDER: "rejected-order",
     TENANT_PAYED: "tenant-payed",
+    TENANT_PAYED_WAITING: "tenant-payed-waiting",
     PENDED_TO_CLIENT: "pending_item_to_client",
     FINISHED: "finished",
     CANCELED_ORDER: "canceled-order",

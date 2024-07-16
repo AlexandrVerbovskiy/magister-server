@@ -150,18 +150,19 @@ class DisputeController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { disputeId, solution } = req.body;
       const disputeStatus = await this.disputeModel.solve(solution, disputeId);
-      const orderChatId = await this.disputeModel.getOrderChatId(disputeId);
+      const { orderId, chatId } =
+        await this.disputeModel.getOrderChatIdsByDispute(disputeId);
 
       const createdMessages = [];
 
       const chatMessage =
         await this.chatMessageModel.createResolvedDisputeMessage({
-          chatId: orderChatId,
+          chatId: chatId,
         });
 
-      this.sendSocketMessageToChatUsers(orderChatId, "get-message", {
+      this.sendSocketMessageToChatUsers(chatId, "get-message", {
         message: chatMessage,
-        orderPart: { disputeStatus },
+        orderPart: { id: orderId, disputeStatus },
       });
 
       createdMessages.push(chatMessage);
@@ -178,7 +179,7 @@ class DisputeController extends Controller {
 
         this.sendSocketMessageToChatUsers(disputeChatId, "get-message", {
           message: chatMessage,
-          orderPart: { disputeStatus },
+          orderPart: { id: orderId, disputeStatus },
         });
 
         createdMessages.push(chatMessage);
@@ -186,7 +187,7 @@ class DisputeController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         messages: createdMessages,
-        orderPart: { disputeStatus },
+        orderPart: { id: orderId, disputeStatus },
       });
     });
 

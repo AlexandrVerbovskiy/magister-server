@@ -331,6 +331,9 @@ class ChatController extends Controller {
 
       entity = await this.orderController.wrapOrderFullInfo(entity, userId);
       entity["type"] = STATIC.CHAT_TYPES.ORDER;
+
+      entity["paymentInfo"] =
+        await this.senderPaymentModel.getInfoAboutOrderPayment(chat.entityId);
     }
 
     return { entity, dopEntityInfo };

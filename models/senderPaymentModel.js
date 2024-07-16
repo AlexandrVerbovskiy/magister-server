@@ -294,7 +294,7 @@ class SenderPayment extends Model {
 
     query = this.baseTypeWhere(query, type);
     query = this.baseStatusWhere(query, status);
-    
+
     const result = await query.count("* as count").first();
     return +result?.count;
   };
