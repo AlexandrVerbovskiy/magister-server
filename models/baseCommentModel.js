@@ -133,8 +133,6 @@ class BaseCommentModel extends Model {
     return entities;
   };
 
-  
-
   bindAverageForKeyEntity = async (entity, entityKey = "id", keyFieldNames) => {
     const result = await this.bindAverageForKeyEntities(
       [entity],
