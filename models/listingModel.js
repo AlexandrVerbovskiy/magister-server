@@ -616,7 +616,6 @@ class ListingsModel extends Model {
     query = this.baseListJoin(query);
     query = query
       .where("approved", true)
-      .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
 

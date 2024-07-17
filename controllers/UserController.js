@@ -793,8 +793,6 @@ class UserController extends Controller {
             userId
           );
 
-        console.log("hasUnansweredRequest: ", hasUnansweredRequest);
-
         if (!hasUnansweredRequest) {
           this.userVerifyRequestModel.create(userId);
         }

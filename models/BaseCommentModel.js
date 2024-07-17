@@ -98,7 +98,6 @@ class BaseCommentModel extends Model {
       averageRatingName: "averageRating",
     }
   ) => {
-    console.log("entities: ", entities);
     const entityIds = entities.map((entity) => entity[entityKey]);
 
     const data = await this.baseSelect()
