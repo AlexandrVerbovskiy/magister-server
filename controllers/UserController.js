@@ -762,7 +762,7 @@ class UserController extends Controller {
       let userPhoto = this.getFileByName(req, "userPhoto");
       let documentFront = this.getFileByName(req, "documentFront");
       let documentBack = this.getFileByName(req, "documentBack");
-      
+
       const dataToSave = {};
       const folder = "documents/" + userId;
 
@@ -786,6 +786,16 @@ class UserController extends Controller {
 
         if (user.verified) {
           await this.userModel.setVerified(userId, false);
+        }
+
+        const hasUnansweredRequest =
+          await this.userVerifyRequestModel.checkUserHasUnansweredRequest(
+            userId
+          );
+
+        console.log("hasUnansweredRequest: ", hasUnansweredRequest);
+
+        if (!hasUnansweredRequest) {
           this.userVerifyRequestModel.create(userId);
         }
 
