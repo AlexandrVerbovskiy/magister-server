@@ -237,7 +237,11 @@ class ChatModel extends Model {
         lastChatId
       );
 
-      query = query.where(`${CHAT_MESSAGE_TABLE}.id`, "<", lastChatCreatedTime);
+      query = query.where(
+        `${CHAT_MESSAGE_TABLE}.created_at`,
+        "<",
+        lastChatCreatedTime
+      );
     }
 
     if (needChatId) {
@@ -465,7 +469,11 @@ class ChatModel extends Model {
         lastChatId
       );
 
-      query = query.where(`${CHAT_MESSAGE_TABLE}.id`, "<", lastChatCreatedTime);
+      query = query.where(
+        `${CHAT_MESSAGE_TABLE}.created_at`,
+        "<",
+        lastChatCreatedTime
+      );
     }
 
     if (needChatId) {
