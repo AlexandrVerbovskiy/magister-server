@@ -98,6 +98,7 @@ class BaseCommentModel extends Model {
       averageRatingName: "averageRating",
     }
   ) => {
+    console.log("entities: ", entities);
     const entityIds = entities.map((entity) => entity[entityKey]);
 
     const data = await this.baseSelect()
@@ -132,20 +133,14 @@ class BaseCommentModel extends Model {
     return entities;
   };
 
-  bindAverageForKeyEntity = async (
-    entity,
-    entityKey = "id",
-    keyFieldNames = {
-      commentCountName: "commentCount",
-      averageRatingName: "averageRating",
-    }
-  ) => {
-    const entities = await this.bindAverageForKeyEntities(
+  bindAverageForKeyEntity = async (entity, entityKey = "id", keyFieldNames) => {
+    const result = await this.bindAverageForKeyEntities(
       [entity],
       entityKey,
       keyFieldNames
     );
-    return entities[0];
+
+    return result[0];
   };
 
   checkOrderHasComment = async (orderId) => {
