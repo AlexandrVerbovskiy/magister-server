@@ -201,7 +201,7 @@ class OrderController extends Controller {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
-          "The deal has an unconfirmed extension. Confirm it to run the new extension"
+          "Owner of the item has to confirm your previous request for extension"
         );
       }
 

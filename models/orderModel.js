@@ -440,6 +440,7 @@ class OrderModel extends Model {
     let query = baseGetReq(filter);
     query = this.payedInfoJoin(query);
     query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
 
     return query.whereRaw("tenants.id = ?", tenantId);
   };
@@ -449,6 +450,7 @@ class OrderModel extends Model {
 
     let query = baseGetReq(filter);
     query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
+    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
 
     return query.whereRaw("owners.id = ?", ownerId);
   };
@@ -457,22 +459,26 @@ class OrderModel extends Model {
     if (type == "finished") {
       query = query
         .where(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+        .whereRaw(`${DISPUTES_TABLE}.id IS NULL`)
         .whereNull(`${ORDERS_TABLE}.cancel_status`);
     }
 
     if (type == "rejected") {
       query = query
         .where(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED)
+        .whereRaw(`${DISPUTES_TABLE}.id IS NULL`)
         .whereNull(`${ORDERS_TABLE}.cancel_status`);
     }
 
     if (type == "canceled") {
       query = query
-        .where(
-          `${ORDERS_TABLE}.cancel_status`,
-          STATIC.ORDER_CANCELATION_STATUSES.CANCELLED
-        )
-        .orWhere(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
+        .where(function () {
+          this.where(
+            `${ORDERS_TABLE}.cancel_status`,
+            STATIC.ORDER_CANCELATION_STATUSES.CANCELLED
+          ).orWhere(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.REJECTED);
+        })
+        .whereRaw(`${DISPUTES_TABLE}.id IS NULL`);
     }
 
     if (type == "in-dispute") {
@@ -487,6 +493,7 @@ class OrderModel extends Model {
           `${ORDERS_TABLE}.status`,
           STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT
         )
+        .whereRaw(`${DISPUTES_TABLE}.id IS NULL`)
         .whereNull(`${ORDERS_TABLE}.cancel_status`);
     }
 
@@ -496,7 +503,8 @@ class OrderModel extends Model {
           STATIC.ORDER_STATUSES.FINISHED,
           STATIC.ORDER_STATUSES.REJECTED,
         ])
-        .whereNull(`${ORDERS_TABLE}.cancel_status`);
+        .whereNull(`${ORDERS_TABLE}.cancel_status`)
+        .whereRaw(`${DISPUTES_TABLE}.id IS NULL`);
     }
 
     return query;
@@ -552,11 +560,9 @@ class OrderModel extends Model {
 
   baseTenantList = async (props) => {
     const { filter, start, count, timeInfos, tenantId } = props;
-
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
-
     query = this.commentsInfoJoin(query);
     query = this.disputeChatInfoJoin(query, tenantId);
 
@@ -564,11 +570,8 @@ class OrderModel extends Model {
       ...this.lightRequestVisibleFields,
       ...this.selectPartPayedInfo,
     ];
-
     visibleFields = this.commentsVisibleFields(visibleFields);
     visibleFields = this.disputeChatsVisibleFields(visibleFields);
-
-    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
 
     return await query
       .select(visibleFields)
@@ -582,16 +585,12 @@ class OrderModel extends Model {
     const { order, orderType } = this.getOrderInfo(props);
 
     let query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
-
     query = this.commentsInfoJoin(query);
+    query = this.disputeChatInfoJoin(query, ownerId);
 
     let visibleFields = this.commentsVisibleFields(
       this.lightRequestVisibleFields
     );
-
-    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
-    query = this.disputeChatInfoJoin(query, ownerId);
-
     visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
     return await query
@@ -1354,23 +1353,23 @@ class OrderModel extends Model {
         db.raw(
           `SUM(CASE 
             WHEN (${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.FINISHED}' 
-            AND ${ORDERS_TABLE}.cancel_status IS NULL)
+            AND ${ORDERS_TABLE}.cancel_status IS NULL AND ${DISPUTES_TABLE}.id IS NULL)
             THEN 1 ELSE 0 END) AS "finishedCount"`
         ),
         db.raw(
           `SUM(CASE 
-            WHEN (${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' OR ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}') 
+            WHEN ((${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}' OR ${ORDERS_TABLE}.status = '${STATIC.ORDER_STATUSES.REJECTED}') AND ${DISPUTES_TABLE}.id IS NULL) 
             THEN 1 ELSE 0 END) AS "canceledCount"`
         ),
         db.raw(
           `SUM(CASE 
-            WHEN (${DISPUTES_TABLE}.id IS NOT NULL AND ${DISPUTES_TABLE}.status != '${STATIC.DISPUTE_STATUSES.SOLVED}') 
+            WHEN (${DISPUTES_TABLE}.id IS NOT NULL AND ${DISPUTES_TABLE}.status != '${STATIC.DISPUTE_STATUSES.SOLVED}')
             THEN 1 ELSE 0 END) AS "disputeCount"`
         ),
         db.raw(
           `SUM(CASE 
             WHEN (${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.FINISHED}' AND ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'
-            AND ${ORDERS_TABLE}.cancel_status IS NULL)
+            AND ${ORDERS_TABLE}.cancel_status IS NULL AND ${DISPUTES_TABLE}.id IS NULL)
             THEN 1 ELSE 0 END) AS "activeCount"`
         )
       )
