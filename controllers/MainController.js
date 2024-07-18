@@ -375,6 +375,33 @@ class MainController extends Controller {
 
       const bankInfo = await this.systemOptionModel.getBankAccountInfo();
 
+      order = await this.listingCommentModel.bindAverageForKeyEntity(
+        order,
+        "listingId",
+        {
+          commentCountName: "listingCommentCount",
+          averageRatingName: "listingAverageRating",
+        }
+      );
+
+      order = await this.ownerCommentModel.bindAverageForKeyEntity(
+        order,
+        "ownerId",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
+
+      order = await this.tenantCommentModel.bindAverageForKeyEntity(
+        order,
+        "tenantId",
+        {
+          commentCountName: "tenantCommentCount",
+          averageRatingName: "tenantAverageRating",
+        }
+      );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order: { ...order, ...dopOrderOptions },
         categories,
