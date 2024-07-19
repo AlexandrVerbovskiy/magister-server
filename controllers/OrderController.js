@@ -476,16 +476,19 @@ class OrderController extends Controller {
     return await this.baseRequestsList(req, totalCountCall, listCall);
   };
 
+  baseOrderList = async (req) => {
+    const isForTenant = req.body.type !== "owner";
+
+    const request = isForTenant
+      ? this.baseTenantOrderList
+      : this.baseListingOwnerOrderList;
+
+    return await request(req);
+  };
+
   orderList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const isForTenant = req.body.type !== "owner";
-
-      const request = isForTenant
-        ? this.baseTenantOrderList
-        : this.baseListingOwnerOrderList;
-
-      const result = await request(req);
-
+      const result = await this.baseOrderList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -638,83 +641,127 @@ class OrderController extends Controller {
       });
     });
 
+  baseRejectBooking = async (req) => {
+    const { id } = req.body;
+    const userId = req.userData.userId;
+
+    const order = await this.orderModel.getById(id);
+
+    if (!order) {
+      return {
+        error: {
+          status: STATIC.ERRORS.NOT_FOUND,
+        },
+      };
+    }
+
+    if (
+      (order.tenantId != userId && order.ownerId != userId) ||
+      order.disputeStatus
+    ) {
+      return {
+        error: {
+          status: STATIC.ERRORS.FORBIDDEN,
+        },
+      };
+    }
+
+    if (
+      (order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER &&
+        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT &&
+        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) ||
+      order.cancelStatus
+    ) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "Unable to perform an operation for the current order status",
+        },
+      };
+    }
+
+    const lastUpdateRequestInfo =
+      await this.orderUpdateRequestModel.getFullForLastActive(id);
+
+    let newData = {};
+
+    if (lastUpdateRequestInfo) {
+      newData = {
+        newStartDate: lastUpdateRequestInfo.newStartDate,
+        newEndDate: lastUpdateRequestInfo.newEndDate,
+        newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+        prevPricePerDay: order.offerPricePerDay,
+        prevStartDate: order.offerStartDate,
+        prevEndDate: order.offerEndDate,
+      };
+    }
+
+    let newStatus = null;
+    let newCancelStatus = null;
+
+    if (order.tenantId == userId) {
+      await this.orderModel.successCancelled(id, newData);
+      newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
+    } else {
+      await this.orderModel.rejectOrder(id, newData);
+      newCancelStatus = STATIC.ORDER_STATUSES.REJECTED;
+      newStatus = order.status;
+    }
+
+    await this.orderUpdateRequestModel.closeLast(id);
+
+    const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+      chatId: order.chatId,
+      messageData: {},
+      senderId: userId,
+      createMessageFunc: this.chatMessageModel.createRejectedOrderMessage,
+      orderPart: {
+        id: order.id,
+        status: newStatus,
+        cancelStatus: newCancelStatus,
+      },
+    });
+
+    return {
+      chatMessage,
+      status: newStatus,
+      cancelStatus: newCancelStatus,
+    };
+  };
+
   rejectBooking = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { id } = req.body;
-      const userId = req.userData.userId;
+      const result = await this.baseRejectBooking(req);
 
-      const order = await this.orderModel.getById(id);
-
-      if (!order) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      if (
-        (order.tenantId != userId && order.ownerId != userId) ||
-        order.disputeStatus
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
-      if (
-        (order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT &&
-          order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) ||
-        order.cancelStatus
-      ) {
+      if (result.error) {
         return this.sendErrorResponse(
           res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "Unable to perform an operation for the current order status"
+          result.error.status,
+          result.error.message ?? null
         );
       }
 
-      const lastUpdateRequestInfo =
-        await this.orderUpdateRequestModel.getFullForLastActive(id);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
 
-      let newData = {};
+  rejectBookingWithPageProps = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const orderUpdateResult = await this.baseRejectBooking(req);
 
-      if (lastUpdateRequestInfo) {
-        newData = {
-          newStartDate: lastUpdateRequestInfo.newStartDate,
-          newEndDate: lastUpdateRequestInfo.newEndDate,
-          newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-          prevPricePerDay: order.offerPricePerDay,
-          prevStartDate: order.offerStartDate,
-          prevEndDate: order.offerEndDate,
-        };
+      if (orderUpdateResult.error) {
+        return this.sendErrorResponse(
+          res,
+          orderUpdateResult.error.status,
+          orderUpdateResult.error.message ?? null
+        );
       }
 
-      let newStatus = null;
-      let newCancelStatus = null;
-
-      if (order.tenantId == userId) {
-        await this.orderModel.successCancelled(id, newData);
-        newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
-      } else {
-        await this.orderModel.rejectOrder(id, newData);
-        newCancelStatus = STATIC.ORDER_STATUSES.REJECTED;
-        newStatus = order.status;
-      }
-
-      await this.orderUpdateRequestModel.closeLast(id);
-
-      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: order.chatId,
-        messageData: {},
-        senderId: userId,
-        createMessageFunc: this.chatMessageModel.createRejectedOrderMessage,
-        orderPart: {
-          id: order.id,
-          status: newStatus,
-          cancelStatus: newCancelStatus,
-        },
-      });
+      const orderListResult = await this.baseOrderList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        chatMessage,
-        status: newStatus,
-        cancelStatus: newCancelStatus,
+        orderUpdateResult,
+        orderListResult,
       });
     });
 
@@ -952,7 +999,7 @@ class OrderController extends Controller {
     const orderInfo = await this.orderModel.getFullById(id);
 
     if (!orderInfo) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      return { error: { status: STATIC.ERRORS.NOT_FOUND } };
     }
 
     const isOwner = userType === "owner";
@@ -962,23 +1009,26 @@ class OrderController extends Controller {
     const isCancelByOwner = isOwner && orderInfo.ownerId === userId;
 
     if ((!isCancelByTenant && !isCancelByOwner) || orderInfo.disputeStatus) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      return { error: { status: STATIC.ERRORS.FORBIDDEN } };
     }
 
     if (orderInfo.cancelStatus != null) {
-      return this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
-      );
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled",
+        },
+      };
     }
 
     if (!availableStatusesToCancel.includes(orderInfo.status)) {
-      return this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "You cannot cancel an order with its current status"
-      );
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message: "You cannot cancel an order with its current status",
+        },
+      };
     }
 
     const cancelStatus = await cancelFunc(id, orderInfo);
@@ -994,10 +1044,10 @@ class OrderController extends Controller {
       },
     });
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+    return {
       chatMessage,
       orderPart: { cancelStatus, id: orderInfo.id },
-    });
+    };
   };
 
   acceptCancelOrder = async (req, res, userId, userType) => {
@@ -1032,30 +1082,6 @@ class OrderController extends Controller {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
-    /*const tenantInfo = await this.userModel.getById(orderInfo.tenantId);
-
-    await sendMoneyToPaypalByPaypalID(
-      tenantInfo.paypalId,
-      tenantPaymentCalculate(
-        orderInfo.offerStartDate,
-        orderInfo.offerEndDate,
-        orderInfo.tenantFee,
-        orderInfo.offerPricePerDay
-      )
-    );
-
-    const unfinishedPAymentsSum =
-      await this.recipientPaymentModel.markRentalAsCancelledByOrderId(id);
-
-    if (unfinishedPAymentsSum > 0) {
-      await this.recipientPaymentModel.createRefundPayment({
-        money: unfinishedPAymentsSum,
-        userId: orderInfo.tenantId,
-        orderId: id,
-        data: {paypalId: tenantInfo.paypalId},
-      });
-    }*/
-
     const newCancelStatus = await this.orderModel.successCancelled(id);
 
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
@@ -1079,7 +1105,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      return this.baseCancelOrder({
+      const result = await this.baseCancelOrder({
         req,
         res,
         userId,
@@ -1092,13 +1118,23 @@ class OrderController extends Controller {
         createMessageFunc:
           this.chatMessageModel.createCancelOrderRequestMessage,
       });
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          result.error.status,
+          result.error.message ?? null
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   cancelByOwner = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      return this.baseCancelOrder({
+      const result = await this.baseCancelOrder({
         req,
         res,
         userId,
@@ -1111,6 +1147,16 @@ class OrderController extends Controller {
         createMessageFunc:
           this.chatMessageModel.createCancelOrderRequestMessage,
       });
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          result.error.status,
+          result.error.message ?? null
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   acceptCancelByTenant = (req, res) =>
@@ -1125,105 +1171,142 @@ class OrderController extends Controller {
       return this.acceptCancelOrder(req, res, userId, "owner");
     });
 
+  baseFullCancelPayed = async (req) => {
+    const { userId } = req.userData;
+    const { id, type, paypalId = null, cardNumber = null } = req.body;
+
+    const orderInfo = await this.orderModel.getById(id);
+
+    if (!orderInfo) {
+      return { error: { status: STATIC.ERRORS.NOT_FOUND } };
+    }
+
+    const {
+      tenantId,
+      status,
+      cancelStatus,
+      offerStartDate,
+      offerEndDate,
+      tenantFee,
+      offerPricePerDay,
+    } = orderInfo;
+
+    if (tenantId != userId || orderInfo.disputeStatus) {
+      return { error: { status: STATIC.ERRORS.FORBIDDEN } };
+    }
+
+    if (cancelStatus != null) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled",
+        },
+      };
+    }
+
+    if (status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message: "You cannot cancel an order with the current order status",
+        },
+      };
+    }
+
+    const canFastCancelPayed =
+      this.orderModel.canFastCancelPayedOrder(orderInfo);
+
+    if (!canFastCancelPayed) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "You can no longer cancel the reservation because the available time has passed",
+        },
+      };
+    }
+
+    const factTotalPrice = tenantPaymentCalculate(
+      offerStartDate,
+      offerEndDate,
+      tenantFee,
+      offerPricePerDay
+    );
+
+    const tenantCancelFeePercent =
+      await this.systemOptionModel.getTenantCancelCommissionPercent();
+
+    const factTotalPriceWithoutCommission =
+      (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
+
+    const refundData = {
+      money: factTotalPriceWithoutCommission,
+      userId: userId,
+      orderId: id,
+      type: type,
+      status: STATIC.RECIPIENT_STATUSES.WAITING,
+    };
+
+    if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
+      refundData["data"] = { cardNumber: cardNumber };
+    }
+
+    if (type == STATIC.PAYMENT_TYPES.PAYPAL) {
+      refundData["data"] = { paypalId: paypalId };
+    }
+
+    await this.recipientPaymentModel.createRefundPayment(refundData);
+
+    const newCancelStatus = await this.orderModel.successCancelled(id);
+
+    const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+      chatId: orderInfo.chatId,
+      messageData: {},
+      senderId: userId,
+      createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+      orderPart: {
+        id: orderInfo.id,
+        cancelStatus: newCancelStatus,
+      },
+    });
+
+    return {
+      chatMessage,
+      orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
+    };
+  };
+
   fullCancelPayed = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const { id, type, paypalId = null, cardNumber = null } = req.body;
+      const result = await this.baseFullCancelPayed(req);
 
-      const orderInfo = await this.orderModel.getById(id);
-
-      if (!orderInfo) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      if (result.error) {
+        this.sendErrorResponse(
+          res,
+          result.error.status,
+          result.error.message ?? null
+        );
       }
+    });
 
-      const {
-        tenantId,
-        status,
-        cancelStatus,
-        offerStartDate,
-        offerEndDate,
-        tenantFee,
-        offerPricePerDay,
-      } = orderInfo;
+  fullCancelPayedWithPageProps = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const orderUpdateResult = await this.baseFullCancelPayed(req);
 
-      if (tenantId != userId || orderInfo.disputeStatus) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
-      if (cancelStatus != null) {
+      if (orderUpdateResult.error) {
         return this.sendErrorResponse(
           res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
+          orderUpdateResult.error.status,
+          orderUpdateResult.error.message ?? null
         );
       }
 
-      if (status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You cannot cancel an order with the current order status"
-        );
-      }
-
-      const canFastCancelPayed =
-        this.orderModel.canFastCancelPayedOrder(orderInfo);
-
-      if (!canFastCancelPayed) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You can no longer cancel the reservation because the available time has passed"
-        );
-      }
-
-      const factTotalPrice = tenantPaymentCalculate(
-        offerStartDate,
-        offerEndDate,
-        tenantFee,
-        offerPricePerDay
-      );
-
-      const tenantCancelFeePercent =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
-
-      const factTotalPriceWithoutCommission =
-        (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
-
-      const refundData = {
-        money: factTotalPriceWithoutCommission,
-        userId: userId,
-        orderId: id,
-        type: type,
-        status: STATIC.RECIPIENT_STATUSES.WAITING,
-      };
-
-      if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
-        refundData["data"] = { cardNumber: cardNumber };
-      }
-
-      if (type == STATIC.PAYMENT_TYPES.PAYPAL) {
-        refundData["data"] = { paypalId: paypalId };
-      }
-
-      await this.recipientPaymentModel.createRefundPayment(refundData);
-
-      const newCancelStatus = await this.orderModel.successCancelled(id);
-
-      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: orderInfo.chatId,
-        messageData: {},
-        senderId: userId,
-        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
-        orderPart: {
-          id: orderInfo.id,
-          cancelStatus: newCancelStatus,
-        },
-      });
+      const orderListResult = await this.baseOrderList(req);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        chatMessage,
-        orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
+        orderUpdateResult,
+        orderListResult,
       });
     });
 
@@ -1231,7 +1314,7 @@ class OrderController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      return this.baseCancelOrder({
+      const result = await this.baseCancelOrder({
         req,
         res,
         userId,
@@ -1242,6 +1325,49 @@ class OrderController extends Controller {
         ],
         cancelFunc: this.orderModel.successCancelled,
         createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+      });
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          result.error.status,
+          result.error.message ?? null
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  fullCancelWithPageProps = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userId } = req.userData;
+
+      const orderUpdateResult = await this.baseCancelOrder({
+        req,
+        res,
+        userId,
+        userType: "tenant",
+        availableStatusesToCancel: [
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
+          STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
+        ],
+        cancelFunc: this.orderModel.successCancelled,
+        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+      });
+
+      if (orderUpdateResult.error) {
+        return this.sendErrorResponse(
+          res,
+          orderUpdateResult.error.status,
+          orderUpdateResult.error.message ?? null
+        );
+      }
+
+      const orderListResult = await this.baseOrderList(req);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        orderUpdateResult,
+        orderListResult,
       });
     });
 
