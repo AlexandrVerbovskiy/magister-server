@@ -375,6 +375,33 @@ class MainController extends Controller {
 
       const bankInfo = await this.systemOptionModel.getBankAccountInfo();
 
+      order = await this.listingCommentModel.bindAverageForKeyEntity(
+        order,
+        "listingId",
+        {
+          commentCountName: "listingCommentCount",
+          averageRatingName: "listingAverageRating",
+        }
+      );
+
+      order = await this.ownerCommentModel.bindAverageForKeyEntity(
+        order,
+        "ownerId",
+        {
+          commentCountName: "ownerCommentCount",
+          averageRatingName: "ownerAverageRating",
+        }
+      );
+
+      order = await this.tenantCommentModel.bindAverageForKeyEntity(
+        order,
+        "tenantId",
+        {
+          commentCountName: "tenantCommentCount",
+          averageRatingName: "tenantAverageRating",
+        }
+      );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order: { ...order, ...dopOrderOptions },
         categories,
@@ -745,7 +772,8 @@ class MainController extends Controller {
   getFullOrderByIdPageOption = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      const order = await this.orderModel.getFullById(id);
+      const order = await this.orderModel.getFullWithPaymentById(id);
+
       order["requestsToUpdate"] =
         await this.orderUpdateRequestModel.getAllForOrder(id);
 

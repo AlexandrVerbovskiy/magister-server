@@ -204,15 +204,15 @@ class OrderModel extends Model {
   ];
 
   processStatuses = [
-    STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+    STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
     STATIC.ORDER_STATUSES.PENDING_TENANT,
     STATIC.ORDER_STATUSES.PENDING_OWNER,
-    STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+    STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
     STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
   ];
 
   canFastCancelPayedOrder = (order) => {
-    if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT) {
+    if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
       return false;
     }
 
@@ -491,7 +491,7 @@ class OrderModel extends Model {
       query = query
         .where(
           `${ORDERS_TABLE}.status`,
-          STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT
+          STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
         )
         .whereRaw(`${DISPUTES_TABLE}.id IS NULL`)
         .whereNull(`${ORDERS_TABLE}.cancel_status`);
@@ -723,8 +723,8 @@ class OrderModel extends Model {
       .select(this.fullVisibleFields)
       .where(`${ORDERS_TABLE}.parent_id`, id)
       .whereIn(`${ORDERS_TABLE}.status`, [
-        STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
-        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+        STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
       ])
@@ -747,7 +747,7 @@ class OrderModel extends Model {
       .select(this.fullVisibleFields)
       .where(`${ORDERS_TABLE}.parent_id`, orderId)
       .whereIn(`${ORDERS_TABLE}.status`, [
-        STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
         STATIC.ORDER_STATUSES.PENDING_OWNER,
         STATIC.ORDER_STATUSES.PENDING_TENANT,
         STATIC.ORDER_STATUSES.REJECTED,
@@ -777,7 +777,18 @@ class OrderModel extends Model {
 
   getFullById = (id) => this.getFullByBaseRequest(() => this.getById(id));
 
-  getFullByIdeWithDisputeChat = (id, userId) =>
+  getFullWithPaymentById = (id) =>
+    this.getFullByBaseRequest(async () => {
+      let query = db(ORDERS_TABLE);
+      query = this.fullOrdersJoin(query);
+      query = this.payedInfoJoin(query);
+      query = query.where(`${ORDERS_TABLE}.id`, id);
+      return await query
+        .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
+        .first();
+    });
+
+  getFullByIdWithDisputeChat = (id, userId) =>
     this.getFullByBaseRequest(() => this.getByIdWithDisputeChat(id, userId));
 
   getFullWithCommentsById = (id, userId) =>
@@ -1092,12 +1103,12 @@ class OrderModel extends Model {
   };
 
   acceptUpdateRequest = (orderId, newData = {}) => {
-    newData["status"] = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT;
     return this.updateOrder(orderId, newData);
   };
 
   acceptOrder = async (orderId, newData = {}) => {
-    newData["status"] = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT;
     return this.updateOrder(orderId, newData);
   };
 
@@ -1206,7 +1217,7 @@ class OrderModel extends Model {
   };
 
   orderTenantPayed = async (orderId, { token, qrCode }) => {
-    const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT;
+    const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT;
 
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       tenant_accept_listing_token: token,
@@ -1272,7 +1283,7 @@ class OrderModel extends Model {
         );*/
       })
       .whereIn(`${ORDERS_TABLE}.status`, [
-        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
       ])

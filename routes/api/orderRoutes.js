@@ -15,10 +15,10 @@ const {
   idBodyValidation,
   createValidation,
   listValidation,
-  approveClientGotListingValidation,
+  approveTenantGotListingValidation,
   paypalOrderPayedValidation,
   finishOrderByOwnerValidation,
-  creditCardUnpaidTransactionValidation,
+  bankTransferUnpaidTransactionValidation,
   extendValidation,
 } = require("../../validations/order");
 const { validateIdParam } = require("../../validations/base");
@@ -98,15 +98,15 @@ module.exports = (io) => {
     isFileLimit,
     isAuth,
     isVerified,
-    creditCardUnpaidTransactionValidation,
-    orderController.unpaidTransactionByCreditCard
+    bankTransferUnpaidTransactionValidation,
+    orderController.unpaidTransactionByBankTransfer
   );
 
   router.post(
     "/approve-client-got-listing",
     isAuth,
-    approveClientGotListingValidation,
-    orderController.approveClientGotListing
+    approveTenantGotListingValidation,
+    orderController.approveTenantGotListing
   );
 
   router.post(

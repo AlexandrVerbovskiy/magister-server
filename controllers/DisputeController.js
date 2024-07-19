@@ -73,7 +73,7 @@ class DisputeController extends Controller {
         (!isTenantCreatedDispute && !isOwnerCreatedDispute) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         [
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
           STATIC.ORDER_STATUSES.FINISHED,
         ].includes(STATIC.ORDER_STATUSES) ||

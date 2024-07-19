@@ -2,10 +2,8 @@ const STATIC = require("../static");
 const {
   getPaypalOrderInfo,
   capturePaypalOrder,
-  sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
   getDaysDifference,
-  isPayedUsedPaypal,
   removeDuplicates,
   checkStartEndHasConflict,
 } = require("../utils");
@@ -39,7 +37,7 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.status === STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) {
+      if (order.status === STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) {
         order["payedInfo"] = await this.senderPaymentModel.getInfoByOrderId(
           order.id
         );
@@ -335,8 +333,8 @@ class OrderController extends Controller {
     const orderIdsNeedExtendInfoObj = {};
 
     requestsWithImages.forEach((request) => {
-      if (request.parentId) {
-        orderIdsNeedExtendInfoObj[request.parentId] = true;
+      if (request.orderParentId) {
+        orderIdsNeedExtendInfoObj[request.orderParentId] = true;
       } else {
         orderIdsNeedExtendInfoObj[request.id] = true;
       }
@@ -621,7 +619,7 @@ class OrderController extends Controller {
         await this.orderModel.acceptOrder(id);
       }
 
-      const newStatus = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+      const newStatus = STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT;
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -661,7 +659,7 @@ class OrderController extends Controller {
       if (
         (order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER &&
           order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT &&
-          order.status !== STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) ||
+          order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) ||
         order.cancelStatus
       ) {
         return this.sendErrorResponse(
@@ -808,7 +806,7 @@ class OrderController extends Controller {
       });
     });
 
-  unpaidTransactionByCreditCard = async (req, res) => {
+  unpaidTransactionByBankTransfer = async (req, res) => {
     const { userId } = req.userData;
     const { orderId } = req.body;
 
@@ -829,7 +827,7 @@ class OrderController extends Controller {
 
     let type = "created";
     let transactionId = null;
-    const paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
+    let paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
       orderId
     );
 
@@ -848,6 +846,10 @@ class OrderController extends Controller {
         orderId,
         proofUrl,
       });
+
+      paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
+        orderId
+      );
 
       await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -868,7 +870,7 @@ class OrderController extends Controller {
     });
   };
 
-  approveClientGotListing = (req, res) =>
+  approveTenantGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token, defectDescription } = req.body;
       const { userId } = req.userData;
@@ -878,7 +880,7 @@ class OrderController extends Controller {
       );
 
       if (
-        orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT ||
+        orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT ||
         orderInfo.cancelStatus
       ) {
         return this.sendErrorResponse(
@@ -922,7 +924,7 @@ class OrderController extends Controller {
         messageData: {},
         senderId: userId,
         createMessageFunc:
-          this.chatMessageModel.createPendedToClientOrderMessage,
+          this.chatMessageModel.createPendedToTenantOrderMessage,
         orderPart: {
           id: orderInfo.id,
           status: newStatus,
@@ -1083,7 +1085,7 @@ class OrderController extends Controller {
         userId,
         userType: "tenant",
         availableStatusesToCancel: [
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
         cancelFunc: this.orderModel.startCancelByTenant,
@@ -1102,7 +1104,7 @@ class OrderController extends Controller {
         userId,
         userType: "owner",
         availableStatusesToCancel: [
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
+          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         ],
         cancelFunc: this.orderModel.startCancelByOwner,
@@ -1156,7 +1158,7 @@ class OrderController extends Controller {
         );
       }
 
-      if (status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT) {
+      if (status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
@@ -1188,44 +1190,23 @@ class OrderController extends Controller {
       const factTotalPriceWithoutCommission =
         (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
 
-      if (isPayedUsedPaypal(type)) {
-        try {
-          await sendMoneyToPaypalByPaypalID(
-            paypalId,
-            factTotalPriceWithoutCommission
-          );
-
-          await this.recipientPaymentModel.createRefundPayment({
-            money: factTotalPriceWithoutCommission,
-            userId: userId,
-            orderId: id,
-            type: STATIC.PAYMENT_TYPES.PAYPAL,
-            data: { paypalId: paypalId },
-            status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-          });
-        } catch (e) {
-          await this.recipientPaymentModel.createRefundPayment({
-            money: factTotalPriceWithoutCommission,
-            userId: userId,
-            orderId: id,
-            type: STATIC.PAYMENT_TYPES.PAYPAL,
-            data: { paypalId: paypalId },
-            status: STATIC.RECIPIENT_STATUSES.FAILED,
-            failedDescription: e.message,
-          });
-        }
-      }
+      const refundData = {
+        money: factTotalPriceWithoutCommission,
+        userId: userId,
+        orderId: id,
+        type: type,
+        status: STATIC.RECIPIENT_STATUSES.WAITING,
+      };
 
       if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
-        await this.recipientPaymentModel.createRefundPayment({
-          money: factTotalPriceWithoutCommission,
-          userId: userId,
-          orderId: id,
-          type: STATIC.PAYMENT_TYPES.BANK_TRANSFER,
-          data: { cardNumber: cardNumber },
-          status: STATIC.RECIPIENT_STATUSES.WAITING,
-        });
+        refundData["data"] = { cardNumber: cardNumber };
       }
+
+      if (type == STATIC.PAYMENT_TYPES.PAYPAL) {
+        refundData["data"] = { paypalId: paypalId };
+      }
+
+      await this.recipientPaymentModel.createRefundPayment(refundData);
 
       const newCancelStatus = await this.orderModel.successCancelled(id);
 
@@ -1257,7 +1238,7 @@ class OrderController extends Controller {
         userType: "tenant",
         availableStatusesToCancel: [
           STATIC.ORDER_STATUSES.PENDING_OWNER,
-          STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+          STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
         ],
         cancelFunc: this.orderModel.successCancelled,
         createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
