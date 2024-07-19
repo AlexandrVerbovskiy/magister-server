@@ -772,7 +772,8 @@ class MainController extends Controller {
   getFullOrderByIdPageOption = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      const order = await this.orderModel.getFullById(id);
+      const order = await this.orderModel.getFullWithPaymentById(id);
+
       order["requestsToUpdate"] =
         await this.orderUpdateRequestModel.getAllForOrder(id);
 
