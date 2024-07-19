@@ -314,10 +314,13 @@ class ChatController extends Controller {
       entity = await this.disputeModel.getById(chat.entityId);
       entity["type"] = STATIC.CHAT_TYPES.DISPUTE;
     } else {
-      entity = await this.orderModel.getFullByIdeWithDisputeChat(
+      entity = await this.orderModel.getFullByIdWithDisputeChat(
         chat.entityId,
         userId
       );
+
+      entity["canFastCancelPayed"] =
+        this.orderModel.canFastCancelPayedOrder(entity);
 
       entity["childrenList"] = await this.orderModel.getChildrenList(
         chat.entityId

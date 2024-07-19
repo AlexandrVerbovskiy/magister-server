@@ -4,8 +4,8 @@ module.exports = {
   idParamValidation: require("./idParamValidation"),
   idBodyValidation: require("./idBodyValidation"),
   listValidation: require("./listValidation"),
-  approveClientGotListingValidation: require("./approveClientGotListingValidation"),
+  approveTenantGotListingValidation: require("./approveTenantGotListingValidation"),
   paypalOrderPayedValidation: require("./paypalOrderPayedValidation"),
   finishOrderByOwnerValidation: require("./finishOrderByOwnerValidation"),
-  creditCardUnpaidTransactionValidation: require("./creditCardUnpaidTransactionValidation"),
+  bankTransferUnpaidTransactionValidation: require("./bankTransferUnpaidTransactionValidation"),
 };

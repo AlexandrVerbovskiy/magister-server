@@ -10,7 +10,7 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.status !== STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) {
+      if (order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
@@ -167,7 +167,7 @@ class SenderPaymentController extends Controller {
 
       let newStatus = null;
 
-      if (order.parentId) {
+      if (order.orderParentId) {
         newStatus = await this.orderModel.orderTenantGotListing(orderId, {
           token: ownerToken,
           qrCode: generatedImage,
@@ -194,7 +194,7 @@ class SenderPaymentController extends Controller {
         await this.sendSocketMessageToUserOpponent(
           chatId,
           order.ownerId,
-          "get-message",
+          "update-order-message",
           {
             message,
             opponent: tenant,
@@ -205,7 +205,7 @@ class SenderPaymentController extends Controller {
         await this.sendSocketMessageToUserOpponent(
           chatId,
           order.tenantId,
-          "get-message",
+          "update-order-message",
           {
             message,
             opponent: owner,

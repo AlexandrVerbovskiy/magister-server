@@ -216,10 +216,10 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createPendedToClientOrderMessage = async ({ chatId, senderId }) => {
+  createPendedToTenantOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.PENDED_TO_CLIENT,
+      type: STATIC.MESSAGE_TYPES.PENDED_TO_TENANT,
       senderId,
     });
   };
