@@ -22,6 +22,43 @@ class TenantCommentController extends BaseCommentController {
     );
     return items;
   };
+
+  createComment = async (req, res) => {
+    const { userCommentInfo, orderId } = req.body;
+    const senderId = req.userData.userId;
+
+    const orderHasTenantComment =
+      await this.tenantCommentModel.checkOrderHasComment(orderId);
+
+    if (orderHasTenantComment) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
+    const tenantCommentId = await this.tenantCommentModel.create({
+      ...userCommentInfo,
+      orderId,
+    });
+
+    const order = await this.orderModel.getById(orderId);
+    const chatId = order.chatId;
+
+    const tenantMessage = await this.chatMessageModel.createUserReviewMessage({
+      chatId,
+      senderId,
+      data: { ...userCommentInfo, type: "tenant" },
+    });
+
+    const sender = await this.userModel.getById(senderId);
+
+    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+      message: tenantMessage,
+      opponent: sender,
+    });
+
+    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      tenantCommentId,
+    });
+  };
 }
 
 module.exports = TenantCommentController;

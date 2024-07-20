@@ -92,22 +92,22 @@ const io = socketIo(server, {
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
 
 app.use("/api/main", apiRoutes.mainRoutes(io));
-app.use("/api/auth", apiRoutes.authApiRoutes(io));
-app.use("/api/users", apiRoutes.userApiRoutes(io));
-app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestApiRoutes(io));
-app.use("/api/logs", isAuth, isAdmin, apiRoutes.logApiRoutes(io));
+app.use("/api/auth", apiRoutes.authRoutes(io));
+app.use("/api/users", apiRoutes.userRoutes(io));
+app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestRoutes(io));
+app.use("/api/logs", isAuth, isAdmin, apiRoutes.logRoutes(io));
 app.use(
   "/api/user-event-logs",
   isAuth,
   isAdmin,
-  apiRoutes.userEventLogApiRoutes(io)
+  apiRoutes.userEventLogRoutes(io)
 );
 
 app.use("/api/listing-categories", apiRoutes.listingCategoryRoutes(io));
 app.use("/api/listings", apiRoutes.listingRoutes(io));
 app.use("/api/orders", apiRoutes.orderRoutes(io));
 app.use("/api/order-update-requests", apiRoutes.orderUpdateRequestRoutes(io));
-app.use("/api/system", isAuth, isAdmin, apiRoutes.systemApiRoutes(io));
+app.use("/api/system", isAuth, isAdmin, apiRoutes.systemRoutes(io));
 app.use("/api/searched-words", apiRoutes.searchedWordsRoutes(io));
 app.use(
   "/api/listing-approval-requests",

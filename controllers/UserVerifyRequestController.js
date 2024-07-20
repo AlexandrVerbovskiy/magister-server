@@ -46,23 +46,6 @@ class UserVerifyRequestController extends Controller {
   getById = (req, res) =>
     this.baseGetById(req, res, this.userVerifyRequestModel);
 
-  createUserVerifyRequest = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const has =
-        await this.userVerifyRequestModel.checkUserHasUnansweredRequest(userId);
-
-      if (has) {
-        throw new Error(
-          "Have an unanswered request, wait for an administrator to review it before resubmitting"
-        );
-      }
-
-      await this.userVerifyRequestModel.create(userId);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
-
   updateUserVerifyRequest = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id, verified } = req.body;

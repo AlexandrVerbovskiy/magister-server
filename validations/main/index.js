@@ -25,7 +25,5 @@ module.exports = {
   adminIndexPageOptionsValidation: require("./adminIndexPageOptionsValidation"),
   adminCommentListOptionsValidation: require("./adminCommentListOptionsValidation"),
   adminDisputeListOptionsValidation: require("./adminDisputeListOptionsValidation"),
-  createUserCommentValidation: require("./createUserCommentValidation"),
-  createOwnerCommentValidation: require("./createOwnerCommentValidation"),
   chatOptionsValidation: require("./chatOptionsValidation"),
 };

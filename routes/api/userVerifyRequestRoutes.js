@@ -28,13 +28,6 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/create",
-    isAuth,
-    isUnverified,
-    userVerifyRequestController.createUserVerifyRequest
-  );
-
-  router.post(
     "/update",
     isAuth,
     isSupport,

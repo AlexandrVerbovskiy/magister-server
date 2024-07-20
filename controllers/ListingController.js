@@ -276,38 +276,6 @@ class ListingController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  getShortById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-      const listing = await this.listingModel.getById(id);
-
-      if (!listing) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.NOT_FOUND,
-          "Listing wasn't found"
-        );
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, listing);
-    });
-
-  getFullById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-      const listing = await this.listingModel.getFullById(id);
-
-      if (!listing) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.NOT_FOUND,
-          "Listing wasn't found"
-        );
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, listing);
-    });
-
   localGetFiles = (req) => {
     const listingImages = JSON.parse(req.body["listingImages"] ?? "[]");
 
@@ -500,8 +468,6 @@ class ListingController extends Controller {
         );
       }
 
-      const listing = await this.listingModel.getById(listingId);
-
       const result = await this.baseUpdate(req, res, false, true);
 
       this.saveUserAction(
@@ -568,23 +534,6 @@ class ListingController extends Controller {
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
   };
 
-  delete = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const forbidden = await this.checkForbidden(req);
-      if (forbidden) return forbidden;
-
-      const { id } = req.body;
-      const listing = await this.listingModel.getById(id);
-
-      const result = await this.baseDelete(req, res);
-
-      this.saveUserAction(
-        req,
-        `User delete a listing with name '${listing.name}'`
-      );
-
-      return result;
-    });
 
   baseChangeActive = async (req, res, changeActiveCall) => {
     const { id } = req.body;

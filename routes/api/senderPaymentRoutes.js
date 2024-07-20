@@ -53,6 +53,7 @@ module.exports = (io) => {
   router.post(
     "/approve-bank-transfer-transaction",
     isAuth,
+    isAdmin,
     approveCreditCardTransactionValidation,
     senderPaymentController.approveTransaction
   );
@@ -60,6 +61,7 @@ module.exports = (io) => {
   router.post(
     "/reject-bank-transfer-transaction",
     isAuth,
+    isAdmin,
     rejectCreditCardTransactionValidation,
     senderPaymentController.rejectTransaction
   );

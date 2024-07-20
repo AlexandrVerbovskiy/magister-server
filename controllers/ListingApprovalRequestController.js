@@ -45,13 +45,6 @@ class ListingApprovalRequestController extends Controller {
     };
   };
 
-  list = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const userId = req.userData.userId;
-      const result = await this.baseRequestsList(req, userId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
   adminList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await this.baseRequestsList(req);

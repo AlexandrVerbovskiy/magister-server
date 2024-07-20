@@ -41,22 +41,12 @@ module.exports = (io) => {
     listStatusValidation,
     listingController.adminList
   );
+
   router.post(
     "/user-list",
     isAuth,
     listStatusValidation,
     listingController.getCurrentUserList
-  );
-
-  router.get(
-    "/get-short-by-id/:id",
-    idParamValidation,
-    listingController.getShortById
-  );
-  router.get(
-    "/get-full-by-id/:id",
-    idParamValidation,
-    listingController.getFullById
   );
 
   router.post(
@@ -100,8 +90,6 @@ module.exports = (io) => {
     updateByAdminValidation,
     listingController.updateByAdmin
   );
-
-  router.post("/delete", isAuth, deleteValidation, listingController.delete);
 
   router.post(
     "/delete-by-admin",
