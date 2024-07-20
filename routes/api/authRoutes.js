@@ -38,10 +38,30 @@ module.exports = (io) => {
     userController.register
   );
 
+  router.post(
+    "/verify-email",
+    isNotAuth,
+    verifyEmailValidation,
+    userController.verifyEmail
+  );
+
   router.post("/login", isNotAuth, loginValidation, userController.login);
 
+  router.post(
+    "/generate-two-factor-code",
+    isNotAuth,
+    typeValidation,
+    userController.twoFactorAuthGenerate
+  );
+  router.post(
+    "/check-two-factor-code",
+    isNotAuth,
+    checkTwoFactorCodeValidation,
+    userController.twoFactorAuthVerify
+  );
+
   router.post("/my-info", isAuth, userController.myInfo);
-  
+
   router.post(
     "/save-profile",
     upload.single("photo"),
@@ -65,26 +85,6 @@ module.exports = (io) => {
     isSummaryFileLimit,
     isFileLimit,
     userController.updateMyDocuments
-  );
-
-  router.post(
-    "/two-factor-auth-generate",
-    isNotAuth,
-    twoFactorAuthGenerateValidation,
-    userController.twoFactorAuthGenerate
-  );
-
-  router.post(
-    "/two-factor-auth-verify",
-    twoFactorAuthVerifyValidation,
-    userController.twoFactorAuthVerify
-  );
-
-  router.post(
-    "/verify-email",
-    isNotAuth,
-    verifyEmailValidation,
-    userController.verifyEmail
   );
 
   router.post(
@@ -122,28 +122,9 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/generate-two-factor-code",
-    isNotAuth,
-    typeValidation,
-    userController.twoFactorAuthGenerate
-  );
-  router.post(
-    "/check-two-factor-code",
-    isNotAuth,
-    checkTwoFactorCodeValidation,
-    userController.twoFactorAuthVerify
-  );
-
-  router.post(
     "/change-two-factor-auth",
     isAuth,
     userController.changeTwoFactorAuth
-  );
-
-  router.post(
-    "/no-need-regular-view-info-form",
-    isAuth,
-    userController.noNeedRegularViewInfoForm
   );
 
   router.post(

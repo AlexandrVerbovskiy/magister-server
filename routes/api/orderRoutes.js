@@ -26,19 +26,9 @@ const { validateIdParam } = require("../../validations/base");
 module.exports = (io) => {
   const orderController = new OrderController(io);
 
-  router.post(
-    "/create",
-    isAuth,
-    createValidation,
-    orderController.create
-  );
+  router.post("/create", isAuth, createValidation, orderController.create);
 
-  router.post(
-    "/extend",
-    isAuth,
-    extendValidation,
-    orderController.extend
-  );
+  router.post("/extend", isAuth, extendValidation, orderController.extend);
 
   router.get(
     "/get-full-by-id/:id",
@@ -46,6 +36,8 @@ module.exports = (io) => {
     idParamValidation,
     orderController.getFullById
   );
+
+  router.post("/order-list", isAuth, listValidation, orderController.orderList);
 
   router.post(
     "/accept-booking",
@@ -67,13 +59,6 @@ module.exports = (io) => {
     idBodyValidation,
     listValidation,
     orderController.rejectBookingWithPageProps
-  );
-
-  router.post(
-    "/order-list",
-    isAuth,
-    listValidation,
-    orderController.orderList
   );
 
   router.post(
@@ -118,38 +103,10 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/cancel-by-tenant",
-    isAuth,
-    idBodyValidation,
-    orderController.cancelByTenant
-  );
-
-  router.post(
-    "/cancel-by-owner",
-    isAuth,
-    idBodyValidation,
-    orderController.cancelByOwner
-  );
-
-  router.post(
     "/finished-by-owner",
     isAuth,
     finishOrderByOwnerValidation,
     orderController.finishedByOwner
-  );
-
-  router.post(
-    "/accept-cancel-by-tenant",
-    isAuth,
-    idBodyValidation,
-    orderController.acceptCancelByTenant
-  );
-
-  router.post(
-    "/accept-cancel-by-owner",
-    isAuth,
-    idBodyValidation,
-    orderController.acceptCancelByOwner
   );
 
   router.post(

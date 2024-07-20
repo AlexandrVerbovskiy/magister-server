@@ -144,7 +144,7 @@ class UserController extends Controller {
 
       return this.sendSuccessResponse(
         res,
-        STATIC.SUCCESS.CREATED,
+        STATIC.SUCCESS.OK,
         "Letter created successfully. An account confirmation letter has been sent to the email"
       );
     });
@@ -825,13 +825,6 @@ class UserController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         documents: dataToSave,
       });
-    });
-
-  noNeedRegularViewInfoForm = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      await this.userModel.noNeedRegularViewInfoForm(userId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
 

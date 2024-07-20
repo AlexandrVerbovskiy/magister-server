@@ -40,14 +40,9 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/update-failed",
-    isAuth,
-    recipientPaymentController.updateFailed
-  );
-
-  router.post(
     "/failed-recipient-mark-done",
     isAuth,
+    isAdmin,
     recipientPaymentController.markFailedRecipientDone
   );
 

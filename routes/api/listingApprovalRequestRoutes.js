@@ -13,8 +13,6 @@ module.exports = (io) => {
     io
   );
 
-  router.post("/list", listValidation, listingApprovalRequestController.list);
-
   router.post(
     "/admin-list",
     isAuth,

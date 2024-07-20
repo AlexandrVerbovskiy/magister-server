@@ -4,14 +4,32 @@ const { ListingCommentController } = require("../../controllers");
 const { isAuth, isSupport } = require("../../middlewares");
 const TenantCommentController = require("../../controllers/TenantCommentController");
 const OwnerCommentController = require("../../controllers/OwnerCommentController");
-const { commentListValidation } = require("../../validations/comments");
-const commentRejectValidation = require("../../validations/comments/commentRejectValidation");
-const commentApproveValidation = require("../../validations/comments/commentApproveValidation");
+const {
+  commentListValidation,
+  createOwnerCommentValidation,
+  createUserCommentValidation,
+  commentRejectValidation,
+  commentApproveValidation,
+} = require("../../validations/comments");
 
 module.exports = (io) => {
   const listingCommentController = new ListingCommentController(io);
   const ownerCommentController = new OwnerCommentController(io);
   const tenantCommentController = new TenantCommentController(io);
+
+  router.post(
+    "/create-owner-review",
+    isAuth,
+    createOwnerCommentValidation,
+    ownerCommentController.createComment
+  );
+
+  router.post(
+    "/create-tenant-review",
+    isAuth,
+    createUserCommentValidation,
+    tenantCommentController.createComment
+  );
 
   router.post(
     "/listing-list",
