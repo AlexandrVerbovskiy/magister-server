@@ -31,8 +31,6 @@ const {
   adminIndexPageOptionsValidation,
   adminCommentListOptionsValidation,
   adminDisputeListOptionsValidation,
-  createOwnerCommentValidation,
-  createUserCommentValidation,
   chatOptionsValidation,
   adminOthersListingCategoriesOptionsValidation,
 } = require("../../validations/main");
@@ -376,20 +374,6 @@ module.exports = (io) => {
     isSupport,
     adminCommentListOptionsValidation,
     mainController.getAdminListingCommentsPageOptions
-  );
-
-  router.post(
-    "/create-owner-review",
-    isAuth,
-    createOwnerCommentValidation,
-    mainController.createOwnerComment
-  );
-
-  router.post(
-    "/create-tenant-review",
-    isAuth,
-    ...createUserCommentValidation,
-    mainController.createTenantComment
   );
 
   router.post(

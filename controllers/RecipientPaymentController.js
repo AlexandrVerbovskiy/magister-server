@@ -68,6 +68,7 @@ class RecipientPaymentController extends Controller {
         userId,
         STATIC.TIME_FILTER_TYPES.DURATION
       );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -99,70 +100,6 @@ class RecipientPaymentController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id, paymentNumber } = req.body;
       await this.recipientPaymentModel.markFailedAsDone(id, paymentNumber);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
-
-  updateFailed = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id, type, paypalId = null, cardNumber = null } = req.body;
-      const { userId } = req.userData;
-      const data = {};
-
-      const recipient = await this.recipientPaymentModel.getById(id);
-
-      if (userId != recipient.recipientId) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
-      if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
-        data["cardNumber"] = cardNumber;
-        await this.recipientPaymentModel.updateRefundPayment({
-          id,
-          type: STATIC.PAYMENT_TYPES.BANK_TRANSFER,
-          data,
-          status: STATIC.RECIPIENT_STATUSES.WAITING,
-        });
-      }
-
-      if (isPayedUsedPaypal(STATIC.PAYMENT_TYPES.PAYPAL)) {
-        data["paypalId"] = paypalId;
-
-        try {
-          const factTotalPrice = tenantPaymentCalculate(
-            recipient.offerStartDate,
-            recipient.offerEndDate,
-            recipient.tenantFee,
-            recipient.offerPricePerDay
-          );
-
-          const tenantCancelFeePercent =
-            await this.systemOptionModel.getTenantCancelCommissionPercent();
-
-          const factTotalPriceWithoutCommission =
-            (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
-
-          await sendMoneyToPaypalByPaypalID(
-            paypalId,
-            factTotalPriceWithoutCommission
-          );
-
-          await this.recipientPaymentModel.updateRefundPayment({
-            id,
-            type: STATIC.PAYMENT_TYPES.PAYPAL,
-            data,
-            status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-          });
-        } catch (e) {
-          await this.recipientPaymentModel.updateRefundPayment({
-            id,
-            type: STATIC.PAYMENT_TYPES.PAYPAL,
-            data,
-            status: STATIC.RECIPIENT_STATUSES.FAILED,
-            failedDescription: e.message,
-          });
-        }
-      }
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
