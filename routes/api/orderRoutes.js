@@ -54,14 +54,6 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/reject-booking-with-page-props",
-    isAuth,
-    idBodyValidation,
-    listValidation,
-    orderController.rejectBookingWithPageProps
-  );
-
-  router.post(
     "/admin-order-list",
     isAuth,
     isSupport,
@@ -117,26 +109,10 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/full-cancel-payed-with-page-props",
-    isAuth,
-    idBodyValidation,
-    listValidation,
-    orderController.fullCancelPayedWithPageProps
-  );
-
-  router.post(
     "/full-cancel",
     isAuth,
     idBodyValidation,
     orderController.fullCancel
-  );
-
-  router.post(
-    "/full-cancel-with-page-props",
-    isAuth,
-    idBodyValidation,
-    listValidation,
-    orderController.fullCancelWithPageProps
   );
 
   router.get(

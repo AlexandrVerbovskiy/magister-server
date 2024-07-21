@@ -1,7 +1,5 @@
 const STATIC = require("../static");
-const {
-  checkStartEndHasConflict,
-} = require("../utils");
+const { checkStartEndHasConflict } = require("../utils");
 const Controller = require("./Controller");
 
 class OrderUpdateRequestController extends Controller {
@@ -44,13 +42,12 @@ class OrderUpdateRequestController extends Controller {
         orderId
       );
 
-      const blockedListingsDates =
-        await this.orderModel.getBlockedListingsDatesForListings(
-          [order.listingId],
-          tenantId == senderId ? senderId : null
+      const blockedOrderDates =
+        await this.orderModel.getBlockedListingsDatesForOrders(
+          [order.id]
         );
 
-      const currentListingBlockedDates = blockedListingsDates[order.listingId];
+      const currentListingBlockedDates = blockedOrderDates[order.id];
 
       if (
         checkStartEndHasConflict(

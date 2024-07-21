@@ -65,8 +65,7 @@ class OrderModel extends Model {
     `${CHAT_TABLE}.id as chatId`,
   ];
 
-  lightRequestVisibleFields = [
-    ...this.lightVisibleFields,
+  requestVisibleFields = [
     `${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
@@ -120,7 +119,7 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.prev_price_per_day`,
     `${ORDERS_TABLE}.prev_start_date`,
     `${ORDERS_TABLE}.prev_end_date`,
-    `searching_order.id`,
+    `main_orders.id`,
     `tenants.id`,
     `tenants.name`,
     `tenants.email`,
@@ -161,6 +160,7 @@ class OrderModel extends Model {
     `tenants.facebook_url`,
     `tenants.linkedin_url`,
     `tenants.instagram_url`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
@@ -237,41 +237,61 @@ class OrderModel extends Model {
     return today > quickCancelLastPossible;
   };
 
-  fullOrdersJoin = (query) => {
+  orderListingJoin = (query, orderTable = ORDERS_TABLE) => {
     return query
       .join(
         LISTINGS_TABLE,
         `${LISTINGS_TABLE}.id`,
         "=",
-        `${ORDERS_TABLE}.listing_id`
+        `${orderTable}.listing_id`
       )
       .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
         `${LISTINGS_TABLE}.category_id`
-      )
+      );
+  };
+
+  orderDisputeJoin = (query, orderTable = ORDERS_TABLE) => {
+    return query.leftJoin(
+      `${DISPUTES_TABLE}`,
+      `${DISPUTES_TABLE}.order_id`,
+      "=",
+      `${orderTable}.id`
+    );
+  };
+
+  orderUsersJoin = (
+    query,
+    orderTable = ORDERS_TABLE,
+    listingTable = LISTINGS_TABLE
+  ) => {
+    return query
       .join(
         `${USERS_TABLE} as owners`,
         `owners.id`,
         "=",
-        `${LISTINGS_TABLE}.owner_id`
+        `${listingTable}.owner_id`
       )
       .join(
         `${USERS_TABLE} as tenants`,
         `tenants.id`,
         "=",
-        `${ORDERS_TABLE}.tenant_id`
-      )
-      .leftJoin(
-        `${DISPUTES_TABLE} as disputes`,
-        `${DISPUTES_TABLE}.order_id`,
-        "=",
-        `${ORDERS_TABLE}.id`
-      )
-      .joinRaw(
-        `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
+        `${orderTable}.tenant_id`
       );
+  };
+
+  fullOrdersJoin = (query) => {
+    query = this.orderListingJoin(query);
+    query = this.orderUsersJoin(query);
+    query = this.orderDisputeJoin(query);
+
+    query = query.joinRaw(
+      `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
+    );
+
+    return query;
   };
 
   fullBaseGetQuery = (filter) => {
@@ -359,14 +379,17 @@ class OrderModel extends Model {
     return query;
   };
 
-  fullBaseGetQueryWithRequestInfo = (filter) => {
-    let query = this.fullBaseGetQuery(filter);
-
+  baseRequestInfoJoin = (query) => {
     return query.joinRaw(
       `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
        ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
     );
+  };
+
+  fullBaseGetQueryWithRequestInfo = (filter) => {
+    let query = this.fullBaseGetQuery(filter);
+    return this.baseRequestInfoJoin(query);
   };
 
   payedInfoJoin = (query) => {
@@ -567,7 +590,8 @@ class OrderModel extends Model {
     query = this.disputeChatInfoJoin(query, tenantId);
 
     let visibleFields = [
-      ...this.lightRequestVisibleFields,
+      ...this.lightVisibleFields,
+      ...this.requestVisibleFields,
       ...this.selectPartPayedInfo,
     ];
     visibleFields = this.commentsVisibleFields(visibleFields);
@@ -588,9 +612,10 @@ class OrderModel extends Model {
     query = this.commentsInfoJoin(query);
     query = this.disputeChatInfoJoin(query, ownerId);
 
-    let visibleFields = this.commentsVisibleFields(
-      this.lightRequestVisibleFields
-    );
+    let visibleFields = this.commentsVisibleFields([
+      ...this.lightVisibleFields,
+      ...this.requestVisibleFields,
+    ]);
     visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
     return await query
@@ -837,6 +862,66 @@ class OrderModel extends Model {
     return Object.keys(blockedDatesObj);
   };
 
+  baseConflictOrdersForOrders = (orderIds) => {
+    const currentDate = separateDate(new Date());
+
+    return db(`${ORDERS_TABLE} as main_orders`)
+      .whereIn("main_orders.id", orderIds)
+      .joinRaw(
+        `JOIN ${ORDERS_TABLE} ON (main_orders.listing_id = ${ORDERS_TABLE}.listing_id AND main_orders.id != ${ORDERS_TABLE}.id)`
+      )
+      .joinRaw(
+        `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+         ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
+      )
+      .whereRaw(
+        `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?) OR (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND ${ORDERS_TABLE}.end_date >= ? ))`,
+        [currentDate, currentDate]
+      )
+      .where(function () {
+        this.whereRaw(
+          `NOT (${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
+        ).whereNotIn(`${ORDERS_TABLE}.status`, [
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
+          STATIC.ORDER_STATUSES.REJECTED,
+          STATIC.ORDER_STATUSES.FINISHED,
+        ]);
+      });
+  };
+
+  getBlockedListingsDatesForOrders = async (orderIds) => {
+    const orders = await this.baseConflictOrdersForOrders(
+      orderIds
+    ).select([
+      `main_orders.id as mainOrderId`,
+      `${ORDERS_TABLE}.id`,
+      `${ORDERS_TABLE}.start_date as offerStartDate`,
+      `${ORDERS_TABLE}.end_date as offerEndDate`,
+      `${ORDERS_TABLE}.listing_id as listingId`,
+      `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
+      `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
+    ]);
+
+    const orderBlockedDates = {};
+
+    orderIds.forEach((mainOrderId) => {
+      const mainOrders = [];
+
+      orders.forEach((order) => {
+        if (order.mainOrderId == mainOrderId) {
+          mainOrders.push(order);
+        }
+      });
+
+      orderBlockedDates[mainOrderId] =
+        mainOrders.length > 0
+          ? this.generateBlockedDatesByOrders(mainOrders)
+          : [];
+    });
+
+    return orderBlockedDates;
+  };
+
   getBlockedListingsDatesForListings = async (listingIds, tenantId = null) => {
     const currentDate = separateDate(new Date());
 
@@ -900,117 +985,23 @@ class OrderModel extends Model {
   getOrdersExtends = async (orderIds) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
+    query = this.baseRequestInfoJoin(query);
 
     return await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
-      .select([...this.fullVisibleFields]);
+      .select([...this.fullVisibleFields, ...this.requestVisibleFields]);
   };
 
   getConflictOrders = async (orderIds) => {
-    let query = db(`${ORDERS_TABLE} as searching_order`)
-      .joinRaw(
-        `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} as searching_order_update_request ON searching_order_update_request.order_id = searching_order.id AND searching_order_update_request.active`
-      )
-      .join(
-        `${ORDERS_TABLE}`,
-        `${ORDERS_TABLE}.listing_id`,
-        "=",
-        `${ORDERS_TABLE}.listing_id`
-      );
+    let query = this.baseConflictOrdersForOrders(orderIds);
     query = this.fullOrdersJoin(query);
-    query = query
-      .joinRaw(
-        `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-     ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
-      )
-      .whereRaw(`${ORDERS_TABLE}.id != searching_order.id`)
-      .where(`searching_order.status`, STATIC.ORDER_STATUSES.PENDING_OWNER)
-      .whereRaw(`${ORDERS_TABLE}.listing_id = searching_order.listing_id`)
-      .whereIn(`searching_order.id`, orderIds)
-      .whereRaw(
-        `(
-          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND searching_order_update_request.id IS NOT NULL
-            AND (
-              (
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= searching_order_update_request.new_start_date 
-                AND 
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= searching_order_update_request.new_end_date
-              )
-              OR
-              (
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= searching_order_update_request.new_start_date 
-                AND 
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= searching_order_update_request.new_end_date
-              )
-            )
-          )
-          OR
-          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND searching_order_update_request.id IS NOT NULL
-            AND (
-              (
-                ${ORDERS_TABLE}.start_date >= searching_order_update_request.new_start_date 
-                AND 
-                ${ORDERS_TABLE}.start_date <= searching_order_update_request.new_end_date
-              )
-              OR
-              (
-                ${ORDERS_TABLE}.end_date >= searching_order_update_request.new_start_date 
-                AND 
-                ${ORDERS_TABLE}.end_date <= searching_order_update_request.new_end_date
-              )
-            )
-          ) 
-          OR 
-          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND searching_order_update_request.id IS NULL
-            AND (
-              (
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date >= searching_order.start_date 
-                AND 
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= searching_order.end_date
-              )
-              OR
-              (
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= searching_order.start_date 
-                AND 
-                ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date <= searching_order.end_date
-              )
-            )
-          )
-          OR
-          (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND searching_order_update_request.id IS NULL
-            AND (
-              (
-                ${ORDERS_TABLE}.start_date >= searching_order.start_date 
-                AND 
-                ${ORDERS_TABLE}.start_date <= searching_order.end_date
-              )
-              OR
-              (
-                ${ORDERS_TABLE}.end_date >= searching_order.start_date 
-                AND 
-                ${ORDERS_TABLE}.end_date <= searching_order.end_date
-              )
-            )
-          )
-        )`
-      )
-      .whereNotIn(`${ORDERS_TABLE}.status`, [
-        STATIC.ORDER_STATUSES.PENDING_OWNER,
-        STATIC.ORDER_STATUSES.FINISHED,
-        STATIC.ORDER_STATUSES.REJECTED,
-      ])
-      .whereRaw(
-        `NOT (${ORDERS_TABLE}.cancel_status IS NOT NULL AND ${ORDERS_TABLE}.cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
-      );
 
     const conflictOrders = await query
       .groupBy(this.fullGroupBy)
       .select([
         ...this.fullVisibleFields,
-        `searching_order.id as searchingOrderId`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
+        `main_orders.id as mainOrderId`,
+        ...this.requestVisibleFields,
       ]);
 
     const res = {};
@@ -1019,7 +1010,7 @@ class OrderModel extends Model {
       const currentOrderConflicts = [];
 
       conflictOrders.forEach((conflict) => {
-        if (conflict.searchingOrderId == orderId) {
+        if (conflict.mainOrderId == orderId) {
           currentOrderConflicts.push(conflict);
         }
       });
@@ -1267,13 +1258,10 @@ class OrderModel extends Model {
   };
 
   getUserTotalCountOrders = async (userId) => {
-    const resultSelect = await db(ORDERS_TABLE)
-      .join(
-        LISTINGS_TABLE,
-        `${LISTINGS_TABLE}.id`,
-        "=",
-        `${ORDERS_TABLE}.listing_id`
-      )
+    let query = db(ORDERS_TABLE);
+    query = this.orderListingJoin(query);
+
+    const resultSelect = await query
       .select(db.raw("COUNT(*) as count"))
       .where(function () {
         this.where(`${LISTINGS_TABLE}.owner_id`, userId);
@@ -1306,14 +1294,11 @@ class OrderModel extends Model {
       .update({ status: STATIC.ORDER_STATUSES.FINISHED });
   };
 
-  getInUseListingsBaseQuery = (dateStart, dateEnd) =>
-    db(ORDERS_TABLE)
-      .join(
-        LISTINGS_TABLE,
-        `${LISTINGS_TABLE}.id`,
-        "=",
-        `${ORDERS_TABLE}.listing_id`
-      )
+  getInUseListingsBaseQuery = (dateStart, dateEnd) => {
+    let query = db(ORDERS_TABLE);
+    query = this.orderListingJoin(query);
+
+    return query
       .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
         STATIC.ORDER_STATUSES.FINISHED,
@@ -1326,6 +1311,7 @@ class OrderModel extends Model {
         "start_date as startDate",
         "end_date as endDate",
       ]);
+  };
 
   getInUseListings = async (dateStart, dateEnd) => {
     return await this.getInUseListingsBaseQuery(dateStart, dateEnd);
@@ -1340,19 +1326,13 @@ class OrderModel extends Model {
 
   getOrderStatusesCount = async ({ timeInfos, filter }) => {
     let query = db(ORDERS_TABLE);
-    query = query
-      .joinRaw(
-        `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+    query = query.joinRaw(
+      `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
        ${ORDER_UPDATE_REQUESTS_TABLE}.order_id = ${ORDERS_TABLE}.id
         AND ${ORDER_UPDATE_REQUESTS_TABLE}.active = true`
-      )
-      .leftJoin(
-        `${DISPUTES_TABLE} as disputes`,
-        `${DISPUTES_TABLE}.order_id`,
-        "=",
-        `${ORDERS_TABLE}.id`
-      );
+    );
 
+    query = this.orderDisputeJoin(query);
     query = this.orderCreatedTimeFilterWrap(query, timeInfos);
     query = query.whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
