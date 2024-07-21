@@ -284,13 +284,12 @@ class OrderController extends Controller {
     });
 
   baseRequestsList = async (req, totalCountCall, listCall) => {
+    const type = req.body.type == "owner" ? "owner" : "tenant";
+
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
-    const userId = req.userData.userId;
-
-    const type = req.body.type == "owner" ? "owner" : "tenant";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       totalCountCall(filter, timeInfos)
@@ -335,15 +334,16 @@ class OrderController extends Controller {
     );
 
     const extendOrderIds = orderExtends.map((request) => request.id);
+    const extendConflictOrders = await this.orderModel.getConflictOrders(
+      extendOrderIds
+    );
 
     const extendPaymentInfos =
       await this.senderPaymentModel.getInfoAboutOrdersPayments(extendOrderIds);
 
     orderExtends.forEach((request, index) => {
-      const currentOrderConflicts = conflictOrders[request.orderParentId];
-      orderExtends[index]["conflictOrders"] = currentOrderConflicts;
-
       orderExtends[index]["paymentInfo"] = extendPaymentInfos[request.id];
+      orderExtends[index]["conflictOrders"] = extendConflictOrders[request.id];
 
       orderExtends[index]["canFastCancelPayed"] =
         this.orderModel.canFastCancelPayedOrder(request);
