@@ -13,13 +13,7 @@ function isAuth(request, response, next) {
   const token = authorization.split("Bearer ")[1];
   const resValidate = validateToken(token);
 
-  if (!resValidate || !resValidate.userId)
-    return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
-      isError: true,
-      message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
-    });
-
-  if (isNaN(resValidate.userId)) {
+  if (!resValidate || !resValidate.userId || isNaN(resValidate.userId)) {
     return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
       isError: true,
       message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,

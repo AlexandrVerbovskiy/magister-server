@@ -6,6 +6,7 @@ const {
   getDaysDifference,
   removeDuplicates,
   checkStartEndHasConflict,
+  isOrderCanBeAccepted,
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
@@ -305,28 +306,15 @@ class OrderController extends Controller {
     );
 
     const orderIds = requestsWithImages.map((request) => request.id);
+
     const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
 
     const paymentInfos =
       await this.senderPaymentModel.getInfoAboutOrdersPayments(orderIds);
 
-    const orderListingIds = removeDuplicates(
-      requestsWithImages.map((request) => request.listingId)
-    );
-
-    const tenantId = type == "tenant" ? userId : null;
-
-    const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForListings(
-        orderListingIds,
-        tenantId
-      );
-
     requestsWithImages.forEach((request, index) => {
       const currentOrderConflicts = conflictOrders[request.id];
       requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
-      requestsWithImages[index]["blockedDates"] =
-        blockedListingsDates[request.listingId];
       requestsWithImages[index]["paymentInfo"] = paymentInfos[request.id];
     });
 
@@ -354,9 +342,6 @@ class OrderController extends Controller {
     orderExtends.forEach((request, index) => {
       const currentOrderConflicts = conflictOrders[request.orderParentId];
       orderExtends[index]["conflictOrders"] = currentOrderConflicts;
-
-      orderExtends[index]["blockedForRentalDates"] =
-        blockedListingsDates[request.listingId];
 
       orderExtends[index]["paymentInfo"] = extendPaymentInfos[request.id];
 
@@ -583,7 +568,7 @@ class OrderController extends Controller {
 
       const conflictOrders = await this.orderModel.getConflictOrders([id]);
 
-      if (conflictOrders[id].length > 0) {
+      if (!isOrderCanBeAccepted(order, conflictOrders[id])) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
@@ -743,26 +728,6 @@ class OrderController extends Controller {
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
-  rejectBookingWithPageProps = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const orderUpdateResult = await this.baseRejectBooking(req);
-
-      if (orderUpdateResult.error) {
-        return this.sendErrorResponse(
-          res,
-          orderUpdateResult.error.status,
-          orderUpdateResult.error.message ?? null
-        );
-      }
-
-      const orderListResult = await this.baseOrderList(req);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        orderUpdateResult,
-        orderListResult,
-      });
     });
 
   delete = (req, res) =>
@@ -1052,7 +1017,7 @@ class OrderController extends Controller {
 
   baseFullCancelPayed = async (req) => {
     const { userId } = req.userData;
-    const { id, receiptType , paypalId = null, cardNumber = null } = req.body;
+    const { id, receiptType, paypalId = null, cardNumber = null } = req.body;
 
     const orderInfo = await this.orderModel.getById(id);
 
@@ -1169,26 +1134,6 @@ class OrderController extends Controller {
       }
     });
 
-  fullCancelPayedWithPageProps = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const orderUpdateResult = await this.baseFullCancelPayed(req);
-
-      if (orderUpdateResult.error) {
-        return this.sendErrorResponse(
-          res,
-          orderUpdateResult.error.status,
-          orderUpdateResult.error.message ?? null
-        );
-      }
-
-      const orderListResult = await this.baseOrderList(req);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        orderUpdateResult,
-        orderListResult,
-      });
-    });
-
   fullCancel = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
@@ -1215,39 +1160,6 @@ class OrderController extends Controller {
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
-  fullCancelWithPageProps = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      const orderUpdateResult = await this.baseCancelOrder({
-        req,
-        res,
-        userId,
-        userType: "tenant",
-        availableStatusesToCancel: [
-          STATIC.ORDER_STATUSES.PENDING_OWNER,
-          STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
-        ],
-        cancelFunc: this.orderModel.successCancelled,
-        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
-      });
-
-      if (orderUpdateResult.error) {
-        return this.sendErrorResponse(
-          res,
-          orderUpdateResult.error.status,
-          orderUpdateResult.error.message ?? null
-        );
-      }
-
-      const orderListResult = await this.baseOrderList(req);
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        orderUpdateResult,
-        orderListResult,
-      });
     });
 
   finishedByOwner = (req, res) =>
@@ -1335,15 +1247,7 @@ class OrderController extends Controller {
     ]);
 
     const conflictOrders = resGetConflictOrders[order.id];
-    const tenantId = order.tenantId == userId ? userId : null;
 
-    const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForListings(
-        [order.listingId],
-        tenantId
-      );
-
-    order["blockedDates"] = blockedListingsDates[order.listingId];
     order["extendOrders"] = await this.orderModel.getOrdersExtends([
       order.orderParentId ?? order.id,
     ]);
