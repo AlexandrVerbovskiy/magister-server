@@ -424,30 +424,15 @@ class MainController extends Controller {
       const paymentInfo =
         await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
 
-      let blockedDates = [];
-
       const conflictOrdersList = await this.orderModel.getConflictOrders([
         order.id,
       ]);
 
       const conflictOrders = conflictOrdersList[order.id];
 
-      if (!order.cancelStatus) {
-        const tenantId = order.tenantId == userId ? userId : null;
-
-        const listingsConflictDates =
-          await this.orderModel.getBlockedListingsDatesForListings(
-            [order.listingId],
-            tenantId
-          );
-
-        blockedDates = listingsConflictDates[order.listingId];
-      }
-
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
         paymentInfo,
-        blockedDates,
         conflictOrders,
       };
     };

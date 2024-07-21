@@ -1,4 +1,5 @@
 const STATIC = require("../static");
+const { generateDatesBetween, checkStartEndHasConflict } = require("./dateHelpers");
 
 const indicateMediaTypeByExtension = (type) => {
   if (STATIC.VIDEO_EXTENSIONS.includes(type.toLowerCase()))
@@ -43,6 +44,41 @@ const isPayedUsedPaypal = (type) =>
 
 const removeDuplicates = (arr) => [...new Set(arr)];
 
+const getOrderBlockedDatesToUpdate = (conflictOrders) => {
+  let blockedDatesToUpdate = [];
+
+  conflictOrders.map((conflictOrder) => {
+    blockedDatesToUpdate = [
+      ...blockedDatesToUpdate,
+      ...generateDatesBetween(
+        conflictOrder.newStartDate ?? conflictOrder.offerStartDate,
+        conflictOrder.newEndDate ?? conflictOrder.offerEndDate
+      ),
+    ];
+  });
+
+  return removeDuplicates(blockedDatesToUpdate);
+};
+
+const isOrderCanBeAccepted = (order, conflictOrders) => {
+  if (
+    order.status != STATIC.ORDER_STATUSES.PENDING_OWNER ||
+    order.disputeId ||
+    order.cancelStatus
+  ) {
+    return true;
+  }
+
+  const orderStartDate = order.requestId
+    ? order.newStartDate
+    : order.offerStartDate;
+
+  const orderEndDate = order.requestId ? order.newEndDate : order.offerEndDate;
+  const blockedDates = getOrderBlockedDatesToUpdate(conflictOrders);
+
+  return !checkStartEndHasConflict(orderStartDate, orderEndDate, blockedDates);
+};
+
 module.exports = {
   indicateMediaTypeByExtension,
   determineStepType,
@@ -50,4 +86,5 @@ module.exports = {
   incrementDateSums,
   isPayedUsedPaypal,
   removeDuplicates,
+  isOrderCanBeAccepted
 };
