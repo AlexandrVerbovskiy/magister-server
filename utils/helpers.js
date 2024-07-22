@@ -1,5 +1,8 @@
 const STATIC = require("../static");
-const { generateDatesBetween, checkStartEndHasConflict } = require("./dateHelpers");
+const {
+  generateDatesBetween,
+  checkStartEndHasConflict,
+} = require("./dateHelpers");
 
 const indicateMediaTypeByExtension = (type) => {
   if (STATIC.VIDEO_EXTENSIONS.includes(type.toLowerCase()))
@@ -48,12 +51,17 @@ const getOrderBlockedDatesToUpdate = (conflictOrders) => {
   let blockedDatesToUpdate = [];
 
   conflictOrders.map((conflictOrder) => {
+    const startDate = conflictOrder.requestId
+      ? conflictOrder.newStartDate
+      : conflictOrder.offerStartDate;
+
+    const endDate = conflictOrder.requestId
+      ? conflictOrder.newEndDate
+      : conflictOrder.offerEndDate;
+
     blockedDatesToUpdate = [
       ...blockedDatesToUpdate,
-      ...generateDatesBetween(
-        conflictOrder.newStartDate ?? conflictOrder.offerStartDate,
-        conflictOrder.newEndDate ?? conflictOrder.offerEndDate
-      ),
+      ...generateDatesBetween(startDate, endDate),
     ];
   });
 
@@ -86,5 +94,5 @@ module.exports = {
   incrementDateSums,
   isPayedUsedPaypal,
   removeDuplicates,
-  isOrderCanBeAccepted
+  isOrderCanBeAccepted,
 };

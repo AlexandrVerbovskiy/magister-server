@@ -1242,9 +1242,12 @@ class OrderController extends Controller {
     });
 
   wrapOrderFullInfo = async (order, userId) => {
-    const resGetConflictOrders = await this.orderModel.getConflictOrders([
-      order.id,
-    ]);
+    const canViewFullInfo = order.ownerId === userId;
+
+    const resGetConflictOrders = await this.orderModel.getConflictOrders(
+      [order.id],
+      canViewFullInfo
+    );
 
     const conflictOrders = resGetConflictOrders[order.id];
 
