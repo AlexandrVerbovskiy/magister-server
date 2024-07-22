@@ -402,8 +402,17 @@ class MainController extends Controller {
         }
       );
 
+      const canViewFullInfo = order.ownerId === userId;
+
+      const conflictOrdersList = await this.orderModel.getConflictOrders(
+        [order.id],
+        canViewFullInfo
+      );
+
+      const conflictOrders = conflictOrdersList[order.id];
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        order: { ...order, ...dopOrderOptions },
+        order: { ...order, ...dopOrderOptions, conflictOrders },
         categories,
         ...dopOptions,
         ownerBaseCommission,
@@ -424,19 +433,9 @@ class MainController extends Controller {
       const paymentInfo =
         await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
 
-      const canViewFullInfo = order.ownerId === userId;
-
-      const conflictOrdersList = await this.orderModel.getConflictOrders(
-        [order.id],
-        canViewFullInfo
-      );
-
-      const conflictOrders = conflictOrdersList[order.id];
-
       return {
         canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
         paymentInfo,
-        conflictOrders,
       };
     };
 

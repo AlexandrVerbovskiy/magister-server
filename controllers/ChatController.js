@@ -322,6 +322,15 @@ class ChatController extends Controller {
       entity["canFastCancelPayed"] =
         this.orderModel.canFastCancelPayedOrder(entity);
 
+      const canViewFullInfo = entity.ownerId === userId;
+
+      const resGetConflictOrders = await this.orderModel.getConflictOrders(
+        [entity.id],
+        canViewFullInfo
+      );
+
+      entity["conflictOrders"] = resGetConflictOrders[entity.id];
+
       entity["childrenList"] = await this.orderModel.getChildrenList(
         chat.entityId
       );
