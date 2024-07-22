@@ -6,6 +6,7 @@ const {
   separateDate,
   generateDatesBetween,
   formatDateToSQLFormat,
+  cloneObject,
 } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
@@ -119,7 +120,6 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.prev_price_per_day`,
     `${ORDERS_TABLE}.prev_start_date`,
     `${ORDERS_TABLE}.prev_end_date`,
-    `main_orders.id`,
     `tenants.id`,
     `tenants.name`,
     `tenants.email`,
@@ -160,15 +160,18 @@ class OrderModel extends Model {
     `tenants.facebook_url`,
     `tenants.linkedin_url`,
     `tenants.instagram_url`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
     `${DISPUTES_TABLE}.id`,
     `${DISPUTES_TABLE}.status`,
     `${DISPUTES_TABLE}.type`,
     `${DISPUTES_TABLE}.description`,
     `${CHAT_TABLE}.id`,
+  ];
+
+  requestGroupBy = [
+    `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day`,
   ];
 
   strFilterFields = [
@@ -890,9 +893,7 @@ class OrderModel extends Model {
   };
 
   getBlockedListingsDatesForOrders = async (orderIds) => {
-    const orders = await this.baseConflictOrdersForOrders(
-      orderIds
-    ).select([
+    const orders = await this.baseConflictOrdersForOrders(orderIds).select([
       `main_orders.id as mainOrderId`,
       `${ORDERS_TABLE}.id`,
       `${ORDERS_TABLE}.start_date as offerStartDate`,
@@ -992,17 +993,29 @@ class OrderModel extends Model {
       .select([...this.fullVisibleFields, ...this.requestVisibleFields]);
   };
 
-  getConflictOrders = async (orderIds) => {
+  getConflictOrders = async (orderIds, fullInfo = false) => {
     let query = this.baseConflictOrdersForOrders(orderIds);
     query = this.fullOrdersJoin(query);
 
+    const selectFields = fullInfo
+      ? [
+          `main_orders.id as mainOrderId`,
+          ...this.fullVisibleFields,
+          ...this.requestVisibleFields,
+        ]
+      : [
+          `main_orders.id as mainOrderId`,
+          `${ORDERS_TABLE}.id`,
+          `${ORDERS_TABLE}.start_date as offerStartDate`,
+          `${ORDERS_TABLE}.end_date as offerEndDate`,
+          `${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`,
+          `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
+          `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
+        ];
+
     const conflictOrders = await query
-      .groupBy(this.fullGroupBy)
-      .select([
-        ...this.fullVisibleFields,
-        `main_orders.id as mainOrderId`,
-        ...this.requestVisibleFields,
-      ]);
+      .groupBy([`main_orders.id`, ...this.fullGroupBy, ...this.requestGroupBy])
+      .select(selectFields);
 
     const res = {};
 
@@ -1011,7 +1024,9 @@ class OrderModel extends Model {
 
       conflictOrders.forEach((conflict) => {
         if (conflict.mainOrderId == orderId) {
-          currentOrderConflicts.push(conflict);
+          const copiedConflict = cloneObject(conflict);
+          delete copiedConflict["mainOrderId"];
+          currentOrderConflicts.push(copiedConflict);
         }
       });
 
