@@ -9,7 +9,7 @@ module.exports = ({ field, fieldName = null, message = null }) => {
   return [
     body(field)
       .custom((value) => {
-        if (value !== true) {
+        if (value != true) {
           throw new Error(message);
         }
         return true;

@@ -5,6 +5,7 @@ module.exports = ({
   fieldName = null,
   message = null,
   required = true,
+  canBeNegative = false,
 }) => {
   if (!message)
     message = `Body parameter '${
@@ -16,7 +17,7 @@ module.exports = ({
 
   validation = validation.custom((value) => {
     const intValue = parseFloat(value);
-    
+
     if (
       isNaN(intValue) ||
       intValue < Number.MIN_SAFE_INTEGER ||
@@ -26,8 +27,13 @@ module.exports = ({
     }
 
     return true;
-  })
+  });
 
-  validation = validation.isFloat({ min: 0 }).withMessage(message);
+  const dopProps = {};
+  if (!canBeNegative) {
+    dopProps["min"] = 0;
+  }
+
+  validation = validation.isFloat(dopProps).withMessage(message);
   return [validation];
 };
