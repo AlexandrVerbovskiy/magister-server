@@ -1010,9 +1010,9 @@ class OrderController extends Controller {
         newStartDate: lastUpdateRequestInfo.newStartDate,
         newEndDate: lastUpdateRequestInfo.newEndDate,
         newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-        prevPricePerDay: order.offerPricePerDay,
-        prevStartDate: order.offerStartDate,
-        prevEndDate: order.offerEndDate,
+        prevPricePerDay: orderInfo.offerPricePerDay,
+        prevStartDate: orderInfo.offerStartDate,
+        prevEndDate: orderInfo.offerEndDate,
       };
     }
 
@@ -1152,6 +1152,8 @@ class OrderController extends Controller {
           result.error.message ?? null
         );
       }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   fullCancel = (req, res) =>

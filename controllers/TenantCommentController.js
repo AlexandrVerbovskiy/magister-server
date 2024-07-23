@@ -1,3 +1,4 @@
+const STATIC = require("../static");
 const BaseCommentController = require("./BaseCommentController");
 
 class TenantCommentController extends BaseCommentController {
