@@ -13,6 +13,7 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const LISTING_APPROVAL_REQUESTS_TABLE = STATIC.TABLES.LISTING_APPROVAL_REQUESTS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
+const USER_LISTING_FAVORITES_TABLE = STATIC.TABLES.USER_LISTING_FAVORITES;
 
 class ListingsModel extends Model {
   baseGroupedFields = [
@@ -191,7 +192,7 @@ class ListingsModel extends Model {
       .returning("id");
 
     const listingId = res[0]["id"];
-    
+
     for (let i = 0; i < listingImages.length; i++) {
       const image = listingImages[i];
       await this.createImage({
@@ -479,6 +480,17 @@ class ListingsModel extends Model {
         `c3.id`
       );
 
+  baseJoinUserFavorites = (query, favorites, searcherId) => {
+    if (!favorites || !searcherId) {
+      return query;
+    }
+
+    return query.joinRaw(
+      `JOIN ${USER_LISTING_FAVORITES_TABLE} ON (${USER_LISTING_FAVORITES_TABLE}.listing_id = ${LISTINGS_TABLE}.id AND ${USER_LISTING_FAVORITES_TABLE}.user_id = ?)`,
+      [searcherId]
+    );
+  };
+
   listTimeWhere = (timeInfos, query) => {
     return query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
       this.select("listing_id")
@@ -609,11 +621,15 @@ class ListingsModel extends Model {
     lng = null,
     othersCategories = null,
     searchListing = null,
+    favorites = false,
+    searcherId = null,
   }) => {
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
 
     let query = db(LISTINGS_TABLE);
     query = this.baseListJoin(query);
+    query = this.baseJoinUserFavorites(query, favorites, searcherId);
+
     query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
@@ -825,6 +841,8 @@ class ListingsModel extends Model {
       minPrice = null,
       maxPrice = null,
       othersCategories = null,
+      favorites = false,
+      searcherId = null,
     } = props;
 
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
@@ -844,6 +862,7 @@ class ListingsModel extends Model {
 
     let query = db(LISTINGS_TABLE).select(selectParams);
     query = this.baseListJoin(query);
+    query = this.baseJoinUserFavorites(query, favorites, searcherId);
     query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
