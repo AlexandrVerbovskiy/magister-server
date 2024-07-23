@@ -756,7 +756,11 @@ class OrderController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.tenantId != userId || order.disputeStatus) {
+      if (
+        order.tenantId != userId ||
+        order.disputeStatus ||
+        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -996,7 +1000,23 @@ class OrderController extends Controller {
       };
     }
 
-    const cancelStatus = await cancelFunc(id, orderInfo);
+    const lastUpdateRequestInfo =
+      await this.orderUpdateRequestModel.getFullForLastActive(id);
+
+    let newData = {};
+
+    if (lastUpdateRequestInfo) {
+      newData = {
+        newStartDate: lastUpdateRequestInfo.newStartDate,
+        newEndDate: lastUpdateRequestInfo.newEndDate,
+        newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+        prevPricePerDay: order.offerPricePerDay,
+        prevStartDate: order.offerStartDate,
+        prevEndDate: order.offerEndDate,
+      };
+    }
+
+    const cancelStatus = await cancelFunc(id, newData);
 
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
       chatId: orderInfo.chatId,
