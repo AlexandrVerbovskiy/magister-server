@@ -24,8 +24,6 @@ class SenderPaymentController extends Controller {
         order.listingName
       );
 
-      console.log(result);
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
