@@ -1,12 +1,12 @@
 const STATIC = require("../static");
-const { createPaypalOrder } = require("../utils");
+const { createPaypalOrder, tenantPaymentCalculate } = require("../utils");
 
 const Controller = require("./Controller");
 
 class SenderPaymentController extends Controller {
   paypalCreateOrder = async (req, res) =>
     this.baseWrapper(res, res, async () => {
-      const { amount, orderId } = req.body;
+      const { orderId } = req.body;
 
       const order = await this.orderModel.getById(orderId);
 
@@ -17,6 +17,13 @@ class SenderPaymentController extends Controller {
           "Unable to perform an operation for the current order status"
         );
       }
+
+      const amount = tenantPaymentCalculate(
+        order.offerStartDate,
+        order.offerEndDate,
+        order.tenantFee,
+        order.offerPricePerDay
+      );
 
       const result = await createPaypalOrder(
         amount,

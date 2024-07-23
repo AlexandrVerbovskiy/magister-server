@@ -1089,6 +1089,7 @@ class OrderModel extends Model {
       prevEndDate,
       orderParentId,
       status = null,
+      cancelStatus = null,
     }
   ) => {
     const updateProps = {
@@ -1103,6 +1104,10 @@ class OrderModel extends Model {
 
     if (status) {
       updateProps["status"] = status;
+    }
+
+    if (cancelStatus) {
+      updateProps["cancel_status"] = cancelStatus;
     }
 
     await db(ORDERS_TABLE).where("id", orderId).update(updateProps);
@@ -1123,42 +1128,27 @@ class OrderModel extends Model {
     return this.updateOrder(orderId, newData);
   };
 
-  startCancelByOwner = async (orderId) => {
-    await db(ORDERS_TABLE).where("id", orderId).update({
-      cancel_status: STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE,
-    });
+  startCancelByOwner = async (orderId, newData = {}) => {
+    newData["cancelStatus"] =
+      STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE;
+    return this.updateOrder(orderId, newData);
   };
 
-  startCancelByTenant = async (orderId) => {
-    const cancelStatus =
+  startCancelByTenant = async (orderId, newData = {}) => {
+    newData["cancelStatus"] =
       STATIC.ORDER_CANCELATION_STATUSES.WAITING_OWNER_APPROVE;
-
-    await db(ORDERS_TABLE).where("id", orderId).update({
-      cancel_status: cancelStatus,
-    });
-
-    return cancelStatus;
+    return this.updateOrder(orderId, newData);
   };
 
-  needAdminCancel = async (orderId) => {
-    const cancelStatus =
+  needAdminCancel = async (orderId, newData = {}) => {
+    newData["cancelStatus"] =
       STATIC.ORDER_CANCELATION_STATUSES.WAITING_ADMIN_APPROVE;
-
-    await db(ORDERS_TABLE).where("id", orderId).update({
-      cancel_status: cancelStatus,
-    });
-
-    return cancelStatus;
+    return this.updateOrder(orderId, newData);
   };
 
   successCancelled = async (orderId, newData = {}) => {
-    const cancelStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
-
-    await db(ORDERS_TABLE)
-      .where("id", orderId)
-      .update({ cancel_status: cancelStatus });
-
-    return cancelStatus;
+    newData["cancelStatus"] = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
+    return this.updateOrder(orderId, newData);
   };
 
   getUnfinishedTenantCount = async (tenantId) => {
