@@ -49,6 +49,8 @@ class ListingController extends Controller {
     const lat = req.body.lat ?? null;
     const lng = req.body.lng ?? null;
     const othersCategories = req.body.othersCategories ?? false;
+    const sessionUserId = req.userData?.userId;
+    const favorites = sessionUserId ? !!req.body.favorites : false;
 
     const timeInfos = await this.listTimeOption({
       req,
@@ -73,6 +75,8 @@ class ListingController extends Controller {
         lng,
         othersCategories,
         searchListing,
+        favorites,
+        searcherId: sessionUserId,
       })
     );
 
@@ -108,7 +112,7 @@ class ListingController extends Controller {
       othersCategories,
     } = await this.baseCountListings(req, userId);
 
-    const sessionUserId = req.userData.userId;
+    const sessionUserId = req.userData?.userId;
 
     options["userId"] = userId;
     options["cities"] = cities;
@@ -121,12 +125,16 @@ class ListingController extends Controller {
     options["searchCity"] = req.body.searchCity ?? null;
     options["searchCategory"] = req.body.searchCategory ?? null;
     options["searchListing"] = req.body.searchListing ?? null;
+    options["favorites"] = sessionUserId ? !!req.body.favorites : false;
 
     options = this.addTimeInfoToOptions(options, timeInfos);
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
-    let listings = await this.listingModel.list(options);
+    let listings = await this.listingModel.list({
+      ...options,
+      searcherId: sessionUserId,
+    });
 
     listings = await this.listingModel.listingsBindImages(listings);
 
@@ -324,8 +332,8 @@ class ListingController extends Controller {
     const { listingId, listingImages } = await this.listingModel.create(
       dataToSave
     );
-    
-      dataToSave["userVerified"] = true;
+
+    dataToSave["userVerified"] = true;
 
     let createdVerifiedRequest = false;
 
@@ -533,7 +541,6 @@ class ListingController extends Controller {
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
   };
-
 
   baseChangeActive = async (req, res, changeActiveCall) => {
     const { id } = req.body;

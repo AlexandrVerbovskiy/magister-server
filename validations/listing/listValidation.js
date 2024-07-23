@@ -5,6 +5,7 @@ const {
   validateFloat,
   validateCheckbox,
   validateSmallStringBody,
+  validateBoolean,
 } = require("../base");
 
 module.exports = [
@@ -57,6 +58,16 @@ module.exports = [
   ...validateIntegerBody({
     field: "ownerId",
     fieldName: "Owner Id",
+    required: false,
+  }),
+  ...validateBoolean({
+    field: "othersCategories",
+    fieldName: "Others Categories",
+    required: false,
+  }),
+  ...validateBoolean({
+    field: "favorites",
+    fieldName: "Favorites",
     required: false,
   }),
 ];
