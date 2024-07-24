@@ -43,11 +43,13 @@ class TenantCommentController extends BaseCommentController {
     const order = await this.orderModel.getById(orderId);
     const chatId = order.chatId;
 
-    const tenantMessage = await this.chatMessageModel.createUserReviewMessage({
-      chatId,
-      senderId,
-      data: { ...userCommentInfo, type: "tenant" },
-    });
+    const tenantMessage = await this.chatMessageModel.createTenantReviewMessage(
+      {
+        chatId,
+        senderId,
+        data: { ...userCommentInfo },
+      }
+    );
 
     const sender = await this.userModel.getById(senderId);
 

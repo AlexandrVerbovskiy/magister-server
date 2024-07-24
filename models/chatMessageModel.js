@@ -286,19 +286,20 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createUserReviewMessage = async ({
+  createOwnerReviewMessage = async ({
     chatId,
     senderId,
     data: {
-      quality,
-      listingAccuracy,
-      utility,
-      condition,
-      performance,
-      location,
       leaveFeedback,
       description,
-      type,
+      itemDescriptionAccuracy,
+      photoAccuracy,
+      pickupCondition,
+      cleanliness,
+      responsiveness,
+      clarity,
+      schedulingFlexibility,
+      issueResolution,
     },
   }) => {
     return await this.create({
@@ -307,15 +308,54 @@ class ChatMessageModel extends Model {
       isAdminSender: false,
       senderId,
       content: {
-        quality,
-        listingAccuracy,
-        utility,
-        condition,
-        performance,
-        location,
+        itemDescriptionAccuracy,
+        photoAccuracy,
+        pickupCondition,
+        cleanliness,
+        responsiveness,
+        clarity,
+        schedulingFlexibility,
+        issueResolution,
         leaveFeedback,
         description,
-        type,
+      },
+    });
+  };
+
+  createTenantReviewMessage = async ({
+    chatId,
+    senderId,
+    data: {
+      leaveFeedback,
+      description,
+      care,
+      timeliness,
+      responsiveness,
+      clarity,
+      usageGuidelines,
+      termsOfService,
+      honesty,
+      reliability,
+      satisfaction,
+    },
+  }) => {
+    return await this.create({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.USER_REVIEW,
+      isAdminSender: false,
+      senderId,
+      content: {
+        care,
+        timeliness,
+        responsiveness,
+        clarity,
+        usageGuidelines,
+        termsOfService,
+        honesty,
+        reliability,
+        satisfaction,
+        leaveFeedback,
+        description,
       },
     });
   };

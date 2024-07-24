@@ -102,6 +102,8 @@ module.exports = {
     RECIPIENT_PAYMENTS: "recipient_payments",
     REFUND_PAYMENT_REQUESTS: "refund_payment_requests",
     USER_COMMENTS: "user_comments",
+    TENANT_COMMENTS: "tenant_comments",
+    OWNER_COMMENTS: "owner_comments",
     LISTING_COMMENTS: "listing_comments",
     USER_LISTING_FAVORITES: "user_listing_favorites",
     DISPUTES: "disputes",
