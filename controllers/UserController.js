@@ -269,9 +269,9 @@ class UserController extends Controller {
       const resSave = await this.userModel.generateTwoAuthCode(user.id, type);
 
       if (type == "phone") {
-        this.sendToPhoneTwoAuthCodeMessage(user.phone, resSave.code);
+        await this.sendToPhoneTwoAuthCodeMessage(user.phone, resSave.code);
       } else {
-        this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
+        await this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);

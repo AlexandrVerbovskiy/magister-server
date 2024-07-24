@@ -7,6 +7,11 @@ const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
 
+const twilioClient = require("twilio")(
+  process.env.TWILIO_SID,
+  process.env.TWILIO_AUTH
+);
+
 const {
   timeConverter,
   getDateByCurrentAdd,
@@ -418,23 +423,14 @@ class Controller {
   };
 
   sendToPhoneMessage = async (phone, text) => {
-    const data = {
-      recipients: [phone],
-      sms: {
-        sender: process.env.TURBOSMS_SENDER,
-        text,
-      },
-    };
+    const message = await twilioClient.messages
+      .create({
+        body: text,
+        to: phone,
+        from: process.env.TWILIO_PHONE,
+      });
 
-    const url = `https://api.turbosms.ua/message/send.json?token=${process.env.TURBOSMS_TOKEN}`;
-
-    const res = await axios.post(url, data, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    return res.data.response_result;
+    return message.sid;
   };
 
   sendToPhoneVerifyCodeMessage = async (phone, code) => {
