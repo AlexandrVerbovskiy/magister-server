@@ -949,7 +949,7 @@ class OrderModel extends Model {
         this.whereRaw(
           `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}')`
         ).whereNotIn("status", [
-          STATIC.ORDER_STATUSES.PENDING_TENANT,
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
           STATIC.ORDER_STATUSES.REJECTED,
           STATIC.ORDER_STATUSES.FINISHED,
         ]);
