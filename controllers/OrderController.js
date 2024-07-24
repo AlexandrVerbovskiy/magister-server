@@ -86,12 +86,10 @@ class OrderController extends Controller {
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
     const blockedDatesListings =
-      await this.orderModel.getBlockedListingsDatesForListings(
-        [listingId],
-        tenantId
-      );
+      await this.orderModel.getBlockedListingsDatesForListings([listingId]);
 
     const blockedDates = blockedDatesListings[listingId];
+    console.log("blockedDates: ", blockedDates);
 
     if (checkStartEndHasConflict(startDate, endDate, blockedDates)) {
       return {
