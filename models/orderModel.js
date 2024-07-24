@@ -18,7 +18,8 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
-const USER_COMMENTS_TABLE = STATIC.TABLES.USER_COMMENTS;
+const OWNER_COMMENTS_TABLE = STATIC.TABLES.OWNER_COMMENTS;
+const TENANT_COMMENTS_TABLE = STATIC.TABLES.TENANT_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const CHAT_TABLE = STATIC.TABLES.CHATS;
 const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
@@ -424,15 +425,13 @@ class OrderModel extends Model {
     );
 
     query = query.joinRaw(
-      `LEFT JOIN ${USER_COMMENTS_TABLE} as "tenant_comments" 
-      ON tenant_comments.order_id = ${ORDERS_TABLE}.id AND 
-      tenant_comments.type = 'tenant'`
+      `LEFT JOIN ${TENANT_COMMENTS_TABLE} as "tenant_comments" 
+      ON tenant_comments.order_id = ${ORDERS_TABLE}.id`
     );
 
     query = query.joinRaw(
-      `LEFT JOIN ${USER_COMMENTS_TABLE} as "owner_comments" 
-      ON owner_comments.order_id = ${ORDERS_TABLE}.id AND 
-      owner_comments.type = 'owner'`
+      `LEFT JOIN ${OWNER_COMMENTS_TABLE} as "owner_comments" 
+      ON owner_comments.order_id = ${ORDERS_TABLE}.id`
     );
 
     return query;

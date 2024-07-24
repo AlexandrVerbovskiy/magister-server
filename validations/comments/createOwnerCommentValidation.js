@@ -1,36 +1,65 @@
 const { body } = require("express-validator");
-const createUserCommentValidation = require("./createUserCommentValidation");
+const starValidation = require("./starValidation");
 
 module.exports = [
-  ...createUserCommentValidation,
-
   body("listingCommentInfo.description")
     .isString()
     .withMessage("Description must be a string")
     .notEmpty()
     .withMessage("Description cannot be empty"),
-  body("listingCommentInfo.punctuality")
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Punctuality must be a number between 1 and 5")
-    .toInt(),
-  body("listingCommentInfo.communication")
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Communication must be a number between 1 and 5")
-    .toInt(),
-  body("listingCommentInfo.flexibility")
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Flexibility must be a number between 1 and 5")
-    .toInt(),
-  body("listingCommentInfo.reliability")
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Reliability must be a number between 1 and 5")
-    .toInt(),
-  body("listingCommentInfo.kindness")
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Kindness must be a number between 1 and 5")
-    .toInt(),
-  body("listingCommentInfo.generalExperience")
-    .isInt({ min: 1, max: 5 })
-    .withMessage("General experience must be a number between 1 and 5")
-    .toInt(),
+
+  ...starValidation({
+    field: "listingCommentInfo.punctuality",
+    name: "Punctuality",
+  }),
+  ...starValidation({
+    field: "listingCommentInfo.communication",
+    name: "Communication",
+  }),
+  ...starValidation({
+    field: "listingCommentInfo.flexibility",
+    name: "Flexibility",
+  }),
+  ...starValidation({
+    field: "listingCommentInfo.reliability",
+    name: "Reliability",
+  }),
+  ...starValidation({ field: "listingCommentInfo.kindness", name: "Kindness" }),
+  ...starValidation({
+    field: "listingCommentInfo.generalExperience",
+    name: "General experience",
+  }),
+
+  body("userCommentInfo.description")
+    .isString()
+    .withMessage("Description must be a string")
+    .notEmpty()
+    .withMessage("Description cannot be empty"),
+  body("userCommentInfo.leaveFeedback")
+    .isString()
+    .withMessage("Leave feedback must be a string"),
+
+  ...starValidation({ field: "userCommentInfo.itemDescriptionAccuracy", name: "Item description accuracy" }),
+  ...starValidation({
+    field: "userCommentInfo.photoAccuracy",
+    name: "Photo accuracy",
+  }),
+  ...starValidation({
+    field: "userCommentInfo.pickupCondition",
+    name: "Pickup condition",
+  }),
+  ...starValidation({ field: "userCommentInfo.cleanliness", name: "Cleanliness" }),
+  ...starValidation({
+    field: "userCommentInfo.responsiveness",
+    name: "Responsiveness",
+  }),
+  ...starValidation({
+    field: "userCommentInfo.clarity",
+    name: "Clarity",
+  }),
+  ...starValidation({ field: "userCommentInfo.schedulingFlexibility", name: "Scheduling flexibility" }),
+  ...starValidation({
+    field: "userCommentInfo.issueResolution",
+    name: "Issue resolution",
+  }),
 ];

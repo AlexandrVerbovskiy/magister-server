@@ -62,10 +62,10 @@ class OwnerCommentController extends BaseCommentController {
         data: listingCommentInfo,
       });
 
-    const ownerMessage = await this.chatMessageModel.createUserReviewMessage({
+    const ownerMessage = await this.chatMessageModel.createOwnerReviewMessage({
       chatId,
       senderId,
-      data: { ...userCommentInfo, type: "owner" },
+      data: userCommentInfo,
     });
 
     const sender = await this.userModel.getById(senderId);
