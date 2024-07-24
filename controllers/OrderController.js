@@ -89,7 +89,6 @@ class OrderController extends Controller {
       await this.orderModel.getBlockedListingsDatesForListings([listingId]);
 
     const blockedDates = blockedDatesListings[listingId];
-    console.log("blockedDates: ", blockedDates);
 
     if (checkStartEndHasConflict(startDate, endDate, blockedDates)) {
       return {
