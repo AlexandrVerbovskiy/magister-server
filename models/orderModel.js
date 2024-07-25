@@ -986,10 +986,17 @@ class OrderModel extends Model {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
     query = this.baseRequestInfoJoin(query);
+    query = this.commentsInfoJoin(query);
+    
+    let visibleFields = [
+      ...this.fullVisibleFields,
+      ...this.requestVisibleFields,
+    ];
+    visibleFields = this.commentsVisibleFields(visibleFields);
 
     return await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
-      .select([...this.fullVisibleFields, ...this.requestVisibleFields]);
+      .select(visibleFields);
   };
 
   getConflictOrders = async (orderIds, fullInfo = false) => {
