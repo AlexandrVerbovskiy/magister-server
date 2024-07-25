@@ -304,7 +304,7 @@ class ChatMessageModel extends Model {
   }) => {
     return await this.create({
       chatId,
-      type: STATIC.MESSAGE_TYPES.USER_REVIEW,
+      type: STATIC.MESSAGE_TYPES.OWNER_REVIEW,
       isAdminSender: false,
       senderId,
       content: {
@@ -341,7 +341,7 @@ class ChatMessageModel extends Model {
   }) => {
     return await this.create({
       chatId,
-      type: STATIC.MESSAGE_TYPES.USER_REVIEW,
+      type: STATIC.MESSAGE_TYPES.TENANT_REVIEW,
       isAdminSender: false,
       senderId,
       content: {
