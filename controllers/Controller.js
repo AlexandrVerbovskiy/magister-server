@@ -257,7 +257,7 @@ class Controller {
     });
   };
 
-  sendAssetPickupMail = async (email, invoiceId) => {
+  sendAssetPickupOffMail = async (email, invoiceId) => {
     const title = "Asset Drop Off Confirmation";
     //const link = CLIENT_URL + "/dashboard/invoices/" + invoiceId;
     const link = CLIENT_URL + "/";

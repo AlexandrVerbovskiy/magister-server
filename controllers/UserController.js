@@ -786,6 +786,7 @@ class UserController extends Controller {
 
         if (user.verified) {
           await this.userModel.setVerified(userId, false);
+          this.sendProfileVerificationMail(user.email);
         }
 
         const hasUnansweredRequest =
