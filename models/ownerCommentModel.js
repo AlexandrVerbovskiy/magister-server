@@ -16,14 +16,14 @@ class OwnerCommentModel extends BaseCommentModel {
   table = OWNER_COMMENTS_TABLE;
 
   pointFields = [
-    "item_description_accuracy",
-    "photo_accuracy",
-    "pickup_condition",
+    "itemDescriptionAccuracy",
+    "photoAccuracy",
+    "pickupCondition",
     "cleanliness",
     "responsiveness",
     "clarity",
-    "scheduling_flexibility",
-    "issue_resolution",
+    "schedulingFlexibility",
+    "issueResolution",
   ];
 
   visibleFields = [
