@@ -3,7 +3,6 @@ const router = Router();
 const { MainController } = require("../../controllers");
 const {
   isAuth,
-  isVerified,
   isAdmin,
   authId,
   isSupport,
@@ -29,14 +28,11 @@ const {
   orderFullByTokenOptionsValidation,
   orderListOptionsValidation,
   adminOrderListOptionsValidation,
-  recipientPaymentListValidation,
-  senderPaymentListValidation,
   adminIndexPageOptionsValidation,
   adminCommentListOptionsValidation,
   adminDisputeListOptionsValidation,
-  createOwnerCommentValidation,
-  createUserCommentValidation,
   chatOptionsValidation,
+  adminOthersListingCategoriesOptionsValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
@@ -123,6 +119,14 @@ module.exports = (io) => {
     isAdmin,
     adminSearchedWordListOptionsValidation,
     mainController.getAdminSearchedWordListPageOptions
+  );
+
+  router.post(
+    "/admin-searched-others-categories-list-options",
+    isAuth,
+    isAdmin,
+    adminOthersListingCategoriesOptionsValidation,
+    mainController.getAdminOthersListingCategoriesOptions
   );
 
   router.post(
@@ -246,7 +250,6 @@ module.exports = (io) => {
   router.post(
     "/order-list-options",
     isAuth,
-    isVerified,
     orderListOptionsValidation,
     mainController.getOrderListOptions
   );
@@ -294,7 +297,6 @@ module.exports = (io) => {
   router.get(
     "/get-order-invoice-options/:id",
     isAuth,
-    isVerified,
     validateIdParam(),
     mainController.getOrderInvoiceOptions
   );
@@ -375,20 +377,6 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/create-owner-review",
-    isAuth,
-    createOwnerCommentValidation,
-    mainController.createOwnerComment
-  );
-
-  router.post(
-    "/create-tenant-review",
-    isAuth,
-    ...createUserCommentValidation,
-    mainController.createTenantComment
-  );
-
-  router.post(
     "/admin-dispute-list-options",
     isAuth,
     isSupport,
@@ -415,6 +403,13 @@ module.exports = (io) => {
     isAuth,
     chatOptionsValidation,
     mainController.getAdminOrderChatOptions
+  );
+
+  router.get(
+    "/admin-create-category-by-others-options",
+    isAuth,
+    isAdmin,
+    mainController.getAdminCreateCategoryByOtherOptions
   );
 
   router.get("/auth/paypal/callback", mainController.test);

@@ -13,6 +13,7 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const LISTING_APPROVAL_REQUESTS_TABLE = STATIC.TABLES.LISTING_APPROVAL_REQUESTS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
+const USER_LISTING_FAVORITES_TABLE = STATIC.TABLES.USER_LISTING_FAVORITES;
 
 class ListingsModel extends Model {
   baseGroupedFields = [
@@ -23,6 +24,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.address`,
     `${LISTINGS_TABLE}.city`,
     `${LISTINGS_TABLE}.category_id`,
+    `${LISTINGS_TABLE}.other_category`,
     `${LISTINGS_TABLE}.compensation_cost`,
     `${LISTINGS_TABLE}.count_stored_items`,
     `${LISTINGS_TABLE}.description`,
@@ -45,6 +47,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.address`,
     `${LISTINGS_TABLE}.city`,
     `${LISTINGS_TABLE}.category_id as categoryId`,
+    `${LISTINGS_TABLE}.other_category as otherCategory`,
     `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
     `${LISTINGS_TABLE}.count_stored_items as countStoredItems`,
     `${LISTINGS_TABLE}.description`,
@@ -72,6 +75,7 @@ class ListingsModel extends Model {
     `${USERS_TABLE}.twitter_url as userTwitterUrl`,
     `${USERS_TABLE}.place_work as userPlaceWork`,
     `${USERS_TABLE}.verified as userVerified`,
+    `${USERS_TABLE}.paypal_id as userPaypalId`,
     `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
     `${LISTING_CATEGORIES_TABLE}.level as categoryLevel`,
   ];
@@ -140,7 +144,7 @@ class ListingsModel extends Model {
   create = async ({
     address,
     name,
-    categoryId,
+    categoryId = null,
     compensationCost,
     countStoredItems,
     description = "",
@@ -157,6 +161,7 @@ class ListingsModel extends Model {
     city,
     backgroundPhoto = null,
     active = true,
+    otherCategory = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -182,19 +187,20 @@ class ListingsModel extends Model {
         city,
         active,
         background_photo: backgroundPhoto,
+        other_category: otherCategory,
       })
       .returning("id");
 
     const listingId = res[0]["id"];
 
-    listingImages.forEach(
-      async (image) =>
-        await this.createImage({
-          type: image.type,
-          link: image.link,
-          listingId,
-        })
-    );
+    for (let i = 0; i < listingImages.length; i++) {
+      const image = listingImages[i];
+      await this.createImage({
+        type: image.type,
+        link: image.link,
+        listingId,
+      });
+    }
 
     const currentListingImages = await this.getListingImages(listingId);
 
@@ -213,16 +219,21 @@ class ListingsModel extends Model {
 
   getListingImages = (listingId) => this.getListingListImages([listingId]);
 
-  getById = async (id) => {
-    const listing = await db(LISTINGS_TABLE)
+  getLightById = async (id) => {
+    return await db(LISTINGS_TABLE)
       .where({ id })
       .select(this.visibleFields)
       .first();
+  };
 
-    if (!listing) return null;
+  getById = async (id) => {
+    const listing = await this.getLightById(id);
+
+    if (!listing) {
+      return null;
+    }
 
     const listingImages = await this.getListingImages(id);
-
     return { ...listing, listingImages };
   };
 
@@ -238,7 +249,7 @@ class ListingsModel extends Model {
   getListByIds = async (ids) => {
     const listings = await db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
@@ -253,7 +264,7 @@ class ListingsModel extends Model {
   getDopForTop = async (ignoreIds, count) => {
     const listings = await db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
@@ -270,7 +281,7 @@ class ListingsModel extends Model {
   getFullById = async (id) => {
     const listing = await db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
@@ -296,7 +307,7 @@ class ListingsModel extends Model {
   updateById = async ({
     id,
     name,
-    categoryId,
+    categoryId = null,
     compensationCost,
     countStoredItems,
     description,
@@ -314,6 +325,7 @@ class ListingsModel extends Model {
     address,
     active,
     backgroundPhoto = null,
+    otherCategory = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -337,6 +349,7 @@ class ListingsModel extends Model {
       owner_id: ownerId,
       address,
       active,
+      other_category: otherCategory,
     };
 
     if (backgroundPhoto) {
@@ -393,6 +406,15 @@ class ListingsModel extends Model {
     };
   };
 
+  updateOtherCategoryToNormal = async ({ prevCategoryName, newCategoryId }) => {
+    await db(LISTINGS_TABLE)
+      .whereRaw(
+        `LOWER(${LISTINGS_TABLE}.other_category) LIKE ?`,
+        `%${prevCategoryName.toLowerCase()}%`
+      )
+      .update({ category_id: newCategoryId, other_category: null });
+  };
+
   hasAccess = async (listingId, userId) => {
     const listing = await db(LISTINGS_TABLE)
       .where({ id: listingId, owner_id: userId })
@@ -439,7 +461,7 @@ class ListingsModel extends Model {
   baseListJoin = (query) =>
     query
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",
@@ -457,6 +479,17 @@ class ListingsModel extends Model {
         "=",
         `c3.id`
       );
+
+  baseJoinUserFavorites = (query, favorites, searcherId) => {
+    if (!favorites || !searcherId) {
+      return query;
+    }
+
+    return query.joinRaw(
+      `JOIN ${USER_LISTING_FAVORITES_TABLE} ON (${USER_LISTING_FAVORITES_TABLE}.listing_id = ${LISTINGS_TABLE}.id AND ${USER_LISTING_FAVORITES_TABLE}.user_id = ?)`,
+      [searcherId]
+    );
+  };
 
   listTimeWhere = (timeInfos, query) => {
     return query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
@@ -586,14 +619,19 @@ class ListingsModel extends Model {
     maxPrice = null,
     lat = null,
     lng = null,
+    othersCategories = null,
+    searchListing = null,
+    favorites = false,
+    searcherId = null,
   }) => {
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
 
     let query = db(LISTINGS_TABLE);
     query = this.baseListJoin(query);
+    query = this.baseJoinUserFavorites(query, favorites, searcherId);
+
     query = query
       .where("approved", true)
-      .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
 
@@ -616,6 +654,12 @@ class ListingsModel extends Model {
       query.whereRaw(...fieldLowerEqualArray(`city`, queryCities));
     }
 
+    if (searchListing) {
+      query.whereRaw(
+        ...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing)
+      );
+    }
+
     if (queryCategories.length > 0) {
       query.where(function () {
         this.whereRaw(
@@ -626,7 +670,15 @@ class ListingsModel extends Model {
         )
           .orWhereRaw(...fieldLowerEqualArray(`c2.name`, queryCategories))
           .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
+
+        if (othersCategories) {
+          this.orWhereNull(`${LISTINGS_TABLE}.category_id`);
+        }
       });
+    } else {
+      if (othersCategories) {
+        query = query.whereNull(`${LISTINGS_TABLE}.category_id`);
+      }
     }
 
     if (userId) {
@@ -636,10 +688,8 @@ class ListingsModel extends Model {
     query = this.baseDistanceFilter(query, distance, lat, lng);
     query = this.basePriceFilter(query, minPrice, maxPrice);
 
-    const { count } = await query
-      .count(`${LISTINGS_TABLE}.id as count`)
-      .first();
-    return count;
+    const result = await query.count(`${LISTINGS_TABLE}.id as count`).first();
+    return +result?.count;
   };
 
   bindOwnerListCountListings = async (
@@ -669,13 +719,14 @@ class ListingsModel extends Model {
   };
 
   getOwnerCountListings = async (userId) => {
-    const { count } = await db(LISTINGS_TABLE)
+    const result = await db(LISTINGS_TABLE)
       .where({ owner_id: userId })
       .where({ active: true })
       .where({ approved: true })
       .count(`${LISTINGS_TABLE}.id as count`)
       .first();
-    return count;
+
+    return +result?.count;
   };
 
   bindTenantListCountListings = async (
@@ -705,11 +756,12 @@ class ListingsModel extends Model {
   };
 
   getTenantCountListings = async (userId) => {
-    const { count } = await db(ORDERS_TABLE)
+    const result = await db(ORDERS_TABLE)
       .where({ tenant_id: userId })
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
       .first();
-    return count;
+
+    return +result?.count;
   };
 
   baseTotalCountWithLastRequestsQuery = (filter, userId = null) => {
@@ -757,8 +809,8 @@ class ListingsModel extends Model {
     query = this.queryByActive(query, active);
     query = this.queryByApproved(query, approved);
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   totalCountWithLastRequestsByStatus = async (
@@ -768,8 +820,8 @@ class ListingsModel extends Model {
   ) => {
     let query = this.baseTotalCountWithLastRequestsQuery(filter, userId);
     query = this.queryByStatus(query, status);
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {
@@ -784,9 +836,13 @@ class ListingsModel extends Model {
       order = "default",
       searchCity = null,
       searchCategory = null,
+      searchListing = null,
       distance = null,
       minPrice = null,
       maxPrice = null,
+      othersCategories = null,
+      favorites = false,
+      searcherId = null,
     } = props;
 
     const fieldLowerEqualArray = this.fieldLowerEqualArray;
@@ -806,9 +862,9 @@ class ListingsModel extends Model {
 
     let query = db(LISTINGS_TABLE).select(selectParams);
     query = this.baseListJoin(query);
+    query = this.baseJoinUserFavorites(query, favorites, searcherId);
     query = query
       .where("approved", true)
-      .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
 
@@ -831,6 +887,12 @@ class ListingsModel extends Model {
       query.whereRaw(...fieldLowerEqualArray(`city`, queryCities));
     }
 
+    if (searchListing) {
+      query.whereRaw(
+        ...this.fieldLowerEqualString(`${LISTINGS_TABLE}.name`, searchListing)
+      );
+    }
+
     if (queryCategories.length > 0) {
       query.where(function () {
         this.whereRaw(
@@ -841,7 +903,15 @@ class ListingsModel extends Model {
         )
           .orWhereRaw(...fieldLowerEqualArray(`c2.name`, queryCategories))
           .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
+
+        if (othersCategories) {
+          this.orWhereNull(`${LISTINGS_TABLE}.category_id`);
+        }
       });
+    } else {
+      if (othersCategories) {
+        query = query.whereNull(`${LISTINGS_TABLE}.category_id`);
+      }
     }
 
     if (props.userId) {
@@ -900,7 +970,7 @@ class ListingsModel extends Model {
       .joinRaw(
         `LEFT JOIN ${ORDERS_TABLE} ON ${LISTINGS_TABLE}.id = ${ORDERS_TABLE}.listing_id AND (${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.FINISHED}' AND ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}' AND (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}'))`
       )
-      .join(
+      .leftJoin(
         LISTING_CATEGORIES_TABLE,
         `${LISTING_CATEGORIES_TABLE}.id`,
         "=",

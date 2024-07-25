@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const { RecipientPaymentController } = require("../../controllers");
-const { isAuth, isAdmin, isVerified } = require("../../middlewares");
+const { isAuth, isAdmin } = require("../../middlewares");
 const {
   listValidation,
   waitingRefundsListValidation,
@@ -13,7 +13,6 @@ module.exports = (io) => {
   router.post(
     "/list",
     isAuth,
-    isVerified,
     listValidation,
     recipientPaymentController.userList
   );
@@ -41,14 +40,9 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/update-failed",
-    isAuth,
-    recipientPaymentController.updateFailed
-  );
-
-  router.post(
     "/failed-recipient-mark-done",
     isAuth,
+    isAdmin,
     recipientPaymentController.markFailedRecipientDone
   );
 

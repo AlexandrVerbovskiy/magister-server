@@ -1,5 +1,5 @@
 const STATIC = require("../static");
-const { generateDatesBetween, checkStartEndHasConflict } = require("../utils");
+const { checkStartEndHasConflict } = require("../utils");
 const Controller = require("./Controller");
 
 class OrderUpdateRequestController extends Controller {
@@ -9,6 +9,21 @@ class OrderUpdateRequestController extends Controller {
       const senderId = req.userData.userId;
 
       const order = await this.orderModel.getFullById(orderId);
+
+      const dateErrorMessage = this.baseListingDatesValidation(
+        newStartDate,
+        newEndDate,
+        order.listingMinRentalDays
+      );
+
+      if (dateErrorMessage) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          dateErrorMessage
+        );
+      }
+
       const { tenantId, ownerId, chatId } = order;
 
       if (tenantId != senderId && ownerId != senderId) {
@@ -27,13 +42,12 @@ class OrderUpdateRequestController extends Controller {
         orderId
       );
 
-      const blockedListingsDates =
-        await this.orderModel.getBlockedListingsDatesForListings(
-          [order.listingId],
-          tenantId == senderId ? senderId : null
+      const blockedOrderDates =
+        await this.orderModel.getBlockedListingsDatesForOrders(
+          [order.id]
         );
 
-      const currentListingBlockedDates = blockedListingsDates[order.listingId];
+      const currentListingBlockedDates = blockedOrderDates[order.id];
 
       if (
         checkStartEndHasConflict(

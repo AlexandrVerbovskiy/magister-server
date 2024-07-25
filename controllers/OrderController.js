@@ -2,12 +2,11 @@ const STATIC = require("../static");
 const {
   getPaypalOrderInfo,
   capturePaypalOrder,
-  sendMoneyToPaypalByPaypalID,
   tenantPaymentCalculate,
   getDaysDifference,
-  isPayedUsedPaypal,
   removeDuplicates,
   checkStartEndHasConflict,
+  isOrderCanBeAccepted,
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
@@ -39,44 +38,66 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.status === STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) {
+      if (order.status === STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) {
         order["payedInfo"] = await this.senderPaymentModel.getInfoByOrderId(
           order.id
         );
       }
 
-      order["extendOrders"] = await this.orderModel.getOrdersExtends([id]);
+      order["extendOrders"] = await this.orderModel.getOrdersExtends([
+        order.orderParentId ?? id,
+      ]);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  baseCreate = async ({
-    pricePerDay,
-    startDate,
-    endDate,
-    listingId,
-    feeActive,
-    tenantId,
-    orderParentId = null,
-  }) => {
+  baseCreate = async (
+    {
+      pricePerDay,
+      startDate,
+      endDate,
+      listingId,
+      feeActive,
+      tenantId,
+      orderParentId = null,
+    },
+    needMinDateVerify = true
+  ) => {
+    let minRentalDays = null;
+
+    if (needMinDateVerify) {
+      const listing = await this.listingModel.getLightById(listingId);
+      minRentalDays = listing.minRentalDays;
+    }
+
+    const dateErrorMessage = this.baseListingDatesValidation(
+      startDate,
+      endDate,
+      minRentalDays
+    );
+
+    if (dateErrorMessage) {
+      return { error: dateErrorMessage, orderId: null };
+    }
+
     const tenantFee =
       await this.systemOptionModel.getTenantBaseCommissionPercent();
     const ownerFee =
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
     const blockedDatesListings =
-      await this.orderModel.getBlockedListingsDatesForListings(
-        [listingId],
-        tenantId
-      );
+      await this.orderModel.getBlockedListingsDatesForListings([listingId]);
 
     const blockedDates = blockedDatesListings[listingId];
 
     if (checkStartEndHasConflict(startDate, endDate, blockedDates)) {
-      throw new Error("The selected date is not available for booking");
+      return {
+        error: "The selected date is not available for booking",
+        orderId: null,
+      };
     }
 
-    return await this.orderModel.create({
+    const orderId = await this.orderModel.create({
       pricePerDay,
       startDate,
       endDate,
@@ -87,6 +108,11 @@ class OrderController extends Controller {
       feeActive,
       orderParentId,
     });
+
+    return {
+      error: null,
+      orderId,
+    };
   };
 
   create = (req, res) =>
@@ -95,7 +121,7 @@ class OrderController extends Controller {
         req.body;
       const tenantId = req.userData.userId;
 
-      const createdOrderId = await this.baseCreate({
+      const result = await this.baseCreate({
         pricePerDay,
         startDate,
         endDate,
@@ -103,6 +129,16 @@ class OrderController extends Controller {
         feeActive,
         tenantId,
       });
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          result.error
+        );
+      }
+
+      const createdOrderId = result.orderId;
 
       const listing = await this.listingModel.getFullById(listingId);
 
@@ -154,17 +190,22 @@ class OrderController extends Controller {
       } = req.body;
       const tenantId = req.userData.userId;
 
-      const prevOrder = await this.orderModel.getLastActive(parentOrderId);
+      const hasUnstartedExtension =
+        await this.orderModel.checkOrderHasUnstartedExtension(parentOrderId);
 
-      if (
-        !prevOrder ||
-        prevOrder.tenantId != tenantId ||
-        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER ||
-        prevOrder.disputeStatus
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      if (hasUnstartedExtension) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.DATA_CONFLICT,
+          "Owner of the item has to confirm your previous request for extension"
+        );
       }
 
+      const prevOrder = await this.orderModel.getLastActive(parentOrderId);
+
+      if (!prevOrder || prevOrder.tenantId != tenantId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
       const prevOrderEndDate = prevOrder.offerEndDate;
 
       const dataToCreate = {
@@ -176,13 +217,27 @@ class OrderController extends Controller {
         tenantId,
       };
 
-      if (getDaysDifference(prevOrderEndDate, startDate) == 2) {
+      let needMinDateVerify = true;
+
+      if (getDaysDifference(prevOrderEndDate, startDate) == 1) {
         dataToCreate["orderParentId"] = prevOrder.orderParentId
           ? prevOrder.orderParentId
           : parentOrderId;
+
+        needMinDateVerify = false;
       }
 
-      const createdOrderId = await this.baseCreate(dataToCreate);
+      const result = await this.baseCreate(dataToCreate, needMinDateVerify);
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          result.error
+        );
+      }
+
+      const createdOrderId = result.orderId;
 
       const listing = await this.listingModel.getFullById(listingId);
 
@@ -226,13 +281,12 @@ class OrderController extends Controller {
     });
 
   baseRequestsList = async (req, totalCountCall, listCall) => {
+    const type = req.body.type == "owner" ? "owner" : "tenant";
+
     const timeInfos = await this.listTimeOption({
       req,
       type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
     });
-    const userId = req.userData.userId;
-
-    const type = req.body.type == "owner" ? "owner" : "tenant";
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       totalCountCall(filter, timeInfos)
@@ -248,36 +302,23 @@ class OrderController extends Controller {
     );
 
     const orderIds = requestsWithImages.map((request) => request.id);
+
     const conflictOrders = await this.orderModel.getConflictOrders(orderIds);
 
     const paymentInfos =
       await this.senderPaymentModel.getInfoAboutOrdersPayments(orderIds);
 
-    const orderListingIds = removeDuplicates(
-      requestsWithImages.map((request) => request.listingId)
-    );
-
-    const tenantId = type == "tenant" ? userId : null;
-
-    const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForListings(
-        orderListingIds,
-        tenantId
-      );
-
     requestsWithImages.forEach((request, index) => {
       const currentOrderConflicts = conflictOrders[request.id];
       requestsWithImages[index]["conflictOrders"] = currentOrderConflicts;
-      requestsWithImages[index]["blockedDates"] =
-        blockedListingsDates[request.listingId];
       requestsWithImages[index]["paymentInfo"] = paymentInfos[request.id];
     });
 
     const orderIdsNeedExtendInfoObj = {};
 
     requestsWithImages.forEach((request) => {
-      if (request.parentId) {
-        orderIdsNeedExtendInfoObj[request.parentId] = true;
+      if (request.orderParentId) {
+        orderIdsNeedExtendInfoObj[request.orderParentId] = true;
       } else {
         orderIdsNeedExtendInfoObj[request.id] = true;
       }
@@ -290,18 +331,16 @@ class OrderController extends Controller {
     );
 
     const extendOrderIds = orderExtends.map((request) => request.id);
+    const extendConflictOrders = await this.orderModel.getConflictOrders(
+      extendOrderIds
+    );
 
     const extendPaymentInfos =
       await this.senderPaymentModel.getInfoAboutOrdersPayments(extendOrderIds);
 
     orderExtends.forEach((request, index) => {
-      const currentOrderConflicts = conflictOrders[request.orderParentId];
-      orderExtends[index]["conflictOrders"] = currentOrderConflicts;
-
-      orderExtends[index]["blockedForRentalDates"] =
-        blockedListingsDates[request.listingId];
-
       orderExtends[index]["paymentInfo"] = extendPaymentInfos[request.id];
+      orderExtends[index]["conflictOrders"] = extendConflictOrders[request.id];
 
       orderExtends[index]["canFastCancelPayed"] =
         this.orderModel.canFastCancelPayedOrder(request);
@@ -419,16 +458,19 @@ class OrderController extends Controller {
     return await this.baseRequestsList(req, totalCountCall, listCall);
   };
 
+  baseOrderList = async (req) => {
+    const isForTenant = req.body.type !== "owner";
+
+    const request = isForTenant
+      ? this.baseTenantOrderList
+      : this.baseListingOwnerOrderList;
+
+    return await request(req);
+  };
+
   orderList = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const isForTenant = req.body.type !== "owner";
-
-      const request = isForTenant
-        ? this.baseTenantOrderList
-        : this.baseListingOwnerOrderList;
-
-      const result = await request(req);
-
+      const result = await this.baseOrderList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
@@ -523,10 +565,10 @@ class OrderController extends Controller {
 
       const conflictOrders = await this.orderModel.getConflictOrders([id]);
 
-      if (conflictOrders[id].length > 0) {
+      if (!isOrderCanBeAccepted(order, conflictOrders[id])) {
         return this.sendErrorResponse(
           res,
-          STATIC.ERRORS.FORBIDDEN,
+          STATIC.ERRORS.DATA_CONFLICT,
           "Order has conflict orders"
         );
       }
@@ -542,7 +584,7 @@ class OrderController extends Controller {
           order.offerStartDate
         );
 
-        if (dateDiff != 2) {
+        if (dateDiff != 1) {
           resetParentId = true;
         }
       }
@@ -562,7 +604,7 @@ class OrderController extends Controller {
         await this.orderModel.acceptOrder(id);
       }
 
-      const newStatus = STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT;
+      const newStatus = STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT;
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -581,84 +623,108 @@ class OrderController extends Controller {
       });
     });
 
+  baseRejectBooking = async (req) => {
+    const { id } = req.body;
+    const userId = req.userData.userId;
+
+    const order = await this.orderModel.getById(id);
+
+    if (!order) {
+      return {
+        error: {
+          status: STATIC.ERRORS.NOT_FOUND,
+        },
+      };
+    }
+
+    if (
+      (order.tenantId != userId && order.ownerId != userId) ||
+      order.disputeStatus
+    ) {
+      return {
+        error: {
+          status: STATIC.ERRORS.FORBIDDEN,
+        },
+      };
+    }
+
+    if (
+      (order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER &&
+        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT &&
+        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) ||
+      order.cancelStatus
+    ) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "Unable to perform an operation for the current order status",
+        },
+      };
+    }
+
+    const lastUpdateRequestInfo =
+      await this.orderUpdateRequestModel.getFullForLastActive(id);
+
+    let newData = {};
+
+    if (lastUpdateRequestInfo) {
+      newData = {
+        newStartDate: lastUpdateRequestInfo.newStartDate,
+        newEndDate: lastUpdateRequestInfo.newEndDate,
+        newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+        prevPricePerDay: order.offerPricePerDay,
+        prevStartDate: order.offerStartDate,
+        prevEndDate: order.offerEndDate,
+      };
+    }
+
+    let newStatus = null;
+    let newCancelStatus = null;
+
+    if (order.tenantId == userId) {
+      await this.orderModel.successCancelled(id, newData);
+      newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
+    } else {
+      await this.orderModel.rejectOrder(id, newData);
+      newCancelStatus = STATIC.ORDER_STATUSES.REJECTED;
+      newStatus = order.status;
+    }
+
+    await this.orderUpdateRequestModel.closeLast(id);
+
+    const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+      chatId: order.chatId,
+      messageData: {},
+      senderId: userId,
+      createMessageFunc: this.chatMessageModel.createRejectedOrderMessage,
+      orderPart: {
+        id: order.id,
+        status: newStatus,
+        cancelStatus: newCancelStatus,
+      },
+    });
+
+    return {
+      chatMessage,
+      status: newStatus,
+      cancelStatus: newCancelStatus,
+    };
+  };
+
   rejectBooking = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { id } = req.body;
-      const userId = req.userData.userId;
+      const result = await this.baseRejectBooking(req);
 
-      const order = await this.orderModel.getById(id);
-
-      if (!order) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      if (
-        (order.tenantId != userId && order.ownerId != userId) ||
-        order.disputeStatus
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
-      if (
-        (order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT &&
-          order.status !== STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) ||
-        order.cancelStatus
-      ) {
+      if (result.error) {
         return this.sendErrorResponse(
           res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "Unable to perform an operation for the current order status"
+          result.error.status,
+          result.error.message ?? null
         );
       }
 
-      const lastUpdateRequestInfo =
-        await this.orderUpdateRequestModel.getFullForLastActive(id);
-
-      let newData = {};
-
-      if (lastUpdateRequestInfo) {
-        newData = {
-          newStartDate: lastUpdateRequestInfo.newStartDate,
-          newEndDate: lastUpdateRequestInfo.newEndDate,
-          newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-          prevPricePerDay: order.offerPricePerDay,
-          prevStartDate: order.offerStartDate,
-          prevEndDate: order.offerEndDate,
-        };
-      }
-
-      let newStatus = null;
-      let newCancelStatus = null;
-
-      if (order.tenantId == userId) {
-        await this.orderModel.successCancelled(id, newData);
-        newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
-      } else {
-        await this.orderModel.rejectOrder(id, newData);
-        newCancelStatus = STATIC.ORDER_STATUSES.REJECTED;
-        newStatus = order.status;
-      }
-
-      await this.orderUpdateRequestModel.closeLast(id);
-
-      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: order.chatId,
-        messageData: {},
-        senderId: userId,
-        createMessageFunc: this.chatMessageModel.createRejectedOrderMessage,
-        orderPart: {
-          id: order.id,
-          status: newStatus,
-          cancelStatus: newCancelStatus,
-        },
-      });
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        chatMessage,
-        status: newStatus,
-        cancelStatus: newCancelStatus,
-      });
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   delete = (req, res) =>
@@ -687,7 +753,11 @@ class OrderController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.tenantId != userId || order.disputeStatus) {
+      if (
+        order.tenantId != userId ||
+        order.disputeStatus ||
+        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+      ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -735,21 +805,21 @@ class OrderController extends Controller {
         senderId: userId,
         createMessageFunc: this.chatMessageModel.createTenantPayedOrderMessage,
         orderPart: {
-          status: newStatus,
           id: orderId,
+          status: newStatus,
         },
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         orderPart: {
-          status: newStatus,
           id: orderId,
+          status: newStatus,
         },
       });
     });
 
-  unpaidTransactionByCreditCard = async (req, res) => {
+  unpaidTransactionByBankTransfer = async (req, res) => {
     const { userId } = req.userData;
     const { orderId } = req.body;
 
@@ -770,7 +840,7 @@ class OrderController extends Controller {
 
     let type = "created";
     let transactionId = null;
-    const paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
+    let paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
       orderId
     );
 
@@ -789,6 +859,22 @@ class OrderController extends Controller {
         orderId,
         proofUrl,
       });
+
+      paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
+        orderId
+      );
+
+      await this.createAndSendMessageForUpdatedOrder({
+        chatId: order.chatId,
+        messageData: {},
+        senderId: userId,
+        createMessageFunc:
+          this.chatMessageModel.createTenantPayedWaitingOrderMessage,
+        orderPart: {
+          id: orderId,
+          paymentInfo,
+        },
+      });
     }
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -797,7 +883,7 @@ class OrderController extends Controller {
     });
   };
 
-  approveClientGotListing = (req, res) =>
+  approveTenantGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { token, defectDescription } = req.body;
       const { userId } = req.userData;
@@ -807,7 +893,7 @@ class OrderController extends Controller {
       );
 
       if (
-        orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT ||
+        orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT ||
         orderInfo.cancelStatus
       ) {
         return this.sendErrorResponse(
@@ -851,7 +937,7 @@ class OrderController extends Controller {
         messageData: {},
         senderId: userId,
         createMessageFunc:
-          this.chatMessageModel.createPendedToClientOrderMessage,
+          this.chatMessageModel.createPendedToTenantOrderMessage,
         orderPart: {
           id: orderInfo.id,
           status: newStatus,
@@ -860,7 +946,7 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        orderPart: { status: newStatus, id: orderInfo.id },
+        orderPart: { id: orderInfo.id, status: newStatus },
         qrCode: generatedImage,
       });
     });
@@ -879,7 +965,7 @@ class OrderController extends Controller {
     const orderInfo = await this.orderModel.getFullById(id);
 
     if (!orderInfo) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      return { error: { status: STATIC.ERRORS.NOT_FOUND } };
     }
 
     const isOwner = userType === "owner";
@@ -889,26 +975,45 @@ class OrderController extends Controller {
     const isCancelByOwner = isOwner && orderInfo.ownerId === userId;
 
     if ((!isCancelByTenant && !isCancelByOwner) || orderInfo.disputeStatus) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      return { error: { status: STATIC.ERRORS.FORBIDDEN } };
     }
 
     if (orderInfo.cancelStatus != null) {
-      return this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
-      );
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled",
+        },
+      };
     }
 
     if (!availableStatusesToCancel.includes(orderInfo.status)) {
-      return this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "You cannot cancel an order with its current status"
-      );
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message: "You cannot cancel an order with its current status",
+        },
+      };
     }
 
-    const cancelStatus = await cancelFunc(id, orderInfo);
+    const lastUpdateRequestInfo =
+      await this.orderUpdateRequestModel.getFullForLastActive(id);
+
+    let newData = {};
+
+    if (lastUpdateRequestInfo) {
+      newData = {
+        newStartDate: lastUpdateRequestInfo.newStartDate,
+        newEndDate: lastUpdateRequestInfo.newEndDate,
+        newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
+        prevPricePerDay: orderInfo.offerPricePerDay,
+        prevStartDate: orderInfo.offerStartDate,
+        prevEndDate: orderInfo.offerEndDate,
+      };
+    }
+
+    const cancelStatus = await cancelFunc(id, newData);
 
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
       chatId: orderInfo.chatId,
@@ -921,67 +1026,98 @@ class OrderController extends Controller {
       },
     });
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+    return {
       chatMessage,
       orderPart: { cancelStatus, id: orderInfo.id },
-    });
+    };
   };
 
-  acceptCancelOrder = async (req, res, userId, userType) => {
-    const { id } = req.body;
+  baseFullCancelPayed = async (req) => {
+    const { userId } = req.userData;
+    const { id, receiptType, paypalId = null, cardNumber = null } = req.body;
 
-    const orderInfo = await this.orderModel.getFullById(id);
+    const orderInfo = await this.orderModel.getById(id);
 
     if (!orderInfo) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      return { error: { status: STATIC.ERRORS.NOT_FOUND } };
     }
 
-    if (
-      (userType === "tenant" &&
-        orderInfo.cancelStatus !=
-          STATIC.ORDER_CANCELATION_STATUSES.WAITING_TENANT_APPROVE) ||
-      orderInfo.disputeStatus
-    ) {
-      return this.sendErrorResponse(
-        res,
-        STATIC.ERRORS.DATA_CONFLICT,
-        "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
-      );
+    const {
+      tenantId,
+      status,
+      cancelStatus,
+      offerStartDate,
+      offerEndDate,
+      tenantFee,
+      offerPricePerDay,
+    } = orderInfo;
+
+    if (tenantId != userId || orderInfo.disputeStatus) {
+      return { error: { status: STATIC.ERRORS.FORBIDDEN } };
     }
 
-    const isOwner = userType === "owner";
-    const isTenant = userType === "tenant";
-
-    const isAcceptCancelByTenant = isTenant && orderInfo.tenantId === userId;
-    const isAcceptCancelByOwner = isOwner && orderInfo.ownerId === userId;
-
-    if (!isAcceptCancelByTenant && !isAcceptCancelByOwner) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    if (cancelStatus != null) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled",
+        },
+      };
     }
 
-    /*const tenantInfo = await this.userModel.getById(orderInfo.tenantId);
+    if (status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message: "You cannot cancel an order with the current order status",
+        },
+      };
+    }
 
-    await sendMoneyToPaypalByPaypalID(
-      tenantInfo.paypalId,
-      tenantPaymentCalculate(
-        orderInfo.offerStartDate,
-        orderInfo.offerEndDate,
-        orderInfo.tenantFee,
-        orderInfo.offerPricePerDay
-      )
+    const canFastCancelPayed =
+      this.orderModel.canFastCancelPayedOrder(orderInfo);
+
+    if (!canFastCancelPayed) {
+      return {
+        error: {
+          status: STATIC.ERRORS.DATA_CONFLICT,
+          message:
+            "You can no longer cancel the reservation because the available time has passed",
+        },
+      };
+    }
+
+    const factTotalPrice = tenantPaymentCalculate(
+      offerStartDate,
+      offerEndDate,
+      tenantFee,
+      offerPricePerDay
     );
 
-    const unfinishedPAymentsSum =
-      await this.recipientPaymentModel.markRentalAsCancelledByOrderId(id);
+    const tenantCancelFeePercent =
+      await this.systemOptionModel.getTenantCancelCommissionPercent();
 
-    if (unfinishedPAymentsSum > 0) {
-      await this.recipientPaymentModel.createRefundPayment({
-        money: unfinishedPAymentsSum,
-        userId: orderInfo.tenantId,
-        orderId: id,
-        data: {paypalId: tenantInfo.paypalId},
-      });
-    }*/
+    const factTotalPriceWithoutCommission =
+      (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
+
+    const refundData = {
+      money: factTotalPriceWithoutCommission,
+      userId: userId,
+      orderId: id,
+      type: receiptType,
+      status: STATIC.RECIPIENT_STATUSES.WAITING,
+    };
+
+    if (receiptType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
+      refundData["data"] = { cardNumber: cardNumber };
+    }
+
+    if (receiptType == STATIC.PAYMENT_TYPES.PAYPAL) {
+      refundData["data"] = { paypalId: paypalId };
+    }
+
+    await this.recipientPaymentModel.createRefundPayment(refundData);
 
     const newCancelStatus = await this.orderModel.successCancelled(id);
 
@@ -996,201 +1132,53 @@ class OrderController extends Controller {
       },
     });
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+    return {
       chatMessage,
       orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
-    });
+    };
   };
-
-  cancelByTenant = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      return this.baseCancelOrder({
-        req,
-        res,
-        userId,
-        userType: "tenant",
-        availableStatusesToCancel: [
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-        ],
-        cancelFunc: this.orderModel.startCancelByTenant,
-        createMessageFunc:
-          this.chatMessageModel.createCancelOrderRequestMessage,
-      });
-    });
-
-  cancelByOwner = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-
-      return this.baseCancelOrder({
-        req,
-        res,
-        userId,
-        userType: "owner",
-        availableStatusesToCancel: [
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT,
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-        ],
-        cancelFunc: this.orderModel.startCancelByOwner,
-        createMessageFunc:
-          this.chatMessageModel.createCancelOrderRequestMessage,
-      });
-    });
-
-  acceptCancelByTenant = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      return this.acceptCancelOrder(req, res, userId, "tenant");
-    });
-
-  acceptCancelByOwner = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      return this.acceptCancelOrder(req, res, userId, "owner");
-    });
 
   fullCancelPayed = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const { id, type, paypalId = null, cardNumber = null } = req.body;
+      const result = await this.baseFullCancelPayed(req);
 
-      const orderInfo = await this.orderModel.getById(id);
-
-      if (!orderInfo) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const {
-        tenantId,
-        status,
-        cancelStatus,
-        offerStartDate,
-        offerEndDate,
-        tenantFee,
-        offerPricePerDay,
-      } = orderInfo;
-
-      if (tenantId != userId || orderInfo.disputeStatus) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
-      if (cancelStatus != null) {
-        return this.sendErrorResponse(
+      if (result.error) {
+        this.sendErrorResponse(
           res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled"
+          result.error.status,
+          result.error.message ?? null
         );
       }
 
-      if (status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_CLIENT) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You cannot cancel an order with the current order status"
-        );
-      }
-
-      const canFastCancelPayed =
-        this.orderModel.canFastCancelPayedOrder(orderInfo);
-
-      if (!canFastCancelPayed) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.DATA_CONFLICT,
-          "You can no longer cancel the reservation because the available time has passed"
-        );
-      }
-
-      const factTotalPrice = tenantPaymentCalculate(
-        offerStartDate,
-        offerEndDate,
-        tenantFee,
-        offerPricePerDay
-      );
-
-      const tenantCancelFeePercent =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
-
-      const factTotalPriceWithoutCommission =
-        (factTotalPrice * (100 - tenantCancelFeePercent)) / 100;
-
-      if (isPayedUsedPaypal(type)) {
-        try {
-          await sendMoneyToPaypalByPaypalID(
-            paypalId,
-            factTotalPriceWithoutCommission
-          );
-
-          await this.recipientPaymentModel.createRefundPayment({
-            money: factTotalPriceWithoutCommission,
-            userId: userId,
-            orderId: id,
-            type: STATIC.PAYMENT_TYPES.PAYPAL,
-            data: { paypalId: paypalId },
-            status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-          });
-        } catch (e) {
-          await this.recipientPaymentModel.createRefundPayment({
-            money: factTotalPriceWithoutCommission,
-            userId: userId,
-            orderId: id,
-            type: STATIC.PAYMENT_TYPES.PAYPAL,
-            data: { paypalId: paypalId },
-            status: STATIC.RECIPIENT_STATUSES.FAILED,
-            failedDescription: e.message,
-          });
-        }
-      }
-
-      if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
-        await this.recipientPaymentModel.createRefundPayment({
-          money: factTotalPriceWithoutCommission,
-          userId: userId,
-          orderId: id,
-          type: STATIC.PAYMENT_TYPES.BANK_TRANSFER,
-          data: { cardNumber: cardNumber },
-          status: STATIC.RECIPIENT_STATUSES.WAITING,
-        });
-      }
-
-      const newCancelStatus = await this.orderModel.successCancelled(id);
-
-      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: orderInfo.chatId,
-        messageData: {},
-        senderId: userId,
-        createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
-        orderPart: {
-          id: orderInfo.id,
-          cancelStatus: newCancelStatus,
-        },
-      });
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        chatMessage,
-        orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
-      });
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   fullCancel = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
 
-      return this.baseCancelOrder({
+      const result = await this.baseCancelOrder({
         req,
         res,
         userId,
         userType: "tenant",
         availableStatusesToCancel: [
           STATIC.ORDER_STATUSES.PENDING_OWNER,
-          STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT,
+          STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
         ],
         cancelFunc: this.orderModel.successCancelled,
         createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
       });
+
+      if (result.error) {
+        return this.sendErrorResponse(
+          res,
+          result.error.status,
+          result.error.message ?? null
+        );
+      }
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   finishedByOwner = (req, res) =>
@@ -1273,21 +1261,18 @@ class OrderController extends Controller {
     });
 
   wrapOrderFullInfo = async (order, userId) => {
-    const resGetConflictOrders = await this.orderModel.getConflictOrders([
-      order.id,
-    ]);
+    const canViewFullInfo = order.ownerId === userId;
+
+    const resGetConflictOrders = await this.orderModel.getConflictOrders(
+      [order.id],
+      canViewFullInfo
+    );
 
     const conflictOrders = resGetConflictOrders[order.id];
-    const tenantId = order.tenantId == userId ? userId : null;
 
-    const blockedListingsDates =
-      await this.orderModel.getBlockedListingsDatesForListings(
-        [order.listingId],
-        tenantId
-      );
-
-    order["blockedDates"] = blockedListingsDates[order.listingId];
-    order["extendOrders"] = await this.orderModel.getOrdersExtends([order.id]);
+    order["extendOrders"] = await this.orderModel.getOrdersExtends([
+      order.orderParentId ?? order.id,
+    ]);
 
     if (userId != order.tenantId) {
       order["conflictOrders"] = conflictOrders;

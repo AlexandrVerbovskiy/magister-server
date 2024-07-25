@@ -208,10 +208,18 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createPendedToClientOrderMessage = async ({ chatId, senderId }) => {
+  createTenantPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.PENDED_TO_CLIENT,
+      type: STATIC.MESSAGE_TYPES.TENANT_PAYED_WAITING,
+      senderId,
+    });
+  };
+
+  createPendedToTenantOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.PENDED_TO_TENANT,
       senderId,
     });
   };
@@ -278,36 +286,76 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createUserReviewMessage = async ({
+  createOwnerReviewMessage = async ({
     chatId,
     senderId,
     data: {
-      quality,
-      listingAccuracy,
-      utility,
-      condition,
-      performance,
-      location,
       leaveFeedback,
       description,
-      type,
+      itemDescriptionAccuracy,
+      photoAccuracy,
+      pickupCondition,
+      cleanliness,
+      responsiveness,
+      clarity,
+      schedulingFlexibility,
+      issueResolution,
     },
   }) => {
     return await this.create({
       chatId,
-      type: STATIC.MESSAGE_TYPES.USER_REVIEW,
+      type: STATIC.MESSAGE_TYPES.OWNER_REVIEW,
       isAdminSender: false,
       senderId,
       content: {
-        quality,
-        listingAccuracy,
-        utility,
-        condition,
-        performance,
-        location,
+        itemDescriptionAccuracy,
+        photoAccuracy,
+        pickupCondition,
+        cleanliness,
+        responsiveness,
+        clarity,
+        schedulingFlexibility,
+        issueResolution,
         leaveFeedback,
         description,
-        type,
+      },
+    });
+  };
+
+  createTenantReviewMessage = async ({
+    chatId,
+    senderId,
+    data: {
+      leaveFeedback,
+      description,
+      care,
+      timeliness,
+      responsiveness,
+      clarity,
+      usageGuidelines,
+      termsOfService,
+      honesty,
+      reliability,
+      satisfaction,
+    },
+  }) => {
+    return await this.create({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.TENANT_REVIEW,
+      isAdminSender: false,
+      senderId,
+      content: {
+        care,
+        timeliness,
+        responsiveness,
+        clarity,
+        usageGuidelines,
+        termsOfService,
+        honesty,
+        reliability,
+        satisfaction,
+        leaveFeedback,
+        description,
       },
     });
   };

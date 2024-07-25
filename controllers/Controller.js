@@ -7,6 +7,11 @@ const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
 
+const twilioClient = require("twilio")(
+  process.env.TWILIO_SID,
+  process.env.TWILIO_AUTH
+);
+
 const {
   timeConverter,
   getDateByCurrentAdd,
@@ -15,11 +20,12 @@ const {
   clientServerHoursDifference,
   shortTimeConverter,
   tenantPaymentCalculate,
-  getDaysDifference,
   getStartAndEndOfLastWeek,
   getStartAndEndOfLastMonth,
   getStartAndEndOfLastYear,
   getStartAndEndOfYesterday,
+  removeDuplicates,
+  getFactOrderDays,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -333,7 +339,7 @@ class Controller {
 
   sendListingVerifiedMail = async (email, name, id) => {
     const title = "Asset Registration Approved";
-    const link = CLIENT_URL + "/listing/" + id;
+    const link = CLIENT_URL + "/listings/" + id;
 
     await this.sendMail(email, title, "listingVerified", {
       link,
@@ -417,23 +423,13 @@ class Controller {
   };
 
   sendToPhoneMessage = async (phone, text) => {
-    const data = {
-      recipients: [phone],
-      sms: {
-        sender: process.env.TURBOSMS_SENDER,
-        text,
-      },
-    };
-
-    const url = `https://api.turbosms.ua/message/send.json?token=${process.env.TURBOSMS_TOKEN}`;
-
-    const res = await axios.post(url, data, {
-      headers: {
-        "Content-Type": "application/json",
-      },
+    const message = await twilioClient.messages.create({
+      body: text,
+      to: `+${phone}`,
+      from: process.env.TWILIO_PHONE,
     });
 
-    return res.data.response_result;
+    return message.sid;
   };
 
   sendToPhoneVerifyCodeMessage = async (phone, code) => {
@@ -710,7 +706,7 @@ class Controller {
     );
 
     const offerSubTotalPrice =
-      getDaysDifference(offerStartDate, offerEndDate) * offerPricePerDay;
+      getFactOrderDays(offerStartDate, offerEndDate) * offerPricePerDay;
 
     const factTotalFee = (offerSubTotalPrice * payment.tenantFee) / 100;
 
@@ -810,6 +806,42 @@ class Controller {
     );
 
     return { chatMessage: message };
+  };
+
+  onCreateCategory = async (categoryName, categoryId) => {
+    const notificationInfos =
+      await this.listingCategoryCreateNotificationModel.getForCategoryName(
+        categoryName
+      );
+
+    await this.searchedWordModel.setCategoryByName(categoryName, categoryId);
+
+    const successSentIds = notificationInfos.map((info) => info.id);
+    const toSentMessageEmails = removeDuplicates(
+      notificationInfos.map((info) => info.userEmail)
+    );
+
+    toSentMessageEmails.forEach((email) =>
+      this.sendCreatedListingCategory(email, categoryName)
+    );
+
+    await this.listingCategoryCreateNotificationModel.markAsSent(
+      successSentIds
+    );
+  };
+
+  baseListingDatesValidation = (startDate, endDate, minRentalDays) => {
+    if (
+      getFactOrderDays(startDate, endDate) > STATIC.LIMITS.MAX_RENTAL_DURATION
+    ) {
+      return `You can't rent a listing more than ${STATIC.LIMITS.MAX_RENTAL_DURATION} days`;
+    }
+
+    if (minRentalDays && getFactOrderDays(startDate, endDate) < minRentalDays) {
+      return `You can rent ads only for a period of more than ${minRentalDays} days`;
+    }
+
+    return null;
   };
 }
 

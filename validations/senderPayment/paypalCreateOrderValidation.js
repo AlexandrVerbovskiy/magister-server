@@ -1,3 +1,3 @@
-const { validateFloat } = require("../base");
+const { validateIntegerBody} = require("../base");
 
-module.exports = [...validateFloat({ field: "amount", fieldName: "Amount" })];
+module.exports = [...validateIntegerBody({ field: "orderId", fieldName: "Order Id" })];

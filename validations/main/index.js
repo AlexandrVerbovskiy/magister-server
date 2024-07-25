@@ -6,6 +6,7 @@ module.exports = {
   adminUserEventLogListOptionsValidation: require("./adminUserEventLogListOptionsValidation"),
   adminUserVerifyRequestListOptionsValidation: require("./adminUserVerifyRequestListOptionsValidation"),
   adminSearchedWordListOptionsValidation: require("./adminSearchedWordListOptionsValidation"),
+  adminOthersListingCategoriesOptionsValidation: require("./adminOthersListingCategoriesOptionsValidation"),
   userListingListOptionsValidation: require("./userListingListOptionsValidation"),
   adminListingListOptionsValidation: require("./adminListingListOptionsValidation"),
   listingListOptionsValidation: require("./listingListOptionsValidation"),
@@ -24,7 +25,5 @@ module.exports = {
   adminIndexPageOptionsValidation: require("./adminIndexPageOptionsValidation"),
   adminCommentListOptionsValidation: require("./adminCommentListOptionsValidation"),
   adminDisputeListOptionsValidation: require("./adminDisputeListOptionsValidation"),
-  createUserCommentValidation: require("./createUserCommentValidation"),
-  createOwnerCommentValidation: require("./createOwnerCommentValidation"),
   chatOptionsValidation: require("./chatOptionsValidation"),
 };

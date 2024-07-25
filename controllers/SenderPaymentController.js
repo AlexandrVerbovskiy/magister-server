@@ -1,22 +1,29 @@
 const STATIC = require("../static");
-const { createPaypalOrder } = require("../utils");
+const { createPaypalOrder, tenantPaymentCalculate } = require("../utils");
 
 const Controller = require("./Controller");
 
 class SenderPaymentController extends Controller {
   paypalCreateOrder = async (req, res) =>
     this.baseWrapper(res, res, async () => {
-      const { amount, orderId } = req.body;
+      const { orderId } = req.body;
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.status !== STATIC.ORDER_STATUSES.PENDING_CLIENT_PAYMENT) {
+      if (order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
           "Unable to perform an operation for the current order status"
         );
       }
+
+      const amount = tenantPaymentCalculate(
+        order.offerStartDate,
+        order.offerEndDate,
+        order.tenantFee,
+        order.offerPricePerDay
+      );
 
       const result = await createPaypalOrder(
         amount,
@@ -167,7 +174,7 @@ class SenderPaymentController extends Controller {
 
       let newStatus = null;
 
-      if (order.parentId) {
+      if (order.orderParentId) {
         newStatus = await this.orderModel.orderTenantGotListing(orderId, {
           token: ownerToken,
           qrCode: generatedImage,
@@ -194,22 +201,22 @@ class SenderPaymentController extends Controller {
         await this.sendSocketMessageToUserOpponent(
           chatId,
           order.ownerId,
-          "get-message",
+          "update-order-message",
           {
             message,
             opponent: tenant,
-            orderPart: { status: newStatus },
+            orderPart: { id: orderId, status: newStatus },
           }
         );
 
         await this.sendSocketMessageToUserOpponent(
           chatId,
           order.tenantId,
-          "get-message",
+          "update-order-message",
           {
             message,
             opponent: owner,
-            orderPart: { status: newStatus },
+            orderPart: { id: orderId, status: newStatus },
           }
         );
       }
@@ -220,7 +227,18 @@ class SenderPaymentController extends Controller {
   rejectTransaction = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { orderId, description } = req.body;
+      const order = await this.orderModel.getById(orderId);
+      const chatId = order.chatId;
+
       await this.senderPaymentModel.rejectTransaction(orderId, description);
+
+      const paymentInfo =
+        await this.senderPaymentModel.getInfoAboutOrderPayment(orderId);
+
+      await this.sendSocketMessageToChatUsers(chatId, "update-order", {
+        orderPart: { id: orderId, paymentInfo },
+      });
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }

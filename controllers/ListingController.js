@@ -48,6 +48,9 @@ class ListingController extends Controller {
     const maxPrice = req.body.maxPrice ?? null;
     const lat = req.body.lat ?? null;
     const lng = req.body.lng ?? null;
+    const othersCategories = req.body.othersCategories ?? false;
+    const sessionUserId = req.userData?.userId;
+    const favorites = sessionUserId ? !!req.body.favorites : false;
 
     const timeInfos = await this.listTimeOption({
       req,
@@ -55,6 +58,7 @@ class ListingController extends Controller {
     });
     const searchCity = req.body.searchCity ?? null;
     const searchCategory = req.body.searchCategory ?? null;
+    const searchListing = req.body.searchListing ?? null;
 
     let { options, countItems } = await this.baseList(req, () =>
       this.listingModel.totalCount({
@@ -69,11 +73,16 @@ class ListingController extends Controller {
         maxPrice,
         lat,
         lng,
+        othersCategories,
+        searchListing,
+        favorites,
+        searcherId: sessionUserId,
       })
     );
 
     options["searchCity"] = searchCity;
     options["searchCategory"] = searchCategory;
+    options["searchListing"] = searchListing;
 
     options = this.addTimeInfoToOptions(options, timeInfos);
 
@@ -86,6 +95,7 @@ class ListingController extends Controller {
       distance,
       minPrice,
       maxPrice,
+      othersCategories,
     };
   };
 
@@ -99,9 +109,10 @@ class ListingController extends Controller {
       distance,
       minPrice,
       maxPrice,
+      othersCategories,
     } = await this.baseCountListings(req, userId);
 
-    const sessionUserId = req.userData.userId;
+    const sessionUserId = req.userData?.userId;
 
     options["userId"] = userId;
     options["cities"] = cities;
@@ -109,15 +120,21 @@ class ListingController extends Controller {
     options["distance"] = distance;
     options["minPrice"] = minPrice;
     options["maxPrice"] = maxPrice;
+    options["othersCategories"] = othersCategories;
 
     options["searchCity"] = req.body.searchCity ?? null;
     options["searchCategory"] = req.body.searchCategory ?? null;
+    options["searchListing"] = req.body.searchListing ?? null;
+    options["favorites"] = sessionUserId ? !!req.body.favorites : false;
 
     options = this.addTimeInfoToOptions(options, timeInfos);
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
-    let listings = await this.listingModel.list(options);
+    let listings = await this.listingModel.list({
+      ...options,
+      searcherId: sessionUserId,
+    });
 
     listings = await this.listingModel.listingsBindImages(listings);
 
@@ -267,38 +284,6 @@ class ListingController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  getShortById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-      const listing = await this.listingModel.getById(id);
-
-      if (!listing) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.NOT_FOUND,
-          "Listing wasn't found"
-        );
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, listing);
-    });
-
-  getFullById = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id } = req.params;
-      const listing = await this.listingModel.getFullById(id);
-
-      if (!listing) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.NOT_FOUND,
-          "Listing wasn't found"
-        );
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, listing);
-    });
-
   localGetFiles = (req) => {
     const listingImages = JSON.parse(req.body["listingImages"] ?? "[]");
 
@@ -344,8 +329,9 @@ class ListingController extends Controller {
 
     dataToSave["listingImages"] = this.localGetFiles(req);
 
-    const { listingId, listingImages } =
-      await this.listingModel.create(dataToSave);
+    const { listingId, listingImages } = await this.listingModel.create(
+      dataToSave
+    );
 
     dataToSave["userVerified"] = true;
 
@@ -490,8 +476,6 @@ class ListingController extends Controller {
         );
       }
 
-      const listing = await this.listingModel.getById(listingId);
-
       const result = await this.baseUpdate(req, res, false, true);
 
       this.saveUserAction(
@@ -557,24 +541,6 @@ class ListingController extends Controller {
 
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
   };
-
-  delete = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const forbidden = await this.checkForbidden(req);
-      if (forbidden) return forbidden;
-
-      const { id } = req.body;
-      const listing = await this.listingModel.getById(id);
-
-      const result = await this.baseDelete(req, res);
-
-      this.saveUserAction(
-        req,
-        `User delete a listing with name '${listing.name}'`
-      );
-
-      return result;
-    });
 
   baseChangeActive = async (req, res, changeActiveCall) => {
     const { id } = req.body;

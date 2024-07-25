@@ -37,8 +37,8 @@ class LogModel extends Model {
   totalCount = async (filter, timeInfos) => {
     let query = db(LOGS_TABLE).whereRaw(...this.baseStrFilter(filter));
     query = this.baseListTimeFilter(timeInfos, query);
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {

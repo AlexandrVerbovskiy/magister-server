@@ -15,7 +15,7 @@ class BaseCommentModel extends Model {
 
   reject = async (commentId, description) => {
     await db(this.table).where({ id: commentId }).update({
-      approved: true,
+      approved: false,
       waiting_admin: false,
       rejected_description: description,
     });
@@ -130,6 +130,16 @@ class BaseCommentModel extends Model {
     });
 
     return entities;
+  };
+
+  bindAverageForKeyEntity = async (entity, entityKey = "id", keyFieldNames) => {
+    const result = await this.bindAverageForKeyEntities(
+      [entity],
+      entityKey,
+      keyFieldNames
+    );
+
+    return result[0];
   };
 
   checkOrderHasComment = async (orderId) => {

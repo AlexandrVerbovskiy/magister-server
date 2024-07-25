@@ -15,10 +15,10 @@ const {
   idBodyValidation,
   createValidation,
   listValidation,
-  approveClientGotListingValidation,
+  approveTenantGotListingValidation,
   paypalOrderPayedValidation,
   finishOrderByOwnerValidation,
-  creditCardUnpaidTransactionValidation,
+  bankTransferUnpaidTransactionValidation,
   extendValidation,
 } = require("../../validations/order");
 const { validateIdParam } = require("../../validations/base");
@@ -26,34 +26,22 @@ const { validateIdParam } = require("../../validations/base");
 module.exports = (io) => {
   const orderController = new OrderController(io);
 
-  router.post(
-    "/create",
-    isAuth,
-    isVerified,
-    createValidation,
-    orderController.create
-  );
+  router.post("/create", isAuth, createValidation, orderController.create);
 
-  router.post(
-    "/extend",
-    isAuth,
-    isVerified,
-    extendValidation,
-    orderController.extend
-  );
+  router.post("/extend", isAuth, extendValidation, orderController.extend);
 
   router.get(
     "/get-full-by-id/:id",
     isAuth,
-    isVerified,
     idParamValidation,
     orderController.getFullById
   );
 
+  router.post("/order-list", isAuth, listValidation, orderController.orderList);
+
   router.post(
     "/accept-booking",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.acceptBooking
   );
@@ -61,18 +49,8 @@ module.exports = (io) => {
   router.post(
     "/reject-booking",
     isAuth,
-    isVerified,
-    isVerified,
     idBodyValidation,
     orderController.rejectBooking
-  );
-
-  router.post(
-    "/order-list",
-    isAuth,
-    isVerified,
-    listValidation,
-    orderController.orderList
   );
 
   router.post(
@@ -105,62 +83,27 @@ module.exports = (io) => {
     isFileLimit,
     isAuth,
     isVerified,
-    creditCardUnpaidTransactionValidation,
-    orderController.unpaidTransactionByCreditCard
+    bankTransferUnpaidTransactionValidation,
+    orderController.unpaidTransactionByBankTransfer
   );
 
   router.post(
     "/approve-client-got-listing",
     isAuth,
-    isVerified,
-    approveClientGotListingValidation,
-    orderController.approveClientGotListing
-  );
-
-  router.post(
-    "/cancel-by-tenant",
-    isAuth,
-    isVerified,
-    idBodyValidation,
-    orderController.cancelByTenant
-  );
-
-  router.post(
-    "/cancel-by-owner",
-    isAuth,
-    isVerified,
-    idBodyValidation,
-    orderController.cancelByOwner
+    approveTenantGotListingValidation,
+    orderController.approveTenantGotListing
   );
 
   router.post(
     "/finished-by-owner",
     isAuth,
-    isVerified,
     finishOrderByOwnerValidation,
     orderController.finishedByOwner
   );
 
   router.post(
-    "/accept-cancel-by-tenant",
-    isAuth,
-    isVerified,
-    idBodyValidation,
-    orderController.acceptCancelByTenant
-  );
-
-  router.post(
-    "/accept-cancel-by-owner",
-    isAuth,
-    isVerified,
-    idBodyValidation,
-    orderController.acceptCancelByOwner
-  );
-
-  router.post(
     "/full-cancel-payed",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.fullCancelPayed
   );
@@ -168,7 +111,6 @@ module.exports = (io) => {
   router.post(
     "/full-cancel",
     isAuth,
-    isVerified,
     idBodyValidation,
     orderController.fullCancel
   );

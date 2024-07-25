@@ -314,10 +314,22 @@ class ChatController extends Controller {
       entity = await this.disputeModel.getById(chat.entityId);
       entity["type"] = STATIC.CHAT_TYPES.DISPUTE;
     } else {
-      entity = await this.orderModel.getFullByIdeWithDisputeChat(
+      entity = await this.orderModel.getFullByIdWithDisputeChat(
         chat.entityId,
         userId
       );
+
+      entity["canFastCancelPayed"] =
+        this.orderModel.canFastCancelPayedOrder(entity);
+
+      const canViewFullInfo = entity.ownerId === userId;
+
+      const resGetConflictOrders = await this.orderModel.getConflictOrders(
+        [entity.id],
+        canViewFullInfo
+      );
+
+      entity["conflictOrders"] = resGetConflictOrders[entity.id];
 
       entity["childrenList"] = await this.orderModel.getChildrenList(
         chat.entityId
@@ -331,6 +343,9 @@ class ChatController extends Controller {
 
       entity = await this.orderController.wrapOrderFullInfo(entity, userId);
       entity["type"] = STATIC.CHAT_TYPES.ORDER;
+
+      entity["paymentInfo"] =
+        await this.senderPaymentModel.getInfoAboutOrderPayment(chat.entityId);
     }
 
     return { entity, dopEntityInfo };

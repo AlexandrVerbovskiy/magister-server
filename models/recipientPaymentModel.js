@@ -3,10 +3,9 @@ const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
 const {
-  getDaysDifference,
-  listingListDateConverter,
   separateDate,
   formatDateToSQLFormat,
+  getFactOrderDays,
 } = require("../utils");
 
 const RECIPIENT_PAYMENTS_TABLE = STATIC.TABLES.RECIPIENT_PAYMENTS;
@@ -273,8 +272,8 @@ class RecipientPayment extends Model {
       query = this.baseListTypeSelect(query, type);
     }
 
-    const { count } = await query.count("* as count").first();
-    return count;
+    const result = await query.count("* as count").first();
+    return +result?.count;
   };
 
   list = async (props) => {
@@ -316,7 +315,7 @@ class RecipientPayment extends Model {
     orderId,
     fee,
   }) => {
-    const dateDuration = getDaysDifference(startDate, endDate);
+    const dateDuration = getFactOrderDays(startDate, endDate);
 
     const paymentDays = {};
 
@@ -332,7 +331,7 @@ class RecipientPayment extends Model {
         const lastDay = new Date(year, month + 1, 0);
         const dateDuration =
           iteration === 0
-            ? getDaysDifference(startDate, lastDay)
+            ? getFactOrderDays(startDate, lastDay)
             : lastDay.getDate();
 
         const paymentDate = separateDate(lastDay);
@@ -400,6 +399,7 @@ class RecipientPayment extends Model {
         `${RECIPIENT_PAYMENTS_TABLE}.id`,
         `${RECIPIENT_PAYMENTS_TABLE}.money`,
         `${RECIPIENT_PAYMENTS_TABLE}.data`,
+        `${USERS_TABLE}.paypal_id as paypalId`,
       ]);
 
     return res;
@@ -494,10 +494,12 @@ class RecipientPayment extends Model {
   };
 
   markFailedAsDone = async (id, paymentNumber) => {
-    await db(RECIPIENT_PAYMENTS_TABLE).update({
-      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-      data: JSON.stringify({ paypalId: paymentNumber }),
-    });
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where({ id: id, status: STATIC.RECIPIENT_STATUSES.FAILED })
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+        data: JSON.stringify({ paypalId: paymentNumber }),
+      });
   };
 
   getById = async (id) => {

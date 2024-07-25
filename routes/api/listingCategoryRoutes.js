@@ -8,7 +8,11 @@ const {
   isSummaryFileLimit,
 } = require("../../middlewares");
 const { smallUpload } = require("../../utils");
-const { saveValidation } = require("../../validations/listingCategory");
+const {
+  saveValidation,
+  createByOthersValidation,
+  othersListValidation,
+} = require("../../validations/listingCategory");
 
 module.exports = (io) => {
   const listingCategoriesController = new ListingCategoriesController(io);
@@ -24,6 +28,24 @@ module.exports = (io) => {
     isSmallFileLimit,
     saveValidation,
     listingCategoriesController.saveList
+  );
+
+  router.post(
+    "/create-by-others",
+    smallUpload.single("photo"),
+    isSmallFileLimit,
+    isAuth,
+    isAdmin,
+    createByOthersValidation,
+    listingCategoriesController.createByOthersCategory
+  );
+
+  router.post(
+    "/admin-searched-others-categories-list",
+    isAuth,
+    isAdmin,
+    othersListValidation,
+    listingCategoriesController.getOtherCategories
   );
 
   return router;

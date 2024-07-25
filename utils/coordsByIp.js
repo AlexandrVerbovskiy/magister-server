@@ -4,7 +4,7 @@ const fields = "lat,lon";
 module.exports = async function coordsByIp(ip = null) {
   try {
     if (!ip) {
-      return STATIC.DEFAULT_LOCATION;
+      return STATIC.DEFAULTS.LOCATION;
     }
 
     ip = ip.split(", ")[0];
@@ -41,12 +41,12 @@ module.exports = async function coordsByIp(ip = null) {
     }
 
     if (!data || Object.keys(data).length < 1) {
-      return STATIC.DEFAULT_LOCATION;
+      return STATIC.DEFAULTS.LOCATION;
     }
-    
+
     return data;
   } catch (error) {
     console.error("Error getting IP data:", error);
-    return STATIC.DEFAULT_LOCATION;
+    return STATIC.DEFAULTS.LOCATION;
   }
 };

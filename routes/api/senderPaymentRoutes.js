@@ -4,7 +4,6 @@ const { SenderPaymentController } = require("../../controllers");
 const {
   isAuth,
   isAdmin,
-  isVerified,
   isFileLimit,
 } = require("../../middlewares");
 
@@ -32,7 +31,6 @@ module.exports = (io) => {
   router.post(
     "/list",
     isAuth,
-    isVerified,
     listValidation,
     senderPaymentController.userList
   );
@@ -55,6 +53,7 @@ module.exports = (io) => {
   router.post(
     "/approve-bank-transfer-transaction",
     isAuth,
+    isAdmin,
     approveCreditCardTransactionValidation,
     senderPaymentController.approveTransaction
   );
@@ -62,6 +61,7 @@ module.exports = (io) => {
   router.post(
     "/reject-bank-transfer-transaction",
     isAuth,
+    isAdmin,
     rejectCreditCardTransactionValidation,
     senderPaymentController.rejectTransaction
   );
