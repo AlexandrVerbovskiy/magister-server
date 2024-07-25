@@ -221,6 +221,8 @@ class SenderPaymentController extends Controller {
         );
       }
 
+      this.sendPaymentNotificationMail(order.ownerEmail, order.id);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 

@@ -268,6 +268,8 @@ class OrderController extends Controller {
 
       const opponent = await this.userModel.getById(ownerId);
 
+      this.sendBookingExtensionMail(prevOrder.ownerEmail, prevOrder.id);
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
@@ -617,6 +619,8 @@ class OrderController extends Controller {
         },
       });
 
+      this.sendAssetPickupMail(order.tenantEmail);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         status: newStatus,
@@ -704,6 +708,8 @@ class OrderController extends Controller {
         cancelStatus: newCancelStatus,
       },
     });
+
+    this.sendBookingCancellationOwnerMail(order.tenantEmail);
 
     return {
       chatMessage,
@@ -809,6 +815,8 @@ class OrderController extends Controller {
           status: newStatus,
         },
       });
+
+      this.sendPaymentNotificationMail(order.ownerEmail, order.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
@@ -986,6 +994,12 @@ class OrderController extends Controller {
             "You cannot cancel an order if it has already been cancelled or is in the process of being cancelled",
         },
       };
+    }
+
+    if (STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT == orderInfo.status) {
+      this.sendRefundProcessMail(orderInfo.tenantEmail);
+    } else {
+      this.sendBookingCancellationRenterMail(orderInfo.ownerEmail);
     }
 
     if (!availableStatusesToCancel.includes(orderInfo.status)) {
@@ -1227,6 +1241,8 @@ class OrderController extends Controller {
           status: newStatus,
         },
       });
+
+      this.sendLateReturnNotificationMail(orderInfo.ownerEmail);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
