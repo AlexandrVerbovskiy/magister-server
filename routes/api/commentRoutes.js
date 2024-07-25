@@ -7,7 +7,7 @@ const OwnerCommentController = require("../../controllers/OwnerCommentController
 const {
   commentListValidation,
   createOwnerCommentValidation,
-  createUserCommentValidation,
+  createTenantCommentValidation,
   commentRejectValidation,
   commentApproveValidation,
 } = require("../../validations/comments");
@@ -27,7 +27,7 @@ module.exports = (io) => {
   router.post(
     "/create-tenant-review",
     isAuth,
-    createUserCommentValidation,
+    createTenantCommentValidation,
     tenantCommentController.createComment
   );
 

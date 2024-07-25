@@ -423,12 +423,11 @@ class Controller {
   };
 
   sendToPhoneMessage = async (phone, text) => {
-    const message = await twilioClient.messages
-      .create({
-        body: text,
-        to: phone,
-        from: process.env.TWILIO_PHONE,
-      });
+    const message = await twilioClient.messages.create({
+      body: text,
+      to: `+${phone}`,
+      from: process.env.TWILIO_PHONE,
+    });
 
     return message.sid;
   };

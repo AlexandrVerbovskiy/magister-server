@@ -1,7 +1,7 @@
 module.exports = {
   commentListValidation: require("./commentListValidation"),
   createOwnerCommentValidation: require("./createOwnerCommentValidation"),
-  createUserCommentValidation: require("./createUserCommentValidation"),
+  createTenantCommentValidation: require("./createTenantCommentValidation"),
   commentRejectValidation: require("./commentRejectValidation"),
   commentApproveValidation: require("./commentApproveValidation"),
 };
