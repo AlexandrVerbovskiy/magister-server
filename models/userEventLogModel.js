@@ -4,26 +4,32 @@ const db = require("../database");
 const Model = require("./Model");
 
 const USER_EVENT_LOGS_TABLE = STATIC.TABLES.USER_EVENT_LOGS;
+const USERS_TABLE = STATIC.TABLES.USERS;
 
 class UserEventLogModel extends Model {
   visibleFields = [
-    "id",
-    "user_id as userId",
-    "user_email as userEmail",
-    "user_role as userRole",
-    "event_name as eventName",
-    "created_at as createdAt",
+    `${USER_EVENT_LOGS_TABLE}.id`,
+    `${USER_EVENT_LOGS_TABLE}.user_id as userId`,
+    `${USER_EVENT_LOGS_TABLE}.user_email as userEmail`,
+    `${USER_EVENT_LOGS_TABLE}.user_role as userRole`,
+    `${USER_EVENT_LOGS_TABLE}.event_name as eventName`,
+    `${USER_EVENT_LOGS_TABLE}.created_at as createdAt`,
+    `${USERS_TABLE}.photo as userPhoto`,
   ];
 
-  strFilterFields = ["user_email", "user_role", "event_name"];
+  strFilterFields = [
+    `${USER_EVENT_LOGS_TABLE}.user_email`,
+    `${USER_EVENT_LOGS_TABLE}.user_role`,
+    `${USER_EVENT_LOGS_TABLE}.event_name`,
+  ];
 
   orderFields = [
-    "id",
-    "user_id",
-    "user_email",
-    "user_role",
-    "event_name",
-    "created_at",
+    `${USER_EVENT_LOGS_TABLE}.id`,
+    `${USER_EVENT_LOGS_TABLE}.user_id`,
+    `${USER_EVENT_LOGS_TABLE}.user_email`,
+    `${USER_EVENT_LOGS_TABLE}.user_role`,
+    `${USER_EVENT_LOGS_TABLE}.event_name`,
+    `${USER_EVENT_LOGS_TABLE}.created_at`,
   ];
 
   create = async ({ user_id, user_email, user_role, event_name }) => {
@@ -47,12 +53,26 @@ class UserEventLogModel extends Model {
     return query;
   };
 
+  baseJoin = (query) => {
+    return query.join(
+      USERS_TABLE,
+      `${USERS_TABLE}.id`,
+      "=",
+      `${USER_EVENT_LOGS_TABLE}.user_id`
+    );
+  };
+
   totalCount = async ({ filter, timeInfos, type = null }) => {
     let query = db(USER_EVENT_LOGS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${USER_EVENT_LOGS_TABLE}.id`)
     );
 
-    query = this.baseListTimeFilter(timeInfos, query);
+    query = this.baseJoin(query);
+    query = this.baseListTimeFilter(
+      timeInfos,
+      query,
+      `${USER_EVENT_LOGS_TABLE}.created_at`
+    );
     query = this.baseTypeWhere(query, type);
 
     const result = await query.count("* as count").first();
@@ -67,8 +87,12 @@ class UserEventLogModel extends Model {
       this.filterIdLikeString(filter, `${USER_EVENT_LOGS_TABLE}.id`)
     );
 
-    query = this.baseListTimeFilter(props.timeInfos, query);
-
+    query = this.baseJoin(query);
+    query = this.baseListTimeFilter(
+      props.timeInfos,
+      query,
+      `${USER_EVENT_LOGS_TABLE}.created_at`
+    );
     query = this.baseTypeWhere(query, type);
 
     return await query
@@ -83,7 +107,11 @@ class UserEventLogModel extends Model {
       this.filterIdLikeString(filter, `${USER_EVENT_LOGS_TABLE}.id`)
     );
 
-    query = this.baseListTimeFilter(timeInfos, query);
+    query = this.baseListTimeFilter(
+      timeInfos,
+      query,
+      `${USER_EVENT_LOGS_TABLE}.created_at`
+    );
 
     const result = await query
       .select(
