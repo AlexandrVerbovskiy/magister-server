@@ -278,8 +278,8 @@ class ListingsModel extends Model {
     return await this.listingsBindImages(listings);
   };
 
-  getFullById = async (id) => {
-    const listing = await db(LISTINGS_TABLE)
+  getFullWithoutImages = async (id) => {
+    return await db(LISTINGS_TABLE)
       .join(USERS_TABLE, `${USERS_TABLE}.id`, "=", `${LISTINGS_TABLE}.owner_id`)
       .leftJoin(
         LISTING_CATEGORIES_TABLE,
@@ -290,6 +290,10 @@ class ListingsModel extends Model {
       .where(`${LISTINGS_TABLE}.id`, id)
       .select(this.fullVisibleFields)
       .first();
+  };
+
+  getFullById = async (id) => {
+    const listing = await this.getFullWithoutImages(id);
 
     if (!listing) return null;
 
