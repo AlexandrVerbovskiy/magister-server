@@ -272,7 +272,7 @@ class Controller {
     //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
     const link = CLIENT_URL + "/";
 
-    await this.sendMail(email, title, "assetDropOff", {
+    await this.sendMail(email, title, "lateReturnNotification", {
       link,
     });
   };
