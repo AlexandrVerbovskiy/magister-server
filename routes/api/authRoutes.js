@@ -25,7 +25,6 @@ const {
 } = require("../../validations/auth");
 
 const { upload } = require("../../utils");
-
 const { emailValidation } = require("../../validations/base");
 
 module.exports = (io) => {

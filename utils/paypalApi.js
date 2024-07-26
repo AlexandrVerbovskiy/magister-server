@@ -1,7 +1,9 @@
+require("dotenv").config();
 const fetch = require("node-fetch");
 
 const { PAYPAL_CLIENT_ID, PAYPAL_SECRET_KEY } = process.env;
-const base = "https://api-m.sandbox.paypal.com";
+const baseApi = `https://api.${process.env.PORT}`;
+const baseApiM = `https://api-m.${process.env.PORT}`;
 
 async function getToken() {
   const myHeaders = new Headers();
@@ -26,10 +28,7 @@ async function getToken() {
     redirect: "follow",
   };
 
-  const res = await fetch(
-    "https://api-m.sandbox.paypal.com/v1/oauth2/token",
-    requestOptions
-  );
+  const res = await fetch(`${baseApiM}/v1/oauth2/token`, requestOptions);
 
   const data = await res.json();
   return data.access_token;
@@ -37,7 +36,7 @@ async function getToken() {
 
 const createPaypalOrder = async (amount, orderId, listingName) => {
   const accessToken = await getToken();
-  const url = `${base}/v2/checkout/orders`;
+  const url = `${baseApiM}/v2/checkout/orders`;
 
   if (listingName.length > 127) {
     listingName = listingName.substring(0, 123) + "...";
@@ -93,7 +92,7 @@ const createPaypalOrder = async (amount, orderId, listingName) => {
 
 const capturePaypalOrder = async (orderId) => {
   const accessToken = await getToken();
-  const url = `${base}/v2/checkout/orders/${orderId}/capture`;
+  const url = `${baseApiM}/v2/checkout/orders/${orderId}/capture`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -117,7 +116,7 @@ const capturePaypalOrder = async (orderId) => {
 
 async function refundPaypalOrderCapture(id) {
   /*const accessToken = await getToken();
-  const url = `${base}/v2/payments/captures/${id}/refund`;
+  const url = `${baseApiM}/v2/payments/captures/${id}/refund`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -134,7 +133,7 @@ async function refundPaypalOrderCapture(id) {
   }*/
 
   const accessToken = await getToken();
-  const url = `${base}/v2/payments/captures/${id}`;
+  const url = `${baseApiM}/v2/payments/captures/${id}`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -183,7 +182,7 @@ async function sendMoneyToPaypal(type, getter, amount, currency) {
   };
 
   const response = await fetch(
-    "https://api-m.sandbox.paypal.com/v1/payments/payouts",
+    `${baseApiM}/v1/payments/payouts`,
     requestOptions
   );
   const data = await response.json();
@@ -209,7 +208,7 @@ async function sendMoneyToPaypalByPaypalID(paypalId, amount) {
 
 const getPaypalOrderInfo = async (orderId) => {
   const accessToken = await getToken();
-  const url = `https://api.sandbox.paypal.com/v2/checkout/orders/${orderId}`;
+  const url = `${baseApi}/v2/checkout/orders/${orderId}`;
 
   const response = await fetch(url, {
     headers: {
@@ -224,31 +223,28 @@ const getPaypalOrderInfo = async (orderId) => {
 
 const getProfileData = async (code) => {
   try {
-    const response = await fetch(
-      "https://api-m.sandbox.paypal.com/v1/oauth2/token",
-      {
-        method: "POST",
-        headers: {
-          Authorization:
-            "Basic " +
-            Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET_KEY}`).toString(
-              "base64"
-            ),
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          code,
-        }),
-      }
-    );
+    const response = await fetch(`${baseApiM}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization:
+          "Basic " +
+          Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET_KEY}`).toString(
+            "base64"
+          ),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+      }),
+    });
 
     if (!response.ok) {
-      if(response.status){
+      if (response.status) {
         throw new Error(`Paypal Api error! status: ${response.status}`);
-      }else if(response.statusText){
+      } else if (response.statusText) {
         throw new Error(`Paypal Api error! ${response.statusText}`);
-      }else{
+      } else {
         throw new Error(`Paypal Api unknown error! PaypalApi line 252`);
       }
     }
@@ -273,7 +269,7 @@ const getUserPaypalId = async (code) => {
     }
 
     const response = await fetch(
-      "https://api.sandbox.paypal.com/v1/identity/oauth2/userinfo?schema",
+      `${baseApi}/v1/identity/oauth2/userinfo?schema`,
       {
         headers: {
           Authorization: `Bearer ${profileData.data.access_token}`,
@@ -283,11 +279,11 @@ const getUserPaypalId = async (code) => {
     );
 
     if (!response.ok) {
-      if(response.status){
+      if (response.status) {
         throw new Error(`Paypal Api error! status: ${response.statusText}`);
-      }else if(response.statusText){
+      } else if (response.statusText) {
         throw new Error(`Paypal Api error! ${response.status}`);
-      }else{
+      } else {
         throw new Error(`Paypal Api unknown error! PaypalApi line 252`);
       }
     }
@@ -309,5 +305,5 @@ module.exports = {
   getPaypalOrderInfo,
   refundPaypalOrderCapture,
   getProfileData,
-  getUserPaypalId
+  getUserPaypalId,
 };
