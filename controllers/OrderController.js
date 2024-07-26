@@ -996,11 +996,7 @@ class OrderController extends Controller {
       };
     }
 
-    if (STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT == orderInfo.status) {
-      this.sendRefundProcessMail(orderInfo.tenantEmail);
-    } else {
-      this.sendBookingCancellationRenterMail(orderInfo.ownerEmail);
-    }
+    this.sendBookingCancellationRenterMail(orderInfo.ownerEmail);
 
     if (!availableStatusesToCancel.includes(orderInfo.status)) {
       return {
@@ -1145,6 +1141,8 @@ class OrderController extends Controller {
         cancelStatus: newCancelStatus,
       },
     });
+
+    this.sendRefundProcessMail(orderInfo.tenantEmail);
 
     return {
       chatMessage,
