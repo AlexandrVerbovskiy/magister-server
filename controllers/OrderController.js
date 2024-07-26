@@ -1241,7 +1241,7 @@ class OrderController extends Controller {
       });
 
       const today = new Date();
-      const dayDifference = getDaysDifference(order.offerEndDate, today);
+      const dayDifference = getDaysDifference(orderInfo.offerEndDate, today);
 
       if (dayDifference > 1) {
         this.sendLateReturnNotificationMail(orderInfo.ownerEmail, orderInfo.id);
