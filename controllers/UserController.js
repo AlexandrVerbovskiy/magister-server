@@ -22,7 +22,7 @@ class UserController extends Controller {
 
   getEmailByGoogleToken = async (idToken) => {
     const client = new OAuth2Client(process.env.GOOGLE_CLIENT_API);
-    try {
+      try {
       const ticket = await client.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_API,
@@ -31,7 +31,8 @@ class UserController extends Controller {
       const userEmail = payload["email"];
       return userEmail;
     } catch (error) {
-      return null;
+          console.log(error)
+          return null;
     }
   };
 
@@ -41,7 +42,7 @@ class UserController extends Controller {
       let emailByToken = null;
 
       if (provider.toLowerCase() == "google") {
-        emailByToken = await this.getEmailByGoogleToken(token);
+          emailByToken = await this.getEmailByGoogleToken(token);
       }
 
       if (provider.toLowerCase() == "facebook") {
