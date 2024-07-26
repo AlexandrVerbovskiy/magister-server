@@ -1240,18 +1240,7 @@ class OrderController extends Controller {
         },
       });
 
-      const today = new Date();
-      const dayDifference = getDaysDifference(orderInfo.offerEndDate, today);
-
-      if (dayDifference > 1) {
-        if (new Date(orderInfo.offerEndDate) > today) {
-          this.sendEarlyReturnOfAssetMail(orderInfo.ownerEmail, orderInfo.id);
-        } else {
-          this.sendLateReturnNotificationMail(orderInfo.ownerEmail, orderInfo.id);
-        }
-      } else {
-        this.sendAssetPickupOffMail(orderInfo.ownerEmail, orderInfo.id);
-      }
+      this.sendAssetPickupOffMail(orderInfo.ownerEmail, orderInfo.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
