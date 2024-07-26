@@ -1244,10 +1244,10 @@ class OrderController extends Controller {
       const dayDifference = getDaysDifference(orderInfo.offerEndDate, today);
 
       if (dayDifference > 1) {
-        if (new Date(orderInfo.offerEndDate > today)) {
-          this.sendLateReturnNotificationMail(orderInfo.ownerEmail, orderInfo.id);
-        } else {
+        if (new Date(orderInfo.offerEndDate) > today) {
           this.sendEarlyReturnOfAssetMail(orderInfo.ownerEmail, orderInfo.id);
+        } else {
+          this.sendLateReturnNotificationMail(orderInfo.ownerEmail, orderInfo.id);
         }
       } else {
         this.sendAssetPickupOffMail(orderInfo.ownerEmail, orderInfo.id);
