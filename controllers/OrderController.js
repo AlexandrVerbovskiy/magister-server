@@ -619,7 +619,7 @@ class OrderController extends Controller {
         },
       });
 
-      this.sendAssetPickupMail(order.tenantEmail);
+      this.sendAssetPickupMail(order.tenantEmail, order.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
@@ -709,7 +709,7 @@ class OrderController extends Controller {
       },
     });
 
-    this.sendBookingCancellationOwnerMail(order.tenantEmail);
+    this.sendBookingCancellationOwnerMail(order.tenantEmail, order.id);
 
     return {
       chatMessage,
@@ -996,7 +996,7 @@ class OrderController extends Controller {
       };
     }
 
-    this.sendBookingCancellationRenterMail(orderInfo.ownerEmail);
+    this.sendBookingCancellationRenterMail(orderInfo.ownerEmail, orderInfo.id);
 
     if (!availableStatusesToCancel.includes(orderInfo.status)) {
       return {
@@ -1142,7 +1142,7 @@ class OrderController extends Controller {
       },
     });
 
-    this.sendRefundProcessMail(orderInfo.tenantEmail);
+    this.sendRefundProcessMail(orderInfo.tenantEmail, orderInfo.id);
 
     return {
       chatMessage,
@@ -1244,11 +1244,11 @@ class OrderController extends Controller {
       const dayDifference = getDaysDifference(order.offerEndDate, today);
 
       if (dayDifference > 1) {
-        this.sendLateReturnNotificationMail(orderInfo.ownerEmail);
+        this.sendLateReturnNotificationMail(orderInfo.ownerEmail, orderInfo.id);
       } else if (dayDifference < -1) {
-        this.sendEarlyReturnOfAssetMail(orderInfo.ownerEmail);
+        this.sendEarlyReturnOfAssetMail(orderInfo.ownerEmail, orderInfo.id);
       } else {
-        this.sendAssetPickupOffMail(orderInfo.ownerEmail);
+        this.sendAssetPickupOffMail(orderInfo.ownerEmail, orderInfo.id);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
