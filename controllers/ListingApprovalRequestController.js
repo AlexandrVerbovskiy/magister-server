@@ -95,12 +95,14 @@ class ListingApprovalRequestController extends Controller {
       await this.listingApprovalRequestModel.approve(listingId);
       await this.listingModel.approve(listingId);
 
-      const listing = await this.listingModel.getById(listingId);
+      const listing = await this.listingModel.getFullWithoutImages(listingId);
 
       this.saveUserAction(
         req,
         `Accepted a request to create a listing with name ${listing.name}`
       );
+
+      this.sendListingVerifiedMail(listing.userEmail, listing.name, listing.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
     });

@@ -249,18 +249,16 @@ class Controller {
 
   sendAssetPickupMail = async (email, orderId) => {
     const title = "Asset Pickup Confirmation";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "assetPickup", {
       link,
     });
   };
 
-  sendAssetPickupMail = async (email, invoiceId) => {
+  sendAssetPickupOffMail = async (email, invoiceId) => {
     const title = "Asset Drop Off Confirmation";
-    //const link = CLIENT_URL + "/dashboard/invoices/" + invoiceId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/invoices/" + invoiceId;
 
     await this.sendMail(email, title, "assetDropOff", {
       link,
@@ -269,18 +267,16 @@ class Controller {
 
   sendLateReturnNotificationMail = async (email, orderId) => {
     const title = "Late Return Notification";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
-    await this.sendMail(email, title, "assetDropOff", {
+    await this.sendMail(email, title, "lateReturnNotification", {
       link,
     });
   };
 
   sendEarlyReturnOfAssetMail = async (email, orderId) => {
     const title = "Early Return of Asset";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "assetDropOff", {
       link,
@@ -289,18 +285,25 @@ class Controller {
 
   sendBookingExtensionMail = async (email, orderId) => {
     const title = "Booking Extension Request";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "bookingExtension", {
       link,
     });
   };
 
+  sendAssetListingConfirmation = async (email, listingId) => {
+    const title = "Asset Listing Confirmation";
+    const link = CLIENT_URL + "/dashboard/listings/" + listingId;
+
+    await this.sendMail(email, title, "assetListedSuccessfully", {
+      link,
+    });
+  };
+
   sendBookingCancellationRenterMail = async (email, orderId) => {
     const title = "Booking Cancellation Request";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "bookingCancellationRenter", {
       link,
@@ -309,8 +312,7 @@ class Controller {
 
   sendBookingCancellationOwnerMail = async (email, orderId) => {
     const title = "Booking Cancellation Request";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "bookingCancellationOwner", {
       link,
@@ -319,8 +321,7 @@ class Controller {
 
   sendPaymentNotificationMail = async (email, orderId) => {
     const title = "Payment to Partners";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "paymentNotification", {
       link,
@@ -329,8 +330,7 @@ class Controller {
 
   sendRefundProcessMail = async (email, orderId) => {
     const title = "Refund Process";
-    //const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-    const link = CLIENT_URL + "/";
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "refundProcess", {
       link,

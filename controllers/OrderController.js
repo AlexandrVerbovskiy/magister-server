@@ -268,6 +268,8 @@ class OrderController extends Controller {
 
       const opponent = await this.userModel.getById(ownerId);
 
+      this.sendBookingExtensionMail(prevOrder.ownerEmail, prevOrder.id);
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
@@ -617,6 +619,8 @@ class OrderController extends Controller {
         },
       });
 
+      this.sendAssetPickupMail(order.tenantEmail);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         status: newStatus,
@@ -704,6 +708,8 @@ class OrderController extends Controller {
         cancelStatus: newCancelStatus,
       },
     });
+
+    this.sendBookingCancellationOwnerMail(order.tenantEmail);
 
     return {
       chatMessage,
@@ -809,6 +815,8 @@ class OrderController extends Controller {
           status: newStatus,
         },
       });
+
+      this.sendPaymentNotificationMail(order.ownerEmail, order.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
@@ -988,6 +996,8 @@ class OrderController extends Controller {
       };
     }
 
+    this.sendBookingCancellationRenterMail(orderInfo.ownerEmail);
+
     if (!availableStatusesToCancel.includes(orderInfo.status)) {
       return {
         error: {
@@ -1132,6 +1142,8 @@ class OrderController extends Controller {
       },
     });
 
+    this.sendRefundProcessMail(orderInfo.tenantEmail);
+
     return {
       chatMessage,
       orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
@@ -1227,6 +1239,17 @@ class OrderController extends Controller {
           status: newStatus,
         },
       });
+
+      const today = new Date();
+      const dayDifference = getDaysDifference(order.offerEndDate, today);
+
+      if (dayDifference > 1) {
+        this.sendLateReturnNotificationMail(orderInfo.ownerEmail);
+      } else if (dayDifference < -1) {
+        this.sendEarlyReturnOfAssetMail(orderInfo.ownerEmail);
+      } else {
+        this.sendAssetPickupOffMail(orderInfo.ownerEmail);
+      }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
