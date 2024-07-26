@@ -256,9 +256,9 @@ class Controller {
     });
   };
 
-  sendAssetPickupOffMail = async (email, invoiceId) => {
+  sendAssetPickupOffMail = async (email, orderId) => {
     const title = "Asset Drop Off Confirmation";
-    const link = CLIENT_URL + "/dashboard/invoices/" + invoiceId;
+    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "assetDropOff", {
       link,
@@ -278,7 +278,7 @@ class Controller {
     const title = "Early Return of Asset";
     const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
-    await this.sendMail(email, title, "assetDropOff", {
+    await this.sendMail(email, title, "earlyReturnOfAsset", {
       link,
     });
   };
