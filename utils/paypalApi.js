@@ -266,6 +266,7 @@ const getProfileData = async (code) => {
 const getUserPaypalId = async (code) => {
   try {
     const profileData = await getProfileData(code);
+    console.log("profileData: ", profileData);
 
     if (profileData.error) {
       throw new Error(profileData.error);
