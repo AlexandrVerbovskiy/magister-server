@@ -340,6 +340,8 @@ class ListingController extends Controller {
     if (needSendRequest) {
       await this.listingApprovalRequestModel.create(listingId);
       createdVerifiedRequest = true;
+      const owner = await this.userModel.getById(dataToSave.ownerId);
+      this.sendAssetListingConfirmation(owner.email, listingId);
     }
 
     return this.sendSuccessResponse(
@@ -438,6 +440,9 @@ class ListingController extends Controller {
       }
 
       createdVerifiedRequest = true;
+
+      const owner = await this.userModel.getById(dataToSave.ownerId);
+      this.sendAssetListingConfirmation(owner.email, listingId);
     }
 
     if (backgroundImageToDelete) {
