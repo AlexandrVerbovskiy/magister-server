@@ -2,8 +2,8 @@ require("dotenv").config();
 const fetch = require("node-fetch");
 
 const { PAYPAL_CLIENT_ID, PAYPAL_SECRET_KEY } = process.env;
-const baseApi = `https://api.${process.env.PORT}`;
-const baseApiM = `https://api-m.${process.env.PORT}`;
+const baseApi = `https://api.${process.env.PAYPAL_API_URL}`;
+const baseApiM = `https://api-m.${process.env.PAYPAL_API_URL}`;
 
 async function getToken() {
   const myHeaders = new Headers();
@@ -262,7 +262,6 @@ const getProfileData = async (code) => {
 const getUserPaypalId = async (code) => {
   try {
     const profileData = await getProfileData(code);
-    console.log("profileData: ", profileData);
 
     if (profileData.error) {
       throw new Error(profileData.error);
