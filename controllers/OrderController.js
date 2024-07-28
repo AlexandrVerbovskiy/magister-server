@@ -9,7 +9,6 @@ const {
   isOrderCanBeAccepted,
 } = require("../utils");
 const Controller = require("./Controller");
-const fs = require("fs");
 
 class OrderController extends Controller {
   sendMessageForNewOrder = async ({ message, senderId }) => {
@@ -744,7 +743,19 @@ class OrderController extends Controller {
   paypalOrderPayed = async (req, res) =>
     this.baseWrapper(res, res, async () => {
       const { userId } = req.userData;
-      const { orderId: paypalOrderId, type: paypalType } = req.body;
+      const { orderId: paypalOrderId } = req.body;
+
+      const payment = await this.senderPaymentModel.getPaymentInfoByPaypal(
+        paypalOrderId
+      );
+
+      if (!payment) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Payment info not found"
+        );
+      }
 
       await capturePaypalOrder(paypalOrderId);
 
@@ -755,14 +766,12 @@ class OrderController extends Controller {
       const payerCardLastBrand = paypalOrderInfo.payment_source?.card?.brand;
 
       const paypalSenderId = paypalOrderInfo.payment_source.paypal?.account_id;
-      const orderId = +paypalOrderInfo.purchase_units[0].items[0].sku;
-
-      const order = await this.orderModel.getById(orderId);
+      const orderId = payment.orderId;
 
       if (
-        order.tenantId != userId ||
-        order.disputeStatus ||
-        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+        payment.tenantId != userId ||
+        payment.disputeStatus ||
+        payment.orderStatus !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
@@ -770,17 +779,15 @@ class OrderController extends Controller {
       const paypalCaptureId =
         paypalOrderInfo.purchase_units[0].payments.captures[0].id;
 
-      const amount = paypalOrderInfo.purchase_units[0].amount.value;
-
       const { token, image: generatedImage } = await this.generateQrCodeInfo(
-        order.orderParentId
+        payment.orderParentId
           ? STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
           : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
       );
 
       let newStatus = null;
 
-      if (order.orderParentId) {
+      if (payment.orderParentId) {
         newStatus = await this.orderModel.orderTenantGotListing(orderId, {
           token,
           qrCode: generatedImage,
@@ -792,21 +799,17 @@ class OrderController extends Controller {
         });
       }
 
-      await this.senderPaymentModel.createByPaypal({
-        money: amount,
-        userId: userId,
+      await this.senderPaymentModel.updateByPaypal({
         orderId: orderId,
         paypalSenderId: paypalSenderId,
         paypalOrderId: paypalOrderId,
         paypalCaptureId: paypalCaptureId,
         payerCardLastDigits,
         payerCardLastBrand,
-        proofUrl: "",
-        type: paypalType,
       });
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: order.chatId,
+        chatId: payment.chatId,
         messageData: {},
         senderId: userId,
         createMessageFunc: this.chatMessageModel.createTenantPayedOrderMessage,
@@ -816,7 +819,7 @@ class OrderController extends Controller {
         },
       });
 
-      this.sendPaymentNotificationMail(order.ownerEmail, order.id);
+      this.sendPaymentNotificationMail(payment.ownerEmail, payment.orderId);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
@@ -856,12 +859,12 @@ class OrderController extends Controller {
       transactionId = paymentInfo.id;
       type = "updated";
 
-      await this.senderPaymentModel.updateCreditCardTransactionProof(
+      await this.senderPaymentModel.updateBankTransferTransactionProof(
         orderId,
         proofUrl
       );
     } else {
-      transactionId = await this.senderPaymentModel.createByCreditCard({
+      transactionId = await this.senderPaymentModel.createByBankTransfer({
         money,
         userId,
         orderId,
