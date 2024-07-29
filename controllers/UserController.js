@@ -22,7 +22,7 @@ class UserController extends Controller {
 
   getEmailByGoogleToken = async (idToken) => {
     const client = new OAuth2Client(process.env.GOOGLE_CLIENT_API);
-      try {
+    try {
       const ticket = await client.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_API,
@@ -31,8 +31,8 @@ class UserController extends Controller {
       const userEmail = payload["email"];
       return userEmail;
     } catch (error) {
-          console.log(error)
-          return null;
+      console.log(error);
+      return null;
     }
   };
 
@@ -42,7 +42,7 @@ class UserController extends Controller {
       let emailByToken = null;
 
       if (provider.toLowerCase() == "google") {
-          emailByToken = await this.getEmailByGoogleToken(token);
+        emailByToken = await this.getEmailByGoogleToken(token);
       }
 
       if (provider.toLowerCase() == "facebook") {
@@ -196,7 +196,7 @@ class UserController extends Controller {
       }
 
       const user = resCheck.user;
-      const rememberMe = req.body.rememberMe ?? false;
+      const rememberMe = req.body.rememberMe == true;
 
       if (!user.twoFactorAuthentication) {
         this.filterUserFields(user);
@@ -256,7 +256,7 @@ class UserController extends Controller {
         );
       }
 
-      const { type } = req.body;
+      const type = req.body.type.toLowerCase();
       const user = resCheck.user;
 
       if (type == "phone" && !user.phoneVerified) {
@@ -269,13 +269,17 @@ class UserController extends Controller {
 
       const resSave = await this.userModel.generateTwoAuthCode(user.id, type);
 
+      let message = "";
+
       if (type == "phone") {
         await this.sendToPhoneTwoAuthCodeMessage(user.phone, resSave.code);
+        message = "The code has been successfully sent to the mobile phone";
       } else {
         await this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
+        message = "The code has been successfully sent to the email";
       }
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, message);
     });
 
   twoFactorAuthVerify = (req, res) =>
@@ -291,7 +295,7 @@ class UserController extends Controller {
         );
       }
 
-      const rememberMe = req.body.rememberMe ?? false;
+      const rememberMe = req.body.rememberMe == true;
       const authToken = generateAccessToken(userId, rememberMe);
 
       const user = await this.userModel.getFullById(userId);
@@ -405,9 +409,9 @@ class UserController extends Controller {
       }
 
       const userId = resValidate.userId;
-      const user = await this.userModel.getById(userId);
+      const user = await this.userModel.getByIdWithEmailVerified(userId);
 
-      if (user.email !== email) {
+      if (user.email !== email || user.emailVerified) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.BAD_REQUEST,
@@ -750,6 +754,19 @@ class UserController extends Controller {
           res,
           STATIC.ERRORS.INVALID_KEY_DATA,
           "The current password is incorrect"
+        );
+      }
+
+      const isNewEqual = await this.userModel.checkUserPasswordEqual(
+        userId,
+        newPassword
+      );
+
+      if (isNewEqual) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.INVALID_KEY_DATA,
+          "New password can be equal to the current password"
         );
       }
 
