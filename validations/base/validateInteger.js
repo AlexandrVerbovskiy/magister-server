@@ -25,6 +25,7 @@ const validateInteger = ({
     validation
       .custom((value) => {
         const intValue = parseInt(value);
+
         if (!value && !required) {
           return true;
         }
@@ -32,7 +33,8 @@ const validateInteger = ({
         if (
           isNaN(intValue) ||
           intValue < Number.MIN_SAFE_INTEGER ||
-          intValue > Number.MAX_SAFE_INTEGER
+          intValue > Number.MAX_SAFE_INTEGER ||
+          intValue != value
         ) {
           throw new Error(message);
         }

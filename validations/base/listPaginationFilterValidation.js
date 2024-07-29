@@ -1,6 +1,10 @@
 const { body } = require("express-validator");
 
 module.exports = [
+  body("page")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Body parameter 'Page' must be a positive integer"),
   body("itemsPerPage")
     .optional()
     .isInt({ min: 1 })

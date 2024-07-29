@@ -496,6 +496,8 @@ class ListingsModel extends Model {
   };
 
   listTimeWhere = (timeInfos, query) => {
+    const { serverFromTime, serverToTime } = timeInfos;
+
     return query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
       this.select("listing_id")
         .from(ORDERS_TABLE)
@@ -612,7 +614,6 @@ class ListingsModel extends Model {
   };
 
   totalCount = async ({
-    timeInfos,
     cities = [],
     categories = [],
     userId = null,
@@ -638,10 +639,6 @@ class ListingsModel extends Model {
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
-
-    if (timeInfos.serverFromTime && timeInfos.serverToTime) {
-      query = this.listTimeWhere(timeInfos, query);
-    }
 
     const queryCities = [...cities];
     const queryCategories = [...categories];
@@ -686,7 +683,7 @@ class ListingsModel extends Model {
     }
 
     if (userId) {
-      query = query.where({ owner_id: userId });
+      query = query.where("owner_id", userId);
     }
 
     query = this.baseDistanceFilter(query, distance, lat, lng);
@@ -769,13 +766,6 @@ class ListingsModel extends Model {
   };
 
   baseTotalCountWithLastRequestsQuery = (filter, userId = null) => {
-    const subquery = db
-      .select("id")
-      .from(LISTING_APPROVAL_REQUESTS_TABLE)
-      .groupBy("id")
-      .orderBy("id", "desc")
-      .limit(1);
-
     let query = db(LISTINGS_TABLE)
       .leftJoin(LISTING_APPROVAL_REQUESTS_TABLE, function () {
         this.on(
@@ -798,7 +788,7 @@ class ListingsModel extends Model {
       );
 
     if (userId) {
-      query = query.where({ owner_id: userId });
+      query = query.where("owner_id", userId);
     }
 
     return query;
@@ -830,7 +820,6 @@ class ListingsModel extends Model {
 
   list = async (props) => {
     const {
-      timeInfos,
       cities = [],
       categories = [],
       start,
@@ -871,10 +860,6 @@ class ListingsModel extends Model {
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
-
-    if (timeInfos && timeInfos.serverFromTime && timeInfos.serverToTime) {
-      query = this.listTimeWhere(timeInfos, query);
-    }
 
     const queryCities = [...cities];
     const queryCategories = [...categories];
