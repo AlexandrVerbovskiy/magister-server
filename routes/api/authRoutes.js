@@ -59,7 +59,7 @@ module.exports = (io) => {
     userController.twoFactorAuthVerify
   );
 
-  router.post("/my-info", isAuth, userController.myInfo);
+  router.get("/my-info", isAuth, userController.myInfo);
 
   router.post(
     "/save-profile",
