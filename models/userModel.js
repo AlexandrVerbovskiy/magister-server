@@ -56,7 +56,7 @@ class UserModel extends Model {
     "user_photo as userPhoto",
     "document_front as documentFront",
     "document_back as documentBack",
-    ];
+  ];
 
   strFilterFields = ["name", "email", "phone"];
 
@@ -128,8 +128,8 @@ class UserModel extends Model {
       email,
       name,
       phone = null,
-      briefBio,
-      contactDetails,
+      briefBio = null,
+      contactDetails = null,
       twoFactorAuthentication = null,
       emailVerified,
       phoneVerified,
@@ -137,11 +137,11 @@ class UserModel extends Model {
       suspicious,
       role,
       photo,
-      placeWork,
-      facebookUrl,
-      instagramUrl,
-      linkedinUrl,
-      twitterUrl,
+      placeWork = null,
+      facebookUrl = null,
+      instagramUrl = null,
+      linkedinUrl = null,
+      twitterUrl = null,
       verified,
       acceptedTermCondition,
       needRegularViewInfoForm,
@@ -245,6 +245,13 @@ class UserModel extends Model {
   };
 
   getById = (id) => this.baseGetById(id, USERS_TABLE);
+
+  getByIdWithEmailVerified = async (id) => {
+    return await db(USERS_TABLE)
+      .select([...this.allFields, "email_verified as emailVerified"])
+      .where("id", id)
+      .first();
+  };
 
   getFullById = async (id) => {
     return await db(USERS_TABLE).select(this.allFields).where("id", id).first();

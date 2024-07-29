@@ -48,7 +48,7 @@ class ListingController extends Controller {
     const maxPrice = req.body.maxPrice ?? null;
     const lat = req.body.lat ?? null;
     const lng = req.body.lng ?? null;
-    const othersCategories = req.body.othersCategories ?? false;
+    const othersCategories = req.body.othersCategories == true;
     const sessionUserId = req.userData?.userId;
     const favorites = sessionUserId ? !!req.body.favorites : false;
 
