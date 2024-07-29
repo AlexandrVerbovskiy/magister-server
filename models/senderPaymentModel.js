@@ -8,6 +8,8 @@ const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
+const CHAT_TABLE = STATIC.TABLES.CHATS;
 
 class SenderPayment extends Model {
   visibleFields = [
@@ -35,8 +37,17 @@ class SenderPayment extends Model {
     `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.tenant_fee as tenantFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
+    `${ORDERS_TABLE}.status as orderStatus`,
+    `${ORDERS_TABLE}.parent_id as orderParentId`,
     `owners.name as ownerName`,
+    `owners.email as ownerEmail`,
     `owners.id as ownerId`,
+    `tenants.name as tenantName`,
+    `tenants.email as tenantEmail`,
+    `tenants.id as tenantId`,
+    `${CHAT_TABLE}.id as chatId`,
+    `${DISPUTES_TABLE}.id as disputeId`,
+    `${DISPUTES_TABLE}.status as disputeStatus`,
   ];
 
   strFilterFields = [`${LISTINGS_TABLE}.name`, `owners.name`];
@@ -62,6 +73,7 @@ class SenderPayment extends Model {
     type,
     dueAt = null,
     waitingApproved,
+    hidden = false,
   }) => {
     const res = await db(SENDER_PAYMENTS_TABLE)
       .insert({
@@ -74,6 +86,7 @@ class SenderPayment extends Model {
         admin_approved: adminApproved,
         due_at: dueAt,
         waiting_approved: waitingApproved,
+        hidden,
       })
       .returning("id");
 
@@ -84,13 +97,14 @@ class SenderPayment extends Model {
     money,
     userId,
     orderId,
-    paypalSenderId,
+    paypalSenderId = "",
     paypalOrderId,
-    paypalCaptureId,
-    payerCardLastDigits,
-    payerCardLastBrand,
-    proofUrl,
+    paypalCaptureId = "",
+    payerCardLastDigits = "",
+    payerCardLastBrand = "",
+    proofUrl = "",
     type,
+    hidden = false,
   }) => {
     if (
       ![STATIC.PAYMENT_TYPES.PAYPAL, STATIC.PAYMENT_TYPES.CREDIT_CARD].includes(
@@ -113,10 +127,67 @@ class SenderPayment extends Model {
         payerCardLastDigits,
         payerCardLastBrand,
       }),
-      adminApproved: true,
+      adminApproved: false,
       dueAt: db.raw("CURRENT_TIMESTAMP"),
-      waitingApproved: false,
+      waitingApproved: true,
+      hidden,
     });
+  };
+
+  deleteUnactualByPaypal = async (orderId) => {
+    await db(SENDER_PAYMENTS_TABLE)
+      .where(`${SENDER_PAYMENTS_TABLE}.order_id`, orderId)
+      .where(`${SENDER_PAYMENTS_TABLE}.waiting_approved`, "=", true)
+      .whereIn(`${SENDER_PAYMENTS_TABLE}.type`, [
+        STATIC.PAYMENT_TYPES.CREDIT_CARD,
+        STATIC.PAYMENT_TYPES.PAYPAL,
+      ])
+      .delete();
+  };
+
+  updateByPaypal = ({
+    orderId,
+    paypalSenderId,
+    paypalOrderId,
+    paypalCaptureId,
+    payerCardLastDigits,
+    payerCardLastBrand,
+  }) => {
+    return db(SENDER_PAYMENTS_TABLE)
+      .where(`${SENDER_PAYMENTS_TABLE}.order_id`, "=", orderId)
+      .where(`${SENDER_PAYMENTS_TABLE}.waiting_approved`, "=", true)
+      .whereIn(`${SENDER_PAYMENTS_TABLE}.type`, [
+        STATIC.PAYMENT_TYPES.CREDIT_CARD,
+        STATIC.PAYMENT_TYPES.PAYPAL,
+      ])
+      .update({
+        data: JSON.stringify({
+          paypalSenderId,
+          paypalCaptureId,
+          paypalOrderId,
+          payerCardLastDigits,
+          payerCardLastBrand,
+        }),
+        waiting_approved: false,
+        admin_approved: true,
+        hidden: false,
+      });
+  };
+
+  getPaymentInfoByPaypal = async (paymentOrderId) => {
+    let query = db(SENDER_PAYMENTS_TABLE)
+      .whereRaw(`${SENDER_PAYMENTS_TABLE}.data->>'paypalOrderId' = ?`, [
+        paymentOrderId,
+      ])
+      .where(`${SENDER_PAYMENTS_TABLE}.waiting_approved`, "=", true)
+      .whereIn(`${SENDER_PAYMENTS_TABLE}.type`, [
+        STATIC.PAYMENT_TYPES.CREDIT_CARD,
+        STATIC.PAYMENT_TYPES.PAYPAL,
+      ]);
+
+    query = this.baseListJoin(query);
+
+    return await query.select(this.visibleFields).first();
   };
 
   getInfoAboutOrdersPayments = async (orderIds) => {
@@ -135,6 +206,7 @@ class SenderPayment extends Model {
         `${SENDER_PAYMENTS_TABLE}.failed_description as failedDescription`,
         `${SENDER_PAYMENTS_TABLE}.due_at as dueAt`,
       ])
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .whereIn("order_id", orderIds);
 
     const res = {};
@@ -149,7 +221,7 @@ class SenderPayment extends Model {
     return ordersInfo[orderId];
   };
 
-  createByCreditCard = ({ money, userId, orderId, proofUrl }) =>
+  createByBankTransfer = ({ money, userId, orderId, proofUrl }) =>
     this.create({
       money,
       userId,
@@ -176,9 +248,14 @@ class SenderPayment extends Model {
     return canProof;
   };
 
-  updateCreditCardTransactionProof = async (orderId, proof) => {
+  updateBankTransferTransactionProof = async (orderId, proof) => {
     await db(SENDER_PAYMENTS_TABLE)
-      .where({ order_id: orderId, type: STATIC.PAYMENT_TYPES.BANK_TRANSFER })
+      .where(`${SENDER_PAYMENTS_TABLE}.order_id`, "=", orderId)
+      .where(
+        `${SENDER_PAYMENTS_TABLE}.type`,
+        "=",
+        STATIC.PAYMENT_TYPES.BANK_TRANSFER
+      )
       .update({
         payed_proof: proof,
         waiting_approved: true,
@@ -230,6 +307,21 @@ class SenderPayment extends Model {
         `owners.id`,
         "=",
         `${LISTINGS_TABLE}.owner_id`
+      )
+      .join(
+        `${USERS_TABLE} as tenants`,
+        `tenants.id`,
+        "=",
+        `${ORDERS_TABLE}.tenant_id`
+      )
+      .leftJoin(
+        `${DISPUTES_TABLE}`,
+        `${DISPUTES_TABLE}.order_id`,
+        "=",
+        `${ORDERS_TABLE}.id`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
       );
 
   baseTypeWhere = (query, type) => {
@@ -240,7 +332,7 @@ class SenderPayment extends Model {
         STATIC.PAYMENT_TYPES.BANK_TRANSFER,
       ].includes(type)
     ) {
-      query = query.where("type", type);
+      query = query.where(`${SENDER_PAYMENTS_TABLE}.type`, type);
     }
     return query;
   };
@@ -295,7 +387,10 @@ class SenderPayment extends Model {
     query = this.baseTypeWhere(query, type);
     query = this.baseStatusWhere(query, status);
 
-    const result = await query.count("* as count").first();
+    const result = await query
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
+      .count("* as count")
+      .first();
     return +result?.count;
   };
 
@@ -324,10 +419,13 @@ class SenderPayment extends Model {
     }
 
     query = this.baseTypeWhere(query, type);
-
     query = this.baseStatusWhere(query, status);
 
-    return await query.orderBy(order, orderType).limit(count).offset(start);
+    return await query
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
+      .orderBy(order, orderType)
+      .limit(count)
+      .offset(start);
   };
 
   totalCount = async ({
@@ -376,12 +474,14 @@ class SenderPayment extends Model {
     const resultSelect = await db(SENDER_PAYMENTS_TABLE)
       .select(db.raw("SUM(money) as sum"))
       .where({ user_id: userId, admin_approved: true })
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .first();
     return resultSelect.sum ?? 0;
   };
 
   getInfoByOrderId = async (orderId) => {
     return await db(SENDER_PAYMENTS_TABLE)
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .select([
         `${SENDER_PAYMENTS_TABLE}.id`,
         `${SENDER_PAYMENTS_TABLE}.money`,
@@ -404,6 +504,7 @@ class SenderPayment extends Model {
 
     const result = await query
       .where(`${SENDER_PAYMENTS_TABLE}.id`, id)
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .select([
         ...this.visibleFields,
         `${ORDERS_TABLE}.id as orderId`,
@@ -453,6 +554,7 @@ class SenderPayment extends Model {
         "<=",
         formatDateToSQLFormat(dateEnd)
       )
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .select([
         `${ORDERS_TABLE}.id as orderId`,
         `${ORDERS_TABLE}.end_date as endDate`,
@@ -493,17 +595,22 @@ class SenderPayment extends Model {
       .select(
         db.raw(`COUNT(*) AS "allCount"`),
         db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'paypal' THEN 1 ELSE 0 END) AS "paypalCount"`
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = '${STATIC.PAYMENT_TYPES.PAYPAL}' THEN 1 ELSE 0 END) AS "paypalCount"`
         ),
         db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'bank-transfer' THEN 1 ELSE 0 END) AS "bankTransferCount"`
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = '${STATIC.PAYMENT_TYPES.CREDIT_CARD}' THEN 1 ELSE 0 END) AS "creditCardCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = '${STATIC.PAYMENT_TYPES.BANK_TRANSFER}' THEN 1 ELSE 0 END) AS "bankTransferCount"`
         )
       )
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .first();
 
     return {
       allCount: result["allCount"] ?? 0,
       paypalCount: result["paypalCount"] ?? 0,
+      creditCardCount: result["creditCardCount"] ?? 0,
       bankTransferCount: result["bankTransferCount"] ?? 0,
     };
   };

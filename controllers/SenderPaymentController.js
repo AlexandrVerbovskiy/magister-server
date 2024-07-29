@@ -6,7 +6,8 @@ const Controller = require("./Controller");
 class SenderPaymentController extends Controller {
   paypalCreateOrder = async (req, res) =>
     this.baseWrapper(res, res, async () => {
-      const { orderId } = req.body;
+      const { userId } = req.userData;
+      const { orderId, type: paypalType } = req.body;
 
       const order = await this.orderModel.getById(orderId);
 
@@ -30,6 +31,17 @@ class SenderPaymentController extends Controller {
         orderId,
         order.listingName
       );
+
+      await this.senderPaymentModel.deleteUnactualByPaypal(orderId);
+
+      await this.senderPaymentModel.createByPaypal({
+        money: amount,
+        userId: userId,
+        orderId: orderId,
+        paypalOrderId: result.id,
+        type: paypalType,
+        hidden: true,
+      });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
@@ -139,7 +151,7 @@ class SenderPaymentController extends Controller {
       res.send(buffer);
     });
 
-  updateCreditCardTransactionProof = (req, res) =>
+  updateBankTransferTransactionProof = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
       const { orderId } = req.body;
@@ -152,7 +164,7 @@ class SenderPaymentController extends Controller {
 
       const proofUrl = this.moveUploadsFileToFolder(req.file, "paymentProofs");
 
-      await this.searchedWordModel.updateCreditCardTransactionProof(
+      await this.senderPaymentModel.updateBankTransferTransactionProof(
         orderId,
         proofUrl
       );
