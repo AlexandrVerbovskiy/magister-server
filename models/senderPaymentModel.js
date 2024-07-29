@@ -136,9 +136,9 @@ class SenderPayment extends Model {
 
   deleteUnactualByPaypal = async (orderId) => {
     await db(SENDER_PAYMENTS_TABLE)
-      .where("order_id", orderId)
-      .where("waiting_approved", "=", true)
-      .whereIn("type", [
+      .where(`${SENDER_PAYMENTS_TABLE}.order_id`, orderId)
+      .where(`${SENDER_PAYMENTS_TABLE}.waiting_approved`, "=", true)
+      .whereIn(`${SENDER_PAYMENTS_TABLE}.type`, [
         STATIC.PAYMENT_TYPES.CREDIT_CARD,
         STATIC.PAYMENT_TYPES.PAYPAL,
       ])
@@ -168,13 +168,17 @@ class SenderPayment extends Model {
           payerCardLastDigits,
           payerCardLastBrand,
         }),
+        waiting_approved: false,
+        admin_approved: true,
         hidden: false,
       });
   };
 
   getPaymentInfoByPaypal = async (paymentOrderId) => {
     let query = db(SENDER_PAYMENTS_TABLE)
-      .whereRaw(`${SENDER_PAYMENTS_TABLE}.data->>'paypalOrderId' = ?`, [paymentOrderId])
+      .whereRaw(`${SENDER_PAYMENTS_TABLE}.data->>'paypalOrderId' = ?`, [
+        paymentOrderId,
+      ])
       .where(`${SENDER_PAYMENTS_TABLE}.waiting_approved`, "=", true)
       .whereIn(`${SENDER_PAYMENTS_TABLE}.type`, [
         STATIC.PAYMENT_TYPES.CREDIT_CARD,
@@ -246,7 +250,12 @@ class SenderPayment extends Model {
 
   updateBankTransferTransactionProof = async (orderId, proof) => {
     await db(SENDER_PAYMENTS_TABLE)
-      .where({ order_id: orderId, type: STATIC.PAYMENT_TYPES.BANK_TRANSFER })
+      .where(`${SENDER_PAYMENTS_TABLE}.order_id`, "=", orderId)
+      .where(
+        `${SENDER_PAYMENTS_TABLE}.type`,
+        "=",
+        STATIC.PAYMENT_TYPES.BANK_TRANSFER
+      )
       .update({
         payed_proof: proof,
         waiting_approved: true,
@@ -323,7 +332,7 @@ class SenderPayment extends Model {
         STATIC.PAYMENT_TYPES.BANK_TRANSFER,
       ].includes(type)
     ) {
-      query = query.where("type", type);
+      query = query.where(`${SENDER_PAYMENTS_TABLE}.type`, type);
     }
     return query;
   };
@@ -410,7 +419,6 @@ class SenderPayment extends Model {
     }
 
     query = this.baseTypeWhere(query, type);
-
     query = this.baseStatusWhere(query, status);
 
     return await query
@@ -587,10 +595,13 @@ class SenderPayment extends Model {
       .select(
         db.raw(`COUNT(*) AS "allCount"`),
         db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'paypal' THEN 1 ELSE 0 END) AS "paypalCount"`
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = '${STATIC.PAYMENT_TYPES.PAYPAL}' THEN 1 ELSE 0 END) AS "paypalCount"`
         ),
         db.raw(
-          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = 'bank-transfer' THEN 1 ELSE 0 END) AS "bankTransferCount"`
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = '${STATIC.PAYMENT_TYPES.CREDIT_CARD}' THEN 1 ELSE 0 END) AS "creditCardCount"`
+        ),
+        db.raw(
+          `SUM(CASE WHEN ${SENDER_PAYMENTS_TABLE}.type = '${STATIC.PAYMENT_TYPES.BANK_TRANSFER}' THEN 1 ELSE 0 END) AS "bankTransferCount"`
         )
       )
       .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
@@ -599,6 +610,7 @@ class SenderPayment extends Model {
     return {
       allCount: result["allCount"] ?? 0,
       paypalCount: result["paypalCount"] ?? 0,
+      creditCardCount: result["creditCardCount"] ?? 0,
       bankTransferCount: result["bankTransferCount"] ?? 0,
     };
   };
