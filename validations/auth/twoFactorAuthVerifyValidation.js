@@ -1,8 +1,8 @@
-const { validateSmallStringBody } = require("../base");
-const { validateIntegerBody } = require("../base/validateInteger");
+const typeValidation = require("./typeValidation");
+const { validateSmallStringBody, validateIdBody } = require("../base");
 
 module.exports = [
-  ...validateSmallStringBody({ field: "type", fieldName: "Type" }),
+  ...typeValidation({ field: "type", fieldName: "Type" }),
   ...validateSmallStringBody({ field: "code", fieldName: "Code" }),
-  ...validateIntegerBody({field:"id", fieldName:"Id"})
+  ...validateIdBody(),
 ];

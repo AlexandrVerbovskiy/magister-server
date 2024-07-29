@@ -19,8 +19,6 @@ const {
   codeValidation,
   authByProviderValidation,
   saveProfileValidation,
-  typeValidation,
-  checkTwoFactorCodeValidation,
   autofillValidation,
 } = require("../../validations/auth");
 
@@ -49,13 +47,13 @@ module.exports = (io) => {
   router.post(
     "/generate-two-factor-code",
     isNotAuth,
-    typeValidation,
+    twoFactorAuthGenerateValidation,
     userController.twoFactorAuthGenerate
   );
   router.post(
     "/check-two-factor-code",
     isNotAuth,
-    checkTwoFactorCodeValidation,
+    twoFactorAuthVerifyValidation,
     userController.twoFactorAuthVerify
   );
 
