@@ -3,7 +3,6 @@ const {
   listPaginationStringFilterValidation,
   validateIntegerBody,
   validateFloat,
-  validateCheckbox,
   validateSmallStringBody,
   validateBoolean,
 } = require("../base");

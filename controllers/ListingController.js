@@ -52,17 +52,12 @@ class ListingController extends Controller {
     const sessionUserId = req.userData?.userId;
     const favorites = sessionUserId ? !!req.body.favorites : false;
 
-    const timeInfos = await this.listTimeOption({
-      req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.TODAY,
-    });
     const searchCity = req.body.searchCity ?? null;
     const searchCategory = req.body.searchCategory ?? null;
     const searchListing = req.body.searchListing ?? null;
 
     let { options, countItems } = await this.baseList(req, () =>
       this.listingModel.totalCount({
-        timeInfos,
         cities: [...cities],
         categories: [...categories],
         userId,
@@ -84,12 +79,9 @@ class ListingController extends Controller {
     options["searchCategory"] = searchCategory;
     options["searchListing"] = searchListing;
 
-    options = this.addTimeInfoToOptions(options, timeInfos);
-
     return {
       options,
       countItems,
-      timeInfos,
       cities,
       categories,
       distance,
@@ -103,7 +95,6 @@ class ListingController extends Controller {
     let {
       options,
       countItems,
-      timeInfos,
       cities,
       categories,
       distance,
@@ -127,7 +118,6 @@ class ListingController extends Controller {
     options["searchListing"] = req.body.searchListing ?? null;
     options["favorites"] = sessionUserId ? !!req.body.favorites : false;
 
-    options = this.addTimeInfoToOptions(options, timeInfos);
     options["lat"] = req.body.lat;
     options["lng"] = req.body.lng;
 
