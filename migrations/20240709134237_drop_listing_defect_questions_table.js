@@ -5,7 +5,7 @@ const STATIC = require("../static");
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.dropTableIfExists(STATIC.TABLES.LISTING_DEFECT_RELATIONS);
+  return knex.schema.dropTableIfExists(STATIC.TABLES.LISTING_DEFECT_QUESTIONS);
 };
 
 /**
@@ -14,7 +14,7 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return knex.schema.createTable(
-    STATIC.TABLES.LISTING_DEFECT_RELATIONS,
+    STATIC.TABLES.LISTING_DEFECT_QUESTIONS,
     function (table) {
       table.increments("id").primary();
       table.timestamps(true, true);
