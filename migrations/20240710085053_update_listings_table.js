@@ -24,27 +24,22 @@ exports.up = function (knex) {
 exports.down = async function (knex) {
   const firstCategory = await knex(STATIC.TABLES.LISTING_CATEGORIES).first();
 
-  if (!firstCategory) {
-    throw new Error("No categories found in categories table");
+  if (firstCategory) {
+    const defaultCategoryId = firstCategory.id;
+
+    await knex(STATIC.TABLES.LISTINGS).whereNull("category_id").update({
+      category_id: defaultCategoryId,
+    });
   }
 
-  const defaultCategoryId = firstCategory.id;
-
-  // Оновлюємо значення NULL до значення першої категорії
-  await knex(STATIC.TABLES.LISTINGS).whereNull("category_id").update({
-    category_id: defaultCategoryId,
+  await knex.schema.alterTable(STATIC.TABLES.LISTINGS, function (table) {
+    table.dropColumn("other_category");
+    table.integer("category_id").unsigned().notNullable().alter();
   });
 
-  return await knex.schema
-    .alterTable(STATIC.TABLES.LISTINGS, function (table) {
-      table.dropColumn("other_category");
-      table.integer("category_id").unsigned().notNullable().alter();
-    })
-    .then(function () {
-      return knex.schema.table(STATIC.TABLES.LISTINGS, function (table) {
-        table
-          .foreign("category_id")
-          .references(STATIC.TABLES.LISTING_CATEGORIES + ".id");
-      });
-    });
+  return await knex.schema.table(STATIC.TABLES.LISTINGS, function (table) {
+    table
+      .foreign("category_id")
+      .references(STATIC.TABLES.LISTING_CATEGORIES + ".id");
+  });
 };

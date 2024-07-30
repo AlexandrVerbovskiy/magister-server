@@ -21,7 +21,7 @@ exports.down = function (knex) {
   return knex.schema.alterTable(
     STATIC.TABLES.SENDER_PAYMENTS,
     function (table) {
-      table.dropColumn("hidden").defaultTo(false);
+      table.dropColumn("hidden");
     }
   );
 };

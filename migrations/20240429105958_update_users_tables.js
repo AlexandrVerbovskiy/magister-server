@@ -5,9 +5,9 @@ const STATIC = require("../static");
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  /*return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
-    table.string("credit_card_number").defaultTo(null);
-  });*/
+  return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
+    //table.string("credit_card_number").defaultTo(null);
+  });
 };
 
 /**
@@ -15,7 +15,7 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  /*return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
-    table.dropColumn("credit_card_number");
-  });*/
+  return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
+    //table.dropColumn("credit_card_number");
+  });
 };
