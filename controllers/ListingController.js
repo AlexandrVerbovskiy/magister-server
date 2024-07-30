@@ -301,11 +301,32 @@ class ListingController extends Controller {
     return [...filesToSave, ...listingImages];
   };
 
+  checkValidCategoryId = async (categoryId) => {
+    const category = await this.listingCategoryModel.getById(categoryId);
+    return !!category;
+  };
+
   baseCreate = async (req, res, needSendRequest = false) => {
     const dataToSave = req.body;
 
+    if (dataToSave["otherCategory"]) {
+      dataToSave["categoryId"] = null;
+    } else {
+      const resCheckCategoryValid = await this.checkValidCategoryId(
+        dataToSave["categoryId"]
+      );
+
+      if (!resCheckCategoryValid) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.FORBIDDEN,
+          "The selected category was not found"
+        );
+      }
+    }
+
     const backgroundPhoto = req.files.find(
-      (file) => file.fieldname === "background_photo"
+      (file) => file.fieldname === "backgroundPhoto"
     );
 
     if (!backgroundPhoto) {
@@ -365,8 +386,8 @@ class ListingController extends Controller {
       return result;
     });
 
-  checkForbidden = async (req) => {
-    const { id } = req.body;
+  checkForbidden = async (req, res, field = "id") => {
+    const id = req.body[field];
     const { userId } = req.userData;
 
     const hasAccess = await this.listingModel.hasAccess(id, userId);
@@ -385,8 +406,24 @@ class ListingController extends Controller {
     const dataToSave = req.body;
     const listingId = dataToSave["id"];
 
+    if (dataToSave["otherCategory"]) {
+      dataToSave["categoryId"] = null;
+    } else {
+      const resCheckCategoryValid = await this.checkValidCategoryId(
+        dataToSave["categoryId"]
+      );
+
+      if (!resCheckCategoryValid) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.FORBIDDEN,
+          "The selected category was not found"
+        );
+      }
+    }
+
     const backgroundPhoto = req.files.find(
-      (file) => file.fieldname === "background_photo"
+      (file) => file.fieldname === "backgroundPhoto"
     );
 
     let backgroundImageToDelete = null;
@@ -452,8 +489,11 @@ class ListingController extends Controller {
 
   update = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const forbidden = await this.checkForbidden(req);
-      if (forbidden) return forbidden;
+      const forbidden = await this.checkForbidden(req, res);
+
+      if (forbidden) {
+        return forbidden;
+      }
 
       const { userId } = req.userData;
       req.body["ownerId"] = userId;
@@ -553,6 +593,10 @@ class ListingController extends Controller {
 
     const active = await changeActiveCall(id);
 
+    if (active === null) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+    }
+
     const message = active
       ? "Listing activated successfully"
       : "Listing deactivated successfully";
@@ -564,9 +608,15 @@ class ListingController extends Controller {
   };
 
   changeActive = (req, res) =>
-    this.baseWrapper(req, res, () => {
+    this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
-      return this.baseChangeActive(req, res, (listingId) =>
+      const forbidden = await this.checkForbidden(req, res);
+
+      if (forbidden) {
+        return forbidden;
+      }
+
+      return await this.baseChangeActive(req, res, (listingId) =>
         this.listingModel.changeActiveByUser(listingId, userId)
       );
     });
@@ -582,7 +632,6 @@ class ListingController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id } = req.body;
       const listing = await this.listingModel.getById(id);
-
       const result = await this.baseDelete(req, res);
 
       this.saveUserAction(
@@ -597,6 +646,11 @@ class ListingController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { listingId } = req.body;
       const { userId } = req.userData;
+      const listing = await this.listingModel.getById(listingId);
+
+      if (!listing) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
 
       const isFavorite = await this.userListingFavoriteModel.changeUserFavorite(
         userId,

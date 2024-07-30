@@ -35,7 +35,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat`,
     `${LISTINGS_TABLE}.rental_lng`,
     `${LISTINGS_TABLE}.rental_radius`,
-    `${LISTINGS_TABLE}.key_words`,
     `${LISTINGS_TABLE}.background_photo`,
   ];
 
@@ -58,7 +57,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat as rentalLat`,
     `${LISTINGS_TABLE}.rental_lng as rentalLng`,
     `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
-    `${LISTINGS_TABLE}.key_words as keyWords`,
     `${LISTINGS_TABLE}.background_photo as backgroundPhoto`,
   ];
 
@@ -99,11 +97,7 @@ class ListingsModel extends Model {
 
   listingImageVisibleFields = ["id", "listing_id as listingId", "type", "link"];
 
-  strFilterFields = [
-    `${LISTINGS_TABLE}.name`,
-    `${LISTINGS_TABLE}.city`,
-    "key_words",
-  ];
+  strFilterFields = [`${LISTINGS_TABLE}.name`, `${LISTINGS_TABLE}.city`];
 
   strFullFilterFields = [...this.strFilterFields, `${USERS_TABLE}.name`];
 
@@ -154,7 +148,6 @@ class ListingsModel extends Model {
     rentalLng,
     rentalRadius,
     ownerId,
-    keyWords = "",
     approved = false,
     minRentalDays = null,
     listingImages = [],
@@ -183,7 +176,6 @@ class ListingsModel extends Model {
         compensation_cost: compensationCost,
         count_stored_items: countStoredItems,
         owner_id: ownerId,
-        key_words: keyWords,
         city,
         active,
         background_photo: backgroundPhoto,
@@ -323,7 +315,6 @@ class ListingsModel extends Model {
     rentalRadius,
     minRentalDays = null,
     listingImages = [],
-    keyWords = "",
     city,
     ownerId,
     address,
@@ -349,7 +340,6 @@ class ListingsModel extends Model {
       min_rental_days: minRentalDays,
       compensation_cost: compensationCost,
       count_stored_items: countStoredItems,
-      key_words: keyWords,
       owner_id: ownerId,
       address,
       active,
@@ -450,7 +440,7 @@ class ListingsModel extends Model {
       .update({ active: db.raw("NOT active") })
       .returning("active");
 
-    return res[0].active;
+    return res[0]?.active ?? null;
   };
 
   changeActive = async (listingId) => {
@@ -459,7 +449,7 @@ class ListingsModel extends Model {
       .update({ active: db.raw("NOT active") })
       .returning("active");
 
-    return res[0].active;
+    return res[0]?.active ?? null;
   };
 
   baseListJoin = (query) =>

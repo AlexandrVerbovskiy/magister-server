@@ -8,7 +8,7 @@ const {
   idValidation,
   tipsListValidation,
 } = require("../../validations/searchedWord");
-const { smallUpload } = require("../../utils");
+const { smallImageUpload } = require("../../utils");
 
 module.exports = (io) => {
   const searchedWordController = new SearchedWordController(io);
@@ -23,7 +23,7 @@ module.exports = (io) => {
 
   router.post(
     "/create-category",
-    smallUpload.single("photo"),
+    smallImageUpload.single("photo"),
     isSmallFileLimit,
     isAuth,
     isAdmin,

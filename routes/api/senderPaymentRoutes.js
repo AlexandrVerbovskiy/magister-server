@@ -4,10 +4,7 @@ const { SenderPaymentController } = require("../../controllers");
 const {
   isAuth,
   isAdmin,
-  isFileLimit,
 } = require("../../middlewares");
-
-const { upload } = require("../../utils");
 
 const {
   paypalCreateOrderValidation,
