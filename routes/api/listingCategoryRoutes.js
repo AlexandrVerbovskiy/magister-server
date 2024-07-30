@@ -7,7 +7,7 @@ const {
   isSmallFileLimit,
   isSummaryFileLimit,
 } = require("../../middlewares");
-const { smallUpload } = require("../../utils");
+const { smallImageUpload } = require("../../utils");
 const {
   saveValidation,
   createByOthersValidation,
@@ -23,7 +23,7 @@ module.exports = (io) => {
     "/save",
     isAuth,
     isAdmin,
-    smallUpload.any(),
+    smallImageUpload.any(),
     isSummaryFileLimit,
     isSmallFileLimit,
     saveValidation,
@@ -32,7 +32,7 @@ module.exports = (io) => {
 
   router.post(
     "/create-by-others",
-    smallUpload.single("photo"),
+    smallImageUpload.single("photo"),
     isSmallFileLimit,
     isAuth,
     isAdmin,

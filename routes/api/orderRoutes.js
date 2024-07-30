@@ -8,7 +8,7 @@ const {
   isFileLimit,
 } = require("../../middlewares");
 
-const { upload } = require("../../utils");
+const { imageUpload } = require("../../utils");
 
 const {
   idParamValidation,
@@ -79,7 +79,7 @@ module.exports = (io) => {
 
   router.post(
     "/unpaid-order-transaction-bank-transfer",
-    upload.single("proof"),
+    imageUpload.single("proof"),
     isFileLimit,
     isAuth,
     isVerified,
