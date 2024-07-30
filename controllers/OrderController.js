@@ -66,6 +66,11 @@ class OrderController extends Controller {
 
     if (needMinDateVerify) {
       const listing = await this.listingModel.getLightById(listingId);
+
+      if (!listing) {
+        return { error: "Listing not found", orderId: null };
+      }
+
       minRentalDays = listing.minRentalDays;
     }
 
@@ -189,6 +194,19 @@ class OrderController extends Controller {
       } = req.body;
       const tenantId = req.userData.userId;
 
+      const prevOrder = await this.orderModel.getLastActive(parentOrderId);
+
+      if (!prevOrder) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      if (
+        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER ||
+        prevOrder.tenantId != tenantId
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
       const hasUnstartedExtension =
         await this.orderModel.checkOrderHasUnstartedExtension(parentOrderId);
 
@@ -200,11 +218,6 @@ class OrderController extends Controller {
         );
       }
 
-      const prevOrder = await this.orderModel.getLastActive(parentOrderId);
-
-      if (!prevOrder || prevOrder.tenantId != tenantId) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
       const prevOrderEndDate = prevOrder.offerEndDate;
 
       const dataToCreate = {
@@ -284,16 +297,9 @@ class OrderController extends Controller {
   baseRequestsList = async (req, totalCountCall, listCall) => {
     const type = req.body.type == "owner" ? "owner" : "tenant";
 
-    const timeInfos = await this.listTimeOption({
-      req,
-      type: STATIC.TIME_OPTIONS_TYPE_DEFAULT.NULL,
-    });
-
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
-      totalCountCall(filter, timeInfos)
+      totalCountCall(filter)
     );
-
-    options = this.addTimeInfoToOptions(options, timeInfos);
 
     const requests = await listCall(options);
 
@@ -434,8 +440,8 @@ class OrderController extends Controller {
   baseTenantOrderList = async (req) => {
     const tenantId = req.userData.userId;
 
-    const totalCountCall = (filter, timeInfos) =>
-      this.orderModel.tenantOrdersTotalCount(filter, timeInfos, tenantId);
+    const totalCountCall = (filter) =>
+      this.orderModel.tenantOrdersTotalCount(filter, tenantId);
 
     const listCall = (options) => {
       options["tenantId"] = tenantId;
@@ -448,8 +454,8 @@ class OrderController extends Controller {
   baseListingOwnerOrderList = async (req) => {
     const ownerId = req.userData.userId;
 
-    const totalCountCall = (filter, timeInfos) =>
-      this.orderModel.ownerOrdersTotalCount(filter, timeInfos, ownerId);
+    const totalCountCall = (filter) =>
+      this.orderModel.ownerOrdersTotalCount(filter, ownerId);
 
     const listCall = (options) => {
       options["ownerId"] = ownerId;
@@ -510,19 +516,6 @@ class OrderController extends Controller {
   adminOrderList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const result = await this.baseAdminOrderList(req);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-    });
-
-  allList = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const totalCountCall = (filter, timeInfos) =>
-        this.orderModel.fullTotalCount(filter, timeInfos);
-
-      const listCall = (options) => {
-        return this.orderModel.fullList(filter, timeInfos);
-      };
-
-      const result = await this.baseRequestsList(req, totalCountCall, listCall);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 

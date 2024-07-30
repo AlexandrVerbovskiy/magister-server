@@ -410,9 +410,12 @@ class ListingsModel extends Model {
   };
 
   hasAccess = async (listingId, userId) => {
-    const listing = await db(LISTINGS_TABLE)
-      .where({ id: listingId, owner_id: userId })
-      .first();
+    const listing = await db(LISTINGS_TABLE).where({ id: listingId }).first();
+
+    if (!listing || listing.ownerId != userId) {
+      return null;
+    }
+
     return listing;
   };
 
