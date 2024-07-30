@@ -64,14 +64,18 @@ class OrderController extends Controller {
   ) => {
     let minRentalDays = null;
 
+    const listing = await this.listingModel.getLightById(listingId);
+
+    if (!listing) {
+      return { error: "Listing not found", orderId: null };
+    }
+
     if (needMinDateVerify) {
-      const listing = await this.listingModel.getLightById(listingId);
-
-      if (!listing) {
-        return { error: "Listing not found", orderId: null };
-      }
-
       minRentalDays = listing.minRentalDays;
+    }
+
+    if (!listing.approved || !listing.active || listing.ownerId == tenantId) {
+      return { error: "Access denied", orderId: null };
     }
 
     const dateErrorMessage = this.baseListingDatesValidation(
@@ -531,17 +535,17 @@ class OrderController extends Controller {
       }
 
       if (
-        (order.tenantId != userId && order.ownerId != userId) ||
-        order.disputeStatus
+        !(
+          (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
+            order.ownerId == userId) ||
+          (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
+            order.tenantId == userId)
+        )
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      if (
-        (order.status != STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.status != STATIC.ORDER_STATUSES.PENDING_TENANT) ||
-        order.cancelStatus
-      ) {
+      if (order.cancelStatus || order.disputeStatus) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -634,8 +638,12 @@ class OrderController extends Controller {
     }
 
     if (
-      (order.tenantId != userId && order.ownerId != userId) ||
-      order.disputeStatus
+      !(
+        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
+          order.ownerId == userId) ||
+        (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
+          order.tenantId == userId)
+      )
     ) {
       return {
         error: {
@@ -644,17 +652,10 @@ class OrderController extends Controller {
       };
     }
 
-    if (
-      (order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER &&
-        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT &&
-        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) ||
-      order.cancelStatus
-    ) {
+    if (order.cancelStatus || order.disputeStatus) {
       return {
         error: {
-          status: STATIC.ERRORS.DATA_CONFLICT,
-          message:
-            "Unable to perform an operation for the current order status",
+          status: STATIC.ERRORS.FORBIDDEN,
         },
       };
     }
@@ -829,7 +830,16 @@ class OrderController extends Controller {
 
     const order = await this.orderModel.getById(orderId);
 
-    if (order.tenantId != userId || order.disputeStatus) {
+    if (!order) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+    }
+
+    if (
+      order.tenantId != userId ||
+      order.cancelStatus ||
+      order.disputeStatus ||
+      order.status != STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+    ) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
@@ -896,23 +906,20 @@ class OrderController extends Controller {
         token
       );
 
+      if (!orderInfo || orderInfo.tenantId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       if (
         orderInfo.status !== STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT ||
-        orderInfo.cancelStatus
+        orderInfo.cancelStatus ||
+        orderInfo.disputeStatus
       ) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,
           "Unable to perform an operation for the current order status"
         );
-      }
-
-      if (
-        !orderInfo ||
-        orderInfo.tenantId != userId ||
-        orderInfo.disputeStatus
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
       const { token: ownerToken, image: generatedImage } =
