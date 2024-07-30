@@ -1,8 +1,12 @@
 const { body } = require("express-validator");
-const { validateBoolean, validateBigStringBody } = require("../base");
+const {
+  validateBoolean,
+  validateBigStringBody,
+  validateIntegerBody,
+} = require("../base");
 
 module.exports = [
-  body("listingId").isInt().withMessage("Body field 'Listing Id' is required"),
+  ...validateIntegerBody({ field: "listingId", fieldName: "Listing Id" }),
   body("pricePerDay")
     .isNumeric()
     .withMessage("Body field 'Price Per Day' must be a number"),
@@ -48,5 +52,8 @@ module.exports = [
       return true;
     }),
   ...validateBoolean({ field: "feeActive", fieldName: "Fee Active" }),
-  ...validateBigStringBody({ field: "message", fieldName: "Message" }),
+  ...validateBigStringBody({
+    field: "message",
+    fieldName: "Message",
+  }),
 ];

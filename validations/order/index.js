@@ -8,4 +8,5 @@ module.exports = {
   paypalOrderPayedValidation: require("./paypalOrderPayedValidation"),
   finishOrderByOwnerValidation: require("./finishOrderByOwnerValidation"),
   bankTransferUnpaidTransactionValidation: require("./bankTransferUnpaidTransactionValidation"),
+  listValidationWithTimeProps: require("./listValidationWithTimeProps"),
 };

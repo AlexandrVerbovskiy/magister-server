@@ -20,7 +20,9 @@ const {
   finishOrderByOwnerValidation,
   bankTransferUnpaidTransactionValidation,
   extendValidation,
+  listValidationWithTimeProps,
 } = require("../../validations/order");
+
 const { validateIdParam } = require("../../validations/base");
 
 module.exports = (io) => {
@@ -57,7 +59,7 @@ module.exports = (io) => {
     "/admin-order-list",
     isAuth,
     isSupport,
-    listValidation,
+    listValidationWithTimeProps,
     orderController.adminOrderList
   );
 

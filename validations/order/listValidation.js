@@ -1,11 +1,3 @@
-const {
-  listPaginationFilterValidation,
-  listPaginationTimeStringFilterValidation,
-  listTimeStringValidation,
-} = require("../base");
+const { listPaginationStringFilterValidation } = require("../base");
 
-module.exports = [
-  ...listPaginationTimeStringFilterValidation,
-  ...listPaginationFilterValidation,
-  ...listTimeStringValidation,
-];
+module.exports = [...listPaginationStringFilterValidation];

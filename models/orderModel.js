@@ -301,9 +301,12 @@ class OrderModel extends Model {
   fullBaseGetQuery = (filter) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
-    return query.whereRaw(
-      this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
-    );
+
+    return query.where((builder) => {
+      builder
+        .whereRaw(this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`))
+        .orWhereRaw(...this.baseStrFilter(filter));
+    });
   };
 
   orderCreatedTimeFilterWrap = (query, timeInfos) => {
@@ -341,43 +344,6 @@ class OrderModel extends Model {
         "<=",
         formatDateToSQLFormat(timeInfos.serverToTime)
       );
-    }
-
-    return query;
-  };
-
-  orderWithRequestTimeFilterWrap = (query, timeInfos) => {
-    if (timeInfos.serverFromTime || timeInfos.serverToTime) {
-      const fromDateCondition = timeInfos.serverFromTime
-        ? `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND CONCAT(DATE(${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date), ' 00:00:00') >= ?) 
-        OR 
-        (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND CONCAT(DATE(${ORDERS_TABLE}.start_date), ' 00:00:00') >= ?))`
-        : "";
-
-      const toDateCondition = timeInfos.serverToTime
-        ? `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND CONCAT(DATE(${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date), ' 23:59:59') <= ?) 
-        OR 
-        (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND CONCAT(DATE(${ORDERS_TABLE}.end_date), ' 23:59:59') <= ?))`
-        : "";
-
-      const whereClause = [fromDateCondition, toDateCondition]
-        .filter((condition) => condition !== "")
-        .join(" AND ");
-
-      query = query.whereRaw(`(${whereClause})`, [
-        timeInfos.serverFromTime
-          ? formatDateToSQLFormat(timeInfos.serverFromTime)
-          : null,
-        timeInfos.serverFromTime
-          ? formatDateToSQLFormat(timeInfos.serverFromTime)
-          : null,
-        timeInfos.serverToTime
-          ? formatDateToSQLFormat(timeInfos.serverToTime)
-          : null,
-        timeInfos.serverToTime
-          ? formatDateToSQLFormat(timeInfos.serverToTime)
-          : null,
-      ]);
     }
 
     return query;
@@ -459,24 +425,18 @@ class OrderModel extends Model {
     return [...visibleFields, `dispute_chats.id as disputeChatId`];
   };
 
-  tenantBaseGetQuery = (filter, timeInfos, tenantId) => {
+  tenantBaseGetQuery = (filter, tenantId) => {
     const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
-
     let query = baseGetReq(filter);
     query = this.payedInfoJoin(query);
-    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
     query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
-
     return query.whereRaw("tenants.id = ?", tenantId);
   };
 
-  ownerBaseGetQuery = (filter, timeInfos, ownerId) => {
+  ownerBaseGetQuery = (filter, ownerId) => {
     const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
-
     let query = baseGetReq(filter);
-    query = this.orderWithRequestTimeFilterWrap(query, timeInfos);
     query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
-
     return query.whereRaw("owners.id = ?", ownerId);
   };
 
@@ -561,33 +521,33 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  baseTenantTotalCount = async (filter, timeInfos, tenantId) => {
+  baseTenantTotalCount = async (filter, tenantId) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
-    query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
+    query = this.tenantBaseGetQuery(filter, tenantId);
 
     const result = await query.count("* as count").first();
     return +result?.count;
   };
 
-  baseOwnerTotalCount = async (filter, timeInfos, ownerId) => {
+  baseOwnerTotalCount = async (filter, ownerId) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
-    query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
+    query = this.ownerBaseGetQuery(filter, ownerId);
 
     const result = await query.count("* as count").first();
     return +result?.count;
   };
 
   baseTenantList = async (props) => {
-    const { filter, start, count, timeInfos, tenantId } = props;
+    const { filter, start, count, tenantId } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.tenantBaseGetQuery(filter, timeInfos, tenantId);
+    let query = this.tenantBaseGetQuery(filter, tenantId);
     query = this.commentsInfoJoin(query);
     query = this.disputeChatInfoJoin(query, tenantId);
 
@@ -607,10 +567,10 @@ class OrderModel extends Model {
   };
 
   baseOwnerList = async (props) => {
-    const { filter, start, count, timeInfos, ownerId } = props;
+    const { filter, start, count, ownerId } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.ownerBaseGetQuery(filter, timeInfos, ownerId);
+    let query = this.ownerBaseGetQuery(filter, ownerId);
     query = this.commentsInfoJoin(query);
     query = this.disputeChatInfoJoin(query, ownerId);
 
@@ -627,16 +587,16 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  tenantOrdersTotalCount = async (filter, timeInfos, userId) => {
-    return await this.baseTenantTotalCount(filter, timeInfos, userId);
+  tenantOrdersTotalCount = async (filter, userId) => {
+    return await this.baseTenantTotalCount(filter, userId);
   };
 
   tenantOrdersList = async (props) => {
     return await this.baseTenantList(props);
   };
 
-  ownerOrdersTotalCount = async (filter, timeInfos, userId) => {
-    return await this.baseOwnerTotalCount(filter, timeInfos, userId);
+  ownerOrdersTotalCount = async (filter, userId) => {
+    return await this.baseOwnerTotalCount(filter, userId);
   };
 
   ownerOrderList = async (props) => {
@@ -987,7 +947,7 @@ class OrderModel extends Model {
     query = this.fullOrdersJoin(query);
     query = this.baseRequestInfoJoin(query);
     query = this.commentsInfoJoin(query);
-    
+
     let visibleFields = [
       ...this.fullVisibleFields,
       ...this.requestVisibleFields,

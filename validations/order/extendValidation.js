@@ -1,7 +1,10 @@
-const { body } = require("express-validator");
 const createValidation = require("./createValidation");
+const { validateIntegerBody } = require("../base");
 
 module.exports = [
-  body("parentOrderId").isInt().withMessage("Body field 'Order Id' is required"),
+  ...validateIntegerBody({
+    field: "parentOrderId",
+    fieldName: "Parent Order Id",
+  }),
   ...createValidation,
 ];
