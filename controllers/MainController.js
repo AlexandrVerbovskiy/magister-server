@@ -456,6 +456,14 @@ class MainController extends Controller {
       const bankAccount = await this.systemOptionModel.getBankAccountInfo();
       const categories = await this.getNavigationCategories();
 
+      if (
+        order.cancelStatus ||
+        order.disputeStatus ||
+        order.status != STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         order,
         bankAccount,
@@ -715,10 +723,7 @@ class MainController extends Controller {
       let countForOwner = 0;
 
       if (isForTenant) {
-        countForOwner = await this.orderModel.ownerOrdersTotalCount(
-          "",
-          userId
-        );
+        countForOwner = await this.orderModel.ownerOrdersTotalCount("", userId);
         countForTenant = result.countItems;
       } else {
         countForTenant = await this.orderModel.tenantOrdersTotalCount(
