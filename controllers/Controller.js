@@ -62,7 +62,6 @@ const {
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
 const CLIENT_URL = process.env.CLIENT_URL;
-const axios = require("axios");
 
 class Controller {
   mailTransporter = null;
