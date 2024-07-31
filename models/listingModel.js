@@ -375,26 +375,27 @@ class ListingsModel extends Model {
       .whereNotIn("id", imagesToUpdateIds)
       .delete();
 
-    listingImagesToUpdate.forEach(
-      async (image) =>
-        await this.updateImage({
-          type: image.type,
-          link: image.link,
-          id: image.id,
-          listingId: id,
-        })
-    );
+    for (let i = 0; i < listingImagesToUpdate.length; i++) {
+      const image = listingImagesToUpdate[i];
+      await this.updateImage({
+        type: image.type,
+        link: image.link,
+        id: image.id,
+        listingId: id,
+      });
+    }
 
-    listingImagesToInsert.forEach(
-      async (image) =>
-        await this.createImage({
-          type: image.type,
-          link: image.link,
-          listingId: id,
-        })
-    );
+    for (let i = 0; i < listingImagesToInsert.length; i++) {
+      const image = listingImagesToInsert[i];
+      await this.createImage({
+        type: image.type,
+        link: image.link,
+        listingId: id,
+      });
+    }
 
     const currentListingImages = await this.getListingImages(id);
+
     return {
       listingImages: currentListingImages,
     };
@@ -410,7 +411,10 @@ class ListingsModel extends Model {
   };
 
   hasAccess = async (listingId, userId) => {
-    const listing = await db(LISTINGS_TABLE).where({ id: listingId }).first();
+    const listing = await db(LISTINGS_TABLE)
+      .where({ id: listingId })
+      .select(this.visibleFields)
+      .first();
 
     if (!listing || listing.ownerId != userId) {
       return null;
