@@ -627,7 +627,7 @@ class OrderController extends Controller {
     const { id } = req.body;
     const userId = req.userData.userId;
 
-    const order = await this.orderModel.getById(id);
+    const order = await this.orderModel.getFullWithPaymentById(id);
 
     if (!order) {
       return {
@@ -639,7 +639,9 @@ class OrderController extends Controller {
 
     if (
       !(
-        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
+        ((order.status == STATIC.ORDER_STATUSES.PENDING_OWNER ||
+          (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT &&
+            !(order.payedId && order.payedWaitingApproved))) &&
           order.ownerId == userId) ||
         (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
           order.tenantId == userId)
@@ -842,8 +844,7 @@ class OrderController extends Controller {
       order.cancelStatus ||
       order.disputeStatus ||
       order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT ||
-      (order.payedId &&
-        order.payedType == STATIC.PAYMENT_TYPES.PAYPAL) ||
+      (order.payedId && order.payedType == STATIC.PAYMENT_TYPES.PAYPAL) ||
       order.payedAdminApproved
     ) {
       return this.sendErrorResponse(
@@ -982,8 +983,7 @@ class OrderController extends Controller {
     availableStatusesToCancel = [],
   }) => {
     const { id } = req.body;
-
-    const orderInfo = await this.orderModel.getFullById(id);
+    const orderInfo = await this.orderModel.getFullWithPaymentById(id);
 
     if (!orderInfo) {
       return { error: { status: STATIC.ERRORS.NOT_FOUND } };
@@ -999,7 +999,10 @@ class OrderController extends Controller {
       return { error: { status: STATIC.ERRORS.FORBIDDEN } };
     }
 
-    if (orderInfo.cancelStatus != null) {
+    if (
+      orderInfo.cancelStatus != null ||
+      (orderInfo.payedId && orderInfo.payedWaitingApproved)
+    ) {
       return {
         error: {
           status: STATIC.ERRORS.DATA_CONFLICT,
@@ -1168,7 +1171,7 @@ class OrderController extends Controller {
       const result = await this.baseFullCancelPayed(req);
 
       if (result.error) {
-        this.sendErrorResponse(
+        return this.sendErrorResponse(
           res,
           result.error.status,
           result.error.message ?? null
