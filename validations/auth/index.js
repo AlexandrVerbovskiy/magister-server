@@ -1,6 +1,5 @@
 module.exports = {
   authByProviderValidation: require("./authByProviderValidation"),
-  checkTwoFactorCodeValidation: require("./checkTwoFactorCodeValidation"),
   codeValidation: require("./codeValidation"),
   typeValidation: require("./typeValidation"),
   loginValidation: require("./loginValidation"),

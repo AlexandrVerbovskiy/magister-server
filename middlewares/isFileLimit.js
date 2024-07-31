@@ -2,8 +2,16 @@ require("dotenv").config();
 const STATIC = require("../static");
 const multer = require("multer");
 const byteConverter = require("../utils/byteConverter");
+const { ImageValidationError } = require("../utils/errors");
 
 const isBaseFileLimit = (err, req, res, next, baseLimit) => {
+  if (err instanceof ImageValidationError) {
+    return res.status(STATIC.ERRORS.SIZE_LIMIT.STATUS).json({
+      isError: true,
+      message: err.message,
+    });
+  }
+
   if (err instanceof multer.MulterError) {
     const size = byteConverter(Number(baseLimit));
 
@@ -27,7 +35,7 @@ const isSummaryFileLimit = (req, res, next) => {
   const size = byteConverter(Number(maxTotalFileSize));
 
   const totalSize = req.files.reduce((sum, file) => sum + file.size, 0);
-  
+
   if (totalSize > maxTotalFileSize) {
     return res.status(STATIC.ERRORS.SIZE_LIMIT.STATUS).json({
       isError: true,

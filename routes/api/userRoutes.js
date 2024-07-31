@@ -9,7 +9,7 @@ const {
   createValidation,
   listValidation,
 } = require("../../validations/user");
-const { upload } = require("../../utils");
+const { imageUpload } = require("../../utils");
 const { isFileLimit } = require("../../middlewares");
 const { isAuth, isSupport, isAdmin } = require("../../middlewares");
 
@@ -63,7 +63,7 @@ module.exports = (io) => {
     "/update",
     isAuth,
     isAdmin,
-    upload.single("photo"),
+    imageUpload.single("photo"),
     isFileLimit,
     updateValidation,
     userController.update
@@ -73,7 +73,7 @@ module.exports = (io) => {
     "/create",
     isAuth,
     isAdmin,
-    upload.single("photo"),
+    imageUpload.single("photo"),
     isFileLimit,
     createValidation,
     userController.create
