@@ -9,9 +9,19 @@ class SenderPaymentController extends Controller {
       const { userId } = req.userData;
       const { orderId, type: paypalType } = req.body;
 
-      const order = await this.orderModel.getById(orderId);
+      const order = await this.orderModel.getFullWithPaymentById(orderId);
 
-      if (order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT) {
+      if (order.tenantId != userId) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      if (
+        order.cancelStatus ||
+        order.disputeStatus ||
+        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT ||
+        (order.payedId && order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
+        order.payedAdminApproved
+      ) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.DATA_CONFLICT,

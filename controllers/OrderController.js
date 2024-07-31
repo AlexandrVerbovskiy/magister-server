@@ -828,19 +828,29 @@ class OrderController extends Controller {
     const { userId } = req.userData;
     const { orderId } = req.body;
 
-    const order = await this.orderModel.getById(orderId);
+    const order = await this.orderModel.getFullWithPaymentById(orderId);
 
     if (!order) {
       return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
     }
 
+    if (order.tenantId != userId) {
+      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+    }
+
     if (
-      order.tenantId != userId ||
       order.cancelStatus ||
       order.disputeStatus ||
-      order.status != STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+      order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT ||
+      (order.payedId &&
+        order.payedType == STATIC.PAYMENT_TYPES.PAYPAL) ||
+      order.payedAdminApproved
     ) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.DATA_CONFLICT,
+        "Unable to perform an operation for the current order status"
+      );
     }
 
     const proofUrl = this.moveUploadsFileToFolder(req.file, "paymentProofs");
