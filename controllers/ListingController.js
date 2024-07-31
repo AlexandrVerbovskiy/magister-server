@@ -276,7 +276,6 @@ class ListingController extends Controller {
 
   localGetFiles = (req) => {
     const listingImages = JSON.parse(req.body["listingImages"] ?? "[]");
-
     const filesToSave = [];
 
     req.files.forEach((file) => {
@@ -481,7 +480,11 @@ class ListingController extends Controller {
       STATIC.SUCCESS.OK,
       "Updated successfully",
       {
-        listing: { ...dataToSave, listingId, listingImagesToRes },
+        listing: {
+          ...dataToSave,
+          listingId,
+          listingImages: listingImagesToRes,
+        },
         createdVerifiedRequest,
       }
     );
