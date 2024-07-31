@@ -19,12 +19,10 @@ const {
   codeValidation,
   authByProviderValidation,
   saveProfileValidation,
-  typeValidation,
-  checkTwoFactorCodeValidation,
   autofillValidation,
 } = require("../../validations/auth");
 
-const { upload } = require("../../utils");
+const { imageUpload } = require("../../utils");
 const { emailValidation } = require("../../validations/base");
 
 module.exports = (io) => {
@@ -49,13 +47,13 @@ module.exports = (io) => {
   router.post(
     "/generate-two-factor-code",
     isNotAuth,
-    typeValidation,
+    twoFactorAuthGenerateValidation,
     userController.twoFactorAuthGenerate
   );
   router.post(
     "/check-two-factor-code",
     isNotAuth,
-    checkTwoFactorCodeValidation,
+    twoFactorAuthVerifyValidation,
     userController.twoFactorAuthVerify
   );
 
@@ -63,7 +61,7 @@ module.exports = (io) => {
 
   router.post(
     "/save-profile",
-    upload.single("photo"),
+    imageUpload.single("photo"),
     isFileLimit,
     isAuth,
     saveProfileValidation,
@@ -80,7 +78,7 @@ module.exports = (io) => {
   router.post(
     "/save-my-documents",
     isAuth,
-    upload.any(),
+    imageUpload.any(),
     isSummaryFileLimit,
     isFileLimit,
     userController.updateMyDocuments

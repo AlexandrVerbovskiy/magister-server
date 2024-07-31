@@ -8,12 +8,11 @@ const {
   authId,
   isSummaryFileLimit,
 } = require("../../middlewares");
-const { upload } = require("../../utils");
+const { imageUpload } = require("../../utils");
 const {
   deleteValidation,
   listValidation,
   listStatusValidation,
-  idParamValidation,
   createByAdminValidation,
   updateByAdminValidation,
   createValidation,
@@ -52,7 +51,7 @@ module.exports = (io) => {
   router.post(
     "/create",
     isAuth,
-    upload.any(),
+    imageUpload.any(),
     isSummaryFileLimit,
     isFileLimit,
     createValidation,
@@ -62,7 +61,7 @@ module.exports = (io) => {
   router.post(
     "/update",
     isAuth,
-    upload.any(),
+    imageUpload.any(),
     isSummaryFileLimit,
     isFileLimit,
     updateValidation,
@@ -73,7 +72,7 @@ module.exports = (io) => {
     "/create-by-admin",
     isAuth,
     isAdmin,
-    upload.any(),
+    imageUpload.any(),
     isSummaryFileLimit,
     isFileLimit,
     createByAdminValidation,
@@ -84,7 +83,7 @@ module.exports = (io) => {
     "/update-by-admin",
     isAuth,
     isAdmin,
-    upload.any(),
+    imageUpload.any(),
     isSummaryFileLimit,
     isFileLimit,
     updateByAdminValidation,
