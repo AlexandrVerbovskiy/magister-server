@@ -1,12 +1,7 @@
 const { Router } = require("express");
 const router = Router();
 const { MainController } = require("../../controllers");
-const {
-  isAuth,
-  isAdmin,
-  authId,
-  isSupport,
-} = require("../../middlewares");
+const { isAuth, isAdmin, authId, isSupport } = require("../../middlewares");
 const {
   updateListingOptionsValidation,
   adminUpdateListingOptionsValidation,
@@ -412,6 +407,9 @@ module.exports = (io) => {
     mainController.getAdminCreateCategoryByOtherOptions
   );
 
-  router.get("/auth/paypal/callback", mainController.test);
+  router.post("/address-to-coords", isAuth, mainController.getAddressCoords);
+
+  router.post("/coords-to-address", isAuth, mainController.getCoordsAddress);
+
   return router;
 };

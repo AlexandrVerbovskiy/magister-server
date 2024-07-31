@@ -12,4 +12,5 @@ module.exports = {
   ...require("./paypalApi"),
   ...require("./paymentCalculations"),
   ...require("./helpers"),
+  ...require("./geocodingApi"),
 };
