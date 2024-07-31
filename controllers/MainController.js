@@ -24,6 +24,8 @@ const {
   incrementDateSums,
   determineStepType,
   getFactOrderDays,
+  getAddressByCoords,
+  getCoordsByAddress,
 } = require("../utils");
 const TenantCommentController = require("./TenantCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
@@ -1431,7 +1433,19 @@ class MainController extends Controller {
       });
     });
 
-  test = async (req, res) => this.baseWrapper(req, res, async () => {});
+  getAddressCoords = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const address = req.body.address;
+      const result = await getCoordsByAddress({ address });
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  getCoordsAddress = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { lat, lng } = req.body;
+      const result = await getAddressByCoords({ lat, lng });
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
 }
 
 module.exports = MainController;
