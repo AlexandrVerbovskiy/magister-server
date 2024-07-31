@@ -38,6 +38,7 @@ class SenderPayment extends Model {
     `${ORDERS_TABLE}.tenant_fee as tenantFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.status as orderStatus`,
+    `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
     `${ORDERS_TABLE}.parent_id as orderParentId`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
