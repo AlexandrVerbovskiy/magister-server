@@ -2,6 +2,8 @@ module.exports = {
   ...require("./validateInteger"),
   ...require("./validateId"),
   ...require("./validateString"),
+  validatePhone: require("./validatePhone"),
+  validateUrl: require("./validateUrl"),
   validateCheckbox: require("./validateCheckbox"),
   validateFloat: require("./validateFloat"),
   validateDate: require("./validateDate"),

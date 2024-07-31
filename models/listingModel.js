@@ -35,7 +35,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat`,
     `${LISTINGS_TABLE}.rental_lng`,
     `${LISTINGS_TABLE}.rental_radius`,
-    `${LISTINGS_TABLE}.key_words`,
     `${LISTINGS_TABLE}.background_photo`,
   ];
 
@@ -58,7 +57,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat as rentalLat`,
     `${LISTINGS_TABLE}.rental_lng as rentalLng`,
     `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
-    `${LISTINGS_TABLE}.key_words as keyWords`,
     `${LISTINGS_TABLE}.background_photo as backgroundPhoto`,
   ];
 
@@ -99,11 +97,7 @@ class ListingsModel extends Model {
 
   listingImageVisibleFields = ["id", "listing_id as listingId", "type", "link"];
 
-  strFilterFields = [
-    `${LISTINGS_TABLE}.name`,
-    `${LISTINGS_TABLE}.city`,
-    "key_words",
-  ];
+  strFilterFields = [`${LISTINGS_TABLE}.name`, `${LISTINGS_TABLE}.city`];
 
   strFullFilterFields = [...this.strFilterFields, `${USERS_TABLE}.name`];
 
@@ -154,7 +148,6 @@ class ListingsModel extends Model {
     rentalLng,
     rentalRadius,
     ownerId,
-    keyWords = "",
     approved = false,
     minRentalDays = null,
     listingImages = [],
@@ -183,7 +176,6 @@ class ListingsModel extends Model {
         compensation_cost: compensationCost,
         count_stored_items: countStoredItems,
         owner_id: ownerId,
-        key_words: keyWords,
         city,
         active,
         background_photo: backgroundPhoto,
@@ -323,7 +315,6 @@ class ListingsModel extends Model {
     rentalRadius,
     minRentalDays = null,
     listingImages = [],
-    keyWords = "",
     city,
     ownerId,
     address,
@@ -349,7 +340,6 @@ class ListingsModel extends Model {
       min_rental_days: minRentalDays,
       compensation_cost: compensationCost,
       count_stored_items: countStoredItems,
-      key_words: keyWords,
       owner_id: ownerId,
       address,
       active,
@@ -420,9 +410,12 @@ class ListingsModel extends Model {
   };
 
   hasAccess = async (listingId, userId) => {
-    const listing = await db(LISTINGS_TABLE)
-      .where({ id: listingId, owner_id: userId })
-      .first();
+    const listing = await db(LISTINGS_TABLE).where({ id: listingId }).first();
+
+    if (!listing || listing.ownerId != userId) {
+      return null;
+    }
+
     return listing;
   };
 
@@ -450,7 +443,7 @@ class ListingsModel extends Model {
       .update({ active: db.raw("NOT active") })
       .returning("active");
 
-    return res[0].active;
+    return res[0]?.active ?? null;
   };
 
   changeActive = async (listingId) => {
@@ -459,7 +452,7 @@ class ListingsModel extends Model {
       .update({ active: db.raw("NOT active") })
       .returning("active");
 
-    return res[0].active;
+    return res[0]?.active ?? null;
   };
 
   baseListJoin = (query) =>
@@ -496,6 +489,8 @@ class ListingsModel extends Model {
   };
 
   listTimeWhere = (timeInfos, query) => {
+    const { serverFromTime, serverToTime } = timeInfos;
+
     return query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
       this.select("listing_id")
         .from(ORDERS_TABLE)
@@ -612,7 +607,6 @@ class ListingsModel extends Model {
   };
 
   totalCount = async ({
-    timeInfos,
     cities = [],
     categories = [],
     userId = null,
@@ -638,10 +632,6 @@ class ListingsModel extends Model {
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
-
-    if (timeInfos.serverFromTime && timeInfos.serverToTime) {
-      query = this.listTimeWhere(timeInfos, query);
-    }
 
     const queryCities = [...cities];
     const queryCategories = [...categories];
@@ -686,7 +676,7 @@ class ListingsModel extends Model {
     }
 
     if (userId) {
-      query = query.where({ owner_id: userId });
+      query = query.where("owner_id", userId);
     }
 
     query = this.baseDistanceFilter(query, distance, lat, lng);
@@ -769,13 +759,6 @@ class ListingsModel extends Model {
   };
 
   baseTotalCountWithLastRequestsQuery = (filter, userId = null) => {
-    const subquery = db
-      .select("id")
-      .from(LISTING_APPROVAL_REQUESTS_TABLE)
-      .groupBy("id")
-      .orderBy("id", "desc")
-      .limit(1);
-
     let query = db(LISTINGS_TABLE)
       .leftJoin(LISTING_APPROVAL_REQUESTS_TABLE, function () {
         this.on(
@@ -798,7 +781,7 @@ class ListingsModel extends Model {
       );
 
     if (userId) {
-      query = query.where({ owner_id: userId });
+      query = query.where("owner_id", userId);
     }
 
     return query;
@@ -830,7 +813,6 @@ class ListingsModel extends Model {
 
   list = async (props) => {
     const {
-      timeInfos,
       cities = [],
       categories = [],
       start,
@@ -871,10 +853,6 @@ class ListingsModel extends Model {
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
       .where(`${LISTINGS_TABLE}.active`, true);
-
-    if (timeInfos && timeInfos.serverFromTime && timeInfos.serverToTime) {
-      query = this.listTimeWhere(timeInfos, query);
-    }
 
     const queryCities = [...cities];
     const queryCategories = [...categories];

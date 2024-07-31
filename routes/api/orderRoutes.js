@@ -8,7 +8,7 @@ const {
   isFileLimit,
 } = require("../../middlewares");
 
-const { upload } = require("../../utils");
+const { imageUpload } = require("../../utils");
 
 const {
   idParamValidation,
@@ -20,7 +20,9 @@ const {
   finishOrderByOwnerValidation,
   bankTransferUnpaidTransactionValidation,
   extendValidation,
+  listValidationWithTimeProps,
 } = require("../../validations/order");
+
 const { validateIdParam } = require("../../validations/base");
 
 module.exports = (io) => {
@@ -57,7 +59,7 @@ module.exports = (io) => {
     "/admin-order-list",
     isAuth,
     isSupport,
-    listValidation,
+    listValidationWithTimeProps,
     orderController.adminOrderList
   );
 
@@ -79,7 +81,7 @@ module.exports = (io) => {
 
   router.post(
     "/unpaid-order-transaction-bank-transfer",
-    upload.single("proof"),
+    imageUpload.single("proof"),
     isFileLimit,
     isAuth,
     isVerified,

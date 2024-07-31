@@ -7,10 +7,13 @@ module.exports = ({
   required = true,
   canBeNegative = false,
 }) => {
-  if (!message)
-    message = `Body parameter '${
-      fieldName ?? field
-    }' must be a float number greater than or equal to 0`;
+  if (!message) {
+    message = `Body parameter '${fieldName ?? field}' must be a float number`;
+  }
+
+  if (!canBeNegative) {
+    message += " greater than or equal to 0";
+  }
 
   let validation = body(field);
   if (!required) validation = validation.optional({ nullable: true });

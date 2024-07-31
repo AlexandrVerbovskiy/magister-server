@@ -717,14 +717,12 @@ class MainController extends Controller {
       if (isForTenant) {
         countForOwner = await this.orderModel.ownerOrdersTotalCount(
           "",
-          {},
           userId
         );
         countForTenant = result.countItems;
       } else {
         countForTenant = await this.orderModel.tenantOrdersTotalCount(
           "",
-          {},
           userId
         );
         countForOwner = result.countItems;

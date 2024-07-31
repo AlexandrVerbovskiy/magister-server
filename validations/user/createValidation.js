@@ -2,7 +2,7 @@ const {
   validateSmallStringBody,
   validateBigStringBody,
   userRoleValidation,
-  validateIntegerBody,
+  validatePhone,
 } = require("../base");
 
 module.exports = [
@@ -11,7 +11,7 @@ module.exports = [
     field: "name",
     fieldName: "Name",
   }),
-  ...validateSmallStringBody({
+  ...validatePhone({
     field: "phone",
     fieldName: "Phone",
     required: false,

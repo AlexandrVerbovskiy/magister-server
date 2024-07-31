@@ -1,11 +1,16 @@
-const { validateSmallStringBody, validateBigStringBody } = require("../base");
+const {
+  validateSmallStringBody,
+  validateBigStringBody,
+  validatePhone,
+  validateUrl,
+} = require("../base");
 
 module.exports = [
   ...validateSmallStringBody({
     field: "name",
     fieldName: "Name",
   }),
-  ...validateSmallStringBody({
+  ...validatePhone({
     field: "phone",
     fieldName: "Phone",
     required: false,
@@ -25,22 +30,22 @@ module.exports = [
     fieldName: "Place Work",
     required: false,
   }),
-  ...validateSmallStringBody({
+  ...validateUrl({
     field: "facebookUrl",
     fieldName: "Facebook Url",
     required: false,
   }),
-  ...validateSmallStringBody({
+  ...validateUrl({
     field: "instagramUrl",
     fieldName: "Instagram Url",
     required: false,
   }),
-  ...validateSmallStringBody({
+  ...validateUrl({
     field: "linkedinUrl",
     fieldName: "Linkedin Url",
     required: false,
   }),
-  ...validateSmallStringBody({
+  ...validateUrl({
     field: "twitterUrl",
     fieldName: "Twitter Url",
     required: false,
