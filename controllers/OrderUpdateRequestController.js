@@ -24,15 +24,15 @@ class OrderUpdateRequestController extends Controller {
         );
       }
 
-      const { tenantId, ownerId, chatId } = order;
-
-      if (tenantId != senderId && ownerId != senderId) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
+      const { tenantId, ownerId } = order;
 
       if (
-        (order.status != STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.status != STATIC.ORDER_STATUSES.PENDING_TENANT) ||
+        !(
+          (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
+            order.tenantId == senderId) ||
+          (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
+            order.ownerId == senderId)
+        ) ||
         order.cancelStatus
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
@@ -43,9 +43,7 @@ class OrderUpdateRequestController extends Controller {
       );
 
       const blockedOrderDates =
-        await this.orderModel.getBlockedListingsDatesForOrders(
-          [order.id]
-        );
+        await this.orderModel.getBlockedListingsDatesForOrders([order.id]);
 
       const currentListingBlockedDates = blockedOrderDates[order.id];
 

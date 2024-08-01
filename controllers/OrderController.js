@@ -552,15 +552,6 @@ class OrderController extends Controller {
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-      if (
-        (order.status == STATIC.ORDER_STATUSES.PENDING_TENANT &&
-          order.tenantId != userId) ||
-        (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
-          order.ownerId != userId)
-      ) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-      }
-
       const conflictOrders = await this.orderModel.getConflictOrders([id]);
 
       if (!isOrderCanBeAccepted(order, conflictOrders[id])) {
