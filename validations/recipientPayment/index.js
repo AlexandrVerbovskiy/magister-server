@@ -1,4 +1,5 @@
 module.exports = {
   listValidation: require("./listValidation"),
-  waitingRefundsListValidation: require("./waitingRefundsListValidation"),
+  adminListValidation: require("./adminListValidation"),
+  completedValidation: require("./completedValidation"),
 };

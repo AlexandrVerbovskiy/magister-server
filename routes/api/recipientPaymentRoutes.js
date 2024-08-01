@@ -4,7 +4,8 @@ const { RecipientPaymentController } = require("../../controllers");
 const { isAuth, isAdmin } = require("../../middlewares");
 const {
   listValidation,
-  waitingRefundsListValidation,
+  adminListValidation,
+  completedValidation,
 } = require("../../validations/recipientPayment");
 
 module.exports = (io) => {
@@ -21,7 +22,7 @@ module.exports = (io) => {
     "/admin-list",
     isAuth,
     isAdmin,
-    listValidation,
+    adminListValidation,
     recipientPaymentController.adminList
   );
 
@@ -29,21 +30,8 @@ module.exports = (io) => {
     "/completed",
     isAuth,
     isAdmin,
+    completedValidation,
     recipientPaymentController.markAsCompletedRefund
-  );
-
-  router.post(
-    "/rejected",
-    isAuth,
-    isAdmin,
-    recipientPaymentController.markAsFailedRefund
-  );
-
-  router.post(
-    "/failed-recipient-mark-done",
-    isAuth,
-    isAdmin,
-    recipientPaymentController.markFailedRecipientDone
   );
 
   return router;

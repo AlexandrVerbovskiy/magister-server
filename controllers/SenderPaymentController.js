@@ -127,6 +127,7 @@ class SenderPaymentController extends Controller {
   userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
+
       const result = await this.baseAllSenderPaymentList(
         req,
         userId,

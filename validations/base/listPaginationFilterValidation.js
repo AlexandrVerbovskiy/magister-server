@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const { validateSmallStringBody } = require("./validateString");
 
 module.exports = [
   body("page")
@@ -9,6 +10,11 @@ module.exports = [
     .optional()
     .isInt({ min: 1 })
     .withMessage("Body parameter 'Items per page' must be a positive integer"),
+  ...validateSmallStringBody({
+    field: "order",
+    fieldName: "Order",
+    required: false,
+  }),
   body("orderType")
     .optional({ nullable: true })
     .isIn(["desc", "asc"])

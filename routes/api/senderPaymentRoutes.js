@@ -9,6 +9,7 @@ const {
 const {
   paypalCreateOrderValidation,
   listValidation,
+  adminListValidation,
   approveCreditCardTransactionValidation,
   rejectCreditCardTransactionValidation,
 } = require("../../validations/senderPayment");
@@ -36,7 +37,7 @@ module.exports = (io) => {
     "/admin-list",
     isAuth,
     isAdmin,
-    listValidation,
+    adminListValidation,
     senderPaymentController.adminList
   );
 
