@@ -429,11 +429,9 @@ class UserModel extends Model {
     query = this.queryByRole(query, role);
 
     return await query
-      .leftJoin(
-        SENDER_PAYMENTS_TABLE,
-        `${SENDER_PAYMENTS_TABLE}.user_id`,
-        "=",
-        `${USERS_TABLE}.id`
+      .joinRaw(
+        `LEFT JOIN ${SENDER_PAYMENTS_TABLE} ON
+       (${SENDER_PAYMENTS_TABLE}.user_id = ${USERS_TABLE}.id AND ${SENDER_PAYMENTS_TABLE}.hidden = false)`
       )
       .leftJoin(ORDERS_TABLE, `${ORDERS_TABLE}.tenant_id`, `${USERS_TABLE}.id`)
       .select([
