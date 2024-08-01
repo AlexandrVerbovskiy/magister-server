@@ -1,7 +1,7 @@
 const { body } = require("express-validator");
 
 module.exports = [
-  body("orderId").isInt().withMessage("orderId must be a number").toInt(),
+  body("orderId").isInt().withMessage("Order Id must be a number").toInt(),
 
   body("type")
     .isString()
