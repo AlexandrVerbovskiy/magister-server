@@ -88,20 +88,6 @@ class RecipientPaymentController extends Controller {
       await this.recipientPaymentModel.complete(id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
-
-  markAsFailedRefund = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id, description } = req.body;
-      await this.recipientPaymentModel.reject(id, description);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
-
-  markFailedRecipientDone = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { id, paymentNumber } = req.body;
-      await this.recipientPaymentModel.markFailedAsDone(id, paymentNumber);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
 }
 
 module.exports = RecipientPaymentController;

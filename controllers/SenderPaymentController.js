@@ -19,7 +19,8 @@ class SenderPaymentController extends Controller {
         order.cancelStatus ||
         order.disputeStatus ||
         order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT ||
-        (order.payedId && order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
+        (order.payedId &&
+          order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
         order.payedAdminApproved
       ) {
         return this.sendErrorResponse(
@@ -126,6 +127,7 @@ class SenderPaymentController extends Controller {
   userList = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
+
       const result = await this.baseAllSenderPaymentList(
         req,
         userId,
