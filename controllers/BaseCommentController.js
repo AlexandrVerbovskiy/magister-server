@@ -44,22 +44,25 @@ class BaseCommentController extends Controller {
     };
   };
 
-  commentList = async (req, res) => {
-    const result = await this.baseCommentList(req);
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
-  };
+  commentList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.baseCommentList(req);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
 
-  approve = async (req, res) => {
-    const { id } = req.body;
-    await this.model.approve(id);
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-  };
+  approve = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.body;
+      await this.model.approve(id);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
 
-  reject = async (req, res) => {
-    const { id, description } = req.body;
-    await this.model.reject(id, description);
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-  };
+  reject = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id, description } = req.body;
+      await this.model.reject(id, description);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
 }
 
 module.exports = BaseCommentController;
