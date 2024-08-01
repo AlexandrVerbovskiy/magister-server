@@ -24,67 +24,80 @@ class OwnerCommentController extends BaseCommentController {
     return items;
   };
 
-  createComment = async (req, res) => {
-    const { userCommentInfo, listingCommentInfo, orderId } = req.body;
-    const senderId = req.userData.userId;
+  createComment = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userCommentInfo, listingCommentInfo, orderId } = req.body;
+      const senderId = req.userData.userId;
 
-    const orderHasOwnerComment =
-      await this.ownerCommentModel.checkOrderHasComment(orderId);
+      const order = await this.orderModel.getById(orderId);
 
-    if (orderHasOwnerComment) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-    }
+      if (
+        order.cancelStatus ||
+        order.disputeStatus ||
+        order.status != STATIC.ORDER_STATUSES.FINISHED ||
+        order.tenantId != senderId
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
 
-    const orderHasListingComment =
-      await this.listingCommentModel.checkOrderHasComment(orderId);
+      const orderHasOwnerComment =
+        await this.ownerCommentModel.checkOrderHasComment(orderId);
 
-    if (orderHasListingComment) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-    }
+      if (orderHasOwnerComment) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
 
-    const ownerCommentId = await this.ownerCommentModel.create({
-      ...userCommentInfo,
-      orderId,
-    });
+      const orderHasListingComment =
+        await this.listingCommentModel.checkOrderHasComment(orderId);
 
-    const listingCommentId = await this.listingCommentModel.create({
-      ...listingCommentInfo,
-      orderId,
-    });
+      if (orderHasListingComment) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
 
-    const order = await this.orderModel.getById(orderId);
-    const chatId = order.chatId;
-
-    const listingMessage =
-      await this.chatMessageModel.createListingReviewMessage({
-        chatId,
-        senderId,
-        data: listingCommentInfo,
+      const ownerCommentId = await this.ownerCommentModel.create({
+        ...userCommentInfo,
+        orderId,
       });
 
-    const ownerMessage = await this.chatMessageModel.createOwnerReviewMessage({
-      chatId,
-      senderId,
-      data: userCommentInfo,
-    });
+      const listingCommentId = await this.listingCommentModel.create({
+        ...listingCommentInfo,
+        orderId,
+      });
 
-    const sender = await this.userModel.getById(senderId);
+      const chatId = order.chatId;
 
-    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
-      message: listingMessage,
-      opponent: sender,
-    });
+      const listingMessage =
+        await this.chatMessageModel.createListingReviewMessage({
+          chatId,
+          senderId,
+          data: listingCommentInfo,
+        });
 
-    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
-      message: ownerMessage,
-      opponent: sender,
-    });
+      const ownerMessage = await this.chatMessageModel.createOwnerReviewMessage(
+        {
+          chatId,
+          senderId,
+          data: userCommentInfo,
+        }
+      );
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-      ownerCommentId,
-      listingCommentId,
+      const sender = await this.userModel.getById(senderId);
+
+      this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+        message: listingMessage,
+        opponent: sender,
+      });
+
+      this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+        message: ownerMessage,
+        opponent: sender,
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ownerCommentId,
+        listingCommentId,
+      });
     });
-  };
 }
 
 module.exports = OwnerCommentController;

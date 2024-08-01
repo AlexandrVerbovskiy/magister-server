@@ -6,20 +6,21 @@ module.exports = [
 
   body("userCommentInfo.description")
     .isString()
-    .withMessage("Description must be a string")
+    .withMessage("User comment description must be a string")
     .notEmpty()
-    .withMessage("Description cannot be empty"),
+    .withMessage("User comment description cannot be empty"),
+
   body("userCommentInfo.leaveFeedback")
     .isString()
-    .withMessage("Leave feedback must be a string"),
+    .withMessage("User comment leave feedback must be a string"),
     
-  ...starValidation({ field: "userCommentInfo.care", name: "Care" }),
-  ...starValidation({ field: "userCommentInfo.timeliness", name: "Timeliness" }),
-  ...starValidation({ field: "userCommentInfo.responsiveness", name: "Responsiveness" }),
-  ...starValidation({ field: "userCommentInfo.clarity", name: "Clarity" }),
-  ...starValidation({ field: "userCommentInfo.usageGuidelines", name: "Usage guidelines" }),
-  ...starValidation({ field: "userCommentInfo.termsOfService", name: "Terms of service" }),
-  ...starValidation({ field: "userCommentInfo.honesty", name: "Honesty" }),
-  ...starValidation({ field: "userCommentInfo.reliability", name: "Reliability" }),
-  ...starValidation({ field: "userCommentInfo.satisfaction", name: "Satisfaction" }),
+  ...starValidation({ field: "userCommentInfo.care", name: "User comment care" }),
+  ...starValidation({ field: "userCommentInfo.timeliness", name: "User comment timeliness" }),
+  ...starValidation({ field: "userCommentInfo.responsiveness", name: "User comment responsiveness" }),
+  ...starValidation({ field: "userCommentInfo.clarity", name: "User comment clarity" }),
+  ...starValidation({ field: "userCommentInfo.usageGuidelines", name: "User comment usage guidelines" }),
+  ...starValidation({ field: "userCommentInfo.termsOfService", name: "User comment terms of service" }),
+  ...starValidation({ field: "userCommentInfo.honesty", name: "User comment honesty" }),
+  ...starValidation({ field: "userCommentInfo.reliability", name: "User comment reliability" }),
+  ...starValidation({ field: "userCommentInfo.satisfaction", name: "User comment satisfaction" }),
 ];
