@@ -1,7 +1,7 @@
 const { body } = require("express-validator");
 
 module.exports = [
-  body("orderId").isInt().withMessage("Body field 'Listing Id' is required"),
+  body("orderId").isInt().withMessage("Body field 'Order Id' is required"),
   body("newPricePerDay")
     .isNumeric()
     .withMessage("Body field 'New Price Per Day' must be a number"),

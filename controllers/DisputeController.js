@@ -72,11 +72,11 @@ class DisputeController extends Controller {
       if (
         (!isTenantCreatedDispute && !isOwnerCreatedDispute) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
-        [
+        ![
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
           STATIC.ORDER_STATUSES.FINISHED,
-        ].includes(STATIC.ORDER_STATUSES) ||
+        ].includes(order.status) ||
         order.disputeId
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
