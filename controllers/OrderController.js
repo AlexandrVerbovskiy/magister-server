@@ -766,22 +766,35 @@ class OrderController extends Controller {
       const paypalCaptureId =
         paypalOrderInfo.purchase_units[0].payments.captures[0].id;
 
-      const { token, image: generatedImage } = await this.generateQrCodeInfo(
-        payment.orderParentId
-          ? STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
-          : STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
-      );
-
       let newStatus = null;
 
       if (payment.orderParentId) {
+        const { token: ownerToken, image: generatedImage } =
+          await this.generateQrCodeInfo(
+            STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
+          );
+
         newStatus = await this.orderModel.orderTenantGotListing(orderId, {
-          token,
+          token: ownerToken,
           qrCode: generatedImage,
         });
+
+        await this.recipientPaymentModel.paypalPaymentPlanGeneration({
+          startDate: payment.offerStartDate,
+          endDate: payment.offerEndDate,
+          pricePerDay: payment.offerPricePerDay,
+          userId: payment.ownerId,
+          orderId: payment.orderId,
+          fee: payment.ownerFee,
+        });
       } else {
+        const { token: tenantToken, image: generatedImage } =
+          await this.generateQrCodeInfo(
+            STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
+          );
+
         newStatus = await this.orderModel.orderTenantPayed(orderId, {
-          token,
+          token: tenantToken,
           qrCode: generatedImage,
         });
       }
@@ -1262,7 +1275,7 @@ class OrderController extends Controller {
       const order = await this.orderModel.getFullById(id);
 
       if (!order || order.tenantId != userId) {
-        return res.send(404);
+        return res.sendStatus(404);
       }
 
       const buffer = await this.baseInvoicePdfGeneration({

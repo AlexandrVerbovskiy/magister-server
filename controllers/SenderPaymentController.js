@@ -151,10 +151,11 @@ class SenderPaymentController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const userId = req.userData.userId;
+
       const payment = await this.senderPaymentModel.getFullById(id);
 
       if (!payment || payment.payerId != userId) {
-        return res.send(404);
+        return res.sendStatus(404);
       }
 
       const buffer = await this.baseInvoicePdfGeneration(payment);
@@ -205,16 +206,25 @@ class SenderPaymentController extends Controller {
           qrCode: generatedImage,
         });
       } else {
-        const { token: ownerToken, image: generatedImage } =
+        const { token: tenantToken, image: generatedImage } =
           await this.generateQrCodeInfo(
             STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
           );
 
         newStatus = await this.orderModel.orderTenantPayed(orderId, {
-          token: ownerToken,
+          token: tenantToken,
           qrCode: generatedImage,
         });
       }
+
+      await this.recipientPaymentModel.paypalPaymentPlanGeneration({
+        startDate: order.offerStartDate,
+        endDate: order.offerEndDate,
+        pricePerDay: order.offerPricePerDay,
+        userId: order.ownerId,
+        orderId: order.id,
+        fee: order.ownerFee,
+      });
 
       const chatId = order.chatId;
 
