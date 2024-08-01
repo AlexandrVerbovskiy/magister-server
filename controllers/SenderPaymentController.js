@@ -205,6 +205,15 @@ class SenderPaymentController extends Controller {
           token: ownerToken,
           qrCode: generatedImage,
         });
+
+        await this.recipientPaymentModel.paypalPaymentPlanGeneration({
+          startDate: order.offerStartDate,
+          endDate: order.offerEndDate,
+          pricePerDay: order.offerPricePerDay,
+          userId: order.ownerId,
+          orderId: order.id,
+          fee: order.ownerFee,
+        });
       } else {
         const { token: tenantToken, image: generatedImage } =
           await this.generateQrCodeInfo(
@@ -216,15 +225,6 @@ class SenderPaymentController extends Controller {
           qrCode: generatedImage,
         });
       }
-
-      await this.recipientPaymentModel.paypalPaymentPlanGeneration({
-        startDate: order.offerStartDate,
-        endDate: order.offerEndDate,
-        pricePerDay: order.offerPricePerDay,
-        userId: order.ownerId,
-        orderId: order.id,
-        fee: order.ownerFee,
-      });
 
       const chatId = order.chatId;
 
