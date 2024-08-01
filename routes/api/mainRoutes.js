@@ -32,18 +32,6 @@ const {
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
 
-const secureCorsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOriginsForSecure.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  exposedHeaders: ["set-cookie"],
-};
-
 module.exports = (io) => {
   const mainController = new MainController(io);
 
@@ -419,19 +407,9 @@ module.exports = (io) => {
     mainController.getAdminCreateCategoryByOtherOptions
   );
 
-  router.post(
-    "/address-to-coords",
-    cors(secureCorsOptions),
-    isAuth,
-    mainController.getAddressCoords
-  );
+  router.post("/address-to-coords", isAuth, mainController.getAddressCoords);
 
-  router.post(
-    "/coords-to-address",
-    cors(secureCorsOptions),
-    isAuth,
-    mainController.getCoordsAddress
-  );
+  router.post("/coords-to-address", isAuth, mainController.getCoordsAddress);
 
   return router;
 };
