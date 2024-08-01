@@ -24,44 +24,54 @@ class TenantCommentController extends BaseCommentController {
     return items;
   };
 
-  createComment = async (req, res) => {
-    const { userCommentInfo, orderId } = req.body;
-    const senderId = req.userData.userId;
+  createComment = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { userCommentInfo, orderId } = req.body;
+      const senderId = req.userData.userId;
 
-    const orderHasTenantComment =
-      await this.tenantCommentModel.checkOrderHasComment(orderId);
+      const order = await this.orderModel.getById(orderId);
 
-    if (orderHasTenantComment) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
-    }
-
-    const tenantCommentId = await this.tenantCommentModel.create({
-      ...userCommentInfo,
-      orderId,
-    });
-
-    const order = await this.orderModel.getById(orderId);
-    const chatId = order.chatId;
-
-    const tenantMessage = await this.chatMessageModel.createTenantReviewMessage(
-      {
-        chatId,
-        senderId,
-        data: { ...userCommentInfo },
+      if (
+        order.cancelStatus ||
+        order.disputeStatus ||
+        order.status != STATIC.ORDER_STATUSES.FINISHED ||
+        order.ownerId != senderId
+      ) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
-    );
 
-    const sender = await this.userModel.getById(senderId);
+      const orderHasTenantComment =
+        await this.tenantCommentModel.checkOrderHasComment(orderId);
 
-    this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
-      message: tenantMessage,
-      opponent: sender,
+      if (orderHasTenantComment) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const tenantCommentId = await this.tenantCommentModel.create({
+        ...userCommentInfo,
+        orderId,
+      });
+
+      const chatId = order.chatId;
+
+      const tenantMessage =
+        await this.chatMessageModel.createTenantReviewMessage({
+          chatId,
+          senderId,
+          data: { ...userCommentInfo },
+        });
+
+      const sender = await this.userModel.getById(senderId);
+
+      this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
+        message: tenantMessage,
+        opponent: sender,
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        tenantCommentId,
+      });
     });
-
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-      tenantCommentId,
-    });
-  };
 }
 
 module.exports = TenantCommentController;

@@ -873,6 +873,8 @@ class OrderController extends Controller {
       orderId
     );
 
+    await this.senderPaymentModel.deleteUnactualByPaypal(orderId);
+
     if (paymentInfo) {
       transactionId = paymentInfo.id;
       type = "updated";
