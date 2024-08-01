@@ -139,10 +139,7 @@ class SenderPayment extends Model {
     await db(SENDER_PAYMENTS_TABLE)
       .where(`${SENDER_PAYMENTS_TABLE}.order_id`, orderId)
       .where(`${SENDER_PAYMENTS_TABLE}.waiting_approved`, "=", true)
-      .whereIn(`${SENDER_PAYMENTS_TABLE}.type`, [
-        STATIC.PAYMENT_TYPES.CREDIT_CARD,
-        STATIC.PAYMENT_TYPES.PAYPAL,
-      ])
+      .where(`${SENDER_PAYMENTS_TABLE}.hidden`, true)
       .delete();
   };
 

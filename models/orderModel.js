@@ -365,7 +365,7 @@ class OrderModel extends Model {
   payedInfoJoin = (query) => {
     return query.joinRaw(
       `LEFT JOIN ${SENDER_PAYMENTS_TABLE} ON
-       ${SENDER_PAYMENTS_TABLE}.order_id = ${ORDERS_TABLE}.id`
+       (${SENDER_PAYMENTS_TABLE}.order_id = ${ORDERS_TABLE}.id AND ${SENDER_PAYMENTS_TABLE}.hidden = false)`
     );
   };
 
