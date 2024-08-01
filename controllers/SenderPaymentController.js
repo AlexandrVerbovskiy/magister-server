@@ -19,7 +19,8 @@ class SenderPaymentController extends Controller {
         order.cancelStatus ||
         order.disputeStatus ||
         order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT ||
-        (order.payedId && order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
+        (order.payedId &&
+          order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
         order.payedAdminApproved
       ) {
         return this.sendErrorResponse(
@@ -191,17 +192,24 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      const { token: ownerToken, image: generatedImage } =
-        await this.generateQrCodeInfo(STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL);
-
       let newStatus = null;
 
       if (order.orderParentId) {
+        const { token: ownerToken, image: generatedImage } =
+          await this.generateQrCodeInfo(
+            STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
+          );
+
         newStatus = await this.orderModel.orderTenantGotListing(orderId, {
           token: ownerToken,
           qrCode: generatedImage,
         });
       } else {
+        const { token: ownerToken, image: generatedImage } =
+          await this.generateQrCodeInfo(
+            STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
+          );
+
         newStatus = await this.orderModel.orderTenantPayed(orderId, {
           token: ownerToken,
           qrCode: generatedImage,
