@@ -13,7 +13,6 @@ const cookieParser = require("cookie-parser");
 const { isAuth, isAdmin } = require("./middlewares");
 const { apiRoutes, socketsRoutes } = require("./routes");
 const STATIC = require("./static");
-const isNotAuth = require("./middlewares/isNotAuth");
 
 const PORT = process.env.PORT || 5000;
 
