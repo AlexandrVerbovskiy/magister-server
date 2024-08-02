@@ -50,22 +50,41 @@ class ChatController extends Controller {
   baseGetChatList = async (req, res) => {
     const chatId = req.body.id ?? null;
     const userId = req.userData.userId;
-    let chatType = req.body.chatType ?? STATIC.CHAT_TYPES.ORDER;
+    let chatType = req.body.chatType;
     const chatFilter = req.body.chatFilter ?? "";
     const count = this.count_chat_per_iteration;
-    const lastChatId = req.body.lastChatId ?? null;
+    let lastChatId = req.body.lastChatId ?? null;
 
     if (chatId) {
-      const userHasChatAccess =
-        await this.chatRelationModel.checkUserHasRelation(chatId, userId);
+      const userChatRelationInfo =
+        await this.chatRelationModel.userChatRelationInfo(chatId, userId);
 
-      if (!userHasChatAccess) {
+      if (
+        !userChatRelationInfo ||
+        (chatType && userChatRelationInfo.entityType != chatType)
+      ) {
         return { error: STATIC.ERRORS.NOT_FOUND };
       }
+
+      if (!chatType) {
+        chatType = userChatRelationInfo.entityType;
+      }
+    }
+
+    if (!chatType) {
+      chatType = STATIC.CHAT_TYPES.ORDER;
     }
 
     if (chatId) {
       chatType = await this.chatModel.getChatType(chatId);
+    }
+
+    if (lastChatId) {
+      const lastChat = await this.chatModel.getById(lastChatId);
+
+      if (!lastChat) {
+        return { error: STATIC.ERRORS.NOT_FOUND };
+      }
     }
 
     const chatList = await this.chatModel.getList({
@@ -156,7 +175,11 @@ class ChatController extends Controller {
       const chatRes = await func(req, res);
 
       if (chatRes.error) {
-        return this.sendErrorResponse(res, chatRes.error);
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          chatRes.error
+        );
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -170,7 +193,7 @@ class ChatController extends Controller {
   getChatList = async (req, res) =>
     this.getChatListWrapper(req, res, () => this.baseGetChatList(req, res));
 
-  getChatListForAdmin = async (req, res) =>
+  getChatListForAdmin = (req, res) =>
     this.getChatListWrapper(req, res, () =>
       this.baseGetAdminChatList(req, res)
     );
@@ -179,6 +202,19 @@ class ChatController extends Controller {
     const chatId = req.body.id;
     const count = this.count_message_per_iteration;
     const lastMessageId = req.body.lastMessageId ?? null;
+
+    if (lastMessageId) {
+      const message = await this.chatMessageModel.getFullById(lastMessageId);
+
+      if (!message || message.chatId != chatId) {
+        return {
+          error: "Last message not found in chat",
+          list: [],
+          canShowMore: false,
+          options: {},
+        };
+      }
+    }
 
     const messageList = await this.chatMessageModel.getList({
       chatId,
@@ -219,6 +255,19 @@ class ChatController extends Controller {
         canShowMore: false,
         options: {},
       };
+    }
+
+    if (lastMessageId) {
+      const message = await this.chatMessageModel.getFullById(lastMessageId);
+
+      if (!message || message.chatId != chatId) {
+        return {
+          error: "Last message not found in chat",
+          list: [],
+          canShowMore: false,
+          options: {},
+        };
+      }
     }
 
     const getList =
@@ -264,45 +313,53 @@ class ChatController extends Controller {
     };
   };
 
-  getChatMessageList = async (req, res) => {
-    const chatId = req.body.id;
-    const userId = req.userData.userId;
+  getChatMessageList = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const chatId = req.body.id;
+      const userId = req.userData.userId;
 
-    const userHasChatAccess = await this.chatRelationModel.checkUserHasRelation(
-      chatId,
-      userId
-    );
+      const userHasChatAccess =
+        await this.chatRelationModel.checkUserHasRelation(chatId, userId);
 
-    if (!userHasChatAccess) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-    }
+      if (!userHasChatAccess) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
 
-    const messagesRes = await this.baseGetChatMessageList(req, res);
+      const messagesRes = await this.baseGetChatMessageList(req, res);
 
-    if (messagesRes.error) {
-      return this.sendErrorResponse(res, chatRes.error);
-    }
+      if (messagesRes.error) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          messagesRes.error
+        );
+      }
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-      messages: messagesRes.list,
-      messagesCanShowMore: messagesRes.canShowMore,
-      options: messagesRes.options,
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        messages: messagesRes.list,
+        messagesCanShowMore: messagesRes.canShowMore,
+        options: messagesRes.options,
+      });
     });
-  };
 
-  getChatMessageListForAdmin = async (req, res) => {
-    const messagesRes = await this.baseGetAdminChatMessageList(req, res);
+  getChatMessageListForAdmin = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const messagesRes = await this.baseGetAdminChatMessageList(req, res);
 
-    if (messagesRes.error) {
-      return this.sendErrorResponse(res, chatRes.error);
-    }
+      if (messagesRes.error) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          messagesRes.error
+        );
+      }
 
-    return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-      messages: messagesRes.list,
-      messagesCanShowMore: messagesRes.canShowMore,
-      options: messagesRes.options,
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        messages: messagesRes.list,
+        messagesCanShowMore: messagesRes.canShowMore,
+        options: messagesRes.options,
+      });
     });
-  };
 
   baseGetChatEntityInfo = async (chatId, userId) => {
     const chat = await this.chatModel.getById(chatId);
@@ -409,7 +466,11 @@ class ChatController extends Controller {
     const messagesRes = await getMessageList(req, res);
 
     if (messagesRes.error) {
-      return this.sendErrorResponse(res, chatRes.error);
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.BAD_REQUEST,
+        messagesRes.error
+      );
     }
 
     const chatInfo = await getChatDopInfo();
@@ -422,32 +483,35 @@ class ChatController extends Controller {
     });
   };
 
-  getChatInfoByUser = async (req, res) => {
-    const chatId = req.body.id;
-    const userId = req.userData.userId;
-    return this.getChatBaseInfo({
-      req,
-      res,
-      getChatDopInfo: () => this.baseGetChatEntityInfo(chatId, userId),
-      getMessageList: this.baseGetChatMessageList,
-    });
-  };
+  getChatInfoByUser = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const chatId = req.body.id;
+      const userId = req.userData.userId;
 
-  getChatInfoByAdmin = async (req, res) => {
-    const chatId = req.body.id;
-    const type = await this.chatModel.getChatType(chatId);
-
-    return this.getChatBaseInfo({
-      req,
-      res,
-      getChatDopInfo: () => this.baseGetChatDisputeInfo(chatId),
-      getMessageList:
-        type === STATIC.CHAT_TYPES.DISPUTE
-          ? this.baseGetChatMessageList
-          : this.baseGetAdminChatMessageList,
-      needCheckAccess: false,
+      return this.getChatBaseInfo({
+        req,
+        res,
+        getChatDopInfo: () => this.baseGetChatEntityInfo(chatId, userId),
+        getMessageList: this.baseGetChatMessageList,
+      });
     });
-  };
+
+  getChatInfoByAdmin = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const chatId = req.body.id;
+      const type = await this.chatModel.getChatType(chatId);
+
+      return this.getChatBaseInfo({
+        req,
+        res,
+        getChatDopInfo: () => this.baseGetChatDisputeInfo(chatId),
+        getMessageList:
+          type === STATIC.CHAT_TYPES.DISPUTE
+            ? this.baseGetChatMessageList
+            : this.baseGetAdminChatMessageList,
+        needCheckAccess: false,
+      });
+    });
 
   baseSendTextMessage = async (data, sessionInfo, isAdminSender = false) => {
     const senderId = sessionInfo.userId;

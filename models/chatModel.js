@@ -4,7 +4,6 @@ const db = require("../database");
 const Model = require("./Model");
 const chatRelationModel = require("./chatRelationModel");
 const chatMessageModel = require("./chatMessageModel");
-const { query } = require("express");
 const { removeDuplicates } = require("../utils");
 
 const CHAT_TABLE = STATIC.TABLES.CHATS;
@@ -200,7 +199,7 @@ class ChatModel extends Model {
       .select([`${CHAT_MESSAGE_TABLE}.created_at as createdAt`]);
 
     const referenceItem = await query.first();
-    return referenceItem.createdAt;
+    return referenceItem?.createdAt;
   };
 
   getChatType = async (chatId) => {
@@ -212,6 +211,18 @@ class ChatModel extends Model {
       .first();
 
     return result?.entityType;
+  };
+
+  bindChatFilterToQuery = ({ query, chatFilter, isDispute }) => {
+    return query.where((builder) => {
+      if (isDispute) {
+        builder.whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`);
+      } else {
+        builder
+          .whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`)
+          .orWhereILike(`${USER_TABLE}.name`, `%${chatFilter}%`);
+      }
+    });
   };
 
   getList = async ({
@@ -232,10 +243,10 @@ class ChatModel extends Model {
 
     let query = this.getListBaseQuery({ chatType, userId });
 
+    let lastChatCreatedTime = null;
+
     if (lastChatId) {
-      const lastChatCreatedTime = await this.getChatMessageCreatedDate(
-        lastChatId
-      );
+      lastChatCreatedTime = await this.getChatMessageCreatedDate(lastChatId);
 
       query = query.where(
         `${CHAT_MESSAGE_TABLE}.created_at`,
@@ -248,15 +259,22 @@ class ChatModel extends Model {
       const chatMessageCreatedTime = await this.messageJoin(
         db(CHAT_TABLE).where(`${CHAT_TABLE}.id`, "=", needChatId)
       )
-        .select(`${CHAT_MESSAGE_TABLE}.created_at as messageCreatedAt`)
+        .select([`${CHAT_MESSAGE_TABLE}.created_at as messageCreatedAt`])
         .first();
 
-      const firstResPart = await query
-        .where(
-          `${CHAT_MESSAGE_TABLE}.created_at`,
-          ">=",
-          chatMessageCreatedTime.messageCreatedAt
-        )
+      let firstResPartQuery = query.where(
+        `${CHAT_MESSAGE_TABLE}.created_at`,
+        ">=",
+        chatMessageCreatedTime.messageCreatedAt
+      );
+
+      firstResPartQuery = this.bindChatFilterToQuery({
+        query: firstResPartQuery,
+        chatFilter,
+        isDispute,
+      });
+
+      const firstResPart = await firstResPartQuery
         .select(fields)
         .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
 
@@ -264,13 +282,31 @@ class ChatModel extends Model {
 
       result = [...firstResPart];
 
-      if (firstResPartLength % count != 0) {
-        const secondResPart = await this.getListBaseQuery({ chatType, userId })
-          .where(
+      if (firstResPartLength == 0 || firstResPartLength % count != 0) {
+        let secondResPartQuery = this.getListBaseQuery({
+          chatType,
+          userId,
+        }).where(
+          `${CHAT_MESSAGE_TABLE}.created_at`,
+          "<",
+          chatMessageCreatedTime.messageCreatedAt
+        );
+
+        if (lastChatCreatedTime) {
+          secondResPartQuery = secondResPartQuery.where(
             `${CHAT_MESSAGE_TABLE}.created_at`,
             "<",
-            chatMessageCreatedTime.messageCreatedAt
-          )
+            lastChatCreatedTime
+          );
+        }
+
+        secondResPartQuery = this.bindChatFilterToQuery({
+          query: secondResPartQuery,
+          chatFilter,
+          isDispute,
+        });
+
+        const secondResPart = await secondResPartQuery
           .limit(count - (firstResPartLength % count))
           .select(fields)
           .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
@@ -279,14 +315,10 @@ class ChatModel extends Model {
       }
     } else {
       if (chatFilter) {
-        query = query.where((builder) => {
-          if (isDispute) {
-            builder.whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`);
-          } else {
-            builder
-              .whereILike(`${CHAT_TABLE}.name`, `%${chatFilter}%`)
-              .orWhereILike(`${USER_TABLE}.name`, `%${chatFilter}%`);
-          }
+        query = this.bindChatFilterToQuery({
+          query,
+          chatFilter,
+          isDispute,
         });
       }
 
@@ -452,6 +484,12 @@ class ChatModel extends Model {
       .orWhereRaw(this.filterIdLikeString(chatFilter, `${DISPUTE_TABLE}.id`));
   };
 
+  bindChatFilterToAdminQuery = ({ query, chatFilter }) => {
+    return query.where((builder) => {
+      this.baseChatListFilter(builder, chatFilter);
+    });
+  };
+
   getForAdminList = async ({
     needChatId = null,
     count = 20,
@@ -459,15 +497,12 @@ class ChatModel extends Model {
     chatFilter = "",
   }) => {
     let result = [];
-
     let query = this.baseGetForAdmin();
-
     const fields = this.fullVisibleFieldsForAdmin;
+    let lastChatCreatedTime = null;
 
     if (lastChatId) {
-      const lastChatCreatedTime = await this.getChatMessageCreatedDate(
-        lastChatId
-      );
+      lastChatCreatedTime = await this.getChatMessageCreatedDate(lastChatId);
 
       query = query.where(
         `${CHAT_MESSAGE_TABLE}.created_at`,
@@ -483,12 +518,20 @@ class ChatModel extends Model {
         .select(`${CHAT_MESSAGE_TABLE}.created_at as messageCreatedAt`)
         .first();
 
-      const firstResPart = await query
-        .where(
-          `${CHAT_MESSAGE_TABLE}.created_at`,
-          ">=",
-          chatMessageCreatedTime.messageCreatedAt
-        )
+      let firstResPartQuery = query.where(
+        `${CHAT_MESSAGE_TABLE}.created_at`,
+        ">=",
+        chatMessageCreatedTime.messageCreatedAt
+      );
+
+      if (chatFilter) {
+        firstResPartQuery = this.bindChatFilterToAdminQuery({
+          query: firstResPartQuery,
+          chatFilter,
+        });
+      }
+
+      const firstResPart = await firstResPartQuery
         .select(fields)
         .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
 
@@ -496,13 +539,29 @@ class ChatModel extends Model {
 
       result = [...firstResPart];
 
-      if (firstResPartLength % count != 0) {
-        const secondResPart = await this.baseGetForAdmin()
-          .where(
+      if (firstResPartLength == 0 || firstResPartLength % count != 0) {
+        let secondResPartQuery = this.baseGetForAdmin().where(
+          `${CHAT_MESSAGE_TABLE}.created_at`,
+          "<",
+          chatMessageCreatedTime.messageCreatedAt
+        );
+
+        if (lastChatCreatedTime) {
+          secondResPartQuery = secondResPartQuery.where(
             `${CHAT_MESSAGE_TABLE}.created_at`,
             "<",
-            chatMessageCreatedTime.messageCreatedAt
-          )
+            lastChatCreatedTime
+          );
+        }
+
+        if (chatFilter) {
+          secondResPartQuery = this.bindChatFilterToAdminQuery({
+            query: secondResPartQuery,
+            chatFilter,
+          });
+        }
+
+        const secondResPart = await secondResPartQuery
           .limit(count - (firstResPartLength % count))
           .select(fields)
           .orderBy(`${CHAT_MESSAGE_TABLE}.created_at`, "desc");
@@ -511,9 +570,7 @@ class ChatModel extends Model {
       }
     } else {
       if (chatFilter) {
-        query = query.where((builder) => {
-          this.baseChatListFilter(builder, chatFilter);
-        });
+        query = this.bindChatFilterToAdminQuery({ query, chatFilter });
       }
 
       result = await query
