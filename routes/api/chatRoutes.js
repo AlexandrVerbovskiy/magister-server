@@ -1,16 +1,36 @@
 const { Router } = require("express");
 const { ChatController } = require("../../controllers");
 const { isAuth, isAdmin } = require("../../middlewares");
+const {
+  baseChatInfoValidation,
+  chatListValidation,
+  chatMessageListValidation,
+} = require("../../validations/chat");
 const router = Router();
 
 module.exports = (io) => {
   const chatController = new ChatController(io);
 
-  router.post("/chat-list", isAuth, chatController.getChatList);
+  router.post(
+    "/chat-list",
+    isAuth,
+    chatListValidation,
+    chatController.getChatList
+  );
 
-  router.post("/chat-message-list", isAuth, chatController.getChatMessageList);
+  router.post(
+    "/chat-message-list",
+    isAuth,
+    chatMessageListValidation,
+    chatController.getChatMessageList
+  );
 
-  router.post("/chat-base-info", isAuth, chatController.getChatInfoByUser);
+  router.post(
+    "/chat-base-info",
+    isAuth,
+    baseChatInfoValidation,
+    chatController.getChatInfoByUser
+  );
 
   router.post(
     "/admin-chat-list",
