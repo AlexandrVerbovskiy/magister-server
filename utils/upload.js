@@ -19,8 +19,10 @@ const storage = multer.diskStorage({
 
 const imageFilter = (req, file, cb) => {
   const fileExtension = path.extname(file.originalname).toLowerCase().slice(1);
-
-  if (STATIC.IMAGE_EXTENSIONS.includes(fileExtension)) {
+  if (
+    STATIC.IMAGE_EXTENSIONS.includes(fileExtension) ||
+    file.originalname == "blob"
+  ) {
     cb(null, true);
   } else {
     cb(new ImageValidationError("Only image files are allowed"), false);
