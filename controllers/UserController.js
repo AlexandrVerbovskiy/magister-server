@@ -726,6 +726,7 @@ class UserController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
       const user = await this.userModel.getFullById(userId);
+      delete user["password"];
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
     });
 
