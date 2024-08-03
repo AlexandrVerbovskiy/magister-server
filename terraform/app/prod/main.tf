@@ -14,11 +14,11 @@ module "ecs-service" {
       },
       {
         "name" : "SERVER_URL",
-        "value" : "https://api.rentbout.com"
+        "value" : "https://api.rentabout.com"
       },
       {
         "name" : "CLIENT_URL",
-        "value" : "https://rentbout.com"
+        "value" : "https://rentabout.com"
       },
       {
         "name" : "DB_HOST",
