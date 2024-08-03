@@ -21,7 +21,7 @@ phases:
           TAG="latest";
         fi
       # Build and push the Docker image with the appropriate tag
-      - docker build -t $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-central-1.amazonaws.com/$REPO_NAME:$TAG -t $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-central-1.amazonaws.com/$REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION .
-      - docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-central-1.amazonaws.com/$REPO_NAME:$TAG
-      - docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-central-1.amazonaws.com/$REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker build -t $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$TAG -t $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+      - docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$TAG
+      - docker push $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
 

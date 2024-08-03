@@ -16,7 +16,7 @@ phases:
       ## Deploy
       - cd terraform/app/$ENVIRONMENT/
       - terraform init
-      - terraform plan -var image=211125642419.dkr.ecr.eu-central-1.amazonaws.com/$REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION -out plan.terraform
+      - terraform plan -var image=211125642419.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION -out plan.terraform
 
 artifacts:
   files:
