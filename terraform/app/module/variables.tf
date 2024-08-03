@@ -12,7 +12,7 @@ variable "subnet_ids" {
 }
 variable "image" {
   type    = string
-  default = "355354508679.dkr.ecr.eu-central-1.amazonaws.com/bitads:latest"
+  default = "211125642419.dkr.ecr.eu-west-2.amazonaws.com/server:latest"
 }
 variable "tasks_iam_role_statements" {
   description = "Permissions for ECS task"

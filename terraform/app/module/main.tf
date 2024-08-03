@@ -23,10 +23,10 @@ module "ecs_service" {
         }
       ]
 
-      readonly_root_filesystem = false
+      readonly_root_filesystem  = false
       enable_cloudwatch_logging = true
-      memory_reservation = 100
-      environment        = var.service.environment
+      memory_reservation        = 100
+      environment               = var.service.environment
     }
   }
 
