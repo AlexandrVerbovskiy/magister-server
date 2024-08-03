@@ -9,6 +9,7 @@
     "dev-start": "nodemon index.js",
     "dev-server": "node index.js",
     "start": "concurrently \"npm i\" \"npm run migrate\" \"node index.js\"",
+    "start-prod": "npm run migrate && node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate": "node migrate.js",
     "seeds-start": "node seeds-run.js",

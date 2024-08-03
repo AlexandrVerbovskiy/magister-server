@@ -1,4 +1,4 @@
-FROM node:18-alpine3.20
+FROM  --platform=amd64 node:18-alpine3.20
 
 RUN apk update && apk upgrade
 
@@ -11,4 +11,4 @@ RUN npm install
 COPY . .
 
 EXPOSE 8080
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "start-prod" ]
