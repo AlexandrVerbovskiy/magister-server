@@ -1,10 +1,10 @@
 const {
-  listPaginationStringFilterValidation,
+  baseListTimeStringFilterPagination,
   validateSmallStringBody,
 } = require("../base");
 
 module.exports = [
-  ...listPaginationStringFilterValidation,
+  ...baseListTimeStringFilterPagination,
   ...validateSmallStringBody({
     field: "status",
     fieldName: "Status",
