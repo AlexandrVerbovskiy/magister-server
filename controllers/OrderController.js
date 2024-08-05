@@ -43,9 +43,10 @@ class OrderController extends Controller {
         );
       }
 
-      order["extendOrders"] = await this.orderModel.getOrdersExtends([
-        order.orderParentId ?? id,
-      ]);
+      order["extendOrders"] = await this.orderModel.getOrdersExtends(
+        [order.orderParentId ?? id],
+        userId
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
@@ -300,6 +301,7 @@ class OrderController extends Controller {
 
   baseRequestsList = async (req, totalCountCall, listCall) => {
     const type = req.body.type == "owner" ? "owner" : "tenant";
+    const userId = req.userData.userId;
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
       totalCountCall(filter)
@@ -338,7 +340,8 @@ class OrderController extends Controller {
     const orderIdsNeedExtendInfo = Object.keys(orderIdsNeedExtendInfoObj);
 
     const orderExtends = await this.orderModel.getOrdersExtends(
-      orderIdsNeedExtendInfo
+      orderIdsNeedExtendInfo,
+      userId
     );
 
     const extendOrderIds = orderExtends.map((request) => request.id);
@@ -1306,9 +1309,10 @@ class OrderController extends Controller {
 
     const conflictOrders = resGetConflictOrders[order.id];
 
-    order["extendOrders"] = await this.orderModel.getOrdersExtends([
-      order.orderParentId ?? order.id,
-    ]);
+    order["extendOrders"] = await this.orderModel.getOrdersExtends(
+      [order.orderParentId ?? order.id],
+      userId
+    );
 
     if (userId != order.tenantId) {
       order["conflictOrders"] = conflictOrders;
