@@ -942,17 +942,20 @@ class OrderModel extends Model {
     return listingBlockedDates;
   };
 
-  getOrdersExtends = async (orderIds) => {
+  getOrdersExtends = async (orderIds, userId) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
     query = this.baseRequestInfoJoin(query);
     query = this.commentsInfoJoin(query);
+    query = this.disputeChatInfoJoin(query, userId);
 
     let visibleFields = [
       ...this.fullVisibleFields,
       ...this.requestVisibleFields,
     ];
+
     visibleFields = this.commentsVisibleFields(visibleFields);
+    visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
     return await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
