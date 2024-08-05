@@ -1,5 +1,9 @@
-const { validateIntegerBody } = require("../base");
+const { validateIntegerBody, validateBigStringBody } = require("../base");
 
 module.exports = [
-  ...validateIntegerBody({ field: "orderId", fieldName: "Order Id" }),
+  ...validateIntegerBody({ field: "orderId", fieldName: "OrderId" }),
+  ...validateBigStringBody({
+    field: "description",
+    fieldName: "Description",
+  }),
 ];
