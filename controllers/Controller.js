@@ -426,8 +426,6 @@ class Controller {
           ContentType: file.mimetype,
         })
         .promise();
-
-      console.log("File uploaded successfully");
       return filePath;
     } catch (err) {
       console.log("Error uploading file:", err);
@@ -443,8 +441,6 @@ class Controller {
           Key: `public/${filePath}`,
         })
         .promise();
-
-      console.log("File deleted successfully");
     } catch (err) {
       console.log("Error deleting file:", err);
     }
