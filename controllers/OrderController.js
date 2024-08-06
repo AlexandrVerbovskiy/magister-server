@@ -861,7 +861,7 @@ class OrderController extends Controller {
       );
     }
 
-    const proofUrl = this.moveUploadsFileToFolder(req.file, "paymentProofs");
+    const proofUrl = await this.moveUploadsFileToFolder(req.file, "paymentProofs");
 
     const money = tenantPaymentCalculate(
       order.offerStartDate,

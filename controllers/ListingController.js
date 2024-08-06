@@ -274,11 +274,12 @@ class ListingController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
-  localGetFiles = (req) => {
+  localGetFiles = async (req) => {
     const listingImages = JSON.parse(req.body["listingImages"] ?? "[]");
     const filesToSave = [];
 
-    req.files.forEach((file) => {
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
       const { fieldname } = file;
       let id = null;
 
@@ -292,10 +293,10 @@ class ListingController extends Controller {
       }
 
       if (fs.existsSync(file.path)) {
-        const filePath = this.moveUploadsFileToFolder(file, "listings");
+        const filePath = await this.moveUploadsFileToFolder(file, "listings");
         filesToSave.push({ type: "storage", link: filePath, id });
       }
-    });
+    }
 
     return [...filesToSave, ...listingImages];
   };
@@ -332,12 +333,12 @@ class ListingController extends Controller {
       return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST);
     }
 
-    dataToSave["backgroundPhoto"] = this.moveUploadsFileToFolder(
+    dataToSave["backgroundPhoto"] = await this.moveUploadsFileToFolder(
       backgroundPhoto,
       "listings"
     );
 
-    dataToSave["listingImages"] = this.localGetFiles(req);
+    dataToSave["listingImages"] = await this.localGetFiles(req);
 
     const { listingId, listingImages } = await this.listingModel.create(
       dataToSave
@@ -432,7 +433,7 @@ class ListingController extends Controller {
     );
 
     if (backgroundPhoto) {
-      dataToSave["backgroundPhoto"] = this.moveUploadsFileToFolder(
+      dataToSave["backgroundPhoto"] = await this.moveUploadsFileToFolder(
         backgroundPhoto,
         "listings"
       );
@@ -442,12 +443,16 @@ class ListingController extends Controller {
       dataToSave["backgroundPhoto"] = currentBackgroundImage;
     }
 
-    dataToSave["listingImages"] = this.localGetFiles(req);
+    dataToSave["listingImages"] = await this.localGetFiles(req);
 
     dataToSave["active"] = dataToSave["active"] == "true";
 
-    const { listingImages: listingImagesToRes } =
+    const { listingImages: listingImagesToRes, imagesToDeleteLinks } =
       await this.listingModel.updateById(dataToSave);
+
+    for (let i = 0; i < imagesToDeleteLinks.length; i++) {
+      this.removeFile(imagesToDeleteLinks[i]);
+    }
 
     if (canApprove && dataToSave["approved"] === "true") {
       await this.listingApprovalRequestModel.approve(listingId);

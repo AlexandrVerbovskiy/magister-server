@@ -6,11 +6,18 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
+const AWS = require("aws-sdk");
 
 const twilioClient = require("twilio")(
   process.env.TWILIO_SID,
   process.env.TWILIO_AUTH
 );
+
+AWS.config.update({
+  region: process.env.BUCKET_REGION,
+  accessKeyId: process.env.BUCKET_ACCESS_KEY,
+  secretAccessKey: process.env.BUCKET_ACCESS_SECRET_KEY,
+});
 
 const {
   timeConverter,
@@ -129,6 +136,9 @@ class Controller {
         viewPath: path.resolve("./mails/"),
       })
     );
+
+    this.awsS3 = new AWS.S3();
+    this.awsBucketName = process.env.BUCKET_NAME;
   }
 
   sendSocketIoMessage = (socket, messageKey, message) => {
@@ -399,30 +409,44 @@ class Controller {
     });
   };
 
-  createFolderIfNotExists = (folderPath) => {
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-  };
-
-  moveUploadsFileToFolder = (file, folder) => {
+  moveUploadsFileToFolder = async (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
 
-    const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public", folder);
-    this.createFolderIfNotExists(destinationDir);
-    const newFilePath = path.join(destinationDir, name + "." + type);
-    fs.renameSync(originalFilePath, newFilePath);
+    const fileContent = fs.readFileSync(originalFilePath);
+    const awsS3Key = `${folder}/${name}.${type}`;
 
-    return folder + "/" + name + "." + type;
+    try {
+      await this.awsS3
+        .putObject({
+          Bucket: this.awsBucketName,
+          Key: awsS3Key,
+          Body: fileContent,
+          ContentType: file.mimetype,
+        })
+        .promise();
+
+      console.log("File uploaded successfully");
+      return awsS3Key;
+    } catch (err) {
+      console.log("Error uploading file:", err);
+      throw err;
+    }
   };
 
-  removeFile = (filePath) => {
-    const fullPath = path.join(STATIC.MAIN_DIRECTORY, "public", filePath);
+  removeFile = async (filePath) => {
+    try {
+      await this.awsS3
+        .deleteObject({
+          Bucket: this.awsBucketName,
+          Key: filePath,
+        })
+        .promise();
 
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
+      console.log("File deleted successfully");
+    } catch (err) {
+      console.log("Error deleting file:", err);
     }
   };
 

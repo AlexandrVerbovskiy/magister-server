@@ -617,17 +617,25 @@ class ChatController extends Controller {
       tempKey,
       "sending_file"
     );
-    let path =
-      this.message_files_dir + "/" + generateRandomString() + "." + filetype;
+    let path = null;
 
     if (!info || !info.data) {
-      this.createFolderIfNotExists(this.message_files_dir);
+      path =
+        this.message_files_dir + "/" + generateRandomString() + "." + filetype;
 
-      fs.writeFileSync(path, data);
+      await this.awsS3
+        .putObject({
+          Bucket: this.awsBucketName,
+          Key: path,
+          Body: data,
+        })
+        .promise();
+
       const actionInfo = JSON.stringify({
-        path,
+        path: path,
         filename,
       });
+
       await this.activeActionModel.create(
         userId,
         "sending_file",
@@ -637,7 +645,23 @@ class ChatController extends Controller {
     } else {
       const resParsed = JSON.parse(info.data);
       path = resParsed.path;
-      fs.appendFileSync(path, data);
+
+      const currentFileData = await this.awsS3
+        .getObject({
+          Bucket: this.awsBucketName,
+          Key: path,
+        })
+        .promise();
+
+      const updatedData = Buffer.concat([currentFileData.Body, data]);
+
+      await this.awsS3
+        .putObject({
+          Bucket: this.awsBucketName,
+          Key: path,
+          Body: updatedData,
+        })
+        .promise();
     }
 
     return path;
@@ -767,8 +791,7 @@ class ChatController extends Controller {
     );
 
     const { path } = JSON.parse(info.data);
-    fs.unlinkSync(path);
-
+    this.removeFile(path);
     await this.deleteFileAction(key);
   };
 
@@ -779,12 +802,9 @@ class ChatController extends Controller {
       if (action.type == "sending_file") {
         const key = action.key;
         const info = action.data;
+
         const { path } = JSON.parse(info);
-
-        if (fs.existsSync(path)) {
-          fs.unlinkSync(path);
-        }
-
+        this.removeFile(path);
         await this.deleteFileAction(key);
       }
     });
