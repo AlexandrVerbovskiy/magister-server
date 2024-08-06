@@ -87,7 +87,7 @@ const io = socketIo(server, {
   },
 });
 
-app.use("/", (req, res) => res.status(200).send("Hello, world!"));
+app.get("/", (req, res) => res.status(200).send("Hello, world!"));
 
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
 
