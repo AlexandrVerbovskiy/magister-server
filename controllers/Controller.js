@@ -247,7 +247,7 @@ class Controller {
     const title = "Owner Verification";
     const link = CLIENT_URL + "/";
 
-    await this.sendMail(email, title, "userDocumentsVerification", {
+    return await this.sendMail(email, title, "userDocumentsVerification", {
       link,
     });
   };
@@ -415,20 +415,20 @@ class Controller {
     const type = mime.extension(file.mimetype) || "bin";
 
     const fileContent = fs.readFileSync(originalFilePath);
-    const awsS3Key = `public/${folder}/${name}.${type}`;
+    const filePath = `${folder}/${name}.${type}`;
 
     try {
       await this.awsS3
         .putObject({
           Bucket: this.awsBucketName,
-          Key: awsS3Key,
+          Key: `public/${filePath}`,
           Body: fileContent,
           ContentType: file.mimetype,
         })
         .promise();
 
       console.log("File uploaded successfully");
-      return awsS3Key;
+      return filePath;
     } catch (err) {
       console.log("Error uploading file:", err);
       throw err;

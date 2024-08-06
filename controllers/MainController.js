@@ -1449,6 +1449,14 @@ class MainController extends Controller {
       const result = await getAddressByCoords({ lat, lng });
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
+
+  test = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.sendProfileVerificationMail(
+        "cofeek5@gmail.com"
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
 }
 
 module.exports = MainController;
