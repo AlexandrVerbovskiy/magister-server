@@ -81,13 +81,14 @@ class ListingCategoriesController extends Controller {
 
       const folder = "listingCategories";
 
-      req.files.forEach((file) => {
-        const filePath = this.moveUploadsFileToFolder(file, folder);
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const filePath = await this.moveUploadsFileToFolder(file, folder);
 
         const { level, index } = this.getFileLevelAndIndex(file.fieldname);
         listToSave[level][index]["image"] = filePath;
         categoriesToSave[level][index]["image"] = filePath;
-      });
+      }
 
       const groupedList = await this.listingCategoryModel.listGroupedByLevel();
 
@@ -259,8 +260,10 @@ class ListingCategoriesController extends Controller {
         });
       });
 
-      filesToDelete.forEach((file) => this.removeFile(file));
-
+      for (let i = 0; i < filesToDelete.length; i++) {
+        this.removeFile(filesToDelete[i]);
+      }
+      
       this.saveUserAction(req, `Update listing category list`);
 
       levels.forEach((level) => {
@@ -291,7 +294,10 @@ class ListingCategoriesController extends Controller {
       let image = null;
 
       if (req.file) {
-        image = this.moveUploadsFileToFolder(req.file, "listingCategories");
+        image = await this.moveUploadsFileToFolder(
+          req.file,
+          "listingCategories"
+        );
       }
 
       const createdId = await this.listingCategoryModel.create({

@@ -369,6 +369,10 @@ class ListingsModel extends Model {
 
     const imagesToUpdateIds = listingImagesToUpdate.map((image) => image.id);
 
+    const imagesToDeleteLinks = currentImageLinks.filter(
+      (link) => !actualListingImageLinks.includes(link)
+    );
+
     await db(LISTING_IMAGES_TABLE)
       .where("listing_id", id)
       .whereNotIn("link", actualListingImageLinks)
@@ -398,6 +402,7 @@ class ListingsModel extends Model {
 
     return {
       listingImages: currentListingImages,
+      imagesToDeleteLinks,
     };
   };
 
