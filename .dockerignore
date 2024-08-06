@@ -1,0 +1,10 @@
+.git
+**/node_modules/*
+**/dist/*
+**/temp/*
+.gitlab-ci.yml
+Dockerfile
+README.md
+.gitignore
+**/temp/*
+terraform
