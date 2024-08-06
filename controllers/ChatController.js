@@ -626,7 +626,7 @@ class ChatController extends Controller {
       await this.awsS3
         .putObject({
           Bucket: this.awsBucketName,
-          Key: path,
+          Key: "public/" + path,
           Body: data,
         })
         .promise();
@@ -649,7 +649,7 @@ class ChatController extends Controller {
       const currentFileData = await this.awsS3
         .getObject({
           Bucket: this.awsBucketName,
-          Key: path,
+          Key: "public/" + path,
         })
         .promise();
 
@@ -658,7 +658,7 @@ class ChatController extends Controller {
       await this.awsS3
         .putObject({
           Bucket: this.awsBucketName,
-          Key: path,
+          Key: "public/" + path,
           Body: updatedData,
         })
         .promise();
