@@ -415,7 +415,7 @@ class Controller {
     const type = mime.extension(file.mimetype) || "bin";
 
     const fileContent = fs.readFileSync(originalFilePath);
-    const awsS3Key = `${folder}/${name}.${type}`;
+    const awsS3Key = `public/${folder}/${name}.${type}`;
 
     try {
       await this.awsS3
@@ -440,7 +440,7 @@ class Controller {
       await this.awsS3
         .deleteObject({
           Bucket: this.awsBucketName,
-          Key: filePath,
+          Key: `public/${filePath}`,
         })
         .promise();
 
