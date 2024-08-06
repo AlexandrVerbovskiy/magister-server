@@ -280,6 +280,11 @@ class ListingController extends Controller {
 
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
+
+      if (file.fieldname === "backgroundPhoto") {
+        continue;
+      }
+
       const { fieldname } = file;
       let id = null;
 
