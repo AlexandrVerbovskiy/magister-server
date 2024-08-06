@@ -412,5 +412,7 @@ module.exports = (io) => {
 
   router.post("/coords-to-address", isAuth, mainController.getCoordsAddress);
 
+  router.get("/test", mainController.test);
+
   return router;
 };
