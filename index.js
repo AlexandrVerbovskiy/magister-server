@@ -87,6 +87,8 @@ const io = socketIo(server, {
   },
 });
 
+app.use("/", (req, res) => res.status(200).send("Hello, world!"));
+
 app.use("/public", express.static(path.join(STATIC.MAIN_DIRECTORY, "public")));
 
 app.use("/api/main", apiRoutes.mainRoutes(io));
