@@ -123,7 +123,7 @@ class Controller {
         pass: process.env.MAIL_PASSWORD,
       },
       tls: {
-        rejectUnauthorized: false,
+        ciphers: "SSLv3",
       },
     });
 
