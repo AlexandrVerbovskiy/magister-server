@@ -11,7 +11,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const { isAuth, isAdmin } = require("./middlewares");
-const { apiRoutes, socketsRoutes } = require("./routes");
+const { apiRoutes, socketsRoutes, commandsRoutes } = require("./routes");
 const STATIC = require("./static");
 
 const PORT = process.env.PORT || 5000;
@@ -123,6 +123,7 @@ app.use("/api/recipient-payments", apiRoutes.recipientPaymentRoutes(io));
 app.use("/api/comments", apiRoutes.commentRoutes(io));
 app.use("/api/disputes", apiRoutes.disputeRoutes(io));
 app.use("/api/chat", apiRoutes.chatRoutes(io));
+app.use("/commands", commandsRoutes.cronCommandRoutes());
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

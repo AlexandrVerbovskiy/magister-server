@@ -30,7 +30,10 @@ class Model {
     values.map((category) => category.toLowerCase()),
   ];
 
-  fieldLowerEqualString = (field, value) => [`LOWER(${field}) ILIKE ?`, `%${value}%`];
+  fieldLowerEqualString = (field, value) => [
+    `LOWER(${field}) ILIKE ?`,
+    `%${value}%`,
+  ];
 
   baseStrFilter = (filter, searchableFields = null) => {
     filter = `%${filter}%`;

@@ -1253,21 +1253,6 @@ class OrderModel extends Model {
     return resultSelect.count ?? 0;
   };
 
-  updateExtendedFinished = async () => {
-    return await db(ORDERS_TABLE)
-      .where(function () {
-        this.whereIn("id", function () {
-          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
-        }) /*.orWhereIn("parent_id", function () {
-          this.select("parent_id").from(ORDERS_TABLE).whereNotNull("parent_id");
-        })*/;
-      })
-      .whereNull("cancel_status")
-      .where("status", STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER)
-      .whereRaw(`end_date < TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')`)
-      .update({ status: STATIC.ORDER_STATUSES.FINISHED });
-  };
-
   getInUseListingsBaseQuery = (dateStart, dateEnd) => {
     let query = db(ORDERS_TABLE);
     query = this.orderListingJoin(query);
