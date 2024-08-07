@@ -32,12 +32,12 @@ class UserEventLogModel extends Model {
     `${USER_EVENT_LOGS_TABLE}.created_at`,
   ];
 
-  create = async ({ user_id, user_email, user_role, event_name }) => {
+  create = async ({ userId, userEmail, userRole, eventName }) => {
     await db(USER_EVENT_LOGS_TABLE).insert({
-      user_id,
-      user_email,
-      user_role,
-      event_name,
+      user_id: userId,
+      user_email: userEmail,
+      user_role: userRole,
+      event_name: eventName,
     });
   };
 

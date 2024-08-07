@@ -33,6 +33,7 @@ const {
   getStartAndEndOfYesterday,
   removeDuplicates,
   getFactOrderDays,
+  truncateString,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -630,7 +631,7 @@ class Controller {
     return timeInfos;
   };
 
-  saveUserAction = async (req, event_name) => {
+  saveUserAction = async (req, eventName) => {
     const { userId } = req.userData;
     const active = await this.systemOptionModel.getUserLogActive();
     if (!active) return;
@@ -638,10 +639,10 @@ class Controller {
     const user = await this.userModel.getById(userId);
 
     await this.userEventLogModel.create({
-      user_id: userId,
-      user_email: user["email"],
-      user_role: user["role"],
-      event_name,
+      userId: userId,
+      userEmail: user["email"],
+      userRole: user["role"],
+      eventName: truncateString(eventName),
     });
   };
 
