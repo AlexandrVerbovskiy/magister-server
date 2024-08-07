@@ -51,5 +51,9 @@ module.exports = [
     fieldName: "Twitter Url",
     required: false,
   }),
-  ...validateSmallStringBody({ field: "paypalId", fieldName: "Paypal Id" }),
+  ...validateSmallStringBody({
+    field: "paypalId",
+    fieldName: "Paypal Id",
+    required: false,
+  }),
 ];
