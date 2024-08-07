@@ -73,21 +73,6 @@ class MainController extends Controller {
       const userId = req.userData.userId;
       const categories = await this.listingCategoryModel.getFullInfoList();
 
-      /* const topListings = await this.listingModel.getTopListings();
-
-            if (!userId) {
-              return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-                topListings,
-                categories,
-              });
-            }
-
-            const ratingListingsWithImagesFavorites =
-              await this.userListingFavoriteModel.bindUserListingListFavorite(
-                topListings,
-                userId
-              );*/
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
       });
@@ -288,8 +273,12 @@ class MainController extends Controller {
       const userId = req.userData?.userId;
 
       const listing = await this.listingModel.getFullById(id);
+      const isAdmin = await this.userModel.checkIsAdmin(userId);
 
-      if (!listing || (!listing.approved && listing.ownerId != userId)) {
+      if (
+        !listing ||
+        (!listing.approved && listing.ownerId != userId && !isAdmin)
+      ) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.NOT_FOUND,

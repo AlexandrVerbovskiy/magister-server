@@ -118,6 +118,7 @@ class Controller {
       port: process.env.MAIL_PORT,
       secure: false,
       auth: {
+        
         user: process.env.MAIL_EMAIL,
         pass: process.env.MAIL_PASSWORD,
       },
