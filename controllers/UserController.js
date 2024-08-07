@@ -626,6 +626,10 @@ class UserController extends Controller {
         await this.userVerifyRequestModel.updateUserVerifyById(id);
       }
 
+      if (!dataToSave["paypalId"]) {
+        dataToSave["paypalId"] = "";
+      }
+
       const user = await this.baseUpdate(id, dataToSave, req.file);
       this.saveUserAction(req, `Updated user with id '${id}'`);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { user });
@@ -637,7 +641,10 @@ class UserController extends Controller {
       await this.baseCheckEmailUnique(dataToSave);
 
       if (req.file) {
-        dataToSave["photo"] = await this.moveUploadsFileToFolder(req.file, "users");
+        dataToSave["photo"] = await this.moveUploadsFileToFolder(
+          req.file,
+          "users"
+        );
       }
 
       const userId = await this.userModel.createFull(dataToSave);
@@ -791,7 +798,10 @@ class UserController extends Controller {
       }
 
       if (documentFront) {
-        documentFront = await this.moveUploadsFileToFolder(documentFront, folder);
+        documentFront = await this.moveUploadsFileToFolder(
+          documentFront,
+          folder
+        );
         dataToSave["documentFront"] = documentFront;
       }
 
