@@ -1278,6 +1278,10 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
       let order = await this.orderModel.getFullById(id);
 
+      if (!order) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
       order = await this.tenantCommentModel.bindAverageForKeyEntity(
         order,
         "tenantId",

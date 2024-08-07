@@ -19,4 +19,5 @@ module.exports = {
   TenantCommentController: require("./TenantCommentController"),
   DisputeController: require("./DisputeController"),
   ChatController: require("./ChatController"),
+  CronCommandController: require("./CronCommandController"),
 };

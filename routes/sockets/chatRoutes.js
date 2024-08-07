@@ -1,5 +1,6 @@
 const { ChatController } = require("../../controllers");
 const { validateToken } = require("../../utils");
+const { userModel } = require("../../models");
 
 module.exports = (io) => {
   const chatController = new ChatController(io);
@@ -12,6 +13,12 @@ module.exports = (io) => {
     const userId = resValidate?.userId;
 
     if (!resValidate || !userId) {
+      return sendError("Authentication failed");
+    }
+
+    const user = await userModel.getById(userId);
+
+    if (!user) {
       return sendError("Authentication failed");
     }
 
@@ -32,7 +39,10 @@ module.exports = (io) => {
     };
 
     bindFuncToEvent("send-message", chatController.onSendTextMessage);
-    bindFuncToEvent("admin-send-message", chatController.onSendTextMessageByAdmin);
+    bindFuncToEvent(
+      "admin-send-message",
+      chatController.onSendTextMessageByAdmin
+    );
     bindFuncToEvent("update-message", chatController.onUpdateMessage);
     bindFuncToEvent(
       "admin-update-message",
@@ -50,7 +60,10 @@ module.exports = (io) => {
     //bindFuncToEvent("admin-end-typing", chatController.onFinishTyping);
 
     bindFuncToEvent("file-part-upload", chatController.onFilePartUpload);
-    bindFuncToEvent("admin-file-part-upload", chatController.onFilePartUploadByAdmin);
+    bindFuncToEvent(
+      "admin-file-part-upload",
+      chatController.onFilePartUploadByAdmin
+    );
     bindFuncToEvent("stop-file-upload", chatController.onStopFileUpload);
     bindFuncToEvent("admin-stop-file-upload", chatController.onStopFileUpload);
 
