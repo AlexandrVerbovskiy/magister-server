@@ -87,6 +87,17 @@ const isOrderCanBeAccepted = (order, conflictOrders) => {
   return !checkStartEndHasConflict(orderStartDate, orderEndDate, blockedDates);
 };
 
+const truncateString = (str) => {
+  const maxLength = 255;
+  const truncatedLength = 250;
+
+  if (str.length > maxLength) {
+    return str.substring(0, truncatedLength) + "...";
+  } else {
+    return str;
+  }
+};
+
 module.exports = {
   indicateMediaTypeByExtension,
   determineStepType,
@@ -95,4 +106,5 @@ module.exports = {
   isPayedUsedPaypal,
   removeDuplicates,
   isOrderCanBeAccepted,
+  truncateString,
 };
