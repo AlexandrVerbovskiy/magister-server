@@ -390,6 +390,7 @@ module.exports = (io) => {
   router.post(
     "/admin-chat-options",
     isAuth,
+    isSupport,
     chatOptionsValidation,
     mainController.getAdminChatOptions
   );
@@ -397,6 +398,7 @@ module.exports = (io) => {
   router.post(
     "/admin-order-chat-options",
     isAuth,
+    isSupport,
     chatOptionsValidation,
     mainController.getAdminOrderChatOptions
   );

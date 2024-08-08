@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const { ChatController } = require("../../controllers");
-const { isAuth, isAdmin } = require("../../middlewares");
+const { isAuth, isSupport } = require("../../middlewares");
 const {
   baseChatInfoValidation,
   chatListValidation,
@@ -35,21 +35,21 @@ module.exports = (io) => {
   router.post(
     "/admin-chat-list",
     isAuth,
-    isAdmin,
+    isSupport,
     chatController.getChatListForAdmin
   );
 
   router.post(
     "/admin-chat-message-list",
     isAuth,
-    isAdmin,
+    isSupport,
     chatController.getChatMessageListForAdmin
   );
 
   router.post(
     "/admin-chat-base-info",
     isAuth,
-    isAdmin,
+    isSupport,
     chatController.getChatInfoByAdmin
   );
 
