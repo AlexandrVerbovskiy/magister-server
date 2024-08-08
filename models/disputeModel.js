@@ -368,8 +368,13 @@ class DisputeModel extends Model {
         "=",
         `${ORDERS_TABLE}.listing_id`
       )
-      .where(`${LISTINGS_TABLE}.owner_id`, "=", userId)
-      .where(`${ORDERS_TABLE}.tenant_id`, "=", userId);
+      .where(function () {
+        this.where(`${LISTINGS_TABLE}.owner_id`, "=", userId).orWhere(
+          `${ORDERS_TABLE}.tenant_id`,
+          "=",
+          userId
+        );
+      });
   };
 }
 
