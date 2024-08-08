@@ -946,6 +946,8 @@ class MainController extends Controller {
       clientToTime
     );
 
+    const rentListingTotalCounts = rentListingInfos.length;
+
     incrementDateCounts(rentListingCounts, rentListingInfos, (key, info) =>
       checkDateInDuration(key, info.startDate, info.endDate, stepType)
     );
@@ -1065,6 +1067,7 @@ class MainController extends Controller {
       transactionDatesCount,
       transactionDatesSum,
       rentListingCounts,
+      rentListingTotalCounts,
       transactionsDetailInfo,
       disputeTotalDatesCount,
       disputeStatisticInfo,
@@ -1112,6 +1115,8 @@ class MainController extends Controller {
       clientToTime,
       userId
     );
+
+    const rentListingTotalCounts = rentListingInfos.length;
 
     const disputeInfos = await this.disputeModel.getUserInDuration(
       clientFromTime,
@@ -1185,6 +1190,7 @@ class MainController extends Controller {
       transactionDatesCount,
       transactionDatesSum,
       rentListingCounts,
+      rentListingTotalCounts,
       transactionsDetailInfo,
       disputeStatisticInfo,
       disputeTotalDatesCount,
