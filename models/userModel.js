@@ -643,19 +643,7 @@ class UserModel extends Model {
 
   getInactiveRegisteredByDuration = async (dateStart, dateEnd) => {
     return await db(USERS_TABLE)
-      .joinRaw(
-        `LEFT JOIN ${ORDERS_TABLE} ON
-        ${USERS_TABLE}.id = ${ORDERS_TABLE}.tenant_id AND ${ORDERS_TABLE}.start_date <= ?`,
-        [formatDateToSQLFormat(dateEnd)]
-      )
-      .joinRaw(
-        `LEFT JOIN ${LISTINGS_TABLE} ON
-        ${USERS_TABLE}.id = ${LISTINGS_TABLE}.owner_id AND ${LISTINGS_TABLE}.created_at <= ?`,
-        [formatDateToSQLFormat(dateEnd)]
-      )
-      .where(function () {
-        this.whereNull(`${ORDERS_TABLE}.id`).whereNull(`${LISTINGS_TABLE}.id`);
-      })
+      .where("active", false)
       .where(
         `${USERS_TABLE}.created_at`,
         ">=",
