@@ -273,7 +273,12 @@ class MainController extends Controller {
       const userId = req.userData?.userId;
 
       const listing = await this.listingModel.getFullById(id);
-      const isAdmin = await this.userModel.checkIsAdmin(userId);
+
+      let isAdmin = false;
+
+      if (userId) {
+        isAdmin = await this.userModel.checkIsAdmin(userId);
+      }
 
       if (
         !listing ||
