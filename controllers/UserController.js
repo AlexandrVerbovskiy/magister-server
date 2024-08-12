@@ -41,6 +41,24 @@ class UserController extends Controller {
       const { name, email, token, provider } = req.body;
       let emailByToken = null;
 
+      if (!email) {
+        if (provider.toLowerCase() == "google") {
+          return this.sendErrorResponse(
+            res,
+            STATIC.ERRORS.DATA_CONFLICT,
+            "Your Google account has no email. Please add email to your account and try to register again"
+          );
+        }
+
+        if (provider.toLowerCase() == "facebook") {
+          return this.sendErrorResponse(
+            res,
+            STATIC.ERRORS.DATA_CONFLICT,
+            "Your Facebook account has no email. Please add email to your account and try to register again"
+          );
+        }
+      }
+
       if (provider.toLowerCase() == "google") {
         emailByToken = await this.getEmailByGoogleToken(token);
       }
