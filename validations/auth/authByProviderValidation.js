@@ -5,7 +5,6 @@ const {
 } = require("../base");
 
 module.exports = [
-  ...emailValidation,
   ...validateBigStringBody({
     field: "token",
     fieldName: "Token",
