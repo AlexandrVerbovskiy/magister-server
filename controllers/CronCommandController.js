@@ -45,7 +45,7 @@ class CronCommandController extends Controller {
 
   resetDatabase = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      /*await this.baseReset(STATIC.TABLES.OWNER_COMMENTS);
+      await this.baseReset(STATIC.TABLES.OWNER_COMMENTS);
       await this.baseReset(STATIC.TABLES.TENANT_COMMENTS);
       await this.baseReset(STATIC.TABLES.LISTING_COMMENTS);
 
@@ -78,11 +78,15 @@ class CronCommandController extends Controller {
       await this.baseReset(STATIC.TABLES.TWO_FACTOR_AUTH_CODES);
       await this.baseReset(STATIC.TABLES.USER_DOCUMENTS);
       await this.baseReset(STATIC.TABLES.USER_VERIFY_REQUESTS);
-      await db(STATIC.TABLES.USERS).whereNot("email", "admin@ydk.com").delete();*/
-
-      await this.sendProfileVerificationMail("cofeek5@gmail.com");
+      await db(STATIC.TABLES.USERS).whereNot("email", "admin@ydk.com").delete();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  emailTest = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const result = await this.sendProfileVerificationMail("cofeek5@gmail.com");
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 }
 
