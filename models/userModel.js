@@ -434,6 +434,9 @@ class UserModel extends Model {
        (${SENDER_PAYMENTS_TABLE}.user_id = ${USERS_TABLE}.id AND ${SENDER_PAYMENTS_TABLE}.hidden = false)`
       )
       .leftJoin(ORDERS_TABLE, `${ORDERS_TABLE}.tenant_id`, `${USERS_TABLE}.id`)
+      .joinRaw(
+        `LEFT JOIN ${USER_VERIFY_REQUESTS_TABLE} ON (${USER_VERIFY_REQUESTS_TABLE}.user_id = ${USERS_TABLE}.id AND (${USER_VERIFY_REQUESTS_TABLE}.has_response = false))`
+      )
       .select([
         ...this.visibleFields,
         `${USERS_TABLE}.active`,
@@ -441,11 +444,13 @@ class UserModel extends Model {
         `${USERS_TABLE}.email_verified as emailVerified`,
         `${USERS_TABLE}.phone_verified as phoneVerified`,
         `${USERS_TABLE}.created_at as createdAt`,
+        `${USER_VERIFY_REQUESTS_TABLE}.id as verifyRequestId`,
+        `${USER_VERIFY_REQUESTS_TABLE}.has_response as verifyRequestHasResponse`,
         db.raw(`COUNT(${SENDER_PAYMENTS_TABLE}.id) as "totalRents"`),
         db.raw(`SUM(${SENDER_PAYMENTS_TABLE}.money) as "totalSpent"`),
         db.raw(`MAX(${ORDERS_TABLE}.start_date) as "lastRenterDate"`),
       ])
-      .groupBy(`${USERS_TABLE}.id`)
+      .groupBy([`${USERS_TABLE}.id`, `${USER_VERIFY_REQUESTS_TABLE}.id`])
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);

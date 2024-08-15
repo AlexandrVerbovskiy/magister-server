@@ -118,12 +118,8 @@ class Controller {
       host: process.env.MAIL_HOST,
       port: process.env.MAIL_PORT,
       secure: false,
-      auth: {
-        user: process.env.MAIL_EMAIL,
-        pass: process.env.MAIL_PASSWORD,
-      },
       tls: {
-        ciphers: "SSLv3",
+        rejectUnauthorized: false, 
       },
     });
 
@@ -770,6 +766,7 @@ class Controller {
       payed: payment.adminApproved
         ? offerTotalPrice.toFixed(2)
         : (0).toFixed(2),
+      currency: STATIC.CURRENCY,
     };
 
     return await this.generatePdf("/pdfs/invoice", params);
