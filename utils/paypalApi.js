@@ -1,5 +1,6 @@
 require("dotenv").config();
 const fetch = require("node-fetch");
+const STATIC = require("../static");
 
 const { PAYPAL_CLIENT_ID, PAYPAL_SECRET_KEY } = process.env;
 const baseApi = `https://api.${process.env.PAYPAL_API_URL}`;
@@ -47,11 +48,11 @@ const createPaypalOrder = async (amount, orderId, listingName) => {
     purchase_units: [
       {
         amount: {
-          currency_code: "USD",
+          currency_code: STATIC.CURRENCY_NAME,
           value: amount,
           breakdown: {
             item_total: {
-              currency_code: "USD",
+              currency_code: STATIC.CURRENCY_NAME,
               value: amount,
             },
           },
@@ -62,7 +63,7 @@ const createPaypalOrder = async (amount, orderId, listingName) => {
             quantity: 1,
             sku: orderId,
             unit_amount: {
-              currency_code: "USD",
+              currency_code: STATIC.CURRENCY_NAME,
               value: amount,
             },
             description: "Tool rental",
@@ -195,15 +196,15 @@ async function sendMoneyToPaypal(type, getter, amount, currency) {
 }
 
 async function sendMoneyToPaypalByEmail(email, amount) {
-  return sendMoneyToPaypal("EMAIL", email, amount, "USD");
+  return sendMoneyToPaypal("EMAIL", email, amount, STATIC.CURRENCY_NAME);
 }
 
 async function sendMoneyToPaypalByPhone(phone, amount) {
-  return sendMoneyToPaypal("PHONE", phone, amount, "USD");
+  return sendMoneyToPaypal("PHONE", phone, amount, STATIC.CURRENCY_NAME);
 }
 
 async function sendMoneyToPaypalByPaypalID(paypalId, amount) {
-  return sendMoneyToPaypal("PAYPAL_ID", paypalId, amount, "USD");
+  return sendMoneyToPaypal("PAYPAL_ID", paypalId, amount, STATIC.CURRENCY_NAME);
 }
 
 const getPaypalOrderInfo = async (orderId) => {
