@@ -2,17 +2,6 @@ const { body } = require("express-validator");
 
 module.exports = [
   body("orderId").isInt().withMessage("Body field 'Order Id' is required"),
-  body("newPricePerDay")
-    .isNumeric()
-    .withMessage("Body field 'New Price Per Day' must be a number"),
-  body("newPricePerDay").custom((value) => {
-    if (value <= 0) {
-      throw new Error(
-        "Body field 'New Price Per Day' must be higher than zero"
-      );
-    }
-    return true;
-  }),
   body("newStartDate")
     .isDate({ format: "YYYY-MM-DD" })
     .withMessage(

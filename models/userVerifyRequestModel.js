@@ -174,6 +174,19 @@ class UserVerifyRequestModel extends Model {
       .first();
   };
 
+  getLastUserNotAnsweredRequest = async (userId) => {
+    return await db(USER_VERIFY_REQUESTS_TABLE)
+      .select([
+        `${USER_VERIFY_REQUESTS_TABLE}.id`,
+        `${USER_VERIFY_REQUESTS_TABLE}.created_at as createdAt`,
+        `${USER_VERIFY_REQUESTS_TABLE}.has_response as hasResponse`,
+        `${USER_VERIFY_REQUESTS_TABLE}.failed_description as failedDescription`,
+      ])
+      .where({ user_id: userId, has_response: false })
+      .orderBy("created_at", "DESC")
+      .first();
+  };
+
   getUserIdById = async (id) => {
     const res = await db(USER_VERIFY_REQUESTS_TABLE).where({ id: id }).first();
     return res?.user_id;

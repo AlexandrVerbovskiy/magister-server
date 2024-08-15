@@ -7,15 +7,6 @@ const {
 
 module.exports = [
   ...validateIntegerBody({ field: "listingId", fieldName: "Listing Id" }),
-  body("pricePerDay")
-    .isNumeric()
-    .withMessage("Body field 'Price Per Day' must be a number"),
-  body("pricePerDay").custom((value) => {
-    if (value <= 0) {
-      throw new Error("Body field 'Price Per Day' must be higher than zero");
-    }
-    return true;
-  }),
   body("startDate")
     .isDate({ format: "YYYY-MM-DD" })
     .withMessage(

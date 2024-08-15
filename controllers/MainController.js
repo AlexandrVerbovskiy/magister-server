@@ -686,9 +686,13 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
+      const verifiedInfo =
+        await this.userVerifyRequestModel.getLastUserNotAnsweredRequest(userId);
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         categories,
         newPaypalId,
+        verifiedInfo,
       });
     });
 
