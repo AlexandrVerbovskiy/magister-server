@@ -115,15 +115,11 @@ class Controller {
     this.socketModel = socketModel;
 
     this.mailTransporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
-      port: process.env.MAIL_PORT,
+      host: "rentabout-com.mail.protection.outlook.com",
+      port: 25,
       secure: false,
-      auth: {
-        user: process.env.MAIL_EMAIL,
-        pass: process.env.MAIL_PASSWORD,
-      },
       tls: {
-        ciphers: "SSLv3",
+        rejectUnauthorized: false, 
       },
     });
 
@@ -770,6 +766,7 @@ class Controller {
       payed: payment.adminApproved
         ? offerTotalPrice.toFixed(2)
         : (0).toFixed(2),
+      currency: STATIC.CURRENCY,
     };
 
     return await this.generatePdf("/pdfs/invoice", params);

@@ -238,4 +238,6 @@ module.exports = {
   INFINITY_SELECT_ITERATION_LIMIT: 10,
   ORDER_TENANT_GOT_ITEM_APPROVE_URL: "/dashboard/orders/approve-tenant-listing",
   ORDER_OWNER_GOT_ITEM_APPROVE_URL: "/dashboard/orders/approve-owner-listing",
+  CURRENCY_NAME: "GBP", //"USD"
+  CURRENCY:"£"//"$"
 };
