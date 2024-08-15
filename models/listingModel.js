@@ -57,7 +57,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat as rentalLat`,
     `${LISTINGS_TABLE}.rental_lng as rentalLng`,
     `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
-    `${LISTINGS_TABLE}.background_photo as backgroundPhoto`,
   ];
 
   fullVisibleFields = [
@@ -227,15 +226,6 @@ class ListingsModel extends Model {
 
     const listingImages = await this.getListingImages(id);
     return { ...listing, listingImages };
-  };
-
-  getBackgroundPhoto = async (id) => {
-    const listing = await db(LISTINGS_TABLE)
-      .where({ id })
-      .select(`background_photo as backgroundPhoto`)
-      .first();
-
-    return listing?.backgroundPhoto;
   };
 
   getListByIds = async (ids) => {

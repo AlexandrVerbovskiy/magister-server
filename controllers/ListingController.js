@@ -281,10 +281,6 @@ class ListingController extends Controller {
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
 
-      if (file.fieldname === "backgroundPhoto") {
-        continue;
-      }
-
       const { fieldname } = file;
       let id = null;
 
@@ -329,19 +325,6 @@ class ListingController extends Controller {
         );
       }
     }
-
-    const backgroundPhoto = req.files.find(
-      (file) => file.fieldname === "backgroundPhoto"
-    );
-
-    if (!backgroundPhoto) {
-      return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST);
-    }
-
-    dataToSave["backgroundPhoto"] = await this.moveUploadsFileToFolder(
-      backgroundPhoto,
-      "listings"
-    );
 
     dataToSave["listingImages"] = await this.localGetFiles(req);
 
@@ -427,27 +410,6 @@ class ListingController extends Controller {
       }
     }
 
-    const backgroundPhoto = req.files.find(
-      (file) => file.fieldname === "backgroundPhoto"
-    );
-
-    let backgroundImageToDelete = null;
-
-    const currentBackgroundImage = await this.listingModel.getBackgroundPhoto(
-      listingId
-    );
-
-    if (backgroundPhoto) {
-      dataToSave["backgroundPhoto"] = await this.moveUploadsFileToFolder(
-        backgroundPhoto,
-        "listings"
-      );
-
-      backgroundImageToDelete = currentBackgroundImage;
-    } else {
-      dataToSave["backgroundPhoto"] = currentBackgroundImage;
-    }
-
     dataToSave["listingImages"] = await this.localGetFiles(req);
 
     dataToSave["active"] = dataToSave["active"] == "true";
@@ -479,10 +441,6 @@ class ListingController extends Controller {
 
       const owner = await this.userModel.getById(dataToSave.ownerId);
       this.sendAssetListingConfirmation(owner.email, listingId);
-    }
-
-    if (backgroundImageToDelete) {
-      this.removeFile(backgroundImageToDelete);
     }
 
     return this.sendSuccessResponse(

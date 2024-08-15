@@ -5,7 +5,7 @@ const Controller = require("./Controller");
 class OrderUpdateRequestController extends Controller {
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { orderId, newStartDate, newEndDate, newPricePerDay } = req.body;
+      const { orderId, newStartDate, newEndDate } = req.body;
       const senderId = req.userData.userId;
 
       const order = await this.orderModel.getFullById(orderId);
@@ -85,7 +85,7 @@ class OrderUpdateRequestController extends Controller {
         orderId,
         newStartDate,
         newEndDate,
-        newPricePerDay,
+        newPricePerDay: order.offerPricePerDay,
         senderId,
         fee,
       });
@@ -101,7 +101,7 @@ class OrderUpdateRequestController extends Controller {
         messageData: {
           requestId: request.id,
           listingName: order.listingName,
-          offerPrice: newPricePerDay,
+          offerPrice: order.offerPricePerDay,
           listingPhotoPath: firstImage?.link,
           listingPhotoType: firstImage?.type,
           offerDateStart: newStartDate,

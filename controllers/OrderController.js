@@ -53,7 +53,6 @@ class OrderController extends Controller {
 
   baseCreate = async (
     {
-      pricePerDay,
       startDate,
       endDate,
       listingId,
@@ -107,7 +106,7 @@ class OrderController extends Controller {
     }
 
     const orderId = await this.orderModel.create({
-      pricePerDay,
+      pricePerDay: listing.pricePerDay,
       startDate,
       endDate,
       listingId,
@@ -121,17 +120,16 @@ class OrderController extends Controller {
     return {
       error: null,
       orderId,
+      pricePerDay: listing.pricePerDay,
     };
   };
 
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { pricePerDay, startDate, endDate, listingId, feeActive, message } =
-        req.body;
+      const { startDate, endDate, listingId, feeActive, message } = req.body;
       const tenantId = req.userData.userId;
 
       const result = await this.baseCreate({
-        pricePerDay,
         startDate,
         endDate,
         listingId,
@@ -162,7 +160,7 @@ class OrderController extends Controller {
         orderInfo: {
           orderId: createdOrderId,
           listingName: listing.name,
-          offerPrice: pricePerDay,
+          offerPrice: result.pricePerDay,
           listingPhotoPath: firstImage?.link,
           listingPhotoType: firstImage?.type,
           offerDateStart: startDate,
@@ -189,7 +187,6 @@ class OrderController extends Controller {
   extend = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const {
-        pricePerDay,
         startDate,
         endDate,
         listingId,
@@ -226,7 +223,6 @@ class OrderController extends Controller {
       const prevOrderEndDate = prevOrder.offerEndDate;
 
       const dataToCreate = {
-        pricePerDay,
         startDate,
         endDate,
         listingId,
@@ -269,7 +265,7 @@ class OrderController extends Controller {
         orderInfo: {
           orderId: createdOrderId,
           listingName: listing.name,
-          offerPrice: pricePerDay,
+          offerPrice: result.pricePerDay,
           listingPhotoPath: firstImage?.link,
           listingPhotoType: firstImage?.type,
           offerDateStart: startDate,

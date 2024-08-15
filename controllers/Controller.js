@@ -115,8 +115,8 @@ class Controller {
     this.socketModel = socketModel;
 
     this.mailTransporter = nodemailer.createTransport({
-      host: "rentabout-com.mail.protection.outlook.com",
-      port: 25,
+      host: process.env.MAIL_HOST,
+      port: process.env.MAIL_PORT,
       secure: false,
       tls: {
         rejectUnauthorized: false, 
