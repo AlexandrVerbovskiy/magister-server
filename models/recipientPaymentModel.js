@@ -476,12 +476,10 @@ class RecipientPayment extends Model {
   };
 
   complete = async (id) => {
-    await db(RECIPIENT_PAYMENTS_TABLE)
-      .where({ id: id, status: STATIC.RECIPIENT_STATUSES.WAITING })
-      .update({
-        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-        failed_description: null,
-      });
+    await db(RECIPIENT_PAYMENTS_TABLE).where({ id: id }).update({
+      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+      failed_description: null,
+    });
   };
 
   reject = async (id, description) => {

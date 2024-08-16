@@ -86,7 +86,9 @@ class CronCommandController extends Controller {
 
   emailTest = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.sendProfileVerificationMail("cofeek5@gmail.com");
+      const result = await this.sendProfileVerificationMail(
+        "cofeek5@gmail.com"
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 }
