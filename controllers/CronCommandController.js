@@ -1,6 +1,7 @@
 const Controller = require("./Controller");
 const db = require("../database");
 const STATIC = require("../static");
+const { sendMoneyToPaypalByPaypalID } = require("../utils");
 
 class CronCommandController extends Controller {
   baseReset = async (model) => {
