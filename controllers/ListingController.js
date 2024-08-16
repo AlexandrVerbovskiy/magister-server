@@ -48,9 +48,13 @@ class ListingController extends Controller {
     const maxPrice = req.body.maxPrice ?? null;
     const lat = req.body.lat ?? null;
     const lng = req.body.lng ?? null;
-    const othersCategories = req.body.othersCategories == true;
+    const totalOthersCategories = req.body.totalOthersCategories == true;
     const sessionUserId = req.userData?.userId;
     const favorites = sessionUserId ? !!req.body.favorites : false;
+    const othersCategories =
+      req.body.othersCategories
+        .map((category) => +category)
+        .filter((category) => !isNaN(category)) ?? [];
 
     const searchCity = req.body.searchCity ?? null;
     const searchCategory = req.body.searchCategory ?? null;
@@ -68,6 +72,7 @@ class ListingController extends Controller {
         maxPrice,
         lat,
         lng,
+        totalOthersCategories,
         othersCategories,
         searchListing,
         favorites,
@@ -87,6 +92,7 @@ class ListingController extends Controller {
       distance,
       minPrice,
       maxPrice,
+      totalOthersCategories,
       othersCategories,
     };
   };
@@ -100,6 +106,7 @@ class ListingController extends Controller {
       distance,
       minPrice,
       maxPrice,
+      totalOthersCategories,
       othersCategories,
     } = await this.baseCountListings(req, userId);
 
@@ -111,6 +118,7 @@ class ListingController extends Controller {
     options["distance"] = distance;
     options["minPrice"] = minPrice;
     options["maxPrice"] = maxPrice;
+    options["totalOthersCategories"] = totalOthersCategories;
     options["othersCategories"] = othersCategories;
 
     options["searchCity"] = req.body.searchCity ?? null;
@@ -310,20 +318,27 @@ class ListingController extends Controller {
   baseCreate = async (req, res, needSendRequest = false) => {
     const dataToSave = req.body;
 
+    let categoryToCheck = null;
+
     if (dataToSave["otherCategory"]) {
       dataToSave["categoryId"] = null;
+      dataToSave["otherCategory"] = null;
+      categoryToCheck = dataToSave["otherCategoryParentId"];
     } else {
-      const resCheckCategoryValid = await this.checkValidCategoryId(
-        dataToSave["categoryId"]
-      );
+      dataToSave["otherCategoryParentId"] = null;
+      categoryToCheck = dataToSave["categoryId"];
+    }
 
-      if (!resCheckCategoryValid) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.FORBIDDEN,
-          "The selected category was not found"
-        );
-      }
+    const resCheckCategoryValid = await this.checkValidCategoryId(
+      categoryToCheck
+    );
+
+    if (!resCheckCategoryValid) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.FORBIDDEN,
+        "The selected category was not found"
+      );
     }
 
     dataToSave["listingImages"] = await this.localGetFiles(req);
@@ -394,20 +409,27 @@ class ListingController extends Controller {
     const dataToSave = req.body;
     const listingId = dataToSave["id"];
 
+    let categoryToCheck = null;
+
     if (dataToSave["otherCategory"]) {
       dataToSave["categoryId"] = null;
+      categoryToCheck = dataToSave["otherCategoryParentId"];
     } else {
-      const resCheckCategoryValid = await this.checkValidCategoryId(
-        dataToSave["categoryId"]
-      );
+      dataToSave["otherCategoryParentId"] = null;
+      dataToSave["otherCategory"] = null;
+      categoryToCheck = dataToSave["categoryId"];
+    }
 
-      if (!resCheckCategoryValid) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.FORBIDDEN,
-          "The selected category was not found"
-        );
-      }
+    const resCheckCategoryValid = await this.checkValidCategoryId(
+      categoryToCheck
+    );
+
+    if (!resCheckCategoryValid) {
+      return this.sendErrorResponse(
+        res,
+        STATIC.ERRORS.FORBIDDEN,
+        "The selected category was not found"
+      );
     }
 
     dataToSave["listingImages"] = await this.localGetFiles(req);
