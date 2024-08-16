@@ -60,8 +60,8 @@ module.exports = [
     required: false,
   }),
   ...validateBoolean({
-    field: "othersCategories",
-    fieldName: "Others Categories",
+    field: "totalOthersCategories",
+    fieldName: "Total Others Categories",
     required: false,
   }),
   ...validateBoolean({
