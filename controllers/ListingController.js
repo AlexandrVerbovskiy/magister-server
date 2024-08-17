@@ -310,7 +310,11 @@ class ListingController extends Controller {
     return [...filesToSave, ...listingImages];
   };
 
-  checkValidCategoryId = async (categoryId) => {
+  checkValidCategoryId = async (categoryId, canBeEmpty = false) => {
+    if (!categoryId) {
+      return canBeEmpty;
+    }
+
     const category = await this.listingCategoryModel.getById(categoryId);
     return !!category;
   };
@@ -322,15 +326,21 @@ class ListingController extends Controller {
 
     if (dataToSave["otherCategory"]) {
       dataToSave["categoryId"] = null;
-      dataToSave["otherCategory"] = null;
+      dataToSave["otherCategoryParentId"] =
+        +dataToSave["otherCategoryParentId"] || null;
       categoryToCheck = dataToSave["otherCategoryParentId"];
     } else {
+      dataToSave["otherCategory"] = null;
+      dataToSave["categoryId"] = +dataToSave["categoryId"] || null;
       dataToSave["otherCategoryParentId"] = null;
       categoryToCheck = dataToSave["categoryId"];
     }
 
+    const canBeEmptyCategoryId = !!dataToSave["otherCategory"];
+    console.log("can be empty: ", canBeEmptyCategoryId);
     const resCheckCategoryValid = await this.checkValidCategoryId(
-      categoryToCheck
+      categoryToCheck,
+      canBeEmptyCategoryId
     );
 
     if (!resCheckCategoryValid) {
@@ -413,15 +423,20 @@ class ListingController extends Controller {
 
     if (dataToSave["otherCategory"]) {
       dataToSave["categoryId"] = null;
+      dataToSave["otherCategoryParentId"] =
+        +dataToSave["otherCategoryParentId"] || null;
       categoryToCheck = dataToSave["otherCategoryParentId"];
     } else {
       dataToSave["otherCategoryParentId"] = null;
       dataToSave["otherCategory"] = null;
+      dataToSave["categoryId"] = +dataToSave["categoryId"] || null;
       categoryToCheck = dataToSave["categoryId"];
     }
 
+    const canBeEmptyCategoryId = !!dataToSave["otherCategory"];
     const resCheckCategoryValid = await this.checkValidCategoryId(
-      categoryToCheck
+      categoryToCheck,
+      canBeEmptyCategoryId
     );
 
     if (!resCheckCategoryValid) {
