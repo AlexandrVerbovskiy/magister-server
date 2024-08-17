@@ -25,6 +25,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.city`,
     `${LISTINGS_TABLE}.category_id`,
     `${LISTINGS_TABLE}.other_category`,
+    `${LISTINGS_TABLE}.other_category_parent_id`,
     `${LISTINGS_TABLE}.compensation_cost`,
     `${LISTINGS_TABLE}.count_stored_items`,
     `${LISTINGS_TABLE}.description`,
@@ -47,6 +48,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.city`,
     `${LISTINGS_TABLE}.category_id as categoryId`,
     `${LISTINGS_TABLE}.other_category as otherCategory`,
+    `${LISTINGS_TABLE}.other_category_parent_id as otherCategoryParentId`,
     `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
     `${LISTINGS_TABLE}.count_stored_items as countStoredItems`,
     `${LISTINGS_TABLE}.description`,
@@ -154,6 +156,7 @@ class ListingsModel extends Model {
     backgroundPhoto = null,
     active = true,
     otherCategory = null,
+    otherCategoryParentId = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -179,6 +182,7 @@ class ListingsModel extends Model {
         active,
         background_photo: backgroundPhoto,
         other_category: otherCategory,
+        other_category_parent_id: otherCategoryParentId,
       })
       .returning("id");
 
@@ -311,6 +315,7 @@ class ListingsModel extends Model {
     active,
     backgroundPhoto = null,
     otherCategory = null,
+    otherCategoryParentId = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
@@ -334,6 +339,7 @@ class ListingsModel extends Model {
       address,
       active,
       other_category: otherCategory,
+      other_category_parent_id: otherCategoryParentId,
     };
 
     if (backgroundPhoto) {
@@ -605,9 +611,65 @@ class ListingsModel extends Model {
     return query;
   };
 
+  baseCategoryFilter = ({
+    query,
+    queryCategories,
+    totalOthersCategories,
+    othersCategories,
+  }) => {
+    const fieldLowerEqualArray = this.fieldLowerEqualArray;
+
+    if (queryCategories.length > 0) {
+      query.where(function () {
+        this.whereRaw(
+          ...fieldLowerEqualArray(
+            `${LISTING_CATEGORIES_TABLE}.name`,
+            queryCategories
+          )
+        )
+          .orWhereRaw(...fieldLowerEqualArray(`c2.name`, queryCategories))
+          .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
+
+        if (totalOthersCategories) {
+          this.orWhereNull(`${LISTINGS_TABLE}.category_id`);
+        }
+
+        if (othersCategories.length > 0) {
+          this.orWhereIn(
+            `${LISTINGS_TABLE}.other_category_parent_id`,
+            othersCategories
+          );
+        }
+      });
+    } else {
+      if (totalOthersCategories) {
+        query = query.where(function () {
+          this.whereNull(`${LISTINGS_TABLE}.category_id`);
+        });
+
+        if (othersCategories.length > 0) {
+          this.orWhereIn(
+            `${LISTINGS_TABLE}.other_category_parent_id`,
+            othersCategories
+          );
+        }
+      } else {
+        if (othersCategories.length > 0) {
+          query = query.whereIn(
+            `${LISTINGS_TABLE}.other_category_parent_id`,
+            othersCategories
+          );
+        }
+      }
+    }
+
+    return query;
+  };
+
   totalCount = async ({
     cities = [],
     categories = [],
+    othersCategories = [],
     userId = null,
     searchCity = null,
     searchCategory = null,
@@ -616,7 +678,7 @@ class ListingsModel extends Model {
     maxPrice = null,
     lat = null,
     lng = null,
-    othersCategories = null,
+    totalOthersCategories = null,
     searchListing = null,
     favorites = false,
     searcherId = null,
@@ -653,26 +715,12 @@ class ListingsModel extends Model {
       );
     }
 
-    if (queryCategories.length > 0) {
-      query.where(function () {
-        this.whereRaw(
-          ...fieldLowerEqualArray(
-            `${LISTING_CATEGORIES_TABLE}.name`,
-            queryCategories
-          )
-        )
-          .orWhereRaw(...fieldLowerEqualArray(`c2.name`, queryCategories))
-          .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
-
-        if (othersCategories) {
-          this.orWhereNull(`${LISTINGS_TABLE}.category_id`);
-        }
-      });
-    } else {
-      if (othersCategories) {
-        query = query.whereNull(`${LISTINGS_TABLE}.category_id`);
-      }
-    }
+    query = this.baseCategoryFilter({
+      query,
+      queryCategories,
+      totalOthersCategories,
+      othersCategories,
+    });
 
     if (userId) {
       query = query.where("owner_id", userId);
@@ -814,6 +862,7 @@ class ListingsModel extends Model {
     const {
       cities = [],
       categories = [],
+      othersCategories = [],
       start,
       count,
       lat = null,
@@ -825,7 +874,7 @@ class ListingsModel extends Model {
       distance = null,
       minPrice = null,
       maxPrice = null,
-      othersCategories = null,
+      totalOthersCategories = null,
       favorites = false,
       searcherId = null,
     } = props;
@@ -874,26 +923,12 @@ class ListingsModel extends Model {
       );
     }
 
-    if (queryCategories.length > 0) {
-      query.where(function () {
-        this.whereRaw(
-          ...fieldLowerEqualArray(
-            `${LISTING_CATEGORIES_TABLE}.name`,
-            queryCategories
-          )
-        )
-          .orWhereRaw(...fieldLowerEqualArray(`c2.name`, queryCategories))
-          .orWhereRaw(...fieldLowerEqualArray(`c3.name`, queryCategories));
-
-        if (othersCategories) {
-          this.orWhereNull(`${LISTINGS_TABLE}.category_id`);
-        }
-      });
-    } else {
-      if (othersCategories) {
-        query = query.whereNull(`${LISTINGS_TABLE}.category_id`);
-      }
-    }
+    query = this.baseCategoryFilter({
+      query,
+      queryCategories,
+      totalOthersCategories,
+      othersCategories,
+    });
 
     if (props.userId) {
       query = query.where({ owner_id: props.userId });
