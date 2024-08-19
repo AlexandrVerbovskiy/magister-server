@@ -48,7 +48,6 @@ class CronCommandController extends Controller {
     this.baseWrapper(req, res, async () => {
       await this.baseReset(STATIC.TABLES.OWNER_COMMENTS);
       await this.baseReset(STATIC.TABLES.TENANT_COMMENTS);
-      await this.baseReset(STATIC.TABLES.LISTING_COMMENTS);
 
       await this.baseReset(STATIC.TABLES.CHAT_MESSAGE_CONTENTS);
       await this.baseReset(STATIC.TABLES.CHAT_MESSAGES);

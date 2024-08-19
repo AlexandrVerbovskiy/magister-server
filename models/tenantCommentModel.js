@@ -148,26 +148,26 @@ class TenantCommentModel extends BaseCommentModel {
         `${USERS_TABLE}.id`,
         db.raw(`COUNT(${TENANT_COMMENTS_TABLE}.id) AS "commentCount"`),
 
-        db.raw(`COUNT(${TENANT_COMMENTS_TABLE}.care) AS "averageCare"`),
+        db.raw(`AVG(${TENANT_COMMENTS_TABLE}.care) AS "averageCare"`),
         db.raw(
-          `COUNT(${TENANT_COMMENTS_TABLE}.timeliness) AS "averageTimeliness"`
+          `AVG(${TENANT_COMMENTS_TABLE}.timeliness) AS "averageTimeliness"`
         ),
         db.raw(
-          `COUNT(${TENANT_COMMENTS_TABLE}.responsiveness) AS "averageResponsiveness"`
+          `AVG(${TENANT_COMMENTS_TABLE}.responsiveness) AS "averageResponsiveness"`
         ),
-        db.raw(`COUNT(${TENANT_COMMENTS_TABLE}.clarity) AS "averageClarity"`),
+        db.raw(`AVG(${TENANT_COMMENTS_TABLE}.clarity) AS "averageClarity"`),
         db.raw(
-          `COUNT(${TENANT_COMMENTS_TABLE}.usage_guidelines) AS "averageUsageGuidelines"`
-        ),
-        db.raw(
-          `COUNT(${TENANT_COMMENTS_TABLE}.terms_of_service) AS "averageTermsOfService"`
-        ),
-        db.raw(`COUNT(${TENANT_COMMENTS_TABLE}.honesty) AS "averageHonesty"`),
-        db.raw(
-          `COUNT(${TENANT_COMMENTS_TABLE}.reliability) AS "averageReliability"`
+          `AVG(${TENANT_COMMENTS_TABLE}.usage_guidelines) AS "averageUsageGuidelines"`
         ),
         db.raw(
-          `COUNT(${TENANT_COMMENTS_TABLE}.satisfaction) AS "averageSatisfaction"`
+          `AVG(${TENANT_COMMENTS_TABLE}.terms_of_service) AS "averageTermsOfService"`
+        ),
+        db.raw(`AVG(${TENANT_COMMENTS_TABLE}.honesty) AS "averageHonesty"`),
+        db.raw(
+          `AVG(${TENANT_COMMENTS_TABLE}.reliability) AS "averageReliability"`
+        ),
+        db.raw(
+          `AVG(${TENANT_COMMENTS_TABLE}.satisfaction) AS "averageSatisfaction"`
         ),
         db.raw(`(
             AVG(${TENANT_COMMENTS_TABLE}.care) + AVG(${TENANT_COMMENTS_TABLE}.timeliness)

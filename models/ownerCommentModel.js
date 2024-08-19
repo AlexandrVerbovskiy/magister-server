@@ -152,26 +152,26 @@ class OwnerCommentModel extends BaseCommentModel {
         db.raw(`COUNT(${OWNER_COMMENTS_TABLE}.id) AS "commentCount"`),
 
         db.raw(
-          `COUNT(${OWNER_COMMENTS_TABLE}.item_description_accuracy) AS "averageItemDescriptionAccuracy"`
+          `AVG(${OWNER_COMMENTS_TABLE}.item_description_accuracy) AS "averageItemDescriptionAccuracy"`
         ),
         db.raw(
-          `COUNT(${OWNER_COMMENTS_TABLE}.photo_accuracy) AS "averagePhotoAccuracy"`
+          `AVG(${OWNER_COMMENTS_TABLE}.photo_accuracy) AS "averagePhotoAccuracy"`
         ),
         db.raw(
-          `COUNT(${OWNER_COMMENTS_TABLE}.pickup_condition) AS "averagePickupCondition"`
+          `AVG(${OWNER_COMMENTS_TABLE}.pickup_condition) AS "averagePickupCondition"`
         ),
         db.raw(
-          `COUNT(${OWNER_COMMENTS_TABLE}.cleanliness) AS "averageCleanliness"`
+          `AVG(${OWNER_COMMENTS_TABLE}.cleanliness) AS "averageCleanliness"`
         ),
         db.raw(
-          `COUNT(${OWNER_COMMENTS_TABLE}.responsiveness) AS "averageResponsiveness"`
+          `AVG(${OWNER_COMMENTS_TABLE}.responsiveness) AS "averageResponsiveness"`
         ),
-        db.raw(`COUNT(${OWNER_COMMENTS_TABLE}.clarity) AS "averageClarity"`),
+        db.raw(`AVG(${OWNER_COMMENTS_TABLE}.clarity) AS "averageClarity"`),
         db.raw(
-          `COUNT(${OWNER_COMMENTS_TABLE}.scheduling_flexibility) AS "averageSchedulingFlexibility"`
+          `AVG(${OWNER_COMMENTS_TABLE}.scheduling_flexibility) AS "averageSchedulingFlexibility"`
         ),
         db.raw(
-          `COUNT(${OWNER_COMMENTS_TABLE}.issue_resolution) AS "averageIssueResolution"`
+          `AVG(${OWNER_COMMENTS_TABLE}.issue_resolution) AS "averageIssueResolution"`
         ),
         db.raw(`(
             AVG(${OWNER_COMMENTS_TABLE}.item_description_accuracy) + AVG(${OWNER_COMMENTS_TABLE}.photo_accuracy)

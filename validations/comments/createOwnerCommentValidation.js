@@ -4,37 +4,6 @@ const starValidation = require("./starValidation");
 module.exports = [
   body("orderId").isInt().withMessage("Order Id must be a number").toInt(),
 
-  body("listingCommentInfo.description")
-    .isString()
-    .withMessage("Listing comment description must be a string")
-    .notEmpty()
-    .withMessage("Listing comment description cannot be empty"),
-
-  ...starValidation({
-    field: "listingCommentInfo.punctuality",
-    name: "Listing comment punctuality",
-  }),
-  ...starValidation({
-    field: "listingCommentInfo.communication",
-    name: "Listing comment communication",
-  }),
-  ...starValidation({
-    field: "listingCommentInfo.flexibility",
-    name: "Listing comment flexibility",
-  }),
-  ...starValidation({
-    field: "listingCommentInfo.reliability",
-    name: "Listing comment reliability",
-  }),
-  ...starValidation({
-    field: "listingCommentInfo.kindness",
-    name: "Listing comment kindness",
-  }),
-  ...starValidation({
-    field: "listingCommentInfo.generalExperience",
-    name: "Listing comment general experience",
-  }),
-
   body("userCommentInfo.description")
     .isString()
     .withMessage("User comment description must be a string")

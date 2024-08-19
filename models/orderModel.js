@@ -17,7 +17,6 @@ const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
-const LISTING_COMMENTS_TABLE = STATIC.TABLES.LISTING_COMMENTS;
 const OWNER_COMMENTS_TABLE = STATIC.TABLES.OWNER_COMMENTS;
 const TENANT_COMMENTS_TABLE = STATIC.TABLES.TENANT_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
@@ -383,13 +382,6 @@ class OrderModel extends Model {
   };
 
   commentsInfoJoin = (query) => {
-    query = query.leftJoin(
-      LISTING_COMMENTS_TABLE,
-      `${LISTING_COMMENTS_TABLE}.order_id`,
-      "=",
-      `${ORDERS_TABLE}.id`
-    );
-
     query = query.joinRaw(
       `LEFT JOIN ${TENANT_COMMENTS_TABLE} as "tenant_comments" 
       ON tenant_comments.order_id = ${ORDERS_TABLE}.id`
@@ -409,15 +401,12 @@ class OrderModel extends Model {
 
       `tenant_comments.id as tenantCommentId`,
       `owner_comments.id as ownerCommentId`,
-      `${LISTING_COMMENTS_TABLE}.id as listingCommentId`,
 
       `tenant_comments.waiting_admin as tenantCommentWaitingAdmin`,
       `owner_comments.waiting_admin as ownerCommentWaitingAdmin`,
-      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentWaitingAdmin`,
 
       `tenant_comments.waiting_admin as tenantCommentApproved`,
       `owner_comments.waiting_admin as ownerCommentApproved`,
-      `${LISTING_COMMENTS_TABLE}.waiting_admin as listingCommentApproved`,
     ];
   };
 

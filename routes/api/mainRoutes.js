@@ -365,14 +365,6 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/admin-listing-comment-list-options",
-    isAuth,
-    isSupport,
-    adminCommentListOptionsValidation,
-    mainController.getAdminListingCommentsPageOptions
-  );
-
-  router.post(
     "/admin-dispute-list-options",
     isAuth,
     isSupport,

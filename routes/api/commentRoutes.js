@@ -1,6 +1,5 @@
 const { Router } = require("express");
 const router = Router();
-const { ListingCommentController } = require("../../controllers");
 const { isAuth, isSupport } = require("../../middlewares");
 const TenantCommentController = require("../../controllers/TenantCommentController");
 const OwnerCommentController = require("../../controllers/OwnerCommentController");
@@ -13,7 +12,6 @@ const {
 } = require("../../validations/comments");
 
 module.exports = (io) => {
-  const listingCommentController = new ListingCommentController(io);
   const ownerCommentController = new OwnerCommentController(io);
   const tenantCommentController = new TenantCommentController(io);
 
@@ -29,14 +27,6 @@ module.exports = (io) => {
     isAuth,
     createTenantCommentValidation,
     tenantCommentController.createComment
-  );
-
-  router.post(
-    "/listing-list",
-    isAuth,
-    isSupport,
-    commentListValidation,
-    listingCommentController.commentList
   );
 
   router.post(
@@ -56,14 +46,6 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/listing-approve",
-    isAuth,
-    isSupport,
-    commentApproveValidation,
-    listingCommentController.approve
-  );
-
-  router.post(
     "/tenant-approve",
     isAuth,
     isSupport,
@@ -77,14 +59,6 @@ module.exports = (io) => {
     isSupport,
     commentApproveValidation,
     ownerCommentController.approve
-  );
-
-  router.post(
-    "/listing-reject",
-    isAuth,
-    isSupport,
-    commentRejectValidation,
-    listingCommentController.reject
   );
 
   router.post(

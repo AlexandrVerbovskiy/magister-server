@@ -255,37 +255,7 @@ class ChatMessageModel extends Model {
       senderId,
     });
   };
-
-  createListingReviewMessage = async ({
-    chatId,
-    senderId,
-    data: {
-      punctuality,
-      generalExperience,
-      communication,
-      reliability,
-      kindness,
-      flexibility,
-      description,
-    },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.LISTING_REVIEW,
-      isAdminSender: false,
-      senderId,
-      content: {
-        punctuality,
-        generalExperience,
-        communication,
-        reliability,
-        kindness,
-        flexibility,
-        description,
-      },
-    });
-  };
-
+  
   createOwnerReviewMessage = async ({
     chatId,
     senderId,
