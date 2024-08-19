@@ -51,10 +51,13 @@ class ListingController extends Controller {
     const totalOthersCategories = req.body.totalOthersCategories == true;
     const sessionUserId = req.userData?.userId;
     const favorites = sessionUserId ? !!req.body.favorites : false;
-    const othersCategories =
-      req.body.othersCategories
+    let othersCategories = [];
+
+    if (req.body.othersCategories) {
+      othersCategories = req.body.othersCategories
         .map((category) => +category)
-        .filter((category) => !isNaN(category)) ?? [];
+        .filter((category) => !isNaN(category));
+    }
 
     const searchCity = req.body.searchCity ?? null;
     const searchCategory = req.body.searchCategory ?? null;
@@ -153,9 +156,13 @@ class ListingController extends Controller {
       this.searchedWordModel.updateSearchCount(categoriesToCheckHasNotify[0]);
     }
 
-    listings = await this.listingCommentModel.bindAverageForKeyEntities(
+    listings = await this.ownerCommentModel.bindAverageForKeyEntities(
       listings,
-      "id"
+      "id",
+      {
+        ownerCommentCountName: "commentCount",
+        ownerAverageRatingName: "averageRating",
+      }
     );
 
     if (sessionUserId) {
@@ -179,15 +186,9 @@ class ListingController extends Controller {
       listings
     );
 
-    const ratingListingsWithImages =
-      await this.listingCommentModel.bindAverageForKeyEntities(
-        listingsWithImages,
-        "id"
-      );
-
     const ratingListingsOwnersWithImages =
       await this.ownerCommentModel.bindAverageForKeyEntities(
-        ratingListingsWithImages,
+        listingsWithImages,
         "ownerId",
         {
           commentCountName: "ownerCommentCount",
@@ -337,7 +338,6 @@ class ListingController extends Controller {
     }
 
     const canBeEmptyCategoryId = !!dataToSave["otherCategory"];
-    console.log("can be empty: ", canBeEmptyCategoryId);
     const resCheckCategoryValid = await this.checkValidCategoryId(
       categoryToCheck,
       canBeEmptyCategoryId
