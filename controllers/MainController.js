@@ -68,7 +68,6 @@ class MainController extends Controller {
 
   getIndexPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const userId = req.userData.userId;
       const categories = await this.listingCategoryModel.getFullInfoList();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -1429,6 +1428,37 @@ class MainController extends Controller {
       const { lat, lng } = req.body;
       const result = await getAddressByCoords({ lat, lng });
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  getOrderCheckoutInfo = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const { userId } = req.userData;
+
+      const getOrderByRequest = async () => {
+        const order = await this.orderModel.getFullWithCommentsById(id, userId);
+
+        return order.status == STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+          ? order
+          : null;
+      };
+
+      const getDopOrderOptions = async (order) => {
+        const paymentInfo =
+          await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
+
+        return {
+          canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
+          paymentInfo,
+        };
+      };
+
+      return this.baseGetFullOrderInfo(
+        req,
+        res,
+        getOrderByRequest,
+        getDopOrderOptions
+      );
     });
 
   test = (req, res) =>
