@@ -54,7 +54,6 @@ const {
   orderUpdateRequestModel,
   senderPaymentModel,
   recipientPaymentModel,
-  listingCommentModel,
   ownerCommentModel,
   tenantCommentModel,
   userListingFavoriteModel,
@@ -99,7 +98,6 @@ class Controller {
     this.listingCategoryCreateNotificationModel =
       listingCategoryCreateNotificationModel;
 
-    this.listingCommentModel = listingCommentModel;
     this.ownerCommentModel = ownerCommentModel;
     this.tenantCommentModel = tenantCommentModel;
 

@@ -29,7 +29,6 @@ const {
 } = require("../utils");
 const TenantCommentController = require("./TenantCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
-const ListingCommentController = require("./ListingCommentController");
 const DisputeController = require("./DisputeController");
 const ChatController = require("./ChatController");
 
@@ -50,7 +49,6 @@ class MainController extends Controller {
     this.recipientPaymentController = new RecipientPaymentController(io);
     this.tenantCommentController = new TenantCommentController(io);
     this.ownerCommentController = new OwnerCommentController(io);
-    this.listingCommentController = new ListingCommentController(io);
     this.disputeController = new DisputeController(io);
     this.chatController = new ChatController(io);
     this.listingCategoriesController = new ListingCategoriesController(io);
@@ -316,10 +314,10 @@ class MainController extends Controller {
 
       const categories = await this.getNavigationCategories();
 
-      const comments = await this.listingCommentModel.listForEntity(listing.id);
+      const comments = await this.ownerCommentModel.listForEntity(
+        listing.ownerId
+      );
 
-      const listingRatingInfo =
-        await this.listingCommentModel.getListingDetailInfo(listing.id);
       const ownerRatingInfo = await this.ownerCommentModel.getUserDetailInfo(
         listing.ownerId
       );
@@ -329,7 +327,6 @@ class MainController extends Controller {
         categories,
         tenantBaseCommissionPercent,
         comments,
-        listingRatingInfo,
         ownerRatingInfo,
       });
     });
@@ -370,15 +367,6 @@ class MainController extends Controller {
       } = await this.systemOptionModel.getCommissionInfo();
 
       const bankInfo = await this.systemOptionModel.getBankAccountInfo();
-
-      order = await this.listingCommentModel.bindAverageForKeyEntity(
-        order,
-        "listingId",
-        {
-          commentCountName: "listingCommentCount",
-          averageRatingName: "listingAverageRating",
-        }
-      );
 
       order = await this.ownerCommentModel.bindAverageForKeyEntity(
         order,
@@ -1235,15 +1223,6 @@ class MainController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      order = await this.listingCommentModel.bindAverageForKeyEntity(
-        order,
-        "listingId",
-        {
-          commentCountName: "listingCommentCount",
-          averageRatingName: "listingAverageRating",
-        }
-      );
-
       order = await this.ownerCommentModel.bindAverageForKeyEntity(
         order,
         "ownerId",
@@ -1330,12 +1309,6 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
-    });
-
-  getAdminListingCommentsPageOptions = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const result = await this.listingCommentController.baseCommentList(req);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   getAdminDisputesPageOptions = (req, res) =>

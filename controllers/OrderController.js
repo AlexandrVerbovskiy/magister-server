@@ -428,15 +428,6 @@ class OrderController extends Controller {
       }
     );
 
-    orders = await this.listingCommentModel.bindAverageForKeyEntities(
-      orders,
-      "listingId",
-      {
-        commentCountName: "listingCommentCount",
-        averageRatingName: "listingAverageRating",
-      }
-    );
-
     return orders;
   };
 
