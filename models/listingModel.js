@@ -959,6 +959,15 @@ class ListingsModel extends Model {
     query = this.baseDistanceFilter(query, distance, lat, lng);
     query = this.basePriceFilter(query, minPrice, maxPrice);
 
+    console.log(
+      query
+        .orderBy(orderField, orderType)
+        .limit(count)
+        .groupBy(groupedParams)
+        .offset(start)
+        .toQuery()
+    );
+
     return await query
       .orderBy(orderField, orderType)
       .limit(count)
