@@ -4,7 +4,6 @@ const db = require("../database");
 const Model = require("./Model");
 const listingCategoryModel = require("./listingCategoryModel");
 const { listingListDateConverter } = require("../utils");
-const listingCommentModel = require("./listingCommentModel");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -1071,41 +1070,6 @@ class ListingsModel extends Model {
         .where({ category_id: oldNewCategoriesIds[i]["prevId"] })
         .update({ category_id: oldNewCategoriesIds[i]["newId"] });
     }
-  };
-
-  getTopListings = async (count = 4) => {
-    const topListingRatingInfos = await listingCommentModel.topListingsByRating(
-      count
-    );
-
-    const ids = topListingRatingInfos.map((listing) => listing.id);
-
-    const topListings = await this.getListByIds(ids);
-    topListings.forEach((listing, index) => {
-      topListings[index]["commentCount"] = 0;
-      topListings[index]["averageRating"] = 0;
-
-      topListingRatingInfos.forEach((listingRatingInfo) => {
-        if (listing["id"] === listingRatingInfo["id"]) {
-          topListings[index]["commentCount"] = Number(
-            listingRatingInfo["commentCount"]
-          );
-          topListings[index]["averageRating"] = Number(
-            Number(listingRatingInfo["averageRating"]).toFixed(2)
-          );
-        }
-      });
-    });
-
-    const dopCount = count - topListingRatingInfos.length;
-    const dopListings = await this.getDopForTop(ids, dopCount);
-
-    dopListings.forEach((listing, index) => {
-      dopListings[index]["commentCount"] = 0;
-      dopListings[index]["averageRating"] = 0;
-    });
-
-    return [...topListings, ...dopListings];
   };
 
   listingsBindImages = async (listings, key = "id") => {

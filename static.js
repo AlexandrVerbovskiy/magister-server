@@ -174,7 +174,6 @@ module.exports = {
     CANCELED_ORDER: "canceled-order",
     CREATED_CANCEL_REQUEST: "created-cancel",
     ACCEPTED_CANCEL_REQUEST: "accepted-cancel",
-    LISTING_REVIEW: "listing-review",
     OWNER_REVIEW: "owner-review",
     TENANT_REVIEW: "tenant-review",
     STARTED_DISPUTE: "started-dispute",

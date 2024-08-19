@@ -14,7 +14,6 @@ module.exports = {
   OrderUpdateRequestController: require("./OrderUpdateRequestController"),
   SenderPaymentController: require("./SenderPaymentController"),
   RecipientPaymentController: require("./RecipientPaymentController"),
-  ListingCommentController: require("./ListingCommentController"),
   OwnerCommentController: require("./OwnerCommentController"),
   TenantCommentController: require("./TenantCommentController"),
   DisputeController: require("./DisputeController"),
