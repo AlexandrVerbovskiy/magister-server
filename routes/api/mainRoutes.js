@@ -406,6 +406,12 @@ module.exports = (io) => {
 
   router.post("/coords-to-address", isAuth, mainController.getCoordsAddress);
 
+  router.get(
+    "/get-order-checkout-info/:id",
+    isAuth,
+    mainController.getOrderCheckoutInfo
+  );
+
   router.get("/test", mainController.test);
 
   return router;
