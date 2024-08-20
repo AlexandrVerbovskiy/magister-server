@@ -1438,7 +1438,7 @@ class MainController extends Controller {
       const getOrderByRequest = async () => {
         const order = await this.orderModel.getFullWithCommentsById(id, userId);
 
-        return order.status == STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+        return order?.status == STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
           ? order
           : null;
       };

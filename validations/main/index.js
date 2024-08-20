@@ -26,4 +26,5 @@ module.exports = {
   adminCommentListOptionsValidation: require("./adminCommentListOptionsValidation"),
   adminDisputeListOptionsValidation: require("./adminDisputeListOptionsValidation"),
   chatOptionsValidation: require("./chatOptionsValidation"),
+  orderCheckoutValidation: require("./orderCheckoutValidation"),
 };
