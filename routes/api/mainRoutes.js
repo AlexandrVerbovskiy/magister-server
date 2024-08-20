@@ -28,10 +28,10 @@ const {
   adminDisputeListOptionsValidation,
   chatOptionsValidation,
   adminOthersListingCategoriesOptionsValidation,
+  orderCheckoutValidation,
 } = require("../../validations/main");
 const { validateIdParam } = require("../../validations/base");
 const { idParamValidation } = require("../../validations/listing");
-const { upload } = require("../../utils");
 
 module.exports = (io) => {
   const mainController = new MainController(io);
@@ -409,6 +409,7 @@ module.exports = (io) => {
   router.get(
     "/get-order-checkout-info/:id",
     isAuth,
+    orderCheckoutValidation,
     mainController.getOrderCheckoutInfo
   );
 
