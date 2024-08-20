@@ -90,7 +90,9 @@ class DisputeController extends Controller {
       });
 
       const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
-      const senderName = isOwnerCreatedDispute ? order.ownerId : order.tenantId;
+      const senderName = isOwnerCreatedDispute
+        ? order.ownerName
+        : order.tenantName;
 
       const createdMessages = await this.chatModel.createForDispute({
         orderId,
