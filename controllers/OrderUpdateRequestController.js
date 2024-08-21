@@ -96,29 +96,44 @@ class OrderUpdateRequestController extends Controller {
 
       const firstImage = order.listingImages[0];
 
-      let chatId = order.parentId ? order.parentChatId : order.chatId;
-      let createMessageFunc = order.parentId
-        ? this.chatMessageModel.createUpdateExtensionMessage
-        : this.chatMessageModel.createUpdateOrderMessage;
+      let chatId = order.chatId;
+      let createMessageFunc = this.chatMessageModel.createUpdateOrderMessage;
+      let messageData = {
+        requestId: request.id,
+        listingName: order.listingName,
+        offerPrice: order.offerPricePerDay,
+        listingPhotoPath: firstImage?.link,
+        listingPhotoType: firstImage?.type,
+        offerDateStart: newStartDate,
+        offerDateEnd: newEndDate,
+      };
+      let orderPart = {
+        id: order.id,
+        status: newStatus,
+        actualUpdateRequest: request,
+      };
+
+      if (order.parentId) {
+        chatId = order.parentChatId;
+        createMessageFunc = this.chatMessageModel.createUpdateExtensionMessage;
+        messageData["extensionId"] = order.id;
+
+        const parentOrderExtensions = await this.orderModel.getOrderExtends(
+          order.parentId
+        );
+
+        orderPart = {
+          id: order.parentId,
+          extendOrders: parentOrderExtensions,
+        };
+      }
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: chatId,
-        messageData: {
-          requestId: request.id,
-          listingName: order.listingName,
-          offerPrice: order.offerPricePerDay,
-          listingPhotoPath: firstImage?.link,
-          listingPhotoType: firstImage?.type,
-          offerDateStart: newStartDate,
-          offerDateEnd: newEndDate,
-        },
+        chatId,
+        messageData,
         senderId,
-        createMessageFunc: createMessageFunc,
-        orderPart: {
-          id: order.id,
-          status: newStatus,
-          actualUpdateRequest: request,
-        },
+        createMessageFunc,
+        orderPart,
       });
 
       return this.sendSuccessResponse(

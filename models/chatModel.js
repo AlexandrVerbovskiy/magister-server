@@ -84,8 +84,6 @@ class ChatModel extends Model {
       description,
     },
   }) => {
-    const createdUsersMessages = {};
-
     const chatId = await this.create({
       entityId: orderId,
       entityType: STATIC.CHAT_TYPES.ORDER,
@@ -96,7 +94,7 @@ class ChatModel extends Model {
       await chatRelationModel.create(chatId, userId);
     }
 
-    const createdMessage = await chatMessageModel.createNewOrderMessage({
+    return await chatMessageModel.createNewOrderMessage({
       chatId,
       senderId: tenantId,
       data: {
@@ -109,11 +107,6 @@ class ChatModel extends Model {
         description,
       },
     });
-
-    createdUsersMessages[ownerId] = createdMessage;
-    createdUsersMessages[tenantId] = createdMessage;
-
-    return createdUsersMessages;
   };
 
   createForDisputeUserChat = async ({

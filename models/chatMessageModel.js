@@ -618,7 +618,7 @@ class ChatMessageModel extends Model {
         offerDateEnd,
         description,
         extensionId,
-        extensionChatId
+        extensionChatId,
       },
     });
   };
@@ -694,7 +694,7 @@ class ChatMessageModel extends Model {
   createTenantPayedExtensionMessage = async ({
     chatId,
     senderId,
-    data: { offerDateStart, offerDateEnd, extensionId },
+    data: { offerDateStart, offerDateEnd, offerPrice, extensionId },
   }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
@@ -704,6 +704,7 @@ class ChatMessageModel extends Model {
         offerDateStart,
         offerDateEnd,
         extensionId,
+        offerPrice,
       },
     });
   };
@@ -711,7 +712,7 @@ class ChatMessageModel extends Model {
   createTenantPayedWaitingExtensionMessage = async ({
     chatId,
     senderId,
-    data: { offerDateStart, offerDateEnd, extensionId },
+    data: { offerDateStart, offerDateEnd, offerPrice, extensionId },
   }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
@@ -721,6 +722,7 @@ class ChatMessageModel extends Model {
         offerDateStart,
         offerDateEnd,
         extensionId,
+        offerPrice,
       },
     });
   };
@@ -728,7 +730,7 @@ class ChatMessageModel extends Model {
   createCanceledExtensionMessage = async ({
     chatId,
     senderId,
-    data: { offerDateStart, offerDateEnd, extensionId },
+    data: { offerDateStart, offerDateEnd, offerPrice, extensionId },
   }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
@@ -738,6 +740,7 @@ class ChatMessageModel extends Model {
         offerDateStart,
         offerDateEnd,
         extensionId,
+        offerPrice,
       },
     });
   };

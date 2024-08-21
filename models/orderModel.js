@@ -166,6 +166,7 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.type`,
     `${DISPUTES_TABLE}.description`,
     `${CHAT_TABLE}.id`,
+    `parent_chats.id`,
   ];
 
   requestGroupBy = [
@@ -954,6 +955,8 @@ class OrderModel extends Model {
       .select(visibleFields);
   };
 
+  getOrderExtends = (orderId) => this.getOrdersExtends([orderId]);
+
   getConflictOrders = async (orderIds, fullInfo = false) => {
     let query = this.baseConflictOrdersForOrders(orderIds);
     query = this.fullOrdersJoin(query);
@@ -1221,6 +1224,12 @@ class OrderModel extends Model {
       });
 
     return status;
+  };
+
+  orderUpdateEndDate = async (id, endDate) => {
+    await db(ORDERS_TABLE).where({ id }).update({
+      end_date: endDate,
+    });
   };
 
   getUserTotalCountOrders = async (userId) => {
