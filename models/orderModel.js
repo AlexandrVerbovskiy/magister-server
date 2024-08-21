@@ -98,6 +98,7 @@ class OrderModel extends Model {
     `tenants.instagram_url as tenantInstagramUrl`,
     `${ORDERS_TABLE}.defect_description_by_tenant as defectDescriptionByTenant`,
     `${ORDERS_TABLE}.defect_description_by_owner as defectDescriptionByOwner`,
+    `parent_chats.id as parentChatId`,
   ];
 
   selectPartPayedInfo = [
@@ -292,6 +293,10 @@ class OrderModel extends Model {
 
     query = query.joinRaw(
       `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
+    );
+
+    query = query.joinRaw(
+      `LEFT JOIN ${CHAT_TABLE} as parent_chats ON (parent_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND parent_chats.entity_id = ${ORDERS_TABLE}.parent_id)`
     );
 
     return query;
@@ -931,12 +936,11 @@ class OrderModel extends Model {
     return listingBlockedDates;
   };
 
-  getOrdersExtends = async (orderIds, userId) => {
+  getOrdersExtends = async (orderIds) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
     query = this.baseRequestInfoJoin(query);
     query = this.commentsInfoJoin(query);
-    query = this.disputeChatInfoJoin(query, userId);
 
     let visibleFields = [
       ...this.fullVisibleFields,
@@ -944,7 +948,6 @@ class OrderModel extends Model {
     ];
 
     visibleFields = this.commentsVisibleFields(visibleFields);
-    visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
     return await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)

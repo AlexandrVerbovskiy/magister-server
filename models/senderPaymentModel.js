@@ -49,6 +49,7 @@ class SenderPayment extends Model {
     `${CHAT_TABLE}.id as chatId`,
     `${DISPUTES_TABLE}.id as disputeId`,
     `${DISPUTES_TABLE}.status as disputeStatus`,
+    `parent_chats.id as parentChatId`,
   ];
 
   strFilterFields = [`${LISTINGS_TABLE}.name`, `owners.name`];
@@ -320,6 +321,8 @@ class SenderPayment extends Model {
       )
       .joinRaw(
         `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
+      ).joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} as parent_chats ON (parent_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND parent_chats.entity_id = ${ORDERS_TABLE}.parent_id)`
       );
 
   baseTypeWhere = (query, type) => {
