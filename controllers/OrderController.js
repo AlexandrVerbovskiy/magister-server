@@ -12,7 +12,11 @@ const {
 const Controller = require("./Controller");
 
 class OrderController extends Controller {
-  sendMessageForNewOrder = async ({ message, senderId }) => {
+  sendMessageForNewOrder = async ({ message, senderId, opponentId = null }) => {
+    if (!opponentId) {
+      opponentId = senderId;
+    }
+
     const chatId = message.chatId;
     const sender = await this.userModel.getById(senderId);
 
@@ -44,9 +48,9 @@ class OrderController extends Controller {
         );
       }
 
-      order["extendOrders"] = await this.orderModel.getOrdersExtends([
-        order.orderParentId ?? id,
-      ]);
+      order["extendOrders"] = await this.orderModel.getOrdersExtends(
+        order.orderParentId ?? id
+      );
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
@@ -153,7 +157,7 @@ class OrderController extends Controller {
     const firstImage = listing.listingImages[0];
     const ownerId = listing.ownerId;
 
-    const createdMessages = await this.chatModel.createForOrder({
+    const createdMessage = await this.chatModel.createForOrder({
       ownerId,
       tenantId,
       orderInfo: {
@@ -169,7 +173,7 @@ class OrderController extends Controller {
     });
 
     await this.sendMessageForNewOrder({
-      message: createdMessages[ownerId],
+      message: createdMessage,
       senderId: tenantId,
     });
 
@@ -294,9 +298,9 @@ class OrderController extends Controller {
 
       const firstImage = parentOrder.listingImages[0];
 
-      const parentOrderExtendOrders = await this.orderModel.getOrdersExtends([
-        parentOrder.id,
-      ]);
+      const parentOrderExtendOrders = await this.orderModel.getOrderExtends(
+        parentOrder.id
+      );
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: parentOrder.chatId,
@@ -630,21 +634,107 @@ class OrderController extends Controller {
       const newStatus = STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT;
 
       if (resetParentId) {
-      } else {
-        let chatId = order.parentId ? order.parentChatId : order.chatId;
-        let createMessageFunc = order.parentId
-          ? this.chatMessageModel.createAcceptedExtensionMessage
-          : this.chatMessageModel.createAcceptedOrderMessage;
+        this.sendBookingApprovalRequestMail(order.ownerEmail);
+
+        const firstImage = order.listingImages[0];
+        const ownerId = order.ownerId;
+
+        const createdMessage = await this.chatModel.createForOrder({
+          ownerId,
+          tenantId,
+          orderInfo: {
+            orderId: order.id,
+            listingName: order.listingName,
+            offerPrice: currentPricePerDay,
+            listingPhotoPath: firstImage?.link,
+            listingPhotoType: firstImage?.type,
+            offerDateStart: currentStartDate,
+            offerDateEnd: currentEndDate,
+            description: order.description,
+          },
+        });
+
+        await this.sendMessageForNewOrder({
+          message: createdMessage,
+          senderId: tenantId,
+        });
+
+        await this.sendMessageForNewOrder({
+          message: createdMessage,
+          senderId: tenantId,
+          opponentId: ownerId,
+        });
+
+        const parentOrderExtensions = await this.orderModel.getOrderExtends(
+          order.orderParentId
+        );
 
         const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-          chatId: chatId,
-          messageData: {},
-          senderId: userId,
-          createMessageFunc: createMessageFunc,
-          orderPart: {
-            id: order.id,
-            status: newStatus,
+          chatId: order.parentChatId,
+          messageData: {
+            extensionId: order.id,
+            extensionChatId: createdMessage.chatId,
+            listingName: order.listingName,
+            offerPrice: currentPricePerDay,
+            listingPhotoPath: firstImage?.link,
+            listingPhotoType: firstImage?.type,
+            offerDateStart: currentStartDate,
+            offerDateEnd: currentEndDate,
+            description: order.description,
           },
+          senderId: userId,
+          createMessageFunc:
+            this.chatMessageModel.createNewOrderByExtensionMessage,
+          orderPart: {
+            id: order.orderParentId,
+            extendOrders: parentOrderExtensions,
+          },
+        });
+
+        this.sendAssetPickupMail(order.tenantEmail, order.id);
+
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          chatMessage,
+          status: newStatus,
+        });
+      } else {
+        let chatId = order.chatId;
+        let createMessageFunc =
+          this.chatMessageModel.createAcceptedOrderMessage;
+        let messageData = {};
+        let orderPart = {
+          id: order.id,
+          status: newStatus,
+        };
+
+        if (order.orderParentId) {
+          chatId = order.parentChatId;
+          createMessageFunc =
+            this.chatMessageModel.createAcceptedExtensionMessage;
+          messageData["extensionId"] = order.id;
+
+          const parentOrderExtensions = await this.orderModel.getOrderExtends(
+            order.orderParentId
+          );
+
+          orderPart = {
+            id: order.orderParentId,
+            extendOrders: parentOrderExtensions,
+            offerDateEnd: currentEndDate,
+          };
+
+          await this.orderModel.orderUpdateEndDate(
+            order.orderParentId,
+            currentEndDate
+          );
+        }
+
+        const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+          chatId,
+          messageData,
+          senderId: userId,
+          createMessageFunc,
+          orderPart,
         });
 
         this.sendAssetPickupMail(order.tenantEmail, order.id);
@@ -725,21 +815,41 @@ class OrderController extends Controller {
 
     await this.orderUpdateRequestModel.closeLast(id);
 
-    const chatId = order.parentId ? order.parentChatId : order.chatId;
-    const createMessageFunc = order.parentId
-      ? this.chatMessageModel.createRejectedExtensionMessage
-      : this.chatMessageModel.createRejectedOrderMessage;
+    let chatId = order.chatId;
+    let createMessageFunc = this.chatMessageModel.createRejectedOrderMessage;
+    let messageData = {};
+    let orderPart = {
+      id: order.id,
+      status: newStatus,
+      cancelStatus: newCancelStatus,
+    };
+
+    if (order.orderParentId) {
+      chatId = order.parentChatId;
+      createMessageFunc = this.chatMessageModel.createRejectedExtensionMessage;
+      messageData = {
+        extensionId: order.id,
+        offerDateStart: payment.offerDateStart,
+        offerDateEnd: payment.offerDateEnd,
+        offerPrice: payment.offerPricePerDay,
+      };
+
+      const parentOrderExtensions = await this.orderModel.getOrderExtends(
+        order.orderParentId
+      );
+
+      orderPart = {
+        id: order.orderParentId,
+        extendOrders: parentOrderExtensions,
+      };
+    }
 
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-      chatId: chatId,
-      messageData: {},
+      chatId,
+      messageData,
       senderId: userId,
-      createMessageFunc: createMessageFunc,
-      orderPart: {
-        id: order.id,
-        status: newStatus,
-        cancelStatus: newCancelStatus,
-      },
+      createMessageFunc,
+      orderPart,
     });
 
     this.sendBookingCancellationOwnerMail(order.tenantEmail, order.id);
@@ -855,22 +965,42 @@ class OrderController extends Controller {
         payerCardLastBrand,
       });
 
-      let chatId = payment.orderParentId
-        ? payment.parentChatId
-        : payment.chatId;
-      let createMessageFunc = payment.orderParentId
-        ? this.chatMessageModel.createTenantPayedExtensionMessage
-        : this.chatMessageModel.createTenantPayedOrderMessage;
+      let chatId = payment.chatId;
+      let createMessageFunc =
+        this.chatMessageModel.createTenantPayedOrderMessage;
+      let messageData = {};
+      let orderPart = {
+        id: orderId,
+        status: newStatus,
+      };
+
+      if (payment.orderParentId) {
+        chatId = payment.parentChatId;
+        createMessageFunc =
+          this.chatMessageModel.createTenantPayedExtensionMessage;
+        messageData = {
+          extensionId: orderId,
+          offerDateStart: payment.offerDateStart,
+          offerDateEnd: payment.offerDateEnd,
+          offerPrice: payment.offerPricePerDay,
+        };
+
+        const parentOrderExtensions = await this.orderModel.getOrderExtends(
+          payment.orderParentId
+        );
+
+        orderPart = {
+          id: payment.orderParentId,
+          extendOrders: parentOrderExtensions,
+        };
+      }
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: chatId,
-        messageData: {},
+        chatId,
+        messageData,
         senderId: userId,
-        createMessageFunc: createMessageFunc,
-        orderPart: {
-          id: orderId,
-          status: newStatus,
-        },
+        createMessageFunc,
+        orderPart,
       });
 
       this.sendPaymentNotificationMail(payment.ownerEmail, payment.orderId);
@@ -952,20 +1082,39 @@ class OrderController extends Controller {
         orderId
       );
 
-      let chatId = order.parentId ? order.parentChatId : order.chatId;
-      let createMessageFunc = order.parentId
-        ? this.chatMessageModel.createTenantPayedWaitingExtensionMessage
-        : this.chatMessageModel.createTenantPayedWaitingOrderMessage;
+      let chatId = order.chatId;
+      let createMessageFunc =
+        this.chatMessageModel.createTenantPayedWaitingOrderMessage;
+      let messageData = {};
+      let orderPart = { id: orderId, paymentInfo };
+
+      if (order.orderParentId) {
+        chatId = order.parentChatId;
+        createMessageFunc =
+          this.chatMessageModel.createTenantPayedWaitingExtensionMessage;
+        messageData = {
+          extensionId: order.id,
+          offerDateStart: order.offerDateStart,
+          offerDateEnd: order.offerDateEnd,
+          offerPrice: order.offerPricePerDay,
+        };
+
+        const parentOrderExtensions = await this.orderModel.getOrderExtends(
+          order.orderParentId
+        );
+
+        orderPart = {
+          id: order.orderParentId,
+          extendOrders: parentOrderExtensions,
+        };
+      }
 
       await this.createAndSendMessageForUpdatedOrder({
-        chatId: chatId,
-        messageData: {},
+        chatId,
+        messageData,
         senderId: userId,
-        createMessageFunc: createMessageFunc,
-        orderPart: {
-          id: orderId,
-          paymentInfo,
-        },
+        createMessageFunc,
+        orderPart,
       });
     }
 
@@ -1047,6 +1196,7 @@ class OrderController extends Controller {
     userType,
     cancelFunc,
     createMessageFunc,
+    createMessageFuncIfExtension = null,
     availableStatusesToCancel = [],
   }) => {
     const { id } = req.body;
@@ -1108,15 +1258,43 @@ class OrderController extends Controller {
 
     const cancelStatus = await cancelFunc(id, newData);
 
+    let chatId = orderInfo.chatId;
+    createMessageFunc = createMessageFunc;
+    let messageData = {};
+    let orderPart = {
+      id: orderInfo.id,
+      cancelStatus,
+    };
+
+    if (orderInfo.orderParentId) {
+      chatId = orderInfo.parentChatId;
+      createMessageFunc = this.chatMessageModel.createMessageFuncIfExtension;
+      messageData = {
+        extensionId: orderInfo.id,
+        offerDateStart:
+          lastUpdateRequestInfo?.newStartDate ?? orderInfo.offerDateStart,
+        offerDateEnd:
+          lastUpdateRequestInfo?.newEndDate ?? orderInfo.offerDateEnd,
+        offerPrice:
+          lastUpdateRequestInfo?.newPricePerDay ?? orderInfo.offerPricePerDay,
+      };
+
+      const parentOrderExtensions = await this.orderModel.getOrderExtends(
+        orderInfo.orderParentId
+      );
+
+      orderPart = {
+        id: orderInfo.orderParentId,
+        extendOrders: parentOrderExtensions,
+      };
+    }
+
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-      chatId: orderInfo.chatId,
-      messageData: {},
+      chatId,
+      messageData,
       senderId: userId,
-      createMessageFunc: createMessageFunc,
-      orderPart: {
-        id: orderInfo.id,
-        cancelStatus,
-      },
+      createMessageFunc,
+      orderPart,
     });
 
     return {
@@ -1214,20 +1392,20 @@ class OrderController extends Controller {
 
     const newCancelStatus = await this.orderModel.successCancelled(id);
 
-    let chatId = orderInfo.parentId ? orderInfo.parentChatId : orderInfo.chatId;
-    let createMessageFunc = orderInfo.parentId
-      ? this.chatMessageModel.createCanceledExtensionMessage
-      : this.chatMessageModel.createCanceledOrderMessage;
+    let chatId = orderInfo.chatId;
+    let createMessageFunc = this.chatMessageModel.createCanceledOrderMessage;
+    let messageData = {};
+    let orderPart = {
+      id: orderInfo.id,
+      cancelStatus: newCancelStatus,
+    };
 
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-      chatId: chatId,
-      messageData: {},
+      chatId,
+      messageData,
       senderId: userId,
-      createMessageFunc: createMessageFunc,
-      orderPart: {
-        id: orderInfo.id,
-        cancelStatus: newCancelStatus,
-      },
+      createMessageFunc,
+      orderPart,
     });
 
     this.sendRefundProcessMail(orderInfo.tenantEmail, orderInfo.id);
@@ -1268,6 +1446,8 @@ class OrderController extends Controller {
         ],
         cancelFunc: this.orderModel.successCancelled,
         createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
+        createMessageFuncIfExtension:
+          this.chatMessageModel.createCanceledExtensionMessage,
       });
 
       if (result.error) {
@@ -1372,9 +1552,9 @@ class OrderController extends Controller {
 
     const conflictOrders = resGetConflictOrders[order.id];
 
-    order["extendOrders"] = await this.orderModel.getOrdersExtends([
-      order.orderParentId ?? order.id,
-    ]);
+    order["extendOrders"] = await this.orderModel.getOrderExtends(
+      order.orderParentId ?? order.id
+    );
 
     if (userId != order.tenantId) {
       order["conflictOrders"] = conflictOrders;
