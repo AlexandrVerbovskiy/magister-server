@@ -96,8 +96,13 @@ class OrderUpdateRequestController extends Controller {
 
       const firstImage = order.listingImages[0];
 
+      let chatId = order.parentId ? order.parentChatId : order.chatId;
+      let createMessageFunc = order.parentId
+        ? this.chatMessageModel.createUpdateExtensionMessage
+        : this.chatMessageModel.createUpdateOrderMessage;
+
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: order.chatId,
+        chatId: chatId,
         messageData: {
           requestId: request.id,
           listingName: order.listingName,
@@ -108,7 +113,7 @@ class OrderUpdateRequestController extends Controller {
           offerDateEnd: newEndDate,
         },
         senderId,
-        createMessageFunc: this.chatMessageModel.createUpdateOrderMessage,
+        createMessageFunc: createMessageFunc,
         orderPart: {
           id: order.id,
           status: newStatus,
