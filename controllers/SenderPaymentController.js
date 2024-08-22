@@ -175,7 +175,10 @@ class SenderPaymentController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const proofUrl = await this.moveUploadsFileToFolder(req.file, "paymentProofs");
+      const proofUrl = await this.moveUploadsFileToFolder(
+        req.file,
+        "paymentProofs"
+      );
 
       await this.senderPaymentModel.updateBankTransferTransactionProof(
         orderId,
@@ -192,7 +195,7 @@ class SenderPaymentController extends Controller {
       const { orderId } = req.body;
       await this.senderPaymentModel.approveTransaction(orderId);
 
-      const order = await this.orderModel.getById(orderId);
+      const order = await this.orderModel.getFullById(orderId);
 
       let newStatus = null;
 
@@ -215,6 +218,8 @@ class SenderPaymentController extends Controller {
           orderId: order.id,
           fee: order.ownerFee,
         });
+
+        newStatus = await this.orderModel.orderFinishedById(orderId);
       } else {
         const { token: tenantToken, image: generatedImage } =
           await this.generateQrCodeInfo(
@@ -227,42 +232,101 @@ class SenderPaymentController extends Controller {
         });
       }
 
-      const chatId = order.chatId;
+      if (order.orderParentId) {
+        const chatId = order.parentChatId;
 
-      if (chatId) {
-        const message =
-          await this.chatMessageModel.createTenantPayedOrderMessage({
+        if (chatId) {
+          const parentOrderExtensions = await this.orderModel.getOrderExtends(
+            order.orderParentId
+          );
+
+          const orderPart = {
+            id: order.orderParentId,
+            extendOrders: parentOrderExtensions,
+          };
+
+          const message =
+            await this.chatMessageModel.createTenantPayedExtensionMessage({
+              chatId,
+              senderId: order.tenantId,
+              data: {
+                offerStartDate: order.offerStartDate,
+                offerEndDate: order.offerEndDate,
+                offerPrice: order.offerPricePerDay,
+                extensionId: order.id,
+              },
+            });
+
+          const tenant = await this.userModel.getById(order.tenantId);
+          const owner = await this.userModel.getById(order.ownerId);
+
+          await this.sendSocketMessageToUserOpponent(
             chatId,
-            senderId: order.tenantId,
-          });
+            order.ownerId,
+            "update-order-message",
+            {
+              message,
+              opponent: tenant,
+              orderPart,
+            }
+          );
 
-        const tenant = await this.userModel.getById(order.tenantId);
-        const owner = await this.userModel.getById(order.ownerId);
+          await this.sendSocketMessageToUserOpponent(
+            chatId,
+            order.tenantId,
+            "update-order-message",
+            {
+              message,
+              opponent: owner,
+              orderPart,
+            }
+          );
 
-        await this.sendSocketMessageToUserOpponent(
-          chatId,
-          order.ownerId,
-          "update-order-message",
-          {
-            message,
-            opponent: tenant,
-            orderPart: { id: orderId, status: newStatus },
-          }
-        );
+          await this.orderModel.orderUpdateEndDate(
+            order.orderParentId,
+            order.offerEndDate
+          );
+        }
 
-        await this.sendSocketMessageToUserOpponent(
-          chatId,
-          order.tenantId,
-          "update-order-message",
-          {
-            message,
-            opponent: owner,
-            orderPart: { id: orderId, status: newStatus },
-          }
-        );
+        this.sendPaymentNotificationMail(order.ownerEmail, order.orderParentId);
+      } else {
+        const chatId = order.chatId;
+
+        if (chatId) {
+          const message =
+            await this.chatMessageModel.createTenantPayedOrderMessage({
+              chatId,
+              senderId: order.tenantId,
+            });
+
+          const tenant = await this.userModel.getById(order.tenantId);
+          const owner = await this.userModel.getById(order.ownerId);
+
+          await this.sendSocketMessageToUserOpponent(
+            chatId,
+            order.ownerId,
+            "update-order-message",
+            {
+              message,
+              opponent: tenant,
+              orderPart: { id: orderId, status: newStatus },
+            }
+          );
+
+          await this.sendSocketMessageToUserOpponent(
+            chatId,
+            order.tenantId,
+            "update-order-message",
+            {
+              message,
+              opponent: owner,
+              orderPart: { id: orderId, status: newStatus },
+            }
+          );
+        }
+
+        this.sendPaymentNotificationMail(order.ownerEmail, order.id);
       }
-
-      this.sendPaymentNotificationMail(order.ownerEmail, order.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });

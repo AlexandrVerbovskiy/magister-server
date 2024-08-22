@@ -154,6 +154,13 @@ module.exports = (io) => {
   );
 
   router.get(
+    "/order-full-by-id-for-dispute-options/:id",
+    isAuth,
+    orderFullByIdOptionsValidation,
+    mainController.getOrderFullByIdForDisputeOptions
+  );
+
+  router.get(
     "/get-order-for-card-pay-options/:id",
     isAuth,
     orderFullByIdOptionsValidation,

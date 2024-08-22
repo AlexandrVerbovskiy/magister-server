@@ -122,8 +122,8 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoType,
       listingPhotoPath,
-      offerDateStart,
-      offerDateEnd,
+      offerStartDate,
+      offerEndDate,
       description,
     },
   }) => {
@@ -137,8 +137,8 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoType,
         listingPhotoPath,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         description,
       },
     });
@@ -153,8 +153,8 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoPath,
       listingPhotoType,
-      offerDateStart,
-      offerDateEnd,
+      offerStartDate,
+      offerEndDate,
     },
   }) => {
     return await this.create({
@@ -168,8 +168,8 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoPath,
         listingPhotoType,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
       },
     });
   };
@@ -565,8 +565,8 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoType,
       listingPhotoPath,
-      offerDateStart,
-      offerDateEnd,
+      offerStartDate,
+      offerEndDate,
       description,
       extensionId,
     },
@@ -581,8 +581,8 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoType,
         listingPhotoPath,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         description,
         extensionId,
       },
@@ -597,8 +597,8 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoType,
       listingPhotoPath,
-      offerDateStart,
-      offerDateEnd,
+      offerStartDate,
+      offerEndDate,
       description,
       extensionId,
       extensionChatId,
@@ -614,8 +614,8 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoType,
         listingPhotoPath,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         description,
         extensionId,
         extensionChatId,
@@ -626,16 +626,16 @@ class ChatMessageModel extends Model {
   createAcceptedExtensionMessage = async ({
     chatId,
     senderId,
-    data: { extensionId, offerPrice, offerDateStart, offerDateEnd },
+    data: { extensionId, offerPrice, offerStartDate, offerEndDate },
   }) => {
-    return await this.createUpdatedTypeMessage({
+    return await this.create({
       chatId,
       type: STATIC.MESSAGE_TYPES.ACCEPTED_EXTENSION,
       senderId,
       content: {
         offerPrice,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         extensionId,
       },
     });
@@ -644,16 +644,16 @@ class ChatMessageModel extends Model {
   createRejectedExtensionMessage = async ({
     chatId,
     senderId,
-    data: { extensionId, offerPrice, offerDateStart, offerDateEnd },
+    data: { extensionId, offerPrice, offerStartDate, offerEndDate },
   }) => {
-    return await this.createUpdatedTypeMessage({
+    return await this.create({
       chatId,
       type: STATIC.MESSAGE_TYPES.REJECTED_EXTENSION,
       senderId,
       content: {
         offerPrice,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         extensionId,
       },
     });
@@ -668,8 +668,8 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoPath,
       listingPhotoType,
-      offerDateStart,
-      offerDateEnd,
+      offerStartDate,
+      offerEndDate,
       extensionId,
     },
   }) => {
@@ -684,8 +684,8 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoPath,
         listingPhotoType,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         extensionId,
       },
     });
@@ -694,15 +694,15 @@ class ChatMessageModel extends Model {
   createTenantPayedExtensionMessage = async ({
     chatId,
     senderId,
-    data: { offerDateStart, offerDateEnd, offerPrice, extensionId },
+    data: { offerStartDate, offerEndDate, offerPrice, extensionId },
   }) => {
-    return await this.createUpdatedTypeMessage({
+    return await this.create({
       chatId,
       type: STATIC.MESSAGE_TYPES.TENANT_PAYED_EXTENSION,
       senderId,
       content: {
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         extensionId,
         offerPrice,
       },
@@ -712,15 +712,15 @@ class ChatMessageModel extends Model {
   createTenantPayedWaitingExtensionMessage = async ({
     chatId,
     senderId,
-    data: { offerDateStart, offerDateEnd, offerPrice, extensionId },
+    data: { offerStartDate, offerEndDate, offerPrice, extensionId },
   }) => {
-    return await this.createUpdatedTypeMessage({
+    return await this.create({
       chatId,
       type: STATIC.MESSAGE_TYPES.TENANT_PAYED_WAITING_EXTENSION,
       senderId,
       content: {
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         extensionId,
         offerPrice,
       },
@@ -730,15 +730,15 @@ class ChatMessageModel extends Model {
   createCanceledExtensionMessage = async ({
     chatId,
     senderId,
-    data: { offerDateStart, offerDateEnd, offerPrice, extensionId },
+    data: { offerStartDate, offerEndDate, offerPrice, extensionId },
   }) => {
-    return await this.createUpdatedTypeMessage({
+    return await this.create({
       chatId,
       type: STATIC.MESSAGE_TYPES.CANCELED_ORDER,
       senderId,
       content: {
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         extensionId,
         offerPrice,
       },

@@ -79,8 +79,8 @@ class ChatModel extends Model {
       offerPrice,
       listingPhotoType,
       listingPhotoPath,
-      offerDateStart,
-      offerDateEnd,
+      offerStartDate,
+      offerEndDate,
       description,
     },
   }) => {
@@ -102,8 +102,8 @@ class ChatModel extends Model {
         offerPrice,
         listingPhotoType,
         listingPhotoPath,
-        offerDateStart,
-        offerDateEnd,
+        offerStartDate,
+        offerEndDate,
         description,
       },
     });

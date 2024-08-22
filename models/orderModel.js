@@ -950,9 +950,23 @@ class OrderModel extends Model {
 
     visibleFields = this.commentsVisibleFields(visibleFields);
 
-    return await query
+    const orderExtends = await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
+      .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
       .select(visibleFields);
+
+    return orderExtends.map((orderExtend) => {
+      const newOrderExtend = cloneObject(orderExtend);
+
+      newOrderExtend["actualUpdateRequest"] = {
+        id: orderExtend.requestId,
+        newStartDate: orderExtend.newStartDate,
+        newEndDate: orderExtend.newEndDate,
+        newPricePerDay: orderExtend.newPricePerDay,
+      };
+
+      return newOrderExtend;
+    });
   };
 
   getOrderExtends = (orderId) => this.getOrdersExtends([orderId]);
@@ -1208,7 +1222,7 @@ class OrderModel extends Model {
     return status;
   };
 
-  orderFinished = async (token, { defectDescription }) => {
+  orderFinished = async (token, { defectDescription = null } = {}) => {
     const status = STATIC.ORDER_STATUSES.FINISHED;
 
     if (!defectDescription) {
@@ -1221,6 +1235,19 @@ class OrderModel extends Model {
         status,
         finished_at: db.raw("CURRENT_TIMESTAMP"),
         defect_description_by_owner: defectDescription,
+      });
+
+    return status;
+  };
+
+  orderFinishedById = async (id) => {
+    const status = STATIC.ORDER_STATUSES.FINISHED;
+
+    await db(ORDERS_TABLE)
+      .where({ id })
+      .update({
+        status,
+        finished_at: db.raw("CURRENT_TIMESTAMP"),
       });
 
     return status;

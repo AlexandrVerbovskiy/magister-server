@@ -104,8 +104,8 @@ class OrderUpdateRequestController extends Controller {
         offerPrice: order.offerPricePerDay,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
-        offerDateStart: newStartDate,
-        offerDateEnd: newEndDate,
+        offerStartDate: newStartDate,
+        offerEndDate: newEndDate,
       };
       let orderPart = {
         id: order.id,
@@ -113,17 +113,17 @@ class OrderUpdateRequestController extends Controller {
         actualUpdateRequest: request,
       };
 
-      if (order.parentId) {
+      if (order.orderParentId) {
         chatId = order.parentChatId;
         createMessageFunc = this.chatMessageModel.createUpdateExtensionMessage;
         messageData["extensionId"] = order.id;
 
         const parentOrderExtensions = await this.orderModel.getOrderExtends(
-          order.parentId
+          order.orderParentId
         );
 
         orderPart = {
-          id: order.parentId,
+          id: order.orderParentId,
           extendOrders: parentOrderExtensions,
         };
       }
@@ -140,7 +140,7 @@ class OrderUpdateRequestController extends Controller {
         res,
         STATIC.SUCCESS.OK,
         "Created successfully",
-        { request, chatMessage }
+        { request, chatMessage, ...orderPart }
       );
     });
 }

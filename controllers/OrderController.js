@@ -166,8 +166,8 @@ class OrderController extends Controller {
         offerPrice: result.pricePerDay,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
-        offerDateStart: startDate,
-        offerDateEnd: endDate,
+        offerStartDate: startDate,
+        offerEndDate: endDate,
         description: message,
       },
     });
@@ -309,8 +309,8 @@ class OrderController extends Controller {
           offerPrice: result.pricePerDay,
           listingPhotoPath: firstImage?.link,
           listingPhotoType: firstImage?.type,
-          offerDateStart: startDate,
-          offerDateEnd: endDate,
+          offerStartDate: startDate,
+          offerEndDate: endDate,
           description: message,
           extensionId: result.orderId,
         },
@@ -648,8 +648,8 @@ class OrderController extends Controller {
             offerPrice: currentPricePerDay,
             listingPhotoPath: firstImage?.link,
             listingPhotoType: firstImage?.type,
-            offerDateStart: currentStartDate,
-            offerDateEnd: currentEndDate,
+            offerStartDate: currentStartDate,
+            offerEndDate: currentEndDate,
             description: order.description,
           },
         });
@@ -678,8 +678,8 @@ class OrderController extends Controller {
             offerPrice: currentPricePerDay,
             listingPhotoPath: firstImage?.link,
             listingPhotoType: firstImage?.type,
-            offerDateStart: currentStartDate,
-            offerDateEnd: currentEndDate,
+            offerStartDate: currentStartDate,
+            offerEndDate: currentEndDate,
             description: order.description,
           },
           senderId: userId,
@@ -711,7 +711,13 @@ class OrderController extends Controller {
           chatId = order.parentChatId;
           createMessageFunc =
             this.chatMessageModel.createAcceptedExtensionMessage;
-          messageData["extensionId"] = order.id;
+
+          messageData = {
+            extensionId: order.id,
+            offerStartDate: order.offerStartDate,
+            offerEndDate: order.offerEndDate,
+            offerPrice: order.offerPricePerDay,
+          };
 
           const parentOrderExtensions = await this.orderModel.getOrderExtends(
             order.orderParentId
@@ -720,13 +726,7 @@ class OrderController extends Controller {
           orderPart = {
             id: order.orderParentId,
             extendOrders: parentOrderExtensions,
-            offerDateEnd: currentEndDate,
           };
-
-          await this.orderModel.orderUpdateEndDate(
-            order.orderParentId,
-            currentEndDate
-          );
         }
 
         const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
@@ -741,7 +741,7 @@ class OrderController extends Controller {
 
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
           chatMessage,
-          status: newStatus,
+          ...orderPart,
         });
       }
     });
@@ -829,9 +829,9 @@ class OrderController extends Controller {
       createMessageFunc = this.chatMessageModel.createRejectedExtensionMessage;
       messageData = {
         extensionId: order.id,
-        offerDateStart: payment.offerDateStart,
-        offerDateEnd: payment.offerDateEnd,
-        offerPrice: payment.offerPricePerDay,
+        offerStartDate: order.offerStartDate,
+        offerEndDate: order.offerEndDate,
+        offerPrice: order.offerPricePerDay,
       };
 
       const parentOrderExtensions = await this.orderModel.getOrderExtends(
@@ -856,8 +856,7 @@ class OrderController extends Controller {
 
     return {
       chatMessage,
-      status: newStatus,
-      cancelStatus: newCancelStatus,
+      ...orderPart,
     };
   };
 
@@ -926,15 +925,7 @@ class OrderController extends Controller {
       let newStatus = null;
 
       if (payment.orderParentId) {
-        const { token: ownerToken, image: generatedImage } =
-          await this.generateQrCodeInfo(
-            STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
-          );
-
-        newStatus = await this.orderModel.orderTenantGotListing(orderId, {
-          token: ownerToken,
-          qrCode: generatedImage,
-        });
+        newStatus = await this.orderModel.orderFinishedById(orderId);
 
         await this.recipientPaymentModel.paypalPaymentPlanGeneration({
           startDate: payment.offerStartDate,
@@ -980,8 +971,8 @@ class OrderController extends Controller {
           this.chatMessageModel.createTenantPayedExtensionMessage;
         messageData = {
           extensionId: orderId,
-          offerDateStart: payment.offerDateStart,
-          offerDateEnd: payment.offerDateEnd,
+          offerStartDate: payment.offerStartDate,
+          offerEndDate: payment.offerEndDate,
           offerPrice: payment.offerPricePerDay,
         };
 
@@ -992,7 +983,13 @@ class OrderController extends Controller {
         orderPart = {
           id: payment.orderParentId,
           extendOrders: parentOrderExtensions,
+          offerEndDate: payment.offerEndDate,
         };
+
+        await this.orderModel.orderUpdateEndDate(
+          payment.orderParentId,
+          payment.offerEndDate
+        );
       }
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
@@ -1007,10 +1004,7 @@ class OrderController extends Controller {
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
-        orderPart: {
-          id: orderId,
-          status: newStatus,
-        },
+        ...orderPart,
       });
     });
 
@@ -1094,8 +1088,8 @@ class OrderController extends Controller {
           this.chatMessageModel.createTenantPayedWaitingExtensionMessage;
         messageData = {
           extensionId: order.id,
-          offerDateStart: order.offerDateStart,
-          offerDateEnd: order.offerDateEnd,
+          offerStartDate: order.offerStartDate,
+          offerEndDate: order.offerEndDate,
           offerPrice: order.offerPricePerDay,
         };
 
@@ -1121,6 +1115,7 @@ class OrderController extends Controller {
     return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
       transactionId,
       type,
+      ...orderPart,
     });
   };
 
@@ -1268,13 +1263,13 @@ class OrderController extends Controller {
 
     if (orderInfo.orderParentId) {
       chatId = orderInfo.parentChatId;
-      createMessageFunc = this.chatMessageModel.createMessageFuncIfExtension;
+      createMessageFunc = createMessageFuncIfExtension;
       messageData = {
         extensionId: orderInfo.id,
-        offerDateStart:
-          lastUpdateRequestInfo?.newStartDate ?? orderInfo.offerDateStart,
-        offerDateEnd:
-          lastUpdateRequestInfo?.newEndDate ?? orderInfo.offerDateEnd,
+        offerStartDate:
+          lastUpdateRequestInfo?.newStartDate ?? orderInfo.offerStartDate,
+        offerEndDate:
+          lastUpdateRequestInfo?.newEndDate ?? orderInfo.offerEndDate,
         offerPrice:
           lastUpdateRequestInfo?.newPricePerDay ?? orderInfo.offerPricePerDay,
       };
@@ -1299,7 +1294,7 @@ class OrderController extends Controller {
 
     return {
       chatMessage,
-      orderPart: { cancelStatus, id: orderInfo.id },
+      ...orderPart,
     };
   };
 
@@ -1412,7 +1407,7 @@ class OrderController extends Controller {
 
     return {
       chatMessage,
-      orderPart: { cancelStatus: newCancelStatus, id: orderInfo.id },
+      ...orderPart,
     };
   };
 
