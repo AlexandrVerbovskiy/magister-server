@@ -706,19 +706,14 @@ class OrderModel extends Model {
       .where(`${ORDERS_TABLE}.parent_id`, id)
       .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
-        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
-        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-        STATIC.ORDER_STATUSES.FINISHED,
+        STATIC.ORDER_STATUSES.PENDING_TENANT,
+        STATIC.ORDER_STATUSES.PENDING_OWNER,
       ])
       .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .orderBy(`${ORDERS_TABLE}.end_date`, "desc")
       .first();
 
-    if (lastOrder) {
-      return lastOrder;
-    }
-
-    return await this.getById(id);
+    return lastOrder;
   };
 
   checkOrderHasUnstartedExtension = async (orderId) => {
@@ -953,17 +948,20 @@ class OrderModel extends Model {
     const orderExtends = await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
       .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .select(visibleFields);
 
     return orderExtends.map((orderExtend) => {
       const newOrderExtend = cloneObject(orderExtend);
 
-      newOrderExtend["actualUpdateRequest"] = {
-        id: orderExtend.requestId,
-        newStartDate: orderExtend.newStartDate,
-        newEndDate: orderExtend.newEndDate,
-        newPricePerDay: orderExtend.newPricePerDay,
-      };
+      if (orderExtend.requestId) {
+        newOrderExtend["actualUpdateRequest"] = {
+          id: orderExtend.requestId,
+          newStartDate: orderExtend.newStartDate,
+          newEndDate: orderExtend.newEndDate,
+          newPricePerDay: orderExtend.newPricePerDay,
+        };
+      }
 
       return newOrderExtend;
     });
@@ -1257,6 +1255,19 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE).where({ id }).update({
       end_date: endDate,
     });
+  };
+
+  orderCancelExtends = async (id) => {
+    await db(ORDERS_TABLE)
+      .where({ parent_id: id })
+      .whereIn(`${ORDERS_TABLE}.status`, [
+        STATIC.ORDER_STATUSES.PENDING_OWNER,
+        STATIC.ORDER_STATUSES.PENDING_TENANT,
+        STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
+      ])
+      .update({
+        cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELLED,
+      });
   };
 
   getUserTotalCountOrders = async (userId) => {
