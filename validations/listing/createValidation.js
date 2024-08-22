@@ -44,8 +44,16 @@ module.exports = [
     fieldName: "Other Category",
     required: false,
   }),
-  ...validateFloat({ field: "rentalLat", fieldName: "Rental lat", canBeNegative: true }),
-  ...validateFloat({ field: "rentalLng", fieldName: "Rental lng", canBeNegative: true }),
+  ...validateFloat({
+    field: "rentalLat",
+    fieldName: "Rental lat",
+    canBeNegative: true,
+  }),
+  ...validateFloat({
+    field: "rentalLng",
+    fieldName: "Rental lng",
+    canBeNegative: true,
+  }),
   ...validateSmallStringBody({ field: "city", fieldName: "City" }),
   ...validateSmallStringBody({ field: "postcode", fieldName: "Postcode" }),
   ...validateFloat({ field: "rentalRadius", fieldName: "Rental radius" }),
@@ -57,6 +65,11 @@ module.exports = [
   ...validateIntegerBody({
     field: "minRentalDays",
     fieldName: "Minimum rental days",
+    required: false,
+  }),
+  ...validateBigStringBody({
+    field: "defects",
+    fieldName: "Defect Description",
     required: false,
   }),
   body("listingImages")
