@@ -36,6 +36,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lng`,
     `${LISTINGS_TABLE}.rental_radius`,
     `${LISTINGS_TABLE}.background_photo`,
+    `${LISTINGS_TABLE}.defects`,
   ];
 
   visibleFields = [
@@ -58,6 +59,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat as rentalLat`,
     `${LISTINGS_TABLE}.rental_lng as rentalLng`,
     `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
+    `${LISTINGS_TABLE}.defects`,
   ];
 
   fullVisibleFields = [
@@ -156,14 +158,20 @@ class ListingsModel extends Model {
     active = true,
     otherCategory = null,
     otherCategoryParentId = null,
+    defects = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
     }
 
+    if (!defects) {
+      defects = "";
+    }
+
     const res = await db(LISTINGS_TABLE)
       .insert({
         name,
+        defects,
         description,
         postcode,
         address,
@@ -315,9 +323,14 @@ class ListingsModel extends Model {
     backgroundPhoto = null,
     otherCategory = null,
     otherCategoryParentId = null,
+    defects = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
+    }
+
+    if (!defects) {
+      defects = "";
     }
 
     const updateData = {
@@ -339,6 +352,7 @@ class ListingsModel extends Model {
       active,
       other_category: otherCategory,
       other_category_parent_id: otherCategoryParentId,
+      defects,
     };
 
     if (backgroundPhoto) {

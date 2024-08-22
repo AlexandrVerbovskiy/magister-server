@@ -51,6 +51,7 @@ class OrderModel extends Model {
     `owners.verified as ownerVerified`,
     `owners.paypal_id as ownerPaypalId`,
     `${LISTINGS_TABLE}.id as listingId`,
+    `${LISTINGS_TABLE}.defects as listingDefects`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${LISTINGS_TABLE}.city as listingCity`,
     `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
@@ -96,8 +97,6 @@ class OrderModel extends Model {
     `tenants.facebook_url as tenantFacebookUrl`,
     `tenants.linkedin_url as tenantLinkedinUrl`,
     `tenants.instagram_url as tenantInstagramUrl`,
-    `${ORDERS_TABLE}.defect_description_by_tenant as defectDescriptionByTenant`,
-    `${ORDERS_TABLE}.defect_description_by_owner as defectDescriptionByOwner`,
     `parent_chats.id as parentChatId`,
   ];
 
@@ -604,7 +603,10 @@ class OrderModel extends Model {
 
     query = this.baseQueryListByType(query, type);
 
-    const result = await query.count("* as count").first();
+    const result = await query
+      .whereNull(`${ORDERS_TABLE}.parent_id`)
+      .count("* as count")
+      .first();
     return +result?.count;
   };
 
@@ -619,6 +621,8 @@ class OrderModel extends Model {
     query = this.baseQueryListByType(query, type);
 
     return await query
+      .whereNull(`${ORDERS_TABLE}.parent_id`)
+
       .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
       .orderBy(order, orderType)
       .limit(count)
@@ -650,8 +654,6 @@ class OrderModel extends Model {
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
         parent_id: orderParentId,
-        defect_description_by_tenant: "",
-        defect_description_by_owner: "",
       })
       .returning("id");
 
@@ -1200,39 +1202,26 @@ class OrderModel extends Model {
     return status;
   };
 
-  orderTenantGotListing = async (
-    orderId,
-    { token, qrCode, defectDescription }
-  ) => {
+  orderTenantGotListing = async (orderId, { token, qrCode }) => {
     const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER;
-
-    if (!defectDescription) {
-      defectDescription = "";
-    }
 
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       owner_accept_listing_token: token,
       owner_accept_listing_qrcode: qrCode,
       status,
-      defect_description_by_tenant: defectDescription,
     });
 
     return status;
   };
 
-  orderFinished = async (token, { defectDescription = null } = {}) => {
+  orderFinished = async (token) => {
     const status = STATIC.ORDER_STATUSES.FINISHED;
-
-    if (!defectDescription) {
-      defectDescription = "";
-    }
 
     await db(ORDERS_TABLE)
       .where({ owner_accept_listing_token: token })
       .update({
         status,
         finished_at: db.raw("CURRENT_TIMESTAMP"),
-        defect_description_by_owner: defectDescription,
       });
 
     return status;
@@ -1362,6 +1351,7 @@ class OrderModel extends Model {
             THEN 1 ELSE 0 END) AS "activeCount"`
         )
       )
+      .whereNull(`${ORDERS_TABLE}.parent_id`)
       .first();
 
     return {
