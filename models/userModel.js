@@ -5,7 +5,6 @@ const db = require("../database");
 const {
   generateOtp,
   getOneHourAgo,
-  generateRandomString,
   formatDateToSQLFormat,
 } = require("../utils");
 const Model = require("./Model");
@@ -506,11 +505,11 @@ class UserModel extends Model {
   generateTwoAuthCode = async (userId, type) => {
     const dataToSave = { user_id: userId };
 
+    dataToSave["code"] = generateOtp();
+
     if (type == "phone") {
-      dataToSave["code"] = generateOtp();
       dataToSave["type_verification"] = "phone";
     } else {
-      dataToSave["code"] = generateRandomString();
       dataToSave["type_verification"] = "email";
     }
 
