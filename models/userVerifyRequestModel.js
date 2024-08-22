@@ -21,6 +21,8 @@ class UserVerifyRequestModel extends Model {
     `${USERS_TABLE}.facebook_url as userFacebookUrl`,
     `${USERS_TABLE}.linkedin_url as userLinkedinUrl`,
     `${USERS_TABLE}.instagram_url as userInstagramUrl`,
+    `${USERS_TABLE}.email_verified as userEmailVerified`,
+    `${USERS_TABLE}.phone_verified as userPhoneVerified`,
     `${USERS_TABLE}.id as userId`,
     `${USER_VERIFY_REQUESTS_TABLE}.has_response as hasResponse`,
     `${USER_VERIFY_REQUESTS_TABLE}.failed_description as failedDescription`,

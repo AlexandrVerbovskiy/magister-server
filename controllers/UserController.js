@@ -133,14 +133,26 @@ class UserController extends Controller {
         acceptedTermCondition,
       });
 
+      const user = await this.userModel.getFullById(id);
+
       const emailVerifyToken = generateVerifyToken({ userId: id });
 
       this.sendEmailVerificationMail(email, name, emailVerifyToken);
 
+      const authToken = generateAccessToken(user.id, false);
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.CREATED,
-        "Account created successfully. An account confirmation letter has been sent to the email"
+        "Account created successfully. An account confirmation letter has been sent to the email",
+        {
+          user,
+          authToken,
+          userId: user.id,
+          needCode: false,
+          canSendCodeByPhone: user.phoneVerified,
+          needRegularViewInfoForm: user.needRegularViewInfoForm,
+        }
       );
     });
 
@@ -177,15 +189,6 @@ class UserController extends Controller {
         error: true,
         errorBody: STATIC.ERRORS.UNAUTHORIZED,
         errorMessage: "Incorrect email or password",
-      };
-    }
-
-    if (!user.emailVerified) {
-      return {
-        error: true,
-        errorBody: STATIC.ERRORS.UNAUTHORIZED,
-        errorMessage:
-          "The mail was not confirmed. Instructions for confirmation were sent to the mail in the letter when the account was created",
       };
     }
 

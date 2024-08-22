@@ -96,31 +96,51 @@ class OrderUpdateRequestController extends Controller {
 
       const firstImage = order.listingImages[0];
 
+      let chatId = order.chatId;
+      let createMessageFunc = this.chatMessageModel.createUpdateOrderMessage;
+      let messageData = {
+        requestId: request.id,
+        listingName: order.listingName,
+        offerPrice: order.offerPricePerDay,
+        listingPhotoPath: firstImage?.link,
+        listingPhotoType: firstImage?.type,
+        offerStartDate: newStartDate,
+        offerEndDate: newEndDate,
+      };
+      let orderPart = {
+        id: order.id,
+        status: newStatus,
+        actualUpdateRequest: request,
+      };
+
+      if (order.orderParentId) {
+        chatId = order.parentChatId;
+        createMessageFunc = this.chatMessageModel.createUpdateExtensionMessage;
+        messageData["extensionId"] = order.id;
+
+        const parentOrderExtensions = await this.orderModel.getOrderExtends(
+          order.orderParentId
+        );
+
+        orderPart = {
+          id: order.orderParentId,
+          extendOrders: parentOrderExtensions,
+        };
+      }
+
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
-        chatId: order.chatId,
-        messageData: {
-          requestId: request.id,
-          listingName: order.listingName,
-          offerPrice: order.offerPricePerDay,
-          listingPhotoPath: firstImage?.link,
-          listingPhotoType: firstImage?.type,
-          offerDateStart: newStartDate,
-          offerDateEnd: newEndDate,
-        },
+        chatId,
+        messageData,
         senderId,
-        createMessageFunc: this.chatMessageModel.createUpdateOrderMessage,
-        orderPart: {
-          id: order.id,
-          status: newStatus,
-          actualUpdateRequest: request,
-        },
+        createMessageFunc,
+        orderPart,
       });
 
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
         "Created successfully",
-        { request, chatMessage }
+        { request, chatMessage, ...orderPart }
       );
     });
 }

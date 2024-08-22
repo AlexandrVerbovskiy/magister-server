@@ -430,6 +430,38 @@ class MainController extends Controller {
     );
   };
 
+  getOrderFullByIdForDisputeOptions = (req, res) => {
+    const { id } = req.params;
+    const userId = req.userData.userId;
+
+    const getOrderByRequest = async () => {
+      const order = await this.orderModel.getFullWithCommentsById(id, userId);
+
+      if (order.orderParentId) {
+        return null;
+      }
+
+      return order;
+    };
+
+    const getDopOrderOptions = async (order) => {
+      const paymentInfo =
+        await this.senderPaymentModel.getInfoAboutOrderPayment(order.id);
+
+      return {
+        canFastCancelPayed: this.orderModel.canFastCancelPayedOrder(order),
+        paymentInfo,
+      };
+    };
+
+    return this.baseGetFullOrderInfo(
+      req,
+      res,
+      getOrderByRequest,
+      getDopOrderOptions
+    );
+  };
+
   getOrderFullForCardPay = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
@@ -1218,7 +1250,7 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
       let order = await this.orderModel.getFullById(id);
 
-      if (!order) {
+      if (!order || order.orderParentId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
@@ -1260,7 +1292,7 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
       let order = await this.orderModel.getFullById(id);
 
-      if (!order) {
+      if (!order || order.orderParentId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
