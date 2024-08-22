@@ -188,7 +188,7 @@ class OrderController extends Controller {
 
     if (needReturnMessage) {
       const senderOpponent = await this.userModel.getById(ownerId);
-      returningResult.data.chatMessage = createdMessages[tenantId];
+      returningResult.data.chatMessage = createdMessage;
       returningResult.data.opponent = senderOpponent;
     }
 
@@ -226,13 +226,19 @@ class OrderController extends Controller {
 
       const prevOrder = await this.orderModel.getLastActive(parentOrderId);
 
-      if (!prevOrder) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      if (prevOrder) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.FORBIDDEN,
+          "You can't extend order with unfinished order"
+        );
       }
 
+      const order = await this.orderModel.getById(parentOrderId);
+
       if (
-        prevOrder.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER ||
-        prevOrder.tenantId != tenantId
+        order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER ||
+        order.tenantId != tenantId
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
@@ -248,7 +254,7 @@ class OrderController extends Controller {
         );
       }
 
-      const prevOrderEndDate = prevOrder.offerEndDate;
+      const orderEndDate = order.offerEndDate;
 
       const dataToCreate = {
         startDate,
@@ -261,10 +267,10 @@ class OrderController extends Controller {
       let needMinDateVerify = true;
 
       const parentOrder = await this.orderModel.getFullById(
-        prevOrder.orderParentId ? prevOrder.orderParentId : parentOrderId
+        order.orderParentId ? order.orderParentId : parentOrderId
       );
 
-      if (getDaysDifference(prevOrderEndDate, startDate) != 1) {
+      if (getDaysDifference(orderEndDate, startDate) != 1) {
         const result = await this.baseCreateWithMessageSend(req, true);
 
         if (result.error) {
@@ -322,7 +328,7 @@ class OrderController extends Controller {
         },
       });
 
-      this.sendBookingExtensionMail(prevOrder.ownerEmail, prevOrder.id);
+      this.sendBookingExtensionMail(order.ownerEmail, order.id);
 
       return this.sendSuccessResponse(
         res,
@@ -558,7 +564,7 @@ class OrderController extends Controller {
       const { id } = req.body;
       const userId = req.userData.userId;
 
-      const order = await this.orderModel.getById(id);
+      const order = await this.orderModel.getFullById(id);
 
       if (!order) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
@@ -595,12 +601,11 @@ class OrderController extends Controller {
       let resetParentId = false;
 
       if (order.orderParentId) {
-        const parentOrder = await this.orderModel.getLastActive(
-          order.orderParentId
-        );
+        const parentOrder = await this.orderModel.getById(order.orderParentId);
+
         const dateDiff = getDaysDifference(
           parentOrder.offerEndDate,
-          order.offerStartDate
+          lastUpdateRequestInfo?.newStartDate ?? order.offerStartDate
         );
 
         if (dateDiff != 1) {
@@ -636,8 +641,11 @@ class OrderController extends Controller {
       if (resetParentId) {
         this.sendBookingApprovalRequestMail(order.ownerEmail);
 
+        console.log(order);
+
         const firstImage = order.listingImages[0];
         const ownerId = order.ownerId;
+        const tenantId = order.tenantId;
 
         const createdMessage = await this.chatModel.createForOrder({
           ownerId,
@@ -714,9 +722,9 @@ class OrderController extends Controller {
 
           messageData = {
             extensionId: order.id,
-            offerStartDate: order.offerStartDate,
-            offerEndDate: order.offerEndDate,
-            offerPrice: order.offerPricePerDay,
+            offerStartDate: currentStartDate,
+            offerEndDate: currentEndDate,
+            offerPrice: currentPricePerDay,
           };
 
           const parentOrderExtensions = await this.orderModel.getOrderExtends(
@@ -1053,6 +1061,7 @@ class OrderController extends Controller {
     let paymentInfo = await this.senderPaymentModel.getInfoAboutOrderPayment(
       orderId
     );
+    let orderPart = { id: orderId, paymentInfo };
 
     await this.senderPaymentModel.deleteUnactualByPaypal(orderId);
 
@@ -1080,7 +1089,6 @@ class OrderController extends Controller {
       let createMessageFunc =
         this.chatMessageModel.createTenantPayedWaitingOrderMessage;
       let messageData = {};
-      let orderPart = { id: orderId, paymentInfo };
 
       if (order.orderParentId) {
         chatId = order.parentChatId;
@@ -1278,9 +1286,15 @@ class OrderController extends Controller {
         orderInfo.orderParentId
       );
 
+      const conflictOrders = await this.orderModel.getConflictOrders(
+        [orderInfo.orderParentId],
+        false
+      );
+
       orderPart = {
         id: orderInfo.orderParentId,
         extendOrders: parentOrderExtensions,
+        conflictOrders: conflictOrders[orderInfo.orderParentId],
       };
     }
 
@@ -1492,6 +1506,10 @@ class OrderController extends Controller {
         defectDescription,
       });
 
+      const parentOrderExtensions = await this.orderModel.getOrderExtends(
+        orderInfo.id
+      );
+
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: orderInfo.chatId,
         messageData: {},
@@ -1500,10 +1518,13 @@ class OrderController extends Controller {
         orderPart: {
           id: orderInfo.id,
           status: newStatus,
+          extendOrders: parentOrderExtensions,
         },
       });
 
       this.sendAssetPickupOffMail(orderInfo.ownerEmail, orderInfo.id);
+
+      await this.orderModel.orderCancelExtends(orderInfo.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,

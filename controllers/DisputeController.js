@@ -133,6 +133,12 @@ class DisputeController extends Controller {
         },
       });
 
+      await this.orderModel.orderCancelExtends(order.id);
+
+      const parentOrderExtensions = await this.orderModel.getOrderExtends(
+        order.id
+      );
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         orderPart: {
@@ -144,6 +150,7 @@ class DisputeController extends Controller {
           disputeChatId: isOwnerCreatedDispute
             ? ownerDisputeChatId
             : tenantDisputeChatId,
+          extendOrders: parentOrderExtensions,
         },
       });
     });
