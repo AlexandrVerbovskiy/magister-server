@@ -1129,7 +1129,7 @@ class OrderController extends Controller {
 
   approveTenantGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { token, defectDescription } = req.body;
+      const { token } = req.body;
       const { userId } = req.userData;
 
       const orderInfo = await this.orderModel.getFullByTenantListingToken(
@@ -1160,7 +1160,6 @@ class OrderController extends Controller {
         {
           token: ownerToken,
           qrCode: generatedImage,
-          defectDescription,
         }
       );
 
@@ -1473,8 +1472,7 @@ class OrderController extends Controller {
   finishedByOwner = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-
-      const { token, defectDescription = null } = req.body;
+      const { token } = req.body;
 
       const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
@@ -1502,9 +1500,7 @@ class OrderController extends Controller {
         );
       }
 
-      const newStatus = await this.orderModel.orderFinished(token, {
-        defectDescription,
-      });
+      const newStatus = await this.orderModel.orderFinished(token);
 
       const parentOrderExtensions = await this.orderModel.getOrderExtends(
         orderInfo.id
