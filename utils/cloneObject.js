@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 module.exports = function (elem) {
-  return JSON.parse(JSON.stringify(elem));
+  return _.cloneDeep(elem);
 };
