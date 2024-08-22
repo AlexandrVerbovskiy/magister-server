@@ -98,6 +98,7 @@ class OrderModel extends Model {
     `tenants.instagram_url as tenantInstagramUrl`,
     `${ORDERS_TABLE}.defect_description_by_tenant as defectDescriptionByTenant`,
     `${ORDERS_TABLE}.defect_description_by_owner as defectDescriptionByOwner`,
+    `parent_chats.id as parentChatId`,
   ];
 
   selectPartPayedInfo = [
@@ -165,6 +166,7 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.type`,
     `${DISPUTES_TABLE}.description`,
     `${CHAT_TABLE}.id`,
+    `parent_chats.id`,
   ];
 
   requestGroupBy = [
@@ -292,6 +294,10 @@ class OrderModel extends Model {
 
     query = query.joinRaw(
       `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
+    );
+
+    query = query.joinRaw(
+      `LEFT JOIN ${CHAT_TABLE} as parent_chats ON (parent_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND parent_chats.entity_id = ${ORDERS_TABLE}.parent_id)`
     );
 
     return query;
@@ -931,12 +937,11 @@ class OrderModel extends Model {
     return listingBlockedDates;
   };
 
-  getOrdersExtends = async (orderIds, userId) => {
+  getOrdersExtends = async (orderIds) => {
     let query = db(ORDERS_TABLE);
     query = this.fullOrdersJoin(query);
     query = this.baseRequestInfoJoin(query);
     query = this.commentsInfoJoin(query);
-    query = this.disputeChatInfoJoin(query, userId);
 
     let visibleFields = [
       ...this.fullVisibleFields,
@@ -944,12 +949,27 @@ class OrderModel extends Model {
     ];
 
     visibleFields = this.commentsVisibleFields(visibleFields);
-    visibleFields = this.disputeChatsVisibleFields(visibleFields);
 
-    return await query
+    const orderExtends = await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
+      .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
       .select(visibleFields);
+
+    return orderExtends.map((orderExtend) => {
+      const newOrderExtend = cloneObject(orderExtend);
+
+      newOrderExtend["actualUpdateRequest"] = {
+        id: orderExtend.requestId,
+        newStartDate: orderExtend.newStartDate,
+        newEndDate: orderExtend.newEndDate,
+        newPricePerDay: orderExtend.newPricePerDay,
+      };
+
+      return newOrderExtend;
+    });
   };
+
+  getOrderExtends = (orderId) => this.getOrdersExtends([orderId]);
 
   getConflictOrders = async (orderIds, fullInfo = false) => {
     let query = this.baseConflictOrdersForOrders(orderIds);
@@ -1202,7 +1222,7 @@ class OrderModel extends Model {
     return status;
   };
 
-  orderFinished = async (token, { defectDescription }) => {
+  orderFinished = async (token, { defectDescription = null } = {}) => {
     const status = STATIC.ORDER_STATUSES.FINISHED;
 
     if (!defectDescription) {
@@ -1218,6 +1238,25 @@ class OrderModel extends Model {
       });
 
     return status;
+  };
+
+  orderFinishedById = async (id) => {
+    const status = STATIC.ORDER_STATUSES.FINISHED;
+
+    await db(ORDERS_TABLE)
+      .where({ id })
+      .update({
+        status,
+        finished_at: db.raw("CURRENT_TIMESTAMP"),
+      });
+
+    return status;
+  };
+
+  orderUpdateEndDate = async (id, endDate) => {
+    await db(ORDERS_TABLE).where({ id }).update({
+      end_date: endDate,
+    });
   };
 
   getUserTotalCountOrders = async (userId) => {
