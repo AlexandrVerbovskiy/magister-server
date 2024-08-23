@@ -36,6 +36,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lng`,
     `${LISTINGS_TABLE}.rental_radius`,
     `${LISTINGS_TABLE}.background_photo`,
+    `${LISTINGS_TABLE}.defects`,
   ];
 
   visibleFields = [
@@ -58,6 +59,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.rental_lat as rentalLat`,
     `${LISTINGS_TABLE}.rental_lng as rentalLng`,
     `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
+    `${LISTINGS_TABLE}.defects`,
   ];
 
   fullVisibleFields = [
@@ -127,6 +129,20 @@ class ListingsModel extends Model {
     return res[0]["id"];
   };
 
+  createImages = async (images, listingId) => {
+    const imageInsertData = images.map((image) => ({
+      listing_id: listingId,
+      link: image.link,
+      type: image.type,
+    }));
+
+    const res = await db(LISTING_IMAGES_TABLE)
+      .insert(imageInsertData)
+      .returning("id");
+
+    return res.map((row) => row.id);
+  };
+
   updateImage = async ({ type, link, listingId, id }) => {
     await db(LISTING_IMAGES_TABLE).where("id", id).update({
       listing_id: listingId,
@@ -156,14 +172,20 @@ class ListingsModel extends Model {
     active = true,
     otherCategory = null,
     otherCategoryParentId = null,
+    defects = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
     }
 
+    if (!defects) {
+      defects = "";
+    }
+
     const res = await db(LISTINGS_TABLE)
       .insert({
         name,
+        defects,
         description,
         postcode,
         address,
@@ -186,16 +208,7 @@ class ListingsModel extends Model {
       .returning("id");
 
     const listingId = res[0]["id"];
-
-    for (let i = 0; i < listingImages.length; i++) {
-      const image = listingImages[i];
-      await this.createImage({
-        type: image.type,
-        link: image.link,
-        listingId,
-      });
-    }
-
+    await this.createImages(listingImages, listingId);
     const currentListingImages = await this.getListingImages(listingId);
 
     return {
@@ -315,9 +328,14 @@ class ListingsModel extends Model {
     backgroundPhoto = null,
     otherCategory = null,
     otherCategoryParentId = null,
+    defects = null,
   }) => {
     if (!minRentalDays) {
       minRentalDays = null;
+    }
+
+    if (!defects) {
+      defects = "";
     }
 
     const updateData = {
@@ -339,6 +357,7 @@ class ListingsModel extends Model {
       active,
       other_category: otherCategory,
       other_category_parent_id: otherCategoryParentId,
+      defects,
     };
 
     if (backgroundPhoto) {

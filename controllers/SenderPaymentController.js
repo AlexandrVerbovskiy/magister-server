@@ -193,9 +193,18 @@ class SenderPaymentController extends Controller {
   approveTransaction = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { orderId } = req.body;
-      await this.senderPaymentModel.approveTransaction(orderId);
 
       const order = await this.orderModel.getFullById(orderId);
+
+      if (order.cancelStatus) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.SUCCESS.FORBIDDEN,
+          "Order was cancelled. You should return money to user"
+        );
+      }
+
+      await this.senderPaymentModel.approveTransaction(orderId);
 
       let newStatus = null;
 

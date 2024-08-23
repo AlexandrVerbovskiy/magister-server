@@ -10,6 +10,7 @@ const {
 } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
+const checklistModel = require("./checklistModel");
 
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -22,6 +23,7 @@ const TENANT_COMMENTS_TABLE = STATIC.TABLES.TENANT_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const CHAT_TABLE = STATIC.TABLES.CHATS;
 const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
+const CHECKLISTS_TABLE = STATIC.TABLES.CHECKLISTS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -51,6 +53,7 @@ class OrderModel extends Model {
     `owners.verified as ownerVerified`,
     `owners.paypal_id as ownerPaypalId`,
     `${LISTINGS_TABLE}.id as listingId`,
+    `${LISTINGS_TABLE}.defects as listingDefects`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${LISTINGS_TABLE}.city as listingCity`,
     `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
@@ -96,8 +99,6 @@ class OrderModel extends Model {
     `tenants.facebook_url as tenantFacebookUrl`,
     `tenants.linkedin_url as tenantLinkedinUrl`,
     `tenants.instagram_url as tenantInstagramUrl`,
-    `${ORDERS_TABLE}.defect_description_by_tenant as defectDescriptionByTenant`,
-    `${ORDERS_TABLE}.defect_description_by_owner as defectDescriptionByOwner`,
     `parent_chats.id as parentChatId`,
   ];
 
@@ -208,6 +209,22 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.name`,
   ];
 
+  checklistsFields = [
+    `owner_checklists.id as ownerChecklistId`,
+    `owner_checklists.item_matches_description as ownerChecklistItemMatchesDescription`,
+    `owner_checklists.item_matches_photos as ownerChecklistItemMatchesPhotos`,
+    `owner_checklists.item_fully_functional as ownerChecklistItemFullyFunctional`,
+    `owner_checklists.parts_good_condition as ownerChecklistPartsGoodCondition`,
+    `owner_checklists.provided_guidelines as ownerChecklistProvidedGuidelines`,
+
+    `tenant_checklists.id as tenantChecklistId`,
+    `tenant_checklists.item_matches_description as tenantChecklistItemMatchesDescription`,
+    `tenant_checklists.item_matches_photos as tenantChecklistItemMatchesPhotos`,
+    `tenant_checklists.item_fully_functional as tenantChecklistItemFullyFunctional`,
+    `tenant_checklists.parts_good_condition as tenantChecklistPartsGoodCondition`,
+    `tenant_checklists.provided_guidelines as tenantChecklistProvidedGuidelines`,
+  ];
+
   processStatuses = [
     STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
     STATIC.ORDER_STATUSES.PENDING_TENANT,
@@ -301,6 +318,16 @@ class OrderModel extends Model {
     );
 
     return query;
+  };
+
+  orderChecklistsJoin = (query, orderTable = ORDERS_TABLE) => {
+    return query
+      .joinRaw(
+        `LEFT JOIN ${CHECKLISTS_TABLE} as owner_checklists ON (owner_checklists.order_id = ${orderTable}.id AND owner_checklists.type = '${STATIC.CHECKLIST_TYPES.OWNER}')`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHECKLISTS_TABLE} as tenant_checklists ON (tenant_checklists.order_id = ${orderTable}.id AND tenant_checklists.type = '${STATIC.CHECKLIST_TYPES.TENANT}')`
+      );
   };
 
   fullBaseGetQuery = (filter) => {
@@ -604,7 +631,10 @@ class OrderModel extends Model {
 
     query = this.baseQueryListByType(query, type);
 
-    const result = await query.count("* as count").first();
+    const result = await query
+      .whereNull(`${ORDERS_TABLE}.parent_id`)
+      .count("* as count")
+      .first();
     return +result?.count;
   };
 
@@ -619,6 +649,8 @@ class OrderModel extends Model {
     query = this.baseQueryListByType(query, type);
 
     return await query
+      .whereNull(`${ORDERS_TABLE}.parent_id`)
+
       .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
       .orderBy(order, orderType)
       .limit(count)
@@ -650,8 +682,6 @@ class OrderModel extends Model {
         owner_accept_listing_qrcode: "",
         fee_active: feeActive,
         parent_id: orderParentId,
-        defect_description_by_tenant: "",
-        defect_description_by_owner: "",
       })
       .returning("id");
 
@@ -706,19 +736,14 @@ class OrderModel extends Model {
       .where(`${ORDERS_TABLE}.parent_id`, id)
       .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
-        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
-        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-        STATIC.ORDER_STATUSES.FINISHED,
+        STATIC.ORDER_STATUSES.PENDING_TENANT,
+        STATIC.ORDER_STATUSES.PENDING_OWNER,
       ])
       .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .orderBy(`${ORDERS_TABLE}.end_date`, "desc")
       .first();
 
-    if (lastOrder) {
-      return lastOrder;
-    }
-
-    return await this.getById(id);
+    return lastOrder;
   };
 
   checkOrderHasUnstartedExtension = async (orderId) => {
@@ -768,6 +793,44 @@ class OrderModel extends Model {
       return await query
         .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
         .first();
+    });
+
+  getFullWithPaymentAndChecklistsById = (id) =>
+    this.getFullByBaseRequest(async () => {
+      let query = db(ORDERS_TABLE);
+      query = this.fullOrdersJoin(query);
+      query = this.payedInfoJoin(query);
+      query = this.orderChecklistsJoin(query);
+      query = query.where(`${ORDERS_TABLE}.id`, id);
+
+      const order = await query
+        .select([
+          ...this.checklistsFields,
+          ...this.fullVisibleFields,
+          ...this.selectPartPayedInfo,
+        ])
+        .first();
+
+      if (!order) {
+        return null;
+      }
+
+      order["ownerChecklistsImages"] = [];
+      order["tenantChecklistsImages"] = [];
+
+      if (order["ownerChecklistId"]) {
+        order["ownerChecklistsImages"] = await checklistModel.getImages(
+          order["ownerChecklistId"]
+        );
+      }
+
+      if (order["tenantChecklistId"]) {
+        order["tenantChecklistsImages"] = await checklistModel.getImages(
+          order["tenantChecklistId"]
+        );
+      }
+
+      return order;
     });
 
   getFullByIdWithDisputeChat = (id, userId) =>
@@ -953,17 +1016,20 @@ class OrderModel extends Model {
     const orderExtends = await query
       .whereIn(`${ORDERS_TABLE}.parent_id`, orderIds)
       .whereNot(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+      .whereNull(`${ORDERS_TABLE}.cancel_status`)
       .select(visibleFields);
 
     return orderExtends.map((orderExtend) => {
       const newOrderExtend = cloneObject(orderExtend);
 
-      newOrderExtend["actualUpdateRequest"] = {
-        id: orderExtend.requestId,
-        newStartDate: orderExtend.newStartDate,
-        newEndDate: orderExtend.newEndDate,
-        newPricePerDay: orderExtend.newPricePerDay,
-      };
+      if (orderExtend.requestId) {
+        newOrderExtend["actualUpdateRequest"] = {
+          id: orderExtend.requestId,
+          newStartDate: orderExtend.newStartDate,
+          newEndDate: orderExtend.newEndDate,
+          newPricePerDay: orderExtend.newPricePerDay,
+        };
+      }
 
       return newOrderExtend;
     });
@@ -1202,39 +1268,26 @@ class OrderModel extends Model {
     return status;
   };
 
-  orderTenantGotListing = async (
-    orderId,
-    { token, qrCode, defectDescription }
-  ) => {
+  orderTenantGotListing = async (orderId, { token, qrCode }) => {
     const status = STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER;
-
-    if (!defectDescription) {
-      defectDescription = "";
-    }
 
     await db(ORDERS_TABLE).where({ id: orderId }).update({
       owner_accept_listing_token: token,
       owner_accept_listing_qrcode: qrCode,
       status,
-      defect_description_by_tenant: defectDescription,
     });
 
     return status;
   };
 
-  orderFinished = async (token, { defectDescription = null } = {}) => {
+  orderFinished = async (token) => {
     const status = STATIC.ORDER_STATUSES.FINISHED;
-
-    if (!defectDescription) {
-      defectDescription = "";
-    }
 
     await db(ORDERS_TABLE)
       .where({ owner_accept_listing_token: token })
       .update({
         status,
         finished_at: db.raw("CURRENT_TIMESTAMP"),
-        defect_description_by_owner: defectDescription,
       });
 
     return status;
@@ -1257,6 +1310,19 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE).where({ id }).update({
       end_date: endDate,
     });
+  };
+
+  orderCancelExtends = async (id) => {
+    await db(ORDERS_TABLE)
+      .where({ parent_id: id })
+      .whereIn(`${ORDERS_TABLE}.status`, [
+        STATIC.ORDER_STATUSES.PENDING_OWNER,
+        STATIC.ORDER_STATUSES.PENDING_TENANT,
+        STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
+      ])
+      .update({
+        cancel_status: STATIC.ORDER_CANCELATION_STATUSES.CANCELLED,
+      });
   };
 
   getUserTotalCountOrders = async (userId) => {
@@ -1351,6 +1417,7 @@ class OrderModel extends Model {
             THEN 1 ELSE 0 END) AS "activeCount"`
         )
       )
+      .whereNull(`${ORDERS_TABLE}.parent_id`)
       .first();
 
     return {

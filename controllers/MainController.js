@@ -487,8 +487,15 @@ class MainController extends Controller {
   getOrderTenantQrCodeInfo = (req, res) => {
     const { token } = req.params;
 
-    const getOrderByRequest = () =>
-      this.orderModel.getFullByTenantListingToken(token);
+    const getOrderByRequest = async () => {
+      const order = await this.orderModel.getFullByTenantListingToken(token);
+
+      if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
+        return null;
+      }
+
+      return order;
+    };
 
     const getDopOrderOptions = async () => {
       const {
@@ -517,8 +524,15 @@ class MainController extends Controller {
   getOrderOwnerQrCodeInfo = (req, res) => {
     const { token } = req.params;
 
-    const getOrderByRequest = () =>
-      this.orderModel.getFullByOwnerListingToken(token);
+    const getOrderByRequest = async () => {
+      const order = await this.orderModel.getFullByOwnerListingToken(token);
+
+      if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
+        return null;
+      }
+
+      return order;
+    };
 
     const getDopOrderOptions = async (order) => {
       const {
@@ -781,7 +795,9 @@ class MainController extends Controller {
   getFullOrderByIdPageOption = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      const order = await this.orderModel.getFullWithPaymentById(id);
+      const order = await this.orderModel.getFullWithPaymentAndChecklistsById(
+        id
+      );
 
       order["requestsToUpdate"] =
         await this.orderUpdateRequestModel.getAllForOrder(id);
