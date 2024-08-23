@@ -1,4 +1,3 @@
-const e = require("express");
 const STATIC = require("../static");
 const {
   getPaypalOrderInfo,
@@ -10,8 +9,24 @@ const {
   isOrderCanBeAccepted,
 } = require("../utils");
 const Controller = require("./Controller");
+const fs = require("fs");
 
 class OrderController extends Controller {
+  getChecklistImages = async (req) => {
+    const imagesToSave = [];
+
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+
+      if (fs.existsSync(file.path)) {
+        const filePath = await this.moveUploadsFileToFolder(file, "checklists");
+        imagesToSave.push({ type: "storage", link: filePath });
+      }
+    }
+
+    return [...imagesToSave];
+  };
+
   sendMessageForNewOrder = async ({ message, senderId, opponentId = null }) => {
     if (!opponentId) {
       opponentId = senderId;
@@ -1129,7 +1144,14 @@ class OrderController extends Controller {
 
   approveTenantGotListing = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { token } = req.body;
+      const {
+        token,
+        itemMatchesDescription = null,
+        itemMatchesPhotos = null,
+        itemFullyFunctional = null,
+        partsGoodCondition = null,
+        providedGuidelines = null,
+      } = req.body;
       const { userId } = req.userData;
 
       const orderInfo = await this.orderModel.getFullByTenantListingToken(
@@ -1151,6 +1173,18 @@ class OrderController extends Controller {
           "Unable to perform an operation for the current order status"
         );
       }
+
+      const checklistImages = await this.getChecklistImages(req);
+
+      await this.checklistModel.createByTenant({
+        itemMatchesDescription,
+        itemMatchesPhotos,
+        itemFullyFunctional,
+        partsGoodCondition,
+        providedGuidelines,
+        orderId: orderInfo.id,
+        images: checklistImages,
+      });
 
       const { token: ownerToken, image: generatedImage } =
         await this.generateQrCodeInfo(STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL);
@@ -1472,7 +1506,14 @@ class OrderController extends Controller {
   finishedByOwner = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { userId } = req.userData;
-      const { token } = req.body;
+      const {
+        token,
+        itemMatchesDescription = null,
+        itemMatchesPhotos = null,
+        itemFullyFunctional = null,
+        partsGoodCondition = null,
+        providedGuidelines = null,
+      } = req.body;
 
       const orderInfo = await this.orderModel.getFullByOwnerListingToken(token);
 
@@ -1499,6 +1540,18 @@ class OrderController extends Controller {
           "You cannot finished an order with its current status"
         );
       }
+
+      const checklistImages = await this.getChecklistImages(req);
+
+      await this.checklistModel.createByOwner({
+        itemMatchesDescription,
+        itemMatchesPhotos,
+        itemFullyFunctional,
+        partsGoodCondition,
+        providedGuidelines,
+        orderId: orderInfo.id,
+        images: checklistImages,
+      });
 
       const newStatus = await this.orderModel.orderFinished(token);
 

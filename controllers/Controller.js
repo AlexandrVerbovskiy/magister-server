@@ -68,6 +68,7 @@ const {
 
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
+const checklistModel = require("../models/checklistModel");
 const CLIENT_URL = process.env.CLIENT_URL;
 
 class Controller {
@@ -111,13 +112,14 @@ class Controller {
     this.chatRelationModel = chatRelationModel;
 
     this.socketModel = socketModel;
+    this.checklistModel = checklistModel;
 
     this.mailTransporter = nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port: process.env.MAIL_PORT,
       secure: false,
       tls: {
-        rejectUnauthorized: false, 
+        rejectUnauthorized: false,
       },
     });
 

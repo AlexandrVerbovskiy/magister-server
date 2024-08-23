@@ -6,6 +6,7 @@ const {
   isVerified,
   isSupport,
   isFileLimit,
+  isSummaryFileLimit,
 } = require("../../middlewares");
 
 const { imageUpload } = require("../../utils");
@@ -92,6 +93,9 @@ module.exports = (io) => {
   router.post(
     "/approve-client-got-listing",
     isAuth,
+    imageUpload.any(),
+    isSummaryFileLimit,
+    isFileLimit,
     approveTenantGotListingValidation,
     orderController.approveTenantGotListing
   );
@@ -99,6 +103,9 @@ module.exports = (io) => {
   router.post(
     "/finished-by-owner",
     isAuth,
+    imageUpload.any(),
+    isSummaryFileLimit,
+    isFileLimit,
     finishOrderByOwnerValidation,
     orderController.finishedByOwner
   );

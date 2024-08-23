@@ -113,6 +113,8 @@ module.exports = {
     CHAT_MESSAGE_CONTENTS: "chat_messages_contents",
     SOCKETS: "sockets",
     ACTIVE_ACTIONS: "active_actions",
+    CHECKLISTS: "checklists",
+    CHECKLIST_PHOTOS: "checklist_photos",
   },
   ORDER_STATUSES: {
     PENDING_OWNER: "pending_owner",
@@ -231,6 +233,10 @@ module.exports = {
     CREDIT_CARD: "credit-card",
     BANK_TRANSFER: "bank-transfer",
   },
+  CHECKLIST_TYPES:{
+    OWNER:"OWNER",
+    TENANT:"tenant"
+  },
   LIMITS: { MAX_RENTAL_DURATION: 350 },
   DEFAULTS: { LOCATION: { lat: 53.390044, lng: -2.59695 } },
   JWT_DEFAULT_ACCESS_LIFETIME: "7d",
@@ -246,5 +252,5 @@ module.exports = {
   ORDER_TENANT_GOT_ITEM_APPROVE_URL: "/dashboard/orders/approve-tenant-listing",
   ORDER_OWNER_GOT_ITEM_APPROVE_URL: "/dashboard/orders/approve-owner-listing",
   CURRENCY_NAME: "GBP", //"USD"
-  CURRENCY:"£"//"$"
+  CURRENCY: "£", //"$"
 };
