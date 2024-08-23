@@ -129,6 +129,20 @@ class ListingsModel extends Model {
     return res[0]["id"];
   };
 
+  createImages = async (images, listingId) => {
+    const imageInsertData = images.map((image) => ({
+      listing_id: listingId,
+      link: image.link,
+      type: image.type,
+    }));
+
+    const res = await db(LISTING_IMAGES_TABLE)
+      .insert(imageInsertData)
+      .returning("id");
+
+    return res.map((row) => row.id);
+  };
+
   updateImage = async ({ type, link, listingId, id }) => {
     await db(LISTING_IMAGES_TABLE).where("id", id).update({
       listing_id: listingId,
@@ -194,16 +208,7 @@ class ListingsModel extends Model {
       .returning("id");
 
     const listingId = res[0]["id"];
-
-    for (let i = 0; i < listingImages.length; i++) {
-      const image = listingImages[i];
-      await this.createImage({
-        type: image.type,
-        link: image.link,
-        listingId,
-      });
-    }
-
+    await this.createImages(listingImages, listingId);
     const currentListingImages = await this.getListingImages(listingId);
 
     return {
