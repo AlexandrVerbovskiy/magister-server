@@ -221,12 +221,12 @@ class Controller {
       context,
     };
 
-    /*try {
+    try {
       return await this.mailTransporter.sendMail(mailOptions);
     } catch (error) {
       console.error("Error sending email:", error);
       return { error };
-    }*/
+    }
   };
 
   sendEmailVerificationMail = async (email, name, token) => {
