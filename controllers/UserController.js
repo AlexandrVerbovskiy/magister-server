@@ -83,7 +83,7 @@ class UserController extends Controller {
       let userId = null;
 
       if (user) {
-        if (!user.active) {
+        if (!user.active || user.deleted) {
           return this.sendSuccessResponse(
             res,
             STATIC.ERRORS.UNAUTHORIZED,
@@ -192,7 +192,7 @@ class UserController extends Controller {
       };
     }
 
-    if (!user.active) {
+    if (!user.active || user.deleted) {
       return {
         error: true,
         errorBody: STATIC.ERRORS.UNAUTHORIZED,
@@ -364,6 +364,16 @@ class UserController extends Controller {
       const message = active
         ? "User activated successfully"
         : "User deactivated successfully";
+
+      const hasOrders = await this.orderModel.getUserTotalCountOrders(id);
+
+      if (hasOrders) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.FORBIDDEN,
+          "User has unfinished orders"
+        );
+      }
 
       this.saveUserAction(
         req,
@@ -586,6 +596,16 @@ class UserController extends Controller {
 
       if (id == currentId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
+      }
+
+      const hasOrders = await this.orderModel.getUserTotalCountOrders(id);
+
+      if (hasOrders) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.FORBIDDEN,
+          "User has unfinished orders"
+        );
       }
 
       await this.userModel.delete(id);
