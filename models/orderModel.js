@@ -10,6 +10,7 @@ const {
 } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
+const checklistModel = require("./checklistModel");
 
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -22,6 +23,7 @@ const TENANT_COMMENTS_TABLE = STATIC.TABLES.TENANT_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const CHAT_TABLE = STATIC.TABLES.CHATS;
 const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
+const CHECKLISTS_TABLE = STATIC.TABLES.CHECKLISTS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
@@ -207,6 +209,22 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.name`,
   ];
 
+  checklistsFields = [
+    `owner_checklists.id as ownerChecklistId`,
+    `owner_checklists.item_matches_description as ownerChecklistItemMatchesDescription`,
+    `owner_checklists.item_matches_photos as ownerChecklistItemMatchesPhotos`,
+    `owner_checklists.item_fully_functional as ownerChecklistItemFullyFunctional`,
+    `owner_checklists.parts_good_condition as ownerChecklistPartsGoodCondition`,
+    `owner_checklists.provided_guidelines as ownerChecklistProvidedGuidelines`,
+
+    `tenant_checklists.id as tenantChecklistId`,
+    `tenant_checklists.item_matches_description as tenantChecklistItemMatchesDescription`,
+    `tenant_checklists.item_matches_photos as tenantChecklistItemMatchesPhotos`,
+    `tenant_checklists.item_fully_functional as tenantChecklistItemFullyFunctional`,
+    `tenant_checklists.parts_good_condition as tenantChecklistPartsGoodCondition`,
+    `tenant_checklists.provided_guidelines as tenantChecklistProvidedGuidelines`,
+  ];
+
   processStatuses = [
     STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
     STATIC.ORDER_STATUSES.PENDING_TENANT,
@@ -300,6 +318,16 @@ class OrderModel extends Model {
     );
 
     return query;
+  };
+
+  orderChecklistsJoin = (query, orderTable = ORDERS_TABLE) => {
+    return query
+      .joinRaw(
+        `LEFT JOIN ${CHECKLISTS_TABLE} as owner_checklists ON (owner_checklists.order_id = ${orderTable}.id AND owner_checklists.type = '${STATIC.CHECKLIST_TYPES.OWNER}')`
+      )
+      .joinRaw(
+        `LEFT JOIN ${CHECKLISTS_TABLE} as tenant_checklists ON (tenant_checklists.order_id = ${orderTable}.id AND tenant_checklists.type = '${STATIC.CHECKLIST_TYPES.TENANT}')`
+      );
   };
 
   fullBaseGetQuery = (filter) => {
@@ -765,6 +793,44 @@ class OrderModel extends Model {
       return await query
         .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
         .first();
+    });
+
+  getFullWithPaymentAndChecklistsById = (id) =>
+    this.getFullByBaseRequest(async () => {
+      let query = db(ORDERS_TABLE);
+      query = this.fullOrdersJoin(query);
+      query = this.payedInfoJoin(query);
+      query = this.orderChecklistsJoin(query);
+      query = query.where(`${ORDERS_TABLE}.id`, id);
+
+      const order = await query
+        .select([
+          ...this.checklistsFields,
+          ...this.fullVisibleFields,
+          ...this.selectPartPayedInfo,
+        ])
+        .first();
+
+      if (!order) {
+        return null;
+      }
+
+      order["ownerChecklistsImages"] = [];
+      order["tenantChecklistsImages"] = [];
+
+      if (order["ownerChecklistId"]) {
+        order["ownerChecklistsImages"] = await checklistModel.getImages(
+          order["ownerChecklistId"]
+        );
+      }
+
+      if (order["tenantChecklistId"]) {
+        order["tenantChecklistsImages"] = await checklistModel.getImages(
+          order["tenantChecklistId"]
+        );
+      }
+
+      return order;
     });
 
   getFullByIdWithDisputeChat = (id, userId) =>
