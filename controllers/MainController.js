@@ -689,6 +689,14 @@ class MainController extends Controller {
 
       const listing = await this.listingModel.getFullById(listingId);
 
+      if (!listing) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Listing not found"
+        );
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         request,
         listing,

@@ -286,6 +286,7 @@ class ListingsModel extends Model {
         `${LISTINGS_TABLE}.category_id`
       )
       .where(`${LISTINGS_TABLE}.id`, id)
+      .where(`${USERS_TABLE}.deleted`, false)
       .select(this.fullVisibleFields)
       .first();
   };
@@ -710,6 +711,7 @@ class ListingsModel extends Model {
     query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
+      .where(`${USERS_TABLE}.deleted`, false)
       .where(`${LISTINGS_TABLE}.active`, true);
 
     const queryCities = [...cities];
@@ -918,6 +920,7 @@ class ListingsModel extends Model {
     query = query
       .where("approved", true)
       .where(`${USERS_TABLE}.active`, true)
+      .where(`${USERS_TABLE}.deleted`, false)
       .where(`${LISTINGS_TABLE}.active`, true);
 
     const queryCities = [...cities];

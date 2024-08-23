@@ -70,6 +70,7 @@ class UserModel extends Model {
         "need_regular_view_info_form as needRegularViewInfoForm",
         "has_password_access as hasPasswordAccess",
         "active",
+        "deleted",
       ])
       .where("email", email)
       .first();
@@ -253,7 +254,11 @@ class UserModel extends Model {
   };
 
   getFullById = async (id) => {
-    return await db(USERS_TABLE).select(this.allFields).where("id", id).first();
+    return await db(USERS_TABLE)
+      .select(this.allFields)
+      .where("id", id)
+      .where("deleted", false)
+      .first();
   };
 
   checkRole = async (id, role) => {
@@ -304,6 +309,11 @@ class UserModel extends Model {
       .returning("active");
 
     return res[0].active;
+  };
+
+  delete = async (id) => {
+    await db(USERS_TABLE).where({ id }).update({ deleted: true });
+    return true;
   };
 
   setVerified = async (id, verified) => {
@@ -400,7 +410,10 @@ class UserModel extends Model {
     query = this.queryByVerified(query, verified);
     query = this.queryByRole(query, role);
 
-    const result = await query.count("* as count").first();
+    const result = await query
+      .where("deleted", false)
+      .count("* as count")
+      .first();
     return +result?.count;
   };
 
@@ -428,6 +441,7 @@ class UserModel extends Model {
     query = this.queryByRole(query, role);
 
     return await query
+      .where("deleted", false)
       .joinRaw(
         `LEFT JOIN ${SENDER_PAYMENTS_TABLE} ON
        (${SENDER_PAYMENTS_TABLE}.user_id = ${USERS_TABLE}.id AND ${SENDER_PAYMENTS_TABLE}.hidden = false)`
@@ -453,12 +467,6 @@ class UserModel extends Model {
       .orderBy(order, orderType)
       .limit(count)
       .offset(start);
-  };
-
-  delete = async (id) => {
-    await db(USER_DOCUMENTS_TABLE).where("user_id", id).del();
-    await db(USER_VERIFY_REQUESTS_TABLE).where("user_id", id).del();
-    await db(USERS_TABLE).where({ id }).del();
   };
 
   updateById = async (id, userData) => {

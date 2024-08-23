@@ -1344,6 +1344,31 @@ class OrderModel extends Model {
         STATIC.ORDER_STATUSES.FINISHED,
       ])
       .first();
+      
+    return +resultSelect.count ?? 0;
+  };
+
+  getUserActualTotalCountOrders = async (userId) => {
+    let query = db(ORDERS_TABLE);
+    query = this.orderListingJoin(query);
+
+    const resultSelect = await query
+      .select(db.raw("COUNT(*) as count"))
+      .where(function () {
+        this.where(`${LISTINGS_TABLE}.owner_id`, userId).orWhere(
+          `${ORDERS_TABLE}.tenant_id`,
+          userId
+        );
+      })
+      .whereIn(`${ORDERS_TABLE}.status`, [
+        STATIC.ORDER_STATUSES.PENDING_OWNER,
+        STATIC.ORDER_STATUSES.PENDING_TENANT,
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
+        STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
+        STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT,
+      ])
+      .whereNot("cancel_status", STATIC.ORDER_CANCELATION_STATUSES.CANCELLED)
+      .first();
     return resultSelect.count ?? 0;
   };
 
