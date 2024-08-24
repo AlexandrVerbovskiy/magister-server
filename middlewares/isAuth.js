@@ -22,9 +22,9 @@ async function isAuth(request, response, next) {
   }
 
   const userId = resValidate.userId;
-  const user = await userModel.getById(userId);
+  const user = await userModel.getByIdWithStatuses(userId);
 
-  if (!user) {
+  if (!user || !user.active || user.deleted) {
     return response.status(STATIC.ERRORS.UNAUTHORIZED.STATUS).json({
       isError: true,
       message: STATIC.ERRORS.UNAUTHORIZED.DEFAULT_MESSAGE,
