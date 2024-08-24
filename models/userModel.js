@@ -246,6 +246,13 @@ class UserModel extends Model {
 
   getById = (id) => this.baseGetById(id, USERS_TABLE);
 
+  getByIdWithStatuses = async (id) => {
+    return await db(USERS_TABLE)
+      .where("id", id)
+      .select([...this.visibleFields, "active", "deleted"])
+      .first();
+  };
+
   getByIdWithEmailVerified = async (id) => {
     return await db(USERS_TABLE)
       .select([...this.allFields, "email_verified as emailVerified"])
