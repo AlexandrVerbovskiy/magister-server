@@ -97,6 +97,14 @@ class ListingApprovalRequestController extends Controller {
 
       const listing = await this.listingModel.getFullWithoutImages(listingId);
 
+      if (!listing) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.NOT_FOUND,
+          "Listing wasn't found"
+        );
+      }
+
       this.saveUserAction(
         req,
         `Accepted a request to create a listing with name ${listing.name}`

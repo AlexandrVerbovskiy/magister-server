@@ -167,6 +167,14 @@ class OrderController extends Controller {
 
     const listing = await this.listingModel.getFullById(listingId);
 
+    if (!listing) {
+      return {
+        error: true,
+        baseInfo: STATIC.ERRORS.NOT_FOUND,
+        message: "Listing not found",
+      };
+    }
+
     this.sendBookingApprovalRequestMail(listing.userEmail);
 
     const firstImage = listing.listingImages[0];
