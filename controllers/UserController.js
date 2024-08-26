@@ -84,7 +84,7 @@ class UserController extends Controller {
 
       if (user) {
         if (!user.active || user.deleted) {
-          return this.sendSuccessResponse(
+          return this.sendErrorResponse(
             res,
             STATIC.ERRORS.UNAUTHORIZED,
             "Your account has been blocked. For more information, contact the administrator"
