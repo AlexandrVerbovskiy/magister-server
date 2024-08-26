@@ -851,6 +851,8 @@ class ListingsModel extends Model {
       query = query.where("owner_id", userId);
     }
 
+    query = query.where(`${USERS_TABLE}.deleted`, false);
+
     return query;
   };
 
@@ -1036,6 +1038,8 @@ class ListingsModel extends Model {
     if (props.userId) {
       query = query.where({ owner_id: props.userId });
     }
+
+    query = query.where(`${USERS_TABLE}.deleted`, false)
 
     return query;
   };
