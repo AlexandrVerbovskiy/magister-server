@@ -319,7 +319,11 @@ class UserModel extends Model {
   };
 
   delete = async (id) => {
-    await db(USERS_TABLE).where({ id }).update({ deleted: true });
+    const user = await this.getById(id);
+    const newEmail = user.email + "_deleted" + new Date().getTime();
+    await db(USERS_TABLE)
+      .where({ id })
+      .update({ deleted: true, email: newEmail });
     return true;
   };
 
