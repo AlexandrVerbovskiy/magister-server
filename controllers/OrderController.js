@@ -664,8 +664,6 @@ class OrderController extends Controller {
       if (resetParentId) {
         this.sendBookingApprovalRequestMail(order.ownerEmail);
 
-        console.log(order);
-
         const firstImage = order.listingImages[0];
         const ownerId = order.ownerId;
         const tenantId = order.tenantId;

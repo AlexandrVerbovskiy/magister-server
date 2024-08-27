@@ -23,6 +23,7 @@ class ListingApprovalRequestModel extends Model {
     `${USERS_TABLE}.phone as userPhone`,
     `${USERS_TABLE}.photo as userPhoto`,
     `${USERS_TABLE}.id as userId`,
+    `${USERS_TABLE}.verified as userVerified`,
     `${LISTING_CATEGORIES_TABLE}.name as categoryName`,
     `${LISTINGS_TABLE}.category_id as categoryId`,
     `${LISTINGS_TABLE}.other_category as otherCategory`,
