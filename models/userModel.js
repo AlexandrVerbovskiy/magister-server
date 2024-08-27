@@ -78,7 +78,7 @@ class UserModel extends Model {
 
   getFullByEmail = async (email) => {
     return await db(USERS_TABLE)
-      .select(this.allFields)
+      .select([...this.allFields, "deleted"])
       .where("email", email)
       .first();
   };
@@ -455,9 +455,8 @@ class UserModel extends Model {
       .where("deleted", false)
       .joinRaw(
         `LEFT JOIN ${SENDER_PAYMENTS_TABLE} ON
-       (${SENDER_PAYMENTS_TABLE}.user_id = ${USERS_TABLE}.id AND ${SENDER_PAYMENTS_TABLE}.hidden = false)`
+       (${SENDER_PAYMENTS_TABLE}.user_id = ${USERS_TABLE}.id AND ${SENDER_PAYMENTS_TABLE}.hidden = false AND ${SENDER_PAYMENTS_TABLE}.admin_approved = true)`
       )
-      .leftJoin(ORDERS_TABLE, `${ORDERS_TABLE}.tenant_id`, `${USERS_TABLE}.id`)
       .joinRaw(
         `LEFT JOIN ${USER_VERIFY_REQUESTS_TABLE} ON (${USER_VERIFY_REQUESTS_TABLE}.user_id = ${USERS_TABLE}.id AND (${USER_VERIFY_REQUESTS_TABLE}.has_response = false))`
       )
@@ -472,7 +471,11 @@ class UserModel extends Model {
         `${USER_VERIFY_REQUESTS_TABLE}.has_response as verifyRequestHasResponse`,
         db.raw(`COUNT(${SENDER_PAYMENTS_TABLE}.id) as "totalRents"`),
         db.raw(`SUM(${SENDER_PAYMENTS_TABLE}.money) as "totalSpent"`),
-        db.raw(`MAX(${ORDERS_TABLE}.start_date) as "lastRenterDate"`),
+        db.raw(`(
+          SELECT MAX(o.start_date)
+          FROM ${ORDERS_TABLE} o
+          WHERE o.tenant_id = ${USERS_TABLE}.id
+        ) as "lastRenterDate"`),
       ])
       .groupBy([`${USERS_TABLE}.id`, `${USER_VERIFY_REQUESTS_TABLE}.id`])
       .orderBy(order, orderType)
