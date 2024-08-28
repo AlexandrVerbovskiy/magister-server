@@ -437,7 +437,7 @@ class MainController extends Controller {
     const getOrderByRequest = async () => {
       const order = await this.orderModel.getFullWithCommentsById(id, userId);
 
-      if (order.orderParentId) {
+      if (order && order.orderParentId) {
         return null;
       }
 
@@ -490,7 +490,7 @@ class MainController extends Controller {
     const getOrderByRequest = async () => {
       const order = await this.orderModel.getFullByTenantListingToken(token);
 
-      if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
+      if (order && order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
         return null;
       }
 
@@ -527,7 +527,7 @@ class MainController extends Controller {
     const getOrderByRequest = async () => {
       const order = await this.orderModel.getFullByOwnerListingToken(token);
 
-      if (order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
+      if (order && order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
         return null;
       }
 
