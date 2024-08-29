@@ -1540,7 +1540,7 @@ class MainController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      const result = await this.baseVerifyEmail(user.email, token);
+      const result = await UserController.baseVerifyEmail(user.email, token);
 
       if (result.error) {
         return this.sendErrorResponse(res, result.error, result.message);
