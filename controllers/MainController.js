@@ -490,7 +490,10 @@ class MainController extends Controller {
     const getOrderByRequest = async () => {
       const order = await this.orderModel.getFullByTenantListingToken(token);
 
-      if (order && order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT) {
+      if (
+        order &&
+        order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT
+      ) {
         return null;
       }
 
@@ -527,7 +530,10 @@ class MainController extends Controller {
     const getOrderByRequest = async () => {
       const order = await this.orderModel.getFullByOwnerListingToken(token);
 
-      if (order && order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER) {
+      if (
+        order &&
+        order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER
+      ) {
         return null;
       }
 
@@ -1515,6 +1521,37 @@ class MainController extends Controller {
         getOrderByRequest,
         getDopOrderOptions
       );
+    });
+
+  getEmailVerificationInfo = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        authorized: true,
+      });
+      const { userId } = req.userData;
+      const token = req.body.token;
+
+      if (!userId) {
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          authorized: false,
+        });
+      }
+
+      const user = await this.userModel.getById(userId);
+
+      if (!user) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      /*const result = await this.baseVerifyEmail(user.email, token);
+
+      if (result.error) {
+        return this.sendErrorResponse(res, result.error, result.message);
+      }*/
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        authorized: true,
+      });
     });
 
   test = (req, res) =>
