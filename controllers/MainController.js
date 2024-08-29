@@ -1525,9 +1525,6 @@ class MainController extends Controller {
 
   getEmailVerificationInfo = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        authorized: true,
-      });
       const { userId } = req.userData;
       const token = req.body.token;
 
@@ -1543,11 +1540,11 @@ class MainController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      /*const result = await this.baseVerifyEmail(user.email, token);
+      const result = await this.baseVerifyEmail(user.email, token);
 
       if (result.error) {
         return this.sendErrorResponse(res, result.error, result.message);
-      }*/
+      }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         authorized: true,
