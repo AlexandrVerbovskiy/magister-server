@@ -426,31 +426,39 @@ class UserController extends Controller {
       });
     });
 
+  baseVerifyEmail = async (email, token) => {
+    const resValidate = validateToken(token);
+
+    if (!resValidate || !resValidate.userId) {
+      return {
+        error: STATIC.ERRORS.BAD_REQUEST,
+        message: "Token is not valid",
+      };
+    }
+
+    const userId = resValidate.userId;
+    const user = await this.userModel.getByIdWithEmailVerified(userId);
+
+    if (user.email !== email || user.emailVerified) {
+      return {
+        error: STATIC.ERRORS.BAD_REQUEST,
+        message: "Token is not valid",
+      };
+    }
+
+    await this.userModel.setEmailVerified(userId);
+
+    return { error: null };
+  };
+
   verifyEmail = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { email, token } = req.body;
-      const resValidate = validateToken(token);
+      const result = await this.baseVerifyEmail(email, token);
 
-      if (!resValidate || !resValidate.userId) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.BAD_REQUEST,
-          "Token is not valid"
-        );
+      if (result.error) {
+        return this.sendErrorResponse(res, result.error, result.message);
       }
-
-      const userId = resValidate.userId;
-      const user = await this.userModel.getByIdWithEmailVerified(userId);
-
-      if (user.email !== email || user.emailVerified) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.BAD_REQUEST,
-          "Token is not valid"
-        );
-      }
-
-      await this.userModel.setEmailVerified(userId);
 
       return this.sendSuccessResponse(
         res,
