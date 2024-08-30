@@ -34,7 +34,7 @@ class DisputeController extends Controller {
       }
     );
 
-    disputes = await this.ownerCommentModel.bindAverageForKeyEntities(
+    disputes = await this.tenantCommentModel.bindAverageForKeyEntities(
       disputes,
       "tenantId",
       {

@@ -158,10 +158,10 @@ class ListingController extends Controller {
 
     listings = await this.ownerCommentModel.bindAverageForKeyEntities(
       listings,
-      "id",
+      "ownerId",
       {
-        ownerCommentCountName: "commentCount",
-        ownerAverageRatingName: "averageRating",
+        commentCountName: "ownerCommentCount",
+        averageRatingName: "ownerAverageRating",
       }
     );
 
@@ -533,7 +533,7 @@ class ListingController extends Controller {
     this.baseWrapper(req, res, async () => {
       const id = req.body.id;
       const approved = await this.listingModel.changeApprove(id);
-      
+
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
