@@ -207,8 +207,8 @@ class ListingApprovalRequestModel extends Model {
     query = this.baseListJoin(query);
     const request = await query
     .select(this.visibleFields)
-    .where("id", requestId)
-    .orderBy("id", "desc")
+    .where(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, requestId)
+    .orderBy(`${LISTING_APPROVAL_REQUESTS_TABLE}.id`, "desc")
     .first();
 
     return request ?? {};
