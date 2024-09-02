@@ -203,14 +203,15 @@ class ListingApprovalRequestModel extends Model {
   };
 
   getFullById = async (requestId) => {
-    let query = await db(LISTING_APPROVAL_REQUESTS_TABLE);
+    let query = db(LISTING_APPROVAL_REQUESTS_TABLE);
     query = this.baseListJoin(query);
-    query = query.select(this.visibleFields)
-      .where("id", requestId)
-      .orderBy("id", "desc")
-      .first();
+    const request = await query
+    .select(this.visibleFields)
+    .where("id", requestId)
+    .orderBy("id", "desc")
+    .first();
 
-    return requestInfo ?? {};
+    return request ?? {};
   };
 }
 
