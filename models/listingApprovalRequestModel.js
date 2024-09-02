@@ -203,8 +203,9 @@ class ListingApprovalRequestModel extends Model {
   };
 
   getFullById = async (requestId) => {
-    const requestInfo = await db(LISTING_APPROVAL_REQUESTS_TABLE)
-      .select(this.visibleFields)
+    let query = await db(LISTING_APPROVAL_REQUESTS_TABLE);
+    query = this.baseListJoin(query);
+    query = query.select(this.visibleFields)
       .where("id", requestId)
       .orderBy("id", "desc")
       .first();
