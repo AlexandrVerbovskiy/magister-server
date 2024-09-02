@@ -60,6 +60,8 @@ class CronCommandController extends Controller {
       await this.baseReset(STATIC.TABLES.ORDER_UPDATE_REQUESTS);
 
       await db(STATIC.TABLES.ORDERS).whereNotNull("parent_id").delete();
+      await this.baseReset(STATIC.TABLES.CHECKLIST_PHOTOS);
+      await this.baseReset(STATIC.TABLES.CHECKLISTS);
       await this.baseReset(STATIC.TABLES.ORDERS);
 
       await this.baseReset(STATIC.TABLES.USER_LISTING_FAVORITES);
@@ -67,12 +69,12 @@ class CronCommandController extends Controller {
       await this.baseReset(STATIC.TABLES.LISTING_CATEGORY_CREATE_NOTIFICATIONS);
       await this.baseReset(STATIC.TABLES.LISTING_IMAGES);
       await this.baseReset(STATIC.TABLES.LISTINGS);
+      await this.baseReset(STATIC.TABLES.SEARCHED_WORDS);
       await this.baseReset(STATIC.TABLES.LISTING_CATEGORIES);
 
       await this.baseReset(STATIC.TABLES.LOGS);
       await this.baseReset(STATIC.TABLES.USER_EVENT_LOGS);
       await this.baseReset(STATIC.TABLES.ACTIVE_ACTIONS);
-      await this.baseReset(STATIC.TABLES.SEARCHED_WORDS);
       await this.baseReset(STATIC.TABLES.PHONE_VERIFIED_CODES);
       await this.baseReset(STATIC.TABLES.SOCKETS);
       await this.baseReset(STATIC.TABLES.TWO_FACTOR_AUTH_CODES);
