@@ -201,6 +201,16 @@ class ListingApprovalRequestModel extends Model {
     const request = await this.baseGetByField("id", requestId);
     return request ?? {};
   };
+
+  getFullById = async (requestId) => {
+    const requestInfo = await db(LISTING_APPROVAL_REQUESTS_TABLE)
+      .select(this.visibleFields)
+      .where("id", requestId)
+      .orderBy("id", "desc")
+      .first();
+
+    return requestInfo ?? {};
+  };
 }
 
 module.exports = new ListingApprovalRequestModel();
