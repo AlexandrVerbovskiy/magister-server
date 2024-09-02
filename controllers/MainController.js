@@ -685,7 +685,7 @@ class MainController extends Controller {
   getAdminListingApprovalRequestPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      const request = await this.listingApprovalRequestModel.getById(id);
+      const request = await this.listingApprovalRequestModel.getFullById(id);
 
       if (!request.id) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
