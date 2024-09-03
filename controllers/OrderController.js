@@ -4,9 +4,9 @@ const {
   capturePaypalOrder,
   tenantPaymentCalculate,
   getDaysDifference,
-  removeDuplicates,
   checkStartEndHasConflict,
   isOrderCanBeAccepted,
+  invoicePdfGeneration,
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
@@ -1587,7 +1587,7 @@ class OrderController extends Controller {
       });
     });
 
-  generateInvoicePdf = (req, res) =>
+ generateInvoicePdf = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const userId = req.userData.userId;
@@ -1597,20 +1597,24 @@ class OrderController extends Controller {
         return res.sendStatus(404);
       }
 
-      const buffer = await this.baseInvoicePdfGeneration({
-        orderOfferStartDate: order.offerStartDate,
-        orderOfferEndDate: order.offerEndDate,
-        orderOfferPricePerDay: order.offerPricePerDay,
-        tenantFee: order.tenantFee,
-        listingAddress: order.listingAddress,
-        listingCity: order.listingCity,
-        orderId: order.id,
-        listingName: order.listingName,
-        adminApproved: false,
-        dueAt: null,
-      });
-      res.contentType("application/pdf");
-      res.send(buffer);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
+
+      await invoicePdfGeneration(
+        {
+          orderOfferStartDate: order.offerStartDate,
+          orderOfferEndDate: order.offerEndDate,
+          orderOfferPricePerDay: order.offerPricePerDay,
+          tenantFee: order.tenantFee,
+          listingAddress: order.listingAddress,
+          listingCity: order.listingCity,
+          orderId: order.id,
+          listingName: order.listingName,
+          adminApproved: false,
+          dueAt: null,
+        },
+        res
+      );
     });
 
   wrapOrderFullInfo = async (order, userId) => {

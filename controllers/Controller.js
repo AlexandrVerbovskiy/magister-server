@@ -213,7 +213,7 @@ class Controller {
   };
 
   sendMail = async (to, subject, template, context) => {
-    const mailOptions = {
+    /*const mailOptions = {
       from: `"${process.env.MAIL_FROM}" ${process.env.MAIL_EMAIL}`,
       to,
       subject,
@@ -223,6 +223,25 @@ class Controller {
 
     try {
       return await this.mailTransporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return { error };
+    }*/
+
+    const url = process.env.EMAIL_SEND_URL;
+    const data = {
+      recipient: to,
+      subject: subject,
+      htmlBody: this.generateHtmlByHandlebars(template, context),
+      fromName: "RentAbout",
+    };
+
+    try {
+      const response = await axios.post(url, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     } catch (error) {
       console.error("Error sending email:", error);
       return { error };
@@ -658,14 +677,14 @@ class Controller {
   getFileByName = (req, name) =>
     req.files.find((field) => field.fieldname == name);
 
-  generateHtmlByHandlebars(templatePath, params = {}) {
+  generateHtmlByHandlebars = (templatePath, params = {}) => {
     const source = fs.readFileSync(
       path.resolve(`./${templatePath}.handlebars`),
       "utf8"
     );
     const template = handlebars.compile(source);
     return template(params);
-  }
+  };
 
   addTimeInfoToOptions = (options, timeInfos) => {
     options["timeInfos"] = timeInfos;
@@ -714,63 +733,6 @@ class Controller {
 
     return { token, image };
   }
-
-  baseInvoicePdfGeneration = async (payment) => {
-    const offerStartDate = payment.orderOfferStartDate;
-    const offerEndDate = payment.orderOfferEndDate;
-    const offerPricePerDay = payment.orderOfferPricePerDay;
-
-    const offerTotalPrice = tenantPaymentCalculate(
-      offerStartDate,
-      offerEndDate,
-      payment.tenantFee,
-      offerPricePerDay
-    );
-
-    const offerSubTotalPrice =
-      getFactOrderDays(offerStartDate, offerEndDate) * offerPricePerDay;
-
-    const factTotalFee = (offerSubTotalPrice * payment.tenantFee) / 100;
-
-    const durationString =
-      offerStartDate == offerEndDate
-        ? shortTimeConverter(offerStartDate)
-        : `${shortTimeConverter(offerStartDate)} - ${shortTimeConverter(
-            offerEndDate
-          )}`;
-
-    const createdInfo = payment.createdAt
-      ? shortTimeConverter(payment.createdAt)
-      : "-";
-
-    const dueInfo = payment.createdAt
-      ? shortTimeConverter(payment.createdAt)
-      : "-";
-
-    const params = {
-      billTo: payment.listingAddress ?? payment.listingCity,
-      shipTo: payment.listingAddress ?? payment.listingCity,
-      invoiceId: payment.orderId,
-      invoiceDate: createdInfo,
-      purchaseOrder: payment.orderId,
-      dueDate: dueInfo,
-      offer: {
-        factTotalPrice: offerTotalPrice.toFixed(2),
-        fee: payment.tenantFee,
-        listingName: payment.listingName,
-        pricePerDay: offerPricePerDay.toFixed(2),
-        subTotalPrice: offerSubTotalPrice.toFixed(2),
-        factTotalFee: factTotalFee.toFixed(2),
-        durationString,
-      },
-      payed: payment.adminApproved
-        ? offerTotalPrice.toFixed(2)
-        : (0).toFixed(2),
-      currency: STATIC.CURRENCY,
-    };
-
-    return await this.generatePdf("/pdfs/invoice", params);
-  };
 
   sendSocketMessageToUserOpponent = async (
     chatId,

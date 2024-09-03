@@ -7,5 +7,6 @@ module.exports = () => {
   router.post("/pay-rent-for-owners", cronCommandController.payRentForOwners);
   router.post("/reset-database", cronCommandController.resetDatabase);
   router.post("/email-test", cronCommandController.emailTest);
+  router.post("/test", cronCommandController.test);
   return router;
 };
