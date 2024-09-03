@@ -13,4 +13,5 @@ module.exports = {
   ...require("./paymentCalculations"),
   ...require("./helpers"),
   ...require("./geocodingApi"),
+  ...require("./pdfGenerations"),
 };

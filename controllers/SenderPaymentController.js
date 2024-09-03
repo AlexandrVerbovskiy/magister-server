@@ -1,5 +1,9 @@
 const STATIC = require("../static");
-const { createPaypalOrder, tenantPaymentCalculate } = require("../utils");
+const {
+  createPaypalOrder,
+  tenantPaymentCalculate,
+  invoicePdfGeneration,
+} = require("../utils");
 
 const Controller = require("./Controller");
 
@@ -159,9 +163,10 @@ class SenderPaymentController extends Controller {
         return res.sendStatus(404);
       }
 
-      const buffer = await this.baseInvoicePdfGeneration(payment);
-      res.contentType("application/pdf");
-      res.send(buffer);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
+
+      await invoicePdfGeneration(payment, res);
     });
 
   updateBankTransferTransactionProof = (req, res) =>
