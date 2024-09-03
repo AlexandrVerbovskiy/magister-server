@@ -92,6 +92,13 @@ class CronCommandController extends Controller {
       );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
+
+  test = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        test: "123",
+      });
+    });
 }
 
 module.exports = CronCommandController;
