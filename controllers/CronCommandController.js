@@ -81,6 +81,9 @@ class CronCommandController extends Controller {
       await this.baseReset(STATIC.TABLES.USER_DOCUMENTS);
       await this.baseReset(STATIC.TABLES.USER_VERIFY_REQUESTS);
       await db(STATIC.TABLES.USERS).whereNot("email", "admin@ydk.com").delete();
+      await db(STATIC.TABLES.USERS)
+        .where("email", "admin@ydk.com")
+        .update({ paypal_id: null });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
