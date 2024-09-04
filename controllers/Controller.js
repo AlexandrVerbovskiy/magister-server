@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
 const AWS = require("aws-sdk");
+const axios = require("axios");
 
 const twilioClient = require("twilio")(
   process.env.TWILIO_SID,
@@ -232,7 +233,7 @@ class Controller {
     const data = {
       recipient: to,
       subject: subject,
-      htmlBody: this.generateHtmlByHandlebars(template, context),
+      htmlBody: this.generateHtmlByHandlebars(`mails/${template}`, context),
       fromName: "RentAbout",
     };
 
@@ -678,6 +679,26 @@ class Controller {
     req.files.find((field) => field.fieldname == name);
 
   generateHtmlByHandlebars = (templatePath, params = {}) => {
+    const partialsDir = path.resolve(
+      STATIC.MAIN_DIRECTORY,
+      "mails",
+      "components"
+    );
+    const filenames = fs.readdirSync(partialsDir);
+
+    filenames.forEach(function (filename) {
+      const matches = /^([^.]+).handlebars$/.exec(filename);
+      if (!matches) {
+        return;
+      }
+      const name = matches[1];
+      const template = fs.readFileSync(
+        path.join(partialsDir, filename),
+        "utf8"
+      );
+      handlebars.registerPartial("components/" + name, template);
+    });
+
     const source = fs.readFileSync(
       path.resolve(`./${templatePath}.handlebars`),
       "utf8"
