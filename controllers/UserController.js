@@ -745,7 +745,7 @@ class UserController extends Controller {
         );
       }
 
-      this.sendToPhoneVerifyCodeMessage(phone, code);
+      await this.sendToPhoneVerifyCodeMessage(phone, code);
 
       return this.sendSuccessResponse(
         res,

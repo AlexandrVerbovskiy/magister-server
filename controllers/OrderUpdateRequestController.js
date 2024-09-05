@@ -24,6 +24,17 @@ class OrderUpdateRequestController extends Controller {
         );
       }
 
+      const priceErrorMessage = this.baseOrderPriceValidation(
+        newStartDate,
+        newEndDate,
+        order.tenantFee,
+        order.offerPricePerDay
+      );
+
+      if (priceErrorMessage) {
+        return { error: priceErrorMessage, orderId: null };
+      }
+
       const { tenantId, ownerId } = order;
 
       if (
