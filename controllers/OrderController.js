@@ -112,6 +112,17 @@ class OrderController extends Controller {
     const ownerFee =
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
+    const priceErrorMessage = this.baseOrderPriceValidation(
+      startDate,
+      endDate,
+      tenantFee,
+      listing.pricePerDay
+    );
+
+    if (priceErrorMessage) {
+      return { error: priceErrorMessage, orderId: null };
+    }
+
     const blockedDatesListings =
       await this.orderModel.getBlockedListingsDatesForListings([listingId]);
 
@@ -1587,7 +1598,7 @@ class OrderController extends Controller {
       });
     });
 
- generateInvoicePdf = (req, res) =>
+  generateInvoicePdf = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const userId = req.userData.userId;

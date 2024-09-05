@@ -377,13 +377,8 @@ class RecipientPayment extends Model {
     return paymentDays;
   };
 
-  getToPaymentsPay = async (
-    limit = STATIC.INFINITY_SELECT_ITERATION_LIMIT,
-    start = 0
-  ) => {
-    const currentDate = separateDate(new Date());
-
-    const res = await db(RECIPIENT_PAYMENTS_TABLE)
+  baseFullWaitingPaypalSelectQuery = () => {
+    return db(RECIPIENT_PAYMENTS_TABLE)
       .join(
         USERS_TABLE,
         `${USERS_TABLE}.id`,
@@ -391,16 +386,25 @@ class RecipientPayment extends Model {
         `${RECIPIENT_PAYMENTS_TABLE}.user_id`
       )
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
-      .where("planned_time", "<=", currentDate)
       .where("type", STATIC.PAYMENT_TYPES.PAYPAL)
-      .limit(limit)
-      .offset(start)
       .select([
         `${RECIPIENT_PAYMENTS_TABLE}.id`,
         `${RECIPIENT_PAYMENTS_TABLE}.money`,
         `${RECIPIENT_PAYMENTS_TABLE}.data`,
         `${USERS_TABLE}.paypal_id as paypalId`,
       ]);
+  };
+
+  getToPaymentsPay = async (
+    limit = STATIC.INFINITY_SELECT_ITERATION_LIMIT,
+    start = 0
+  ) => {
+    const currentDate = separateDate(new Date());
+
+    const res = await this.baseFullWaitingPaypalSelectQuery()
+      .where("planned_time", "<=", currentDate)
+      .limit(limit)
+      .offset(start);
 
     return res;
   };
@@ -505,6 +509,12 @@ class RecipientPayment extends Model {
     query = this.baseListJoin(query);
     query = query.where(`${RECIPIENT_PAYMENTS_TABLE}.id`, id);
     return await query.select(this.visibleFields).first();
+  };
+
+  getFullById = async (id) => {
+    return await this.baseFullWaitingPaypalSelectQuery()
+      .where(`${RECIPIENT_PAYMENTS_TABLE}.id`, id)
+      .first();
   };
 }
 

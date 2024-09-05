@@ -24,17 +24,14 @@ class UserModel extends Model {
     `${USERS_TABLE}.name`,
     `${USERS_TABLE}.email`,
     `${USERS_TABLE}.role`,
-    `${USERS_TABLE}.contact_details as contactDetails`,
     `${USERS_TABLE}.brief_bio as briefBio`,
     `${USERS_TABLE}.photo`,
     `${USERS_TABLE}.online`,
     `${USERS_TABLE}.phone`,
     `${USERS_TABLE}.suspicious`,
-    `${USERS_TABLE}.place_work as placeWork`,
     `${USERS_TABLE}.facebook_url as facebookUrl`,
     `${USERS_TABLE}.instagram_url as instagramUrl`,
     `${USERS_TABLE}.linkedin_url as linkedinUrl`,
-    `${USERS_TABLE}.twitter_url as twitterUrl`,
     `${USERS_TABLE}.paypal_id as paypalId`,
   ];
 
@@ -129,7 +126,6 @@ class UserModel extends Model {
       name,
       phone = null,
       briefBio = null,
-      contactDetails = null,
       twoFactorAuthentication = null,
       emailVerified,
       phoneVerified,
@@ -137,11 +133,9 @@ class UserModel extends Model {
       suspicious,
       role,
       photo,
-      placeWork = null,
       facebookUrl = null,
       instagramUrl = null,
       linkedinUrl = null,
-      twitterUrl = null,
       verified,
       acceptedTermCondition,
       needRegularViewInfoForm,
@@ -151,13 +145,10 @@ class UserModel extends Model {
     const updateData = {
       name,
       phone,
-      contact_details: contactDetails,
       brief_bio: briefBio,
-      place_work: placeWork,
       facebook_url: facebookUrl,
       instagram_url: instagramUrl,
       linkedin_url: linkedinUrl,
-      twitter_url: twitterUrl,
     };
 
     if (twoFactorAuthentication !== null) {

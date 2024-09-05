@@ -849,6 +849,17 @@ class Controller {
 
     return null;
   };
+
+  baseOrderPriceValidation = (startDate, endDate, tenantFee, pricePerDay) => {
+    if (
+      tenantPaymentCalculate(startDate, endDate, tenantFee, pricePerDay) <
+      STATIC.LIMITS.MIN_RENTAL_PRICE
+    ) {
+      return `Total rental price can't be lower than ${STATIC.CURRENCY}${STATIC.LIMITS.MIN_RENTAL_PRICE}`;
+    }
+
+    return null;
+  };
 }
 
 module.exports = Controller;

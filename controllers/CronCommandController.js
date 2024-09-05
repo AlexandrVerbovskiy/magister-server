@@ -102,6 +102,46 @@ class CronCommandController extends Controller {
         test: "123",
       });
     });
+
+  sendRecipient = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { paymentId } = req.body;
+      const payment = await this.recipientPaymentModel.getFullById(paymentId);
+
+      if (!payment) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
+      }
+
+      const paypalId = payment.paypalId;
+
+      try {
+        if (!paypalId || paypalId.length < 1) {
+          throw new Error(
+            "The paypal id is not specified - it is impossible to perform the operation without a paypal id"
+          );
+        }
+
+        await sendMoneyToPaypalByPaypalID(paypalId, payment.money);
+
+        await this.recipientPaymentModel.markAsCompletedById(payment.id, {
+          paypalId,
+        });
+
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+      } catch (err) {
+        console.log(err.message);
+        await this.recipientPaymentModel.markAsFailed(
+          payment.id,
+          { paypalId },
+          err.message
+        );
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.UNPREDICTABLE,
+          err.message
+        );
+      }
+    });
 }
 
 module.exports = CronCommandController;
