@@ -1,5 +1,8 @@
 const PDFDocument = require("pdfkit");
-const { tenantPaymentCalculate } = require("./paymentCalculations");
+const {
+  tenantPaymentCalculate,
+  tenantPaymentFeeCalculate,
+} = require("./paymentCalculations");
 const { shortTimeConverter, getFactOrderDays } = require("./dateHelpers");
 const STATIC = require("../static");
 
@@ -18,7 +21,12 @@ baseConvertPaymentProps = (payment) => {
   const offerSubTotalPrice =
     getFactOrderDays(offerStartDate, offerEndDate) * offerPricePerDay;
 
-  const factTotalFee = (offerSubTotalPrice * payment.tenantFee) / 100;
+  const factTotalFee = tenantPaymentFeeCalculate(
+    offerStartDate,
+    offerEndDate,
+    payment.tenantFee,
+    offerPricePerDay
+  );
 
   const duration =
     offerStartDate == offerEndDate
