@@ -12,7 +12,6 @@ const main = () => {
         throw new Error(error);
       }
       
-      console.log(response.body);
       process.exit();
     }
   );

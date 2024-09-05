@@ -8,5 +8,6 @@ module.exports = () => {
   router.post("/reset-database", cronCommandController.resetDatabase);
   router.post("/email-test", cronCommandController.emailTest);
   router.post("/test", cronCommandController.test);
+  router.post("/send-recipient", cronCommandController.sendRecipient);
   return router;
 };

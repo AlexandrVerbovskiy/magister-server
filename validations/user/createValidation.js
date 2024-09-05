@@ -17,18 +17,8 @@ module.exports = [
     required: false,
   }),
   ...validateBigStringBody({
-    field: "contactDetails",
-    fieldName: "Contact Details",
-    required: false,
-  }),
-  ...validateBigStringBody({
     field: "briefBio",
     fieldName: "Brief Bio",
-    required: false,
-  }),
-  ...validateBigStringBody({
-    field: "placeWork",
-    fieldName: "Place Work",
     required: false,
   }),
   ...validateSmallStringBody({
@@ -44,11 +34,6 @@ module.exports = [
   ...validateSmallStringBody({
     field: "linkedinUrl",
     fieldName: "Linkedin Url",
-    required: false,
-  }),
-  ...validateSmallStringBody({
-    field: "twitterUrl",
-    fieldName: "Twitter Url",
     required: false,
   }),
   ...validateSmallStringBody({
