@@ -35,6 +35,7 @@ const {
   removeDuplicates,
   getFactOrderDays,
   truncateString,
+  tenantPaymentFeeCalculate,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
@@ -845,17 +846,6 @@ class Controller {
 
     if (minRentalDays && getFactOrderDays(startDate, endDate) < minRentalDays) {
       return `You can rent ads only for a period of more than ${minRentalDays} days`;
-    }
-
-    return null;
-  };
-
-  baseOrderPriceValidation = (startDate, endDate, tenantFee, pricePerDay) => {
-    if (
-      tenantPaymentCalculate(startDate, endDate, tenantFee, pricePerDay) <
-      STATIC.LIMITS.MIN_RENTAL_PRICE
-    ) {
-      return `Total rental price can't be lower than ${STATIC.CURRENCY}${STATIC.LIMITS.MIN_RENTAL_PRICE}`;
     }
 
     return null;
