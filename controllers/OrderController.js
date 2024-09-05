@@ -112,17 +112,6 @@ class OrderController extends Controller {
     const ownerFee =
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
-    const priceErrorMessage = this.baseOrderPriceValidation(
-      startDate,
-      endDate,
-      tenantFee,
-      listing.pricePerDay
-    );
-
-    if (priceErrorMessage) {
-      return { error: priceErrorMessage, orderId: null };
-    }
-
     const blockedDatesListings =
       await this.orderModel.getBlockedListingsDatesForListings([listingId]);
 
