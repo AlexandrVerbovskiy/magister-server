@@ -233,11 +233,11 @@ module.exports = {
     CREDIT_CARD: "credit-card",
     BANK_TRANSFER: "bank-transfer",
   },
-  CHECKLIST_TYPES:{
-    OWNER:"OWNER",
-    TENANT:"tenant"
+  CHECKLIST_TYPES: {
+    OWNER: "OWNER",
+    TENANT: "tenant",
   },
-  LIMITS: { MAX_RENTAL_DURATION: 350 },
+  LIMITS: { MAX_RENTAL_DURATION: 350, MIN_RENTAL_PRICE: 5 },
   DEFAULTS: { LOCATION: { lat: 53.390044, lng: -2.59695 } },
   JWT_DEFAULT_ACCESS_LIFETIME: "7d",
   JWT_REMEMBER_ACCESS_LIFETIME: "90d",
