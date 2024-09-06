@@ -13,6 +13,8 @@ const tenantPaymentFeeCalculate = (startDay, endDay, fee, pricePerDay) => {
   if (result < STATIC.LIMITS.MIN_TENANT_COMMISSION) {
     return STATIC.LIMITS.MIN_TENANT_COMMISSION;
   }
+
+  return result;
 };
 
 const ownerGetsFeeCalculate = paymentFeeCalculate;
@@ -29,7 +31,7 @@ const tenantPaymentCalculate = (startDay, endDay, fee, pricePerDay) => {
 
 const ownerGetsCalculate = (startDay, endDay, fee, pricePerDay) => {
   const duration = getFactOrderDays(startDay, endDay);
-  
+
   const resPayment =
     duration * pricePerDay -
     ownerGetsFeeCalculate(startDay, endDay, fee, pricePerDay);
