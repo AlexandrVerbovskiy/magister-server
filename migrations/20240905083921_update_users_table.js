@@ -4,7 +4,7 @@ const STATIC = require("../static");
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = function (knex) {
+exports.up = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
     table.dropColumn("place_work");
     table.dropColumn("twitter_url");
@@ -16,7 +16,7 @@ exports.down = function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = function (knex) {
+exports.down = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.USERS, function (table) {
     table.text("place_work");
     table.text("twitter_url");
