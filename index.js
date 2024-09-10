@@ -30,9 +30,12 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+const corsUrls = process.env.CORS_URLS.split(",").map((url) => url.trim());
+console.log(corsUrls);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: corsUrls,
     credentials: true,
     exposedHeaders: ["set-cookie"],
   })

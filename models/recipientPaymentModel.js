@@ -334,7 +334,11 @@ class RecipientPayment extends Model {
             ? getFactOrderDays(startDate, lastDay)
             : lastDay.getDate();
 
-        const paymentDate = separateDate(lastDay);
+        let paymentDate = separateDate(lastDay);
+
+        /*if (paymentDate > endDate) {
+          paymentDate = endDate;
+        }*/
 
         paymentDays[paymentDate] = +(
           (dateDuration * pricePerDay * (100 - fee)) /
