@@ -749,9 +749,7 @@ class Controller {
 
   async generateQrCodeInfo(clientLink) {
     const token = generateRandomString();
-    const image = await qrcode.toDataURL(
-      process.env.CLIENT_URL + clientLink + "/" + token
-    );
+    const image = await qrcode.toDataURL(CLIENT_URL + clientLink + "/" + token);
 
     return { token, image };
   }
