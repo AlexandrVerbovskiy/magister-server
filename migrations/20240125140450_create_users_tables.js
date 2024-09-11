@@ -23,7 +23,7 @@ exports.up = function (knex) {
     table.string("linkedin").nullable().defaultTo(null);
     table.string("facebook").nullable().defaultTo(null);
 
-    table.boolean("two_factor_authentication").defaultTo(true);
+    table.boolean("two_factor_authentication").defaultTo(false);
 
     table.boolean("accepted_term_condition").defaultTo(false);
     table.boolean("active").defaultTo(false);

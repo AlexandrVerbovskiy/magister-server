@@ -420,8 +420,6 @@ module.exports = (io) => {
     mainController.getOrderCheckoutInfo
   );
 
-  router.post("/email-verification-info", authId, mainController.getEmailVerificationInfo);
-
   router.get("/test", mainController.test);
 
   return router;

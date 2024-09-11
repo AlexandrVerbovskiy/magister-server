@@ -319,7 +319,12 @@ class RecipientPayment extends Model {
 
     const paymentDays = {};
 
-    if (dateDuration > STATIC.MONTH_DURATION) {
+    paymentDays[endDate] = +(
+      (dateDuration * pricePerDay * (100 - fee)) /
+      100
+    ).toFixed(2);
+
+    /*if (dateDuration > STATIC.MONTH_DURATION) {
       let currentDate = new Date(startDate);
       const end = new Date(endDate);
       const monthEnds = [];
@@ -336,9 +341,11 @@ class RecipientPayment extends Model {
 
         let paymentDate = separateDate(lastDay);
 
-        /*if (paymentDate > endDate) {
+        ----
+        if (paymentDate > endDate) {
           paymentDate = endDate;
-        }*/
+        }
+        ----
 
         paymentDays[paymentDate] = +(
           (dateDuration * pricePerDay * (100 - fee)) /
@@ -356,7 +363,7 @@ class RecipientPayment extends Model {
         (dateDuration * pricePerDay * (100 - fee)) /
         100
       ).toFixed(2);
-    }
+    }*/
 
     const dataToInsert = [];
 

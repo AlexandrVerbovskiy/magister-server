@@ -11,6 +11,7 @@ const Model = require("./Model");
 
 const USERS_TABLE = STATIC.TABLES.USERS;
 const PHONE_VERIFIED_CODES_TABLE = STATIC.TABLES.PHONE_VERIFIED_CODES;
+const EMAIL_VERIFIED_CODES_TABLE = STATIC.TABLES.EMAIL_VERIFIED_CODES;
 const TWO_FACTOR_AUTH_CODES_TABLE = STATIC.TABLES.TWO_FACTOR_AUTH_CODES;
 const USER_DOCUMENTS_TABLE = STATIC.TABLES.USER_DOCUMENTS;
 const USER_VERIFY_REQUESTS_TABLE = STATIC.TABLES.USER_VERIFY_REQUESTS;
@@ -114,6 +115,7 @@ class UserModel extends Model {
         accepted_term_condition: userToSave.acceptedTermCondition,
         email_verified: emailVerified,
         has_password_access: hasPasswordAccess,
+        two_factor_authentication: false
       })
       .returning("id");
 
@@ -203,7 +205,7 @@ class UserModel extends Model {
   };
 
   createFull = async (userData) => {
-    userData["twoFactorAuthentication"] = true;
+    userData["twoFactorAuthentication"] = false;
     const dataToSave = this.convertFullUserDataToSave(userData);
     const res = await db(USERS_TABLE).insert(dataToSave).returning("id");
     return res[0].id;
@@ -349,6 +351,7 @@ class UserModel extends Model {
   };
 
   setEmailVerified = async (id) => {
+    await db(EMAIL_VERIFIED_CODES_TABLE).where({ user_id: id }).delete();
     await db(USERS_TABLE).where({ id }).update({ email_verified: true });
   };
 
@@ -501,6 +504,28 @@ class UserModel extends Model {
     return { code, phone: user.phone };
   };
 
+  generateEmailVerifyCode = async (userId) => {
+    const user = await this.getById(userId);
+    if (!user) return null;
+    if (!user.email) return { email: null, code: null };
+
+    const code = generateOtp();
+
+    const userToken = await db(EMAIL_VERIFIED_CODES_TABLE)
+      .where({ user_id: userId })
+      .first();
+
+    if (userToken) {
+      await db(EMAIL_VERIFIED_CODES_TABLE)
+        .where({ user_id: userId })
+        .update({ code, updated_at: db.fn.now() });
+    } else {
+      await db(EMAIL_VERIFIED_CODES_TABLE).insert({ user_id: userId, code });
+    }
+
+    return { code, email: user.email };
+  };
+
   getUserIdByPhoneVerifyCode = async (code) => {
     const res = await db(PHONE_VERIFIED_CODES_TABLE)
       .select("user_id")
@@ -511,7 +536,28 @@ class UserModel extends Model {
     return res?.user_id;
   };
 
+  getUserByEmailVerifyCode = async (code) => {
+    const res = await db(EMAIL_VERIFIED_CODES_TABLE)
+      .select(this.allFields)
+      .join(
+        USERS_TABLE,
+        `${EMAIL_VERIFIED_CODES_TABLE}.user_id`,
+        "=",
+        `${USERS_TABLE}.id`
+      )
+      .where({ code })
+      .where(
+        `${EMAIL_VERIFIED_CODES_TABLE}.updated_at`,
+        ">",
+        db.raw("?", [getOneHourAgo()])
+      )
+      .first();
+
+    return res;
+  };
+
   setPhoneVerified = async (id) => {
+    await db(PHONE_VERIFIED_CODES_TABLE).where({ user_id: id }).delete();
     await db(USERS_TABLE).where({ id }).update({ phone_verified: true });
   };
 

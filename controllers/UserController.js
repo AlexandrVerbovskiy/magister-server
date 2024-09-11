@@ -135,23 +135,17 @@ class UserController extends Controller {
 
       const user = await this.userModel.getFullById(id);
 
-      const emailVerifyToken = generateVerifyToken({ userId: id });
+      const emailVerifyInfo = await this.userModel.generateEmailVerifyCode(id);
 
-      this.sendEmailVerificationMail(email, name, emailVerifyToken);
-
-      const authToken = generateAccessToken(user.id, false);
+      this.sendEmailVerificationMail(email, name, emailVerifyInfo.code);
 
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.CREATED,
         "Account created successfully. An account confirmation letter has been sent to the email",
         {
-          user,
-          authToken,
-          userId: user.id,
-          needCode: false,
-          canSendCodeByPhone: user.phoneVerified,
-          needRegularViewInfoForm: user.needRegularViewInfoForm,
+          emailVerifiedCodeSent: true,
+          email: user.email,
         }
       );
     });
@@ -169,9 +163,15 @@ class UserController extends Controller {
         );
       }
 
-      const emailVerifyToken = generateVerifyToken({ userId: getByEmail.id });
+      const emailVerifyInfo = await this.userModel.generateEmailVerifyCode(
+        getByEmail.id
+      );
 
-      this.sendEmailVerificationMail(email, getByEmail.name, emailVerifyToken);
+      this.sendEmailVerificationMail(
+        email,
+        getByEmail.name,
+        emailVerifyInfo.code
+      );
 
       return this.sendSuccessResponse(
         res,
@@ -204,6 +204,55 @@ class UserController extends Controller {
     return { error: false, user };
   };
 
+  baseLoginResult = async (user, rememberMe) => {
+    if (!user.twoFactorAuthentication) {
+      this.filterUserFields(user);
+      const authToken = generateAccessToken(user.id, rememberMe);
+
+      return {
+        user,
+        authToken,
+        userId: user.id,
+        needCode: false,
+        canSendCodeByPhone: user.phoneVerified,
+        needRegularViewInfoForm: user.needRegularViewInfoForm,
+      };
+    } else {
+      if (user.phone && user.phoneVerified) {
+        return {
+          user: {
+            email: user.email,
+            phone: user.phone,
+            id: user.id,
+            name: user.name,
+          },
+          needCode: true,
+          codeSent: false,
+          needRegularViewInfoForm: user.needRegularViewInfoForm,
+        };
+      } else {
+        const resSave = await this.userModel.generateTwoAuthCode(
+          user.id,
+          "email"
+        );
+
+        this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
+
+        return {
+          user: {
+            email: user.email,
+            phone: user.phone,
+            id: user.id,
+            name: user.name,
+          },
+          needCode: true,
+          codeSent: true,
+          needRegularViewInfoForm: user.needRegularViewInfoForm,
+        };
+      }
+    }
+  };
+
   login = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const resCheck = await this.baseEmailPasswordCheck(req);
@@ -219,50 +268,25 @@ class UserController extends Controller {
       const user = resCheck.user;
       const rememberMe = req.body.rememberMe == true;
 
-      if (!user.twoFactorAuthentication) {
-        this.filterUserFields(user);
-        const authToken = generateAccessToken(user.id, rememberMe);
+      if (!user.emailVerified) {
+        const emailVerifyInfo = await this.userModel.generateEmailVerifyCode(
+          user.id
+        );
+
+        this.sendEmailVerificationMail(
+          user.email,
+          user.name,
+          emailVerifyInfo.code
+        );
 
         return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          user,
-          authToken,
-          userId: user.id,
-          needCode: false,
-          canSendCodeByPhone: user.phoneVerified,
-          needRegularViewInfoForm: user.needRegularViewInfoForm,
+          emailVerifiedCodeSent: true,
+          email: user.email,
         });
-      } else {
-        if (user.phone && user.phoneVerified) {
-          return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-            user: {
-              email: user.email,
-              phone: user.phone,
-              id: user.id,
-              name: user.name,
-            },
-            needCode: true,
-            codeSent: false,
-          });
-        } else {
-          const resSave = await this.userModel.generateTwoAuthCode(
-            user.id,
-            "email"
-          );
-
-          this.sendTwoAuthCodeMail(user.email, user.name, resSave.code);
-
-          return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-            user: {
-              email: user.email,
-              phone: user.phone,
-              id: user.id,
-              name: user.name,
-            },
-            needCode: true,
-            codeSent: true,
-          });
-        }
       }
+
+      const result = await this.baseLoginResult(user, rememberMe);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 
   twoFactorAuthGenerate = (req, res) =>
@@ -426,18 +450,15 @@ class UserController extends Controller {
       });
     });
 
-  baseVerifyEmail = async (email, token) => {
-    const resValidate = validateToken(token);
+  baseVerifyEmail = async (email, code, rememberMe) => {
+    const user = await this.userModel.getUserByEmailVerifyCode(code);
 
-    if (!resValidate || !resValidate.userId) {
+    if (!user || !user.id) {
       return {
         error: STATIC.ERRORS.BAD_REQUEST,
-        message: "Token is not valid",
+        message: "Verified code is not valid",
       };
     }
-
-    const userId = resValidate.userId;
-    const user = await this.userModel.getByIdWithEmailVerified(userId);
 
     if (user.email !== email || user.emailVerified) {
       return {
@@ -446,15 +467,17 @@ class UserController extends Controller {
       };
     }
 
-    await this.userModel.setEmailVerified(userId);
+    await this.userModel.setEmailVerified(user.id);
 
-    return { error: null };
+    const result = await this.baseLoginResult(user, rememberMe);
+    result["error"] = null;
+    return result;
   };
 
   verifyEmail = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { email, token } = req.body;
-      const result = await this.baseVerifyEmail(email, token);
+      const { email, code, rememberMe = false } = req.body;
+      const result = await this.baseVerifyEmail(email, code, rememberMe);
 
       if (result.error) {
         return this.sendErrorResponse(res, result.error, result.message);
@@ -463,7 +486,8 @@ class UserController extends Controller {
       return this.sendSuccessResponse(
         res,
         STATIC.SUCCESS.OK,
-        "Mail verified successfully. For further actions, log in to the site"
+        "Mail verified successfully. For further actions, log in to the site",
+        result
       );
     });
 
