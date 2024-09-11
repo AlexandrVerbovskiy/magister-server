@@ -77,6 +77,7 @@ module.exports = {
     USERS: "users",
     USER_VERIFY_REQUESTS: "user_verify_requests",
     PHONE_VERIFIED_CODES: "phone_verified_codes",
+    EMAIL_VERIFIED_CODES: "email_verified_codes",
     TWO_FACTOR_AUTH_CODES: "two_factor_auth_codes",
     SEED_STATUS: "seeds_status",
     LOGS: "logs",

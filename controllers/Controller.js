@@ -250,14 +250,14 @@ class Controller {
     }
   };
 
-  sendEmailVerificationMail = async (email, name, token) => {
+  sendEmailVerificationMail = async (email, name, code) => {
     const title = "Account Verification";
-    const link =
-      CLIENT_URL + "/" + STATIC.CLIENT_LINKS.EMAIL_VERIFICATION + "/" + token;
+    const link = CLIENT_URL + "/";
 
     await this.sendMail(email, title, "emailVerification", {
-      name,
       link,
+      name,
+      code,
       title,
     });
   };
