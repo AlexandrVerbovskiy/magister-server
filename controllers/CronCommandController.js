@@ -76,6 +76,7 @@ class CronCommandController extends Controller {
       await this.baseReset(STATIC.TABLES.USER_EVENT_LOGS);
       await this.baseReset(STATIC.TABLES.ACTIVE_ACTIONS);
       await this.baseReset(STATIC.TABLES.PHONE_VERIFIED_CODES);
+      await this.baseReset(STATIC.TABLES.EMAIL_VERIFIED_CODES);
       await this.baseReset(STATIC.TABLES.SOCKETS);
       await this.baseReset(STATIC.TABLES.TWO_FACTOR_AUTH_CODES);
       await this.baseReset(STATIC.TABLES.USER_DOCUMENTS);
