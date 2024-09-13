@@ -84,8 +84,8 @@ class RecipientPaymentController extends Controller {
 
   markAsCompletedRefund = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { id } = req.body;
-      await this.recipientPaymentModel.complete(id);
+      const { id, type, paypalId = null, cardNumber = null } = req.body;
+      await this.recipientPaymentModel.complete(id, type, paypalId, cardNumber);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 }
