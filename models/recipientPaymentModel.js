@@ -491,11 +491,25 @@ class RecipientPayment extends Model {
     return query;
   };
 
-  complete = async (id) => {
-    await db(RECIPIENT_PAYMENTS_TABLE).where({ id: id }).update({
-      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-      failed_description: null,
-    });
+  complete = async (id, type, paypalId, cardNumber) => {
+    let data = {};
+
+    if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
+      data = { cardNumber: cardNumber };
+    }
+
+    if (type == STATIC.PAYMENT_TYPES.PAYPAL) {
+      data = { paypalId: paypalId };
+    }
+
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where({ id: id })
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+        failed_description: null,
+        data: JSON.stringify(data),
+        type: type,
+      });
   };
 
   reject = async (id, description) => {
