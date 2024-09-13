@@ -34,6 +34,7 @@ class RecipientPayment extends Model {
     `${USERS_TABLE}.email as recipientEmail`,
     `${USERS_TABLE}.phone as recipientPhone`,
     `${USERS_TABLE}.photo as recipientPhoto`,
+    `${USERS_TABLE}.paypal_id as recipientPaypalId`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${LISTINGS_TABLE}.address as listingAddress`,
