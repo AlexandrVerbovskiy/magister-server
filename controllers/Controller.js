@@ -335,7 +335,7 @@ class Controller {
   };
 
   sendBookingCancellationRenterMail = async (email, orderId) => {
-    const title = "Booking Cancellation Request";
+    const title = "Booking Request Cancelled";
     const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "bookingCancellationRenter", {
@@ -344,7 +344,7 @@ class Controller {
   };
 
   sendBookingCancellationOwnerMail = async (email, orderId) => {
-    const title = "Booking Cancellation Request";
+    const title = "Booking Request Rejected";
     const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
     await this.sendMail(email, title, "bookingCancellationOwner", {
