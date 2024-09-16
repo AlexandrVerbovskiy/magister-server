@@ -120,8 +120,13 @@ class Controller {
       host: process.env.MAIL_HOST,
       port: process.env.MAIL_PORT,
       secure: false,
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASSWORD,
+      },
       tls: {
         rejectUnauthorized: false,
+        ciphers: "SSLv3",
       },
     });
 
@@ -215,8 +220,8 @@ class Controller {
   };
 
   sendMail = async (to, subject, template, context) => {
-    /*const mailOptions = {
-      from: `"${process.env.MAIL_FROM}" ${process.env.MAIL_EMAIL}`,
+    const mailOptions = {
+      from: `"${process.env.MAIL_FROM}" <${process.env.MAIL_EMAIL}>`,
       to,
       subject,
       template,
@@ -225,25 +230,6 @@ class Controller {
 
     try {
       return await this.mailTransporter.sendMail(mailOptions);
-    } catch (error) {
-      console.error("Error sending email:", error);
-      return { error };
-    }*/
-
-    const url = process.env.EMAIL_SEND_URL;
-    const data = {
-      recipient: to,
-      subject: subject,
-      htmlBody: this.generateHtmlByHandlebars(`mails/${template}`, context),
-      fromName: "RentAbout",
-    };
-
-    try {
-      const response = await axios.post(url, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
     } catch (error) {
       console.error("Error sending email:", error);
       return { error };
