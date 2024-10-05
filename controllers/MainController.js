@@ -27,7 +27,7 @@ const {
   getAddressByCoords,
   getCoordsByAddress,
 } = require("../utils");
-const TenantCommentController = require("./TenantCommentController");
+const WorkerCommentController = require("./WorkerCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
 const DisputeController = require("./DisputeController");
 const ChatController = require("./ChatController");
@@ -47,7 +47,7 @@ class MainController extends Controller {
     this.orderController = new OrderController(io);
     this.senderPaymentController = new SenderPaymentController(io);
     this.recipientPaymentController = new RecipientPaymentController(io);
-    this.tenantCommentController = new TenantCommentController(io);
+    this.WorkerCommentController = new WorkerCommentController(io);
     this.ownerCommentController = new OwnerCommentController(io);
     this.disputeController = new DisputeController(io);
     this.chatController = new ChatController(io);
@@ -308,8 +308,8 @@ class MainController extends Controller {
         listing["blockedDates"] = [];
       }
 
-      const tenantBaseCommissionPercent =
-        await this.systemOptionModel.getTenantBaseCommissionPercent();
+      const workerBaseCommissionPercent =
+        await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
       const categories = await this.getNavigationCategories();
 
@@ -324,7 +324,7 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         listing,
         categories,
-        tenantBaseCommissionPercent,
+        workerBaseCommissionPercent,
         comments,
         ownerRatingInfo,
       });
@@ -341,7 +341,7 @@ class MainController extends Controller {
       const userId = req.userData.userId;
       let order = await getOrderByRequest();
 
-      if (!order || (userId != order.tenantId && userId != order.ownerId)) {
+      if (!order || (userId != order.workerId && userId != order.ownerId)) {
         return this.sendErrorResponse(
           res,
           STATIC.ERRORS.NOT_FOUND,
@@ -361,8 +361,8 @@ class MainController extends Controller {
 
       const {
         ownerBaseCommissionPercent: ownerBaseCommission,
-        tenantBaseCommissionPercent: tenantBaseCommission,
-        tenantCancelFeePercent: tenantCancelFee,
+        workerBaseCommissionPercent: workerBaseCommission,
+        workerCancelFeePercent: workerCancelFee,
       } = await this.systemOptionModel.getCommissionInfo();
 
       const bankInfo = await this.systemOptionModel.getBankAccountInfo();
@@ -376,31 +376,22 @@ class MainController extends Controller {
         }
       );
 
-      order = await this.tenantCommentModel.bindAverageForKeyEntity(
+      order = await this.workerCommentModel.bindAverageForKeyEntity(
         order,
-        "tenantId",
+        "workerId",
         {
-          commentCountName: "tenantCommentCount",
-          averageRatingName: "tenantAverageRating",
+          commentCountName: "workerCommentCount",
+          averageRatingName: "workerAverageRating",
         }
       );
 
-      const canViewFullInfo = order.ownerId === userId;
-
-      const conflictOrdersList = await this.orderModel.getConflictOrders(
-        [order.id],
-        canViewFullInfo
-      );
-
-      const conflictOrders = conflictOrdersList[order.id];
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        order: { ...order, ...dopOrderOptions, conflictOrders },
+        order: { ...order, ...dopOrderOptions },
         categories,
         ...dopOptions,
         ownerBaseCommission,
-        tenantBaseCommission,
-        tenantCancelFee,
+        workerBaseCommission,
+        workerCancelFee,
         bankInfo,
       });
     });
@@ -472,7 +463,7 @@ class MainController extends Controller {
       if (
         order.cancelStatus ||
         order.disputeStatus ||
-        order.status != STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+        order.status != STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -483,87 +474,6 @@ class MainController extends Controller {
         categories,
       });
     });
-
-  getOrderTenantQrCodeInfo = (req, res) => {
-    const { token } = req.params;
-
-    const getOrderByRequest = async () => {
-      const order = await this.orderModel.getFullByTenantListingToken(token);
-
-      if (
-        order &&
-        order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT
-      ) {
-        return null;
-      }
-
-      return order;
-    };
-
-    const getDopOrderOptions = async () => {
-      const {
-        ownerBaseCommissionPercent: ownerBaseFee,
-        tenantBaseCommissionPercent: tenantBaseFee,
-        tenantCancelFeePercent: tenantCancelFee,
-      } = await this.systemOptionModel.getCommissionInfo();
-
-      return {
-        canAcceptTenantListing: true,
-        acceptListingTenantToken: token,
-        tenantCancelFee,
-        ownerBaseFee,
-        tenantBaseFee,
-      };
-    };
-
-    return this.baseGetFullOrderInfo(
-      req,
-      res,
-      getOrderByRequest,
-      getDopOrderOptions
-    );
-  };
-
-  getOrderOwnerQrCodeInfo = (req, res) => {
-    const { token } = req.params;
-
-    const getOrderByRequest = async () => {
-      const order = await this.orderModel.getFullByOwnerListingToken(token);
-
-      if (
-        order &&
-        order.status != STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER
-      ) {
-        return null;
-      }
-
-      return order;
-    };
-
-    const getDopOrderOptions = async (order) => {
-      const {
-        ownerBaseCommissionPercent: ownerBaseFee,
-        tenantBaseCommissionPercent: tenantBaseFee,
-        tenantCancelFeePercent: tenantCancelFee,
-      } = await this.systemOptionModel.getCommissionInfo();
-
-      return {
-        canAcceptOwnerListing: true,
-        acceptListingOwnerToken: token,
-        canFinalization: this.orderModel.canFinalizationOrder(order),
-        tenantCancelFee,
-        ownerBaseFee,
-        tenantBaseFee,
-      };
-    };
-
-    return this.baseGetFullOrderInfo(
-      req,
-      res,
-      getOrderByRequest,
-      getDopOrderOptions
-    );
-  };
 
   getAdminListingListPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -746,32 +656,32 @@ class MainController extends Controller {
   getOrderListOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const userId = req.userData.userId;
-      const isForTenant = req.body.type !== "owner";
+      const isForWorker = req.body.type !== "owner";
       const {
         ownerBaseCommissionPercent: ownerBaseFee,
-        tenantBaseCommissionPercent: tenantBaseFee,
-        tenantCancelFeePercent: tenantCancelFee,
+        workerBaseCommissionPercent: workerBaseFee,
+        workerCancelFeePercent: workerCancelFee,
         bankAccountIban,
         bankAccountSwiftBic,
         bankAccountBeneficiary,
         bankAccountReferenceConceptCode,
       } = await this.systemOptionModel.getOptions();
 
-      const request = isForTenant
-        ? this.orderController.baseTenantOrderList
+      const request = isForWorker
+        ? this.orderController.baseWorkerOrderList
         : this.orderController.baseListingOwnerOrderList;
 
       const result = await request(req);
       const categories = await this.getNavigationCategories();
 
-      let countForTenant = 0;
+      let countForWorker = 0;
       let countForOwner = 0;
 
-      if (isForTenant) {
+      if (isForWorker) {
         countForOwner = await this.orderModel.ownerOrdersTotalCount("", userId);
-        countForTenant = result.countItems;
+        countForWorker = result.countItems;
       } else {
-        countForTenant = await this.orderModel.tenantOrdersTotalCount(
+        countForWorker = await this.orderModel.workerOrdersTotalCount(
           "",
           userId
         );
@@ -781,10 +691,10 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
         categories,
-        tenantCancelFee,
+        workerCancelFee,
         ownerBaseFee,
-        tenantBaseFee,
-        countForTenant,
+        workerBaseFee,
+        countForWorker,
         countForOwner,
         bankInfo: {
           bankAccountIban,
@@ -857,7 +767,7 @@ class MainController extends Controller {
       const recipient = await this.recipientPaymentModel.getById(id);
 
       const refundCommission =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
+        await this.systemOptionModel.getWorkerCancelCommissionPercent();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         recipient,
@@ -947,7 +857,7 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
 
       const refundCommission =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
+        await this.systemOptionModel.getWorkerCancelCommissionPercent();
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         recipient,
@@ -966,7 +876,7 @@ class MainController extends Controller {
       }
 
       const refundCommission =
-        await this.systemOptionModel.getTenantCancelCommissionPercent();
+        await this.systemOptionModel.getWorkerCancelCommissionPercent();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         recipient,
         refundCommission,
@@ -1272,7 +1182,7 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, options);
     });
 
-  getOrderReviewByTenantOptions = (req, res) =>
+  getOrderReviewByWorkerOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const { userId } = req.userData;
@@ -1300,7 +1210,7 @@ class MainController extends Controller {
       const hasComment = await this.ownerCommentModel.checkOrderHasComment(id);
 
       if (
-        order.tenantId != userId ||
+        order.workerId != userId ||
         order.status != STATIC.ORDER_STATUSES.FINISHED ||
         order.cancelStatus ||
         hasComment
@@ -1326,20 +1236,20 @@ class MainController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      order = await this.tenantCommentModel.bindAverageForKeyEntity(
+      order = await this.workerCommentModel.bindAverageForKeyEntity(
         order,
-        "tenantId",
+        "workerId",
         {
-          commentCountName: "tenantCommentCount",
-          averageRatingName: "tenantAverageRating",
+          commentCountName: "workerCommentCount",
+          averageRatingName: "workerAverageRating",
         }
       );
 
-      order["tenantCountItems"] = await this.listingModel.getOwnerCountListings(
-        order.tenantId
+      order["workerCountItems"] = await this.listingModel.getOwnerCountListings(
+        order.workerId
       );
 
-      const hasComment = await this.tenantCommentModel.checkOrderHasComment(id);
+      const hasComment = await this.workerCommentModel.checkOrderHasComment(id);
 
       if (
         order.ownerId != userId ||
@@ -1356,9 +1266,9 @@ class MainController extends Controller {
       });
     });
 
-  getAdminTenantCommentsPageOptions = (req, res) =>
+  getAdminWorkerCommentsPageOptions = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.tenantCommentController.baseCommentList(req);
+      const result = await this.WorkerCommentController.baseCommentList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...result,
       });
@@ -1500,7 +1410,7 @@ class MainController extends Controller {
       const getOrderByRequest = async () => {
         const order = await this.orderModel.getFullWithCommentsById(id, userId);
 
-        return order?.status == STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT
+        return order?.status == STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT
           ? order
           : null;
       };

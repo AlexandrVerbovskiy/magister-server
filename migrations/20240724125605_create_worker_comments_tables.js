@@ -5,7 +5,7 @@ const STATIC = require("../static");
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable(STATIC.TABLES.TENANT_COMMENTS, function (table) {
+  return knex.schema.createTable(STATIC.TABLES.WORKER_COMMENTS, function (table) {
     table.increments("id").primary();
     table.text("description");
     table.text("leave_feedback");
@@ -38,5 +38,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists(STATIC.TABLES.TENANT_COMMENTS);
+  return knex.schema.dropTableIfExists(STATIC.TABLES.WORKER_COMMENTS);
 };

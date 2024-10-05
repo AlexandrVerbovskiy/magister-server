@@ -34,12 +34,12 @@ class DisputeController extends Controller {
       }
     );
 
-    disputes = await this.tenantCommentModel.bindAverageForKeyEntities(
+    disputes = await this.workerCommentModel.bindAverageForKeyEntities(
       disputes,
-      "tenantId",
+      "workerId",
       {
-        commentCountName: "tenantCommentCount",
-        averageRatingName: "tenantAverageRating",
+        commentCountName: "workerCommentCount",
+        averageRatingName: "workerAverageRating",
       }
     );
 
@@ -63,19 +63,18 @@ class DisputeController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
-      const tenantId = +order.tenantId;
+      const workerId = +order.workerId;
       const ownerId = +order.ownerId;
 
       const isOwnerCreatedDispute = userId == ownerId;
-      const isTenantCreatedDispute = userId == tenantId;
+      const isWorkerCreatedDispute = userId == workerId;
 
       if (
-        (!isTenantCreatedDispute && !isOwnerCreatedDispute) ||
+        (!isWorkerCreatedDispute && !isOwnerCreatedDispute) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         ![
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-          STATIC.ORDER_STATUSES.FINISHED,
+          STATIC.ORDER_STATUSES.IN_PROCESS,
+          STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
         ].includes(order.status) ||
         order.disputeId
       ) {
@@ -92,29 +91,29 @@ class DisputeController extends Controller {
       const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
       const senderName = isOwnerCreatedDispute
         ? order.ownerName
-        : order.tenantName;
+        : order.workerName;
 
       const createdMessages = await this.chatModel.createForDispute({
         orderId,
         disputeId,
-        userIds: [tenantId, ownerId],
+        userIds: [workerId, ownerId],
         data: { senderId: userId, senderName, description, type },
       });
 
       if (isOwnerCreatedDispute) {
-        await this.sendSocketMessageToUser(tenantId, "get-message", {
-          message: createdMessages[tenantId],
+        await this.sendSocketMessageToUser(workerId, "get-message", {
+          message: createdMessages[workerId],
         });
       }
 
-      if (isTenantCreatedDispute) {
+      if (isWorkerCreatedDispute) {
         await this.sendSocketMessageToUser(ownerId, "get-message", {
           message: createdMessages[ownerId],
         });
       }
 
       const ownerDisputeChatId = createdMessages[ownerId].chatId;
-      const tenantDisputeChatId = createdMessages[tenantId].chatId;
+      const workerDisputeChatId = createdMessages[workerId].chatId;
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -128,17 +127,11 @@ class DisputeController extends Controller {
           disputeType: type,
           disputeDescription: description,
           disputeChatId: isOwnerCreatedDispute
-            ? tenantDisputeChatId
+            ? workerDisputeChatId
             : ownerDisputeChatId,
         },
       });
-
-      await this.orderModel.orderCancelExtends(order.id);
-
-      const parentOrderExtensions = await this.orderModel.getOrderExtends(
-        order.id
-      );
-
+      
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         orderPart: {
@@ -149,8 +142,7 @@ class DisputeController extends Controller {
           disputeDescription: description,
           disputeChatId: isOwnerCreatedDispute
             ? ownerDisputeChatId
-            : tenantDisputeChatId,
-          extendOrders: parentOrderExtensions,
+            : workerDisputeChatId,
         },
       });
     });

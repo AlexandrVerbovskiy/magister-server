@@ -1,11 +1,11 @@
 const STATIC = require("../static");
 const BaseCommentController = require("./BaseCommentController");
 
-class TenantCommentController extends BaseCommentController {
-  model = this.tenantCommentModel;
+class WorkerCommentController extends BaseCommentController {
+  model = this.workerCommentModel;
 
   ratingJoin = async (items) => {
-    items = await this.tenantCommentModel.bindAverageForKeyEntities(
+    items = await this.workerCommentModel.bindAverageForKeyEntities(
       items,
       "userId",
       {
@@ -44,22 +44,22 @@ class TenantCommentController extends BaseCommentController {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const orderHasTenantComment =
-        await this.tenantCommentModel.checkOrderHasComment(orderId);
+      const orderHasWorkerComment =
+        await this.workerCommentModel.checkOrderHasComment(orderId);
 
-      if (orderHasTenantComment) {
+      if (orderHasWorkerComment) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const tenantCommentId = await this.tenantCommentModel.create({
+      const workerCommentId = await this.workerCommentModel.create({
         ...userCommentInfo,
         orderId,
       });
 
       const chatId = order.chatId;
 
-      const tenantMessage =
-        await this.chatMessageModel.createTenantReviewMessage({
+      const workerMessage =
+        await this.chatMessageModel.createWorkerReviewMessage({
           chatId,
           senderId,
           data: { ...userCommentInfo },
@@ -68,14 +68,14 @@ class TenantCommentController extends BaseCommentController {
       const sender = await this.userModel.getById(senderId);
 
       this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
-        message: tenantMessage,
+        message: workerMessage,
         opponent: sender,
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        tenantCommentId,
+        workerCommentId,
       });
     });
 }
 
-module.exports = TenantCommentController;
+module.exports = WorkerCommentController;

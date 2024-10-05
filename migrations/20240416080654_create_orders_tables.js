@@ -25,7 +25,7 @@ exports.up = function (knex) {
     table.timestamps(true, true);
 
     table
-      .integer("tenant_id")
+      .integer("worker_id")
       .unsigned()
       .references(STATIC.TABLES.USERS + ".id");
 

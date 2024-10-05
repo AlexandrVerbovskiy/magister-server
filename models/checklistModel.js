@@ -66,7 +66,7 @@ class ChecklistModel extends Model {
     };
   };
 
-  createByTenant = ({
+  createByWorker = ({
     itemMatchesDescription = null,
     itemMatchesPhotos = null,
     itemFullyFunctional = null,
@@ -83,7 +83,7 @@ class ChecklistModel extends Model {
       providedGuidelines,
       orderId,
       images,
-      type: STATIC.CHECKLIST_TYPES.TENANT,
+      type: STATIC.CHECKLIST_TYPES.WORKER,
     });
 
   createByOwner = ({

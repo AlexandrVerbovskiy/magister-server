@@ -26,7 +26,7 @@ class RecipientPayment extends Model {
     `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.end_date as offerEndDate`,
     `${ORDERS_TABLE}.status as orderStatus`,
-    `${ORDERS_TABLE}.tenant_fee as tenantFee`,
+    `${ORDERS_TABLE}.worker_fee as workerFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
@@ -47,11 +47,11 @@ class RecipientPayment extends Model {
     `owners.email as ownerEmail`,
     `owners.phone as ownerPhone`,
     `owners.photo as ownerPhoto`,
-    `tenants.id as tenantId`,
-    `tenants.name as tenantName`,
-    `tenants.email as tenantEmail`,
-    `tenants.phone as tenantPhone`,
-    `tenants.photo as tenantPhoto`,
+    `workers.id as workerId`,
+    `workers.name as workerName`,
+    `workers.email as workerEmail`,
+    `workers.phone as workerPhone`,
+    `workers.photo as workerPhoto`,
     `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
     `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
     `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -63,7 +63,7 @@ class RecipientPayment extends Model {
     ...this.strFilterFields,
     `${USERS_TABLE}.name`,
     `owners.name`,
-    `tenants.name`,
+    `workers.name`,
   ];
 
   orderFields = [
@@ -174,10 +174,10 @@ class RecipientPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
-        `${USERS_TABLE} as tenants`,
-        `tenants.id`,
+        `${USERS_TABLE} as workers`,
+        `workers.id`,
         "=",
-        `${ORDERS_TABLE}.tenant_id`
+        `${ORDERS_TABLE}.worker_id`
       );
 
   baseListStatusSelect = (query, status) => {
@@ -197,7 +197,7 @@ class RecipientPayment extends Model {
 
   baseListReceivedTypeSelect = (query, receivedType) => {
     if (
-      [STATIC.RECIPIENT_TYPES.REFUND, STATIC.RECIPIENT_TYPES.RENTAL].includes(
+      [STATIC.RECIPIENT_TYPES.REFUND, STATIC.RECIPIENT_TYPES.RECIPIENT].includes(
         receivedType
       )
     ) {
@@ -372,7 +372,7 @@ class RecipientPayment extends Model {
       dataToInsert.push({
         money: paymentDays[date],
         planned_time: date,
-        received_type: STATIC.RECIPIENT_TYPES.RENTAL,
+        received_type: STATIC.RECIPIENT_TYPES.RECIPIENT,
         status: STATIC.RECIPIENT_STATUSES.WAITING,
         failed_details: "",
         user_id: userId,
@@ -463,7 +463,7 @@ class RecipientPayment extends Model {
     const query = db(RECIPIENT_PAYMENTS_TABLE)
       .where("order_id", orderId)
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
-      .where("received_type", STATIC.RECIPIENT_TYPES.RENTAL);
+      .where("received_type", STATIC.RECIPIENT_TYPES.RECIPIENT);
 
     let sum = 0;
 

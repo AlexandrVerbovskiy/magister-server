@@ -16,11 +16,8 @@ const {
   idBodyValidation,
   createValidation,
   listValidation,
-  approveTenantGotListingValidation,
   paypalOrderPayedValidation,
-  finishOrderByOwnerValidation,
   bankTransferUnpaidTransactionValidation,
-  extendValidation,
   listValidationWithTimeProps,
 } = require("../../validations/order");
 
@@ -30,8 +27,6 @@ module.exports = (io) => {
   const orderController = new OrderController(io);
 
   router.post("/create", isAuth, createValidation, orderController.create);
-
-  router.post("/extend", isAuth, extendValidation, orderController.extend);
 
   router.get(
     "/get-full-by-id/:id",
@@ -88,26 +83,6 @@ module.exports = (io) => {
     isVerified,
     bankTransferUnpaidTransactionValidation,
     orderController.unpaidTransactionByBankTransfer
-  );
-
-  router.post(
-    "/approve-client-got-listing",
-    isAuth,
-    imageUpload.any(),
-    isSummaryFileLimit,
-    isFileLimit,
-    approveTenantGotListingValidation,
-    orderController.approveTenantGotListing
-  );
-
-  router.post(
-    "/finished-by-owner",
-    isAuth,
-    imageUpload.any(),
-    isSummaryFileLimit,
-    isFileLimit,
-    finishOrderByOwnerValidation,
-    orderController.finishedByOwner
   );
 
   router.post(

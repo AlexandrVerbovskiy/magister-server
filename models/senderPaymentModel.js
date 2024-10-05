@@ -35,7 +35,7 @@ class SenderPayment extends Model {
     `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.end_date as offerEndDate`,
     `${ORDERS_TABLE}.start_date as offerStartDate`,
-    `${ORDERS_TABLE}.tenant_fee as tenantFee`,
+    `${ORDERS_TABLE}.worker_fee as workerFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.status as orderStatus`,
     `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
@@ -43,9 +43,9 @@ class SenderPayment extends Model {
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
     `owners.id as ownerId`,
-    `tenants.name as tenantName`,
-    `tenants.email as tenantEmail`,
-    `tenants.id as tenantId`,
+    `workers.name as workerName`,
+    `workers.email as workerEmail`,
+    `workers.id as workerId`,
     `${CHAT_TABLE}.id as chatId`,
     `${DISPUTES_TABLE}.id as disputeId`,
     `${DISPUTES_TABLE}.status as disputeStatus`,
@@ -308,10 +308,10 @@ class SenderPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
-        `${USERS_TABLE} as tenants`,
-        `tenants.id`,
+        `${USERS_TABLE} as workers`,
+        `workers.id`,
         "=",
-        `${ORDERS_TABLE}.tenant_id`
+        `${ORDERS_TABLE}.worker_id`
       )
       .leftJoin(
         `${DISPUTES_TABLE}`,
@@ -514,7 +514,7 @@ class SenderPayment extends Model {
         `${ORDERS_TABLE}.price_per_day as orderOfferPricePerDay`,
         `${ORDERS_TABLE}.start_date as orderOfferStartDate`,
         `${ORDERS_TABLE}.end_date as orderOfferEndDate`,
-        `${ORDERS_TABLE}.tenant_fee as tenantFee`,
+        `${ORDERS_TABLE}.worker_fee as workerFee`,
         `owners.id as ownerId`,
         `owners.name as ownerName`,
         `owners.email as ownerEmail`,

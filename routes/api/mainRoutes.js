@@ -167,20 +167,6 @@ module.exports = (io) => {
     mainController.getOrderFullForCardPay
   );
 
-  router.get(
-    "/tenant-scanning-listing-rental-code/:token",
-    isAuth,
-    orderFullByTokenOptionsValidation,
-    mainController.getOrderTenantQrCodeInfo
-  );
-
-  router.get(
-    "/owner-scanning-listing-rental-code/:token",
-    isAuth,
-    orderFullByTokenOptionsValidation,
-    mainController.getOrderOwnerQrCodeInfo
-  );
-
   router.post(
     "/user-listing-list-options",
     isAuth,
@@ -342,10 +328,10 @@ module.exports = (io) => {
   );
 
   router.get(
-    "/get-order-review-by-tenant/:id",
+    "/get-order-review-by-worker/:id",
     isAuth,
     validateIdParam(),
-    mainController.getOrderReviewByTenantOptions
+    mainController.getOrderReviewByWorkerOptions
   );
 
   router.get(
@@ -356,11 +342,11 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/admin-tenant-comment-list-options",
+    "/admin-worker-comment-list-options",
     isAuth,
     isSupport,
     adminCommentListOptionsValidation,
-    mainController.getAdminTenantCommentsPageOptions
+    mainController.getAdminWorkerCommentsPageOptions
   );
 
   router.post(

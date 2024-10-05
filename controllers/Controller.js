@@ -6,19 +6,11 @@ const hbs = require("nodemailer-express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime-types");
-const AWS = require("aws-sdk");
-const axios = require("axios");
 
 const twilioClient = require("twilio")(
   process.env.TWILIO_SID,
   process.env.TWILIO_AUTH
 );
-
-AWS.config.update({
-  region: process.env.BUCKET_REGION,
-  accessKeyId: process.env.BUCKET_ACCESS_KEY,
-  secretAccessKey: process.env.BUCKET_ACCESS_SECRET_KEY,
-});
 
 const {
   timeConverter,
@@ -26,8 +18,6 @@ const {
   getDateByCurrentReject,
   adaptClientTimeToServer,
   clientServerHoursDifference,
-  shortTimeConverter,
-  tenantPaymentCalculate,
   getStartAndEndOfLastWeek,
   getStartAndEndOfLastMonth,
   getStartAndEndOfLastYear,
@@ -35,11 +25,9 @@ const {
   removeDuplicates,
   getFactOrderDays,
   truncateString,
-  tenantPaymentFeeCalculate,
 } = require("../utils");
 const htmlToPdf = require("html-pdf");
 const handlebars = require("handlebars");
-const qrcode = require("qrcode");
 
 const {
   userModel,
@@ -57,7 +45,7 @@ const {
   senderPaymentModel,
   recipientPaymentModel,
   ownerCommentModel,
-  tenantCommentModel,
+  workerCommentModel,
   userListingFavoriteModel,
   disputeModel,
   chatMessageContentModel,
@@ -102,7 +90,7 @@ class Controller {
       listingCategoryCreateNotificationModel;
 
     this.ownerCommentModel = ownerCommentModel;
-    this.tenantCommentModel = tenantCommentModel;
+    this.workerCommentModel = workerCommentModel;
 
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
@@ -117,18 +105,13 @@ class Controller {
     this.checklistModel = checklistModel;
 
     this.mailTransporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
-      port: process.env.MAIL_PORT,
-      secure: false,
+      service: process.env.MAIL_SERVICE,
       auth: {
-        user: process.env.MAIL_USER,
+        user: process.env.MAIL_EMAIL,
         pass: process.env.MAIL_PASSWORD,
       },
-      tls: {
-        rejectUnauthorized: false,
-        ciphers: "SSLv3",
-      },
     });
+
 
     this.mailTransporter.use(
       "compile",
@@ -140,9 +123,6 @@ class Controller {
         viewPath: path.resolve("./mails/"),
       })
     );
-
-    this.awsS3 = new AWS.S3();
-    this.awsBucketName = process.env.BUCKET_NAME;
   }
 
   sendSocketIoMessage = (socket, messageKey, message) => {
@@ -302,15 +282,6 @@ class Controller {
     });
   };
 
-  sendBookingExtensionMail = async (email, orderId) => {
-    const title = "Booking Extension Request";
-    const link = CLIENT_URL + "/dashboard/orders/" + orderId;
-
-    await this.sendMail(email, title, "bookingExtension", {
-      link,
-    });
-  };
-
   sendAssetListingConfirmation = async (email, listingId) => {
     const title = "Asset Listing Confirmation";
     const link = CLIENT_URL + "/dashboard/listings/" + listingId;
@@ -320,11 +291,11 @@ class Controller {
     });
   };
 
-  sendBookingCancellationRenterMail = async (email, orderId) => {
+  sendBookingCancellationWorkerMail = async (email, orderId) => {
     const title = "Booking Request Cancelled";
     const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
-    await this.sendMail(email, title, "bookingCancellationRenter", {
+    await this.sendMail(email, title, "bookingCancellationWorker", {
       link,
     });
   };
@@ -414,40 +385,24 @@ class Controller {
     });
   };
 
-  moveUploadsFileToFolder = async (file, folder) => {
+  moveUploadsFileToFolder = (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
     const type = mime.extension(file.mimetype) || "bin";
 
-    const fileContent = fs.readFileSync(originalFilePath);
-    const filePath = `${folder}/${name}.${type}`;
+    const destinationDir = path.join(STATIC.MAIN_DIRECTORY, "public", folder);
+    this.createFolderIfNotExists(destinationDir);
+    const newFilePath = path.join(destinationDir, name + "." + type);
+    fs.renameSync(originalFilePath, newFilePath);
 
-    try {
-      await this.awsS3
-        .putObject({
-          Bucket: this.awsBucketName,
-          Key: `public/${filePath}`,
-          Body: fileContent,
-          ContentType: file.mimetype,
-        })
-        .promise();
-      return filePath;
-    } catch (err) {
-      console.log("Error uploading file:", err);
-      throw err;
-    }
+    return folder + "/" + name + "." + type;
   };
 
-  removeFile = async (filePath) => {
-    try {
-      await this.awsS3
-        .deleteObject({
-          Bucket: this.awsBucketName,
-          Key: `public/${filePath}`,
-        })
-        .promise();
-    } catch (err) {
-      console.log("Error deleting file:", err);
+  removeFile = (filePath) => {
+    const fullPath = path.join(STATIC.MAIN_DIRECTORY, "public", filePath);
+
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
     }
   };
 
@@ -733,13 +688,6 @@ class Controller {
     return pdf;
   }
 
-  async generateQrCodeInfo(clientLink) {
-    const token = generateRandomString();
-    const image = await qrcode.toDataURL(CLIENT_URL + clientLink + "/" + token);
-
-    return { token, image };
-  }
-
   sendSocketMessageToUserOpponent = async (
     chatId,
     userId,
@@ -822,12 +770,6 @@ class Controller {
   };
 
   baseListingDatesValidation = (startDate, endDate, minRentalDays) => {
-    if (
-      getFactOrderDays(startDate, endDate) > STATIC.LIMITS.MAX_RENTAL_DURATION
-    ) {
-      return `You can't rent a listing more than ${STATIC.LIMITS.MAX_RENTAL_DURATION} days`;
-    }
-
     if (minRentalDays && getFactOrderDays(startDate, endDate) < minRentalDays) {
       return `You can rent ads only for a period of more than ${minRentalDays} days`;
     }

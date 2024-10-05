@@ -309,16 +309,6 @@ const isDateAfterStartDate = (key, startInfo, stepType, durationHours) => {
   }
 };
 
-const checkStartEndHasConflict = (startDate, endDate, conflictDates) => {
-  const selectedDates = generateDatesBetween(startDate, endDate);
-
-  const hasBlockedDate = selectedDates.find((selectedDate) =>
-    conflictDates.includes(selectedDate)
-  );
-
-  return !!hasBlockedDate;
-};
-
 module.exports = {
   timeConverter,
   getOneHourAgo,
@@ -340,6 +330,5 @@ module.exports = {
   generateDatesByTypeBetween,
   checkDateInDuration,
   isDateAfterStartDate,
-  checkStartEndHasConflict,
   getFactOrderDays,
 };

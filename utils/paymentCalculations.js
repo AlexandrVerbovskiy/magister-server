@@ -7,11 +7,11 @@ const paymentFeeCalculate = (startDay, endDay, fee, pricePerDay) => {
   return +resPayment.toFixed(2);
 };
 
-const tenantPaymentFeeCalculate = (startDay, endDay, fee, pricePerDay) => {
+const workerPaymentFeeCalculate = (startDay, endDay, fee, pricePerDay) => {
   const result = paymentFeeCalculate(startDay, endDay, fee, pricePerDay);
 
-  if (result < STATIC.LIMITS.MIN_TENANT_COMMISSION) {
-    return STATIC.LIMITS.MIN_TENANT_COMMISSION;
+  if (result < STATIC.LIMITS.MIN_WORKER_COMMISSION) {
+    return STATIC.LIMITS.MIN_WORKER_COMMISSION;
   }
 
   return result;
@@ -19,12 +19,12 @@ const tenantPaymentFeeCalculate = (startDay, endDay, fee, pricePerDay) => {
 
 const ownerGetsFeeCalculate = paymentFeeCalculate;
 
-const tenantPaymentCalculate = (startDay, endDay, fee, pricePerDay) => {
+const workerPaymentCalculate = (startDay, endDay, fee, pricePerDay) => {
   const duration = getFactOrderDays(startDay, endDay);
 
   const resPayment =
     duration * pricePerDay +
-    tenantPaymentFeeCalculate(startDay, endDay, fee, pricePerDay);
+    workerPaymentFeeCalculate(startDay, endDay, fee, pricePerDay);
 
   return +resPayment.toFixed(2);
 };
@@ -40,8 +40,8 @@ const ownerGetsCalculate = (startDay, endDay, fee, pricePerDay) => {
 };
 
 module.exports = {
-  tenantPaymentCalculate,
+  workerPaymentCalculate,
   ownerGetsCalculate,
-  tenantPaymentFeeCalculate,
+  workerPaymentFeeCalculate,
   ownerGetsFeeCalculate,
 };

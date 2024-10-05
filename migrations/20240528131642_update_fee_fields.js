@@ -6,7 +6,7 @@ const STATIC = require("../static");
  */
 exports.up = function(knex) {
     return knex.schema.alterTable(STATIC.TABLES.ORDERS, function (table) {
-        table.float("tenant_fee").nullable().defaultTo(null).alter();
+        table.float("worker_fee").nullable().defaultTo(null).alter();
         table.float("owner_fee").nullable().defaultTo(null).alter();
       });
 };
@@ -17,7 +17,7 @@ exports.up = function(knex) {
  */
 exports.down = function(knex) {
     return knex.schema.alterTable(STATIC.TABLES.ORDERS, function (table) {    
-        table.integer("tenant_fee").nullable().defaultTo(null).alter();
+        table.integer("worker_fee").nullable().defaultTo(null).alter();
         table.integer("owner_fee").nullable().defaultTo(null).alter();
       });
 };

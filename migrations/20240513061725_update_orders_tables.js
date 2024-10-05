@@ -13,7 +13,7 @@ exports.up = function (knex) {
     table.string("prev_start_date").nullable().defaultTo(null);
     table.string("prev_end_date").nullable().defaultTo(null);
 
-    table.integer("tenant_fee").nullable().defaultTo(null);
+    table.integer("worker_fee").nullable().defaultTo(null);
     table.integer("owner_fee").nullable().defaultTo(null);
   });
 };
@@ -31,7 +31,7 @@ exports.down = function (knex) {
     table.dropColumn("prev_start_date");
     table.dropColumn("prev_end_date");
 
-    table.dropColumn("tenant_fee");
+    table.dropColumn("worker_fee");
     table.dropColumn("owner_fee");
   });
 };

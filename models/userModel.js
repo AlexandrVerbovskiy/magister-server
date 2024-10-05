@@ -468,8 +468,8 @@ class UserModel extends Model {
         db.raw(`(
           SELECT MAX(o.start_date)
           FROM ${ORDERS_TABLE} o
-          WHERE o.tenant_id = ${USERS_TABLE}.id
-        ) as "lastRenterDate"`),
+          WHERE o.worker_id = ${USERS_TABLE}.id
+        ) as "lastWorkerDate"`),
       ])
       .groupBy([`${USERS_TABLE}.id`, `${USER_VERIFY_REQUESTS_TABLE}.id`])
       .orderBy(order, orderType)

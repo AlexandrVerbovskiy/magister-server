@@ -1,7 +1,7 @@
 const STATIC = require("../static");
 const {
   sendMoneyToPaypalByPaypalID,
-  tenantPaymentCalculate,
+  workerPaymentCalculate,
   isPayedUsedPaypal,
 } = require("../utils");
 const Controller = require("./Controller");

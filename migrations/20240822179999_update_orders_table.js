@@ -6,7 +6,7 @@ const STATIC = require("../static");
  */
 exports.up = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.ORDERS, function (table) {
-    table.dropColumn("defect_description_by_tenant");
+    table.dropColumn("defect_description_by_worker");
     table.dropColumn("defect_description_by_owner");
   });
 };
@@ -17,7 +17,7 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return knex.schema.alterTable(STATIC.TABLES.ORDERS, function (table) {
-    table.text("defect_description_by_tenant");
+    table.text("defect_description_by_worker");
     table.text("defect_description_by_owner");
   });
 };

@@ -18,7 +18,7 @@ exports.seed = async function (knex) {
       value: "20",
     },
     {
-      key: "tenant_base_commission_percent",
+      key: "worker_base_commission_percent",
       value: "15",
     },
   ]);

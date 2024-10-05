@@ -518,7 +518,7 @@ class ListingsModel extends Model {
           `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
                ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
         ).whereRaw(`${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND
-            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND
+            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_WORKER}' AND
             (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}') AND
             ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'`);
 
@@ -786,24 +786,24 @@ class ListingsModel extends Model {
     return +result?.count;
   };
 
-  bindTenantListCountListings = async (
+  bindWorkerListCountListings = async (
     entities,
     key = "id",
-    resultKey = "tenantCountItems"
+    resultKey = "workerCountItems"
   ) => {
     const userIds = entities.map((entity) => entity[key]);
 
     const countInfos = await db(ORDERS_TABLE)
-      .select("tenant_id as tenantId")
+      .select("worker_id as workerId")
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
-      .whereIn("tenant_id", userIds)
-      .groupBy("tenant_id");
+      .whereIn("worker_id", userIds)
+      .groupBy("worker_id");
 
     entities.forEach((entity, index) => {
       entities[index][resultKey] = 0;
 
       countInfos.forEach((countInfo) => {
-        if (entities[index] === countInfo["tenantId"]) {
+        if (entities[index] === countInfo["workerId"]) {
           entities[index][resultKey] = countInfo["count"];
         }
       });
@@ -812,9 +812,9 @@ class ListingsModel extends Model {
     return entities;
   };
 
-  getTenantCountListings = async (userId) => {
+  getWorkerCountListings = async (userId) => {
     const result = await db(ORDERS_TABLE)
-      .where({ tenant_id: userId })
+      .where({ worker_id: userId })
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
       .first();
 
