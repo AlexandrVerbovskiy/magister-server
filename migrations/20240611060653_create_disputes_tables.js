@@ -7,23 +7,23 @@ const STATIC = require("../static");
 exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.DISPUTES, function (table) {
     table.increments("id").primary();
-
     table.text("solution");
     table.text("description");
     table.string("type");
     table.string("status");
+    table.timestamp("solved_at").nullable().defaultTo(null);
+    table.timestamps(true, true);
 
     table
       .integer("order_id")
       .unsigned()
-      .references(STATIC.TABLES.ORDERS + ".id");
+      .references(STATIC.TABLES.ORDERS + ".id")
+      .unique();
 
     table
       .integer("sender_id")
       .unsigned()
       .references(STATIC.TABLES.USERS + ".id");
-
-    table.timestamps(true, true);
   });
 };
 

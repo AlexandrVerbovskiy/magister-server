@@ -9,7 +9,9 @@ exports.up = function (knex) {
     STATIC.TABLES.CHAT_RELATIONS,
     function (table) {
       table.increments("id").primary();
-
+      table.boolean("typing").defaultTo(false);
+      table.timestamps(true, true);
+      
       table
         .integer("chat_id")
         .unsigned()
@@ -19,8 +21,6 @@ exports.up = function (knex) {
         .integer("user_id")
         .unsigned()
         .references(STATIC.TABLES.USERS + ".id");
-
-      table.timestamps(true, true);
     }
   );
 };

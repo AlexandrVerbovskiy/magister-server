@@ -7,15 +7,13 @@ const STATIC = require("../static");
 exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.SOCKETS, function (table) {
     table.increments("id").primary();
-
+    table.text("socket");
+    table.timestamps(true, true);
+    
     table
       .integer("user_id")
       .unsigned()
       .references(STATIC.TABLES.USERS + ".id");
-
-    table.text("socket");
-
-    table.timestamps(true, true);
   });
 };
 

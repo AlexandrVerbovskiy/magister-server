@@ -6,19 +6,18 @@ const STATIC = require("../static");
  */
 exports.up = function (knex) {
   return knex.schema.createTable(
-    STATIC.TABLES.LISTING_DEFECT_RELATIONS,
+    STATIC.TABLES.USER_EVENT_LOGS,
     function (table) {
       table.increments("id").primary();
+      table.text("user_email");
+      table.text("user_role");
+      table.string("event_name");
       table.timestamps(true, true);
 
       table
-        .integer("listing_id")
-        .unsigned()
-        .references(STATIC.TABLES.LISTINGS + ".id");
-      table
-        .integer("listing_defect_id")
-        .unsigned()
-        .references(STATIC.TABLES.LISTING_DEFECTS + ".id");
+      .integer("user_id")
+      .unsigned()
+      .references(STATIC.TABLES.USERS + ".id");
     }
   );
 };
@@ -28,5 +27,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists(STATIC.TABLES.LISTING_DEFECT_RELATIONS);
+  return knex.schema.dropTableIfExists(STATIC.TABLES.USER_EVENT_LOGS);
 };

@@ -7,10 +7,9 @@ const STATIC = require("../static");
 exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.CHATS, function (table) {
     table.increments("id").primary();
-
     table.integer("entity_id").unsigned();
     table.string("entity_type");
-
+    table.text("name");
     table.timestamps(true, true);
   });
 };

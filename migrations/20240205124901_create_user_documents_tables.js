@@ -9,18 +9,9 @@ exports.up = function (knex) {
     STATIC.TABLES.USER_DOCUMENTS,
     function (table) {
       table.increments("id").primary();
-
-      table.string("proof_of_address_link").nullable().defaultTo(null);
-      table.string("reputable_bank_id_link").nullable().defaultTo(null);
-      table.string("utility_link").nullable().defaultTo(null);
-      table.string("hmrc_link").nullable().defaultTo(null);
-      table.string("council_tax_bill_link").nullable().defaultTo(null);
-      table.string("passport_or_driving_id_link").nullable().defaultTo(null);
-      table
-        .string("confirm_money_laundering_checks_and_compliance_link")
-        .nullable()
-        .defaultTo(null);
-
+      table.string("user_photo").nullable().defaultTo(null);
+      table.string("document_front").nullable().defaultTo(null);
+      table.string("document_back").nullable().defaultTo(null);
       table.timestamps(true, true);
 
       table

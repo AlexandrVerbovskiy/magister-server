@@ -9,15 +9,15 @@ exports.up = function (knex) {
     STATIC.TABLES.RECIPIENT_PAYMENTS,
     function (table) {
       table.increments("id").primary();
-
       table.float("money");
       table.string("planned_time");
       table.string("received_type");
       table.string("status");
-      table.string("paypal_id");
       table.text("failed_details");
+      table.string("type");
+      table.json("data").nullable().defaultTo(null);
+      table.text("failed_description");
       table.timestamp("last_tried_at").nullable().defaultTo(null);
-
       table.timestamps(true, true);
 
       table

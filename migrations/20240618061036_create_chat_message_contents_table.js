@@ -9,15 +9,13 @@ exports.up = function (knex) {
     STATIC.TABLES.CHAT_MESSAGE_CONTENTS,
     function (table) {
       table.increments("id").primary();
-
-      table.text("content");
+      table.json("content");
+      table.timestamps(true, true);
 
       table
         .integer("message_id")
         .unsigned()
         .references(STATIC.TABLES.CHAT_MESSAGES + ".id");
-
-      table.timestamps(true, true);
     }
   );
 };

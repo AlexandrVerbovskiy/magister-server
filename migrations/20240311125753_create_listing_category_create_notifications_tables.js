@@ -10,13 +10,14 @@ exports.up = function (knex) {
     function (table) {
       table.increments("id").primary();
       table.text("category_name");
+      table.boolean("sent_success").defaultTo(false);
+      table.timestamp("sent_at").nullable().defaultTo(null);
       table.timestamps(true, true);
 
       table
         .integer("user_id")
         .unsigned()
         .references(STATIC.TABLES.USERS + ".id");
-
     }
   );
 };

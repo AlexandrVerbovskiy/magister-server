@@ -7,9 +7,7 @@ const STATIC = require("../static");
 exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.LISTINGS, function (table) {
     table.increments("id").primary();
-
     table.string("name");
-    table.text("key_words");
 
     table.float("compensation_cost");
     table.integer("count_stored_items");
@@ -17,7 +15,6 @@ exports.up = function (knex) {
     table.integer("min_rental_days").nullable().defaultTo(null);
 
     table.text("description");
-    table.text("rental_terms");
     table.text("address");
 
     table.text("postcode");
@@ -27,13 +24,16 @@ exports.up = function (knex) {
     table.float("rental_lng");
     table.float("rental_radius");
 
+    table.string("other_category").defaultTo(null);
+    table.string("background_photo").defaultTo(null);
     table.boolean("approved").defaultTo(false);
 
-    table.timestamps(true, true);
+    table.integer("category_id").unsigned().nullable();
+    table.integer("other_category_parent_id").defaultTo(null);
+    table.text("defects");
 
-    table
-      .integer("category_id")
-      .unsigned();
+    table.boolean("active").defaultTo(true);
+    table.timestamps(true, true);
 
     table
       .integer("owner_id")

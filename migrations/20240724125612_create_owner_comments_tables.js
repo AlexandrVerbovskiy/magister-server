@@ -24,7 +24,6 @@ exports.up = function (knex) {
       table.boolean("approved").defaultTo(false);
       table.boolean("waiting_admin").defaultTo(true);
       table.text("rejected_description");
-
       table.timestamps(true, true);
 
       table

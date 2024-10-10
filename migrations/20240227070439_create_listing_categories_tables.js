@@ -9,12 +9,11 @@ exports.up = function (knex) {
     STATIC.TABLES.LISTING_CATEGORIES,
     function (table) {
       table.increments("id").primary();
-
       table.string("name");
       table.integer("level");
       table.string("image").nullable().defaultTo(null);
       table.boolean("popular").defaultTo(false);
-
+      table.integer("order_index").nullable().defaultTo(null);
       table.timestamps(true, true);
 
       table

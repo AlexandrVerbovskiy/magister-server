@@ -9,11 +9,9 @@ exports.up = function (knex) {
     STATIC.TABLES.SEARCHED_WORDS,
     function (table) {
       table.increments("id").primary();
-
       table.string("name");
       table.boolean("admin_viewed").defaultTo(false);
       table.integer("search_count").defaultTo(1);
-
       table.timestamps(true, true);
 
       table

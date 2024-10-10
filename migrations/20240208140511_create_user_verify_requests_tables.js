@@ -9,11 +9,9 @@ exports.up = function (knex) {
     STATIC.TABLES.USER_VERIFY_REQUESTS,
     function (table) {
       table.increments("id").primary();
-
       table.boolean("has_response").defaultTo(false);
       table.boolean("viewed_failed_description").defaultTo(false);
       table.text("failed_description");
-
       table.timestamps(true, true);
 
       table
