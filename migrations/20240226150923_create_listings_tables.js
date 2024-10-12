@@ -9,13 +9,10 @@ exports.up = function (knex) {
     table.increments("id").primary();
     table.string("name");
 
-    table.float("compensation_cost");
-    table.integer("count_stored_items");
-    table.float("price_per_day");
-    table.integer("min_rental_days").nullable().defaultTo(null);
-
     table.text("description");
     table.text("address");
+    table.float("total_price");
+    table.timestamp("finish_time");
 
     table.text("postcode");
     table.string("city");

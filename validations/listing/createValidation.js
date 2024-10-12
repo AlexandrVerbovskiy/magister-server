@@ -57,10 +57,6 @@ module.exports = [
   ...validateSmallStringBody({ field: "city", fieldName: "City" }),
   ...validateSmallStringBody({ field: "postcode", fieldName: "Postcode" }),
   ...validateFloat({ field: "rentalRadius", fieldName: "Rental radius" }),
-  ...validateFloat({
-    field: "compensationCost",
-    fieldName: "Compensation Cost",
-  }),
   ...validateFloat({ field: "pricePerDay", fieldName: "Price per day" }),
   ...validateIntegerBody({
     field: "minRentalDays",

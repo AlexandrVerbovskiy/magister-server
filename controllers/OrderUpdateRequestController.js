@@ -12,7 +12,6 @@ class OrderUpdateRequestController extends Controller {
       const dateErrorMessage = this.baseListingDatesValidation(
         newStartDate,
         newEndDate,
-        order.listingMinRentalDays
       );
 
       if (dateErrorMessage) {
@@ -55,17 +54,12 @@ class OrderUpdateRequestController extends Controller {
         newStatus = await this.orderModel.setPendingOwnerStatus(orderId);
       }
 
-      if (ownerId == senderId) {
-        newStatus = await this.orderModel.setPendingWorkerStatus(orderId);
-      }
-
       const fee = await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
       const createdRequestId = await this.orderUpdateRequestModel.create({
         orderId,
         newStartDate,
         newEndDate,
-        newPricePerDay: order.offerPricePerDay,
         senderId,
         fee,
       });
@@ -81,7 +75,6 @@ class OrderUpdateRequestController extends Controller {
       let messageData = {
         requestId: request.id,
         listingName: order.listingName,
-        offerPrice: order.offerPricePerDay,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
         offerStartDate: newStartDate,

@@ -9,23 +9,20 @@ const STATIC = require("../static");
 baseConvertPaymentProps = (payment) => {
   const offerStartDate = payment.orderOfferStartDate;
   const offerEndDate = payment.orderOfferEndDate;
-  const offerPricePerDay = payment.orderOfferPricePerDay;
 
   const offerTotalPrice = workerPaymentCalculate(
     offerStartDate,
     offerEndDate,
     payment.workerFee,
-    offerPricePerDay
   );
 
   const offerSubTotalPrice =
-    getFactOrderDays(offerStartDate, offerEndDate) * offerPricePerDay;
+    getFactOrderDays(offerStartDate, offerEndDate);
 
   const factTotalFee = workerPaymentFeeCalculate(
     offerStartDate,
     offerEndDate,
     payment.workerFee,
-    offerPricePerDay
   );
 
   const duration =
@@ -54,7 +51,6 @@ baseConvertPaymentProps = (payment) => {
       factTotalPrice: offerTotalPrice.toFixed(2),
       fee: payment.workerFee,
       listingName: payment.listingName,
-      pricePerDay: offerPricePerDay.toFixed(2),
       subTotalPrice: offerSubTotalPrice.toFixed(2),
       factTotalFee: factTotalFee.toFixed(2),
       duration,

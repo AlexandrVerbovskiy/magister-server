@@ -64,7 +64,7 @@ class OrderController extends Controller {
     });
 
   baseCreate = async (
-    { startDate, endDate, listingId, feeActive, workerId },
+    { listingId, feeActive, workerId },
     needMinDateVerify = true
   ) => {
     let minRentalDays = null;
@@ -83,16 +83,6 @@ class OrderController extends Controller {
       return { error: "Access denied", orderId: null };
     }
 
-    const dateErrorMessage = this.baseListingDatesValidation(
-      startDate,
-      endDate,
-      minRentalDays
-    );
-
-    if (dateErrorMessage) {
-      return { error: dateErrorMessage, orderId: null };
-    }
-
     const workerFee =
       await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
@@ -101,8 +91,6 @@ class OrderController extends Controller {
 
     const orderId = await this.orderModel.create({
       pricePerDay: listing.pricePerDay,
-      startDate,
-      endDate,
       listingId,
       workerId,
       ownerFee: ownerFee,
@@ -118,12 +106,10 @@ class OrderController extends Controller {
   };
 
   baseCreateWithMessageSend = async (req, needReturnMessage = false) => {
-    const { startDate, endDate, listingId, feeActive, message } = req.body;
+    const { listingId, feeActive, message } = req.body;
     const workerId = req.userData.userId;
 
     const result = await this.baseCreate({
-      startDate,
-      endDate,
       listingId,
       feeActive,
       workerId,
@@ -163,8 +149,6 @@ class OrderController extends Controller {
         offerPrice: result.pricePerDay,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
-        offerStartDate: startDate,
-        offerEndDate: endDate,
         description: message,
       },
     });
@@ -412,8 +396,6 @@ class OrderController extends Controller {
         await this.orderModel.acceptUpdateRequest(id, {
           newStartDate: lastUpdateRequestInfo.newStartDate,
           newEndDate: lastUpdateRequestInfo.newEndDate,
-          newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-          prevPricePerDay: order.offerPricePerDay,
           prevStartDate: order.offerStartDate,
           prevEndDate: order.offerEndDate,
         });
@@ -496,8 +478,6 @@ class OrderController extends Controller {
       newData = {
         newStartDate: lastUpdateRequestInfo.newStartDate,
         newEndDate: lastUpdateRequestInfo.newEndDate,
-        newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-        prevPricePerDay: order.offerPricePerDay,
         prevStartDate: order.offerStartDate,
         prevEndDate: order.offerEndDate,
       };
@@ -677,7 +657,7 @@ class OrderController extends Controller {
       order.offerStartDate,
       order.offerEndDate,
       order.workerFee,
-      order.offerPricePerDay
+      order.offerTotalPrice
     );
 
     let type = "created";
@@ -789,8 +769,6 @@ class OrderController extends Controller {
       newData = {
         newStartDate: lastUpdateRequestInfo.newStartDate,
         newEndDate: lastUpdateRequestInfo.newEndDate,
-        newPricePerDay: lastUpdateRequestInfo.newPricePerDay,
-        prevPricePerDay: orderInfo.offerPricePerDay,
         prevStartDate: orderInfo.offerStartDate,
         prevEndDate: orderInfo.offerEndDate,
       };
@@ -837,7 +815,6 @@ class OrderController extends Controller {
       offerStartDate,
       offerEndDate,
       workerFee,
-      offerPricePerDay,
     } = orderInfo;
 
     if (workerId != userId || orderInfo.disputeStatus) {
@@ -885,7 +862,6 @@ class OrderController extends Controller {
       offerStartDate,
       offerEndDate,
       workerFee,
-      offerPricePerDay
     );
 
     const workerCancelFeePercent =
@@ -998,7 +974,6 @@ class OrderController extends Controller {
         {
           orderOfferStartDate: order.offerStartDate,
           orderOfferEndDate: order.offerEndDate,
-          orderOfferPricePerDay: order.offerPricePerDay,
           workerFee: order.workerFee,
           listingAddress: order.listingAddress,
           listingCity: order.listingCity,

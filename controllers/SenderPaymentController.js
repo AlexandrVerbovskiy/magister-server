@@ -38,7 +38,6 @@ class SenderPaymentController extends Controller {
         order.offerStartDate,
         order.offerEndDate,
         order.workerFee,
-        order.offerPricePerDay
       );
 
       const result = await createPaypalOrder(
@@ -219,9 +218,6 @@ class SenderPaymentController extends Controller {
         );
 
         await this.recipientPaymentModel.paypalPaymentPlanGeneration({
-          startDate: order.offerStartDate,
-          endDate: order.offerEndDate,
-          pricePerDay: order.offerPricePerDay,
           userId: order.ownerId,
           orderId: order.id,
           fee: order.ownerFee,

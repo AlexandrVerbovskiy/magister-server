@@ -7,15 +7,8 @@ const STATIC = require("../static");
 exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.ORDERS, function (table) {
     table.increments("id").primary();
-    table.float("price_per_day");
-    table.string("start_date");
-    table.string("end_date");
     table.string("accept_listing_qr_code");
     table.integer("fee");
-
-    table.float("prev_price_per_day").nullable().defaultTo(null);
-    table.string("prev_start_date").nullable().defaultTo(null);
-    table.string("prev_end_date").nullable().defaultTo(null);
 
     table.text("status");
     table.string("cancel_status").nullable().defaultTo(null);

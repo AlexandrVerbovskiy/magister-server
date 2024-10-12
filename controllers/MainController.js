@@ -295,19 +295,7 @@ class MainController extends Controller {
             id
           );
       }
-
-      if (userId) {
-        const blockedDates =
-          await this.orderModel.getBlockedListingsDatesForListings(
-            [listing.id],
-            userId
-          );
-
-        listing["blockedDates"] = blockedDates[listing.id];
-      } else {
-        listing["blockedDates"] = [];
-      }
-
+      
       const workerBaseCommissionPercent =
         await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
