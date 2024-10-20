@@ -24,11 +24,6 @@ module.exports = [
     .bail()
     .isInt()
     .withMessage("Category id must be an integer"),
-
-  ...validateIntegerBody({
-    field: "countStoredItems",
-    fieldName: "Count stored items",
-  }),
   ...validateBigStringBody({
     field: "description",
     fieldName: "Description",
@@ -45,29 +40,18 @@ module.exports = [
     required: false,
   }),
   ...validateFloat({
-    field: "rentalLat",
-    fieldName: "Rental lat",
+    field: "lat",
+    fieldName: "Lat",
     canBeNegative: true,
   }),
   ...validateFloat({
-    field: "rentalLng",
-    fieldName: "Rental lng",
+    field: "lng",
+    fieldName: "Lng",
     canBeNegative: true,
   }),
   ...validateSmallStringBody({ field: "city", fieldName: "City" }),
   ...validateSmallStringBody({ field: "postcode", fieldName: "Postcode" }),
-  ...validateFloat({ field: "rentalRadius", fieldName: "Rental radius" }),
-  ...validateFloat({ field: "pricePerDay", fieldName: "Price per day" }),
-  ...validateIntegerBody({
-    field: "minRentalDays",
-    fieldName: "Minimum rental days",
-    required: false,
-  }),
-  ...validateBigStringBody({
-    field: "defects",
-    fieldName: "Defect Description",
-    required: false,
-  }),
+  ...validateFloat({ field: "radius", fieldName: "radius" }),
   body("listingImages")
     .optional({ nullable: true })
     .custom((value) => {

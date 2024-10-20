@@ -889,24 +889,12 @@ class MainController extends Controller {
       stepType
     );
 
-    const rentListingCounts = cloneObject(generatedDates);
     const transactionDatesCount = cloneObject(generatedDates);
     const transactionDatesSum = cloneObject(generatedDates);
     const userRegisterDatesCount = cloneObject(generatedDates);
     const userInactiveRegisterDatesCount = cloneObject(generatedDates);
     const userTotalDatesCount = cloneObject(generatedDates);
     const disputeTotalDatesCount = cloneObject(generatedDates);
-
-    const rentListingInfos = await this.orderModel.getInUseListings(
-      clientFromTime,
-      clientToTime
-    );
-
-    const rentListingTotalCounts = rentListingInfos.length;
-
-    incrementDateCounts(rentListingCounts, rentListingInfos, (key, info) =>
-      checkDateInDuration(key, info.startDate, info.endDate, stepType)
-    );
 
     const disputeInfos = await this.disputeModel.getInDuration(
       clientFromTime,
@@ -1022,8 +1010,6 @@ class MainController extends Controller {
       userTotalDatesCount,
       transactionDatesCount,
       transactionDatesSum,
-      rentListingCounts,
-      rentListingTotalCounts,
       transactionsDetailInfo,
       disputeTotalDatesCount,
       disputeStatisticInfo,
@@ -1061,18 +1047,9 @@ class MainController extends Controller {
       stepType
     );
 
-    const rentListingCounts = cloneObject(generatedDates);
     const transactionDatesCount = cloneObject(generatedDates);
     const transactionDatesSum = cloneObject(generatedDates);
     const disputeTotalDatesCount = cloneObject(generatedDates);
-
-    const rentListingInfos = await this.orderModel.getInUseUserListings(
-      clientFromTime,
-      clientToTime,
-      userId
-    );
-
-    const rentListingTotalCounts = rentListingInfos.length;
 
     const disputeInfos = await this.disputeModel.getUserInDuration(
       clientFromTime,
@@ -1092,10 +1069,6 @@ class MainController extends Controller {
 
     incrementDateCounts(disputeTotalDatesCount, disputeInfos, (key, info) =>
       checkDateInDuration(key, info.createdAt, info.solvedAt, stepType)
-    );
-
-    incrementDateCounts(rentListingCounts, rentListingInfos, (key, info) =>
-      checkDateInDuration(key, info.startDate, info.endDate, stepType)
     );
 
     const transactionInfos =
@@ -1145,8 +1118,6 @@ class MainController extends Controller {
       timeFilterType,
       transactionDatesCount,
       transactionDatesSum,
-      rentListingCounts,
-      rentListingTotalCounts,
       transactionsDetailInfo,
       disputeStatisticInfo,
       disputeTotalDatesCount,

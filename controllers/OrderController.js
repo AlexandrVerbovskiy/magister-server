@@ -63,20 +63,11 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  baseCreate = async (
-    { listingId, feeActive, workerId },
-    needMinDateVerify = true
-  ) => {
-    let minRentalDays = null;
-
+  baseCreate = async ({ listingId, feeActive, workerId }) => {
     const listing = await this.listingModel.getLightById(listingId);
 
     if (!listing) {
       return { error: "Listing not found", orderId: null };
-    }
-
-    if (needMinDateVerify) {
-      minRentalDays = listing.minRentalDays;
     }
 
     if (!listing.approved || !listing.active || listing.ownerId == workerId) {
@@ -861,7 +852,7 @@ class OrderController extends Controller {
     const factTotalPrice = workerPaymentCalculate(
       offerStartDate,
       offerEndDate,
-      workerFee,
+      workerFee
     );
 
     const workerCancelFeePercent =

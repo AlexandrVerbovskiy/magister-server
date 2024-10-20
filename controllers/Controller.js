@@ -385,6 +385,12 @@ class Controller {
     });
   };
 
+  createFolderIfNotExists = (folderPath) => {
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+  };
+
   moveUploadsFileToFolder = (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
@@ -767,14 +773,6 @@ class Controller {
     await this.listingCategoryCreateNotificationModel.markAsSent(
       successSentIds
     );
-  };
-
-  baseListingDatesValidation = (startDate, endDate, minRentalDays) => {
-    if (minRentalDays && getFactOrderDays(startDate, endDate) < minRentalDays) {
-      return `You can rent ads only for a period of more than ${minRentalDays} days`;
-    }
-
-    return null;
   };
 }
 

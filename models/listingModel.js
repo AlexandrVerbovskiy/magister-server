@@ -28,12 +28,12 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.description`,
     `${LISTINGS_TABLE}.postcode`,
     `${LISTINGS_TABLE}.owner_id`,
-    `${LISTINGS_TABLE}.rental_lat`,
-    `${LISTINGS_TABLE}.rental_lng`,
-    `${LISTINGS_TABLE}.rental_radius`,
+    `${LISTINGS_TABLE}.lat`,
+    `${LISTINGS_TABLE}.lng`,
+    `${LISTINGS_TABLE}.radius`,
     `${LISTINGS_TABLE}.background_photo`,
-    `${LISTINGS_TABLE}.defects`,
-    `${LISTINGS_TABLE}.total_price`
+    `${LISTINGS_TABLE}.total_price`,
+    `${LISTINGS_TABLE}.finish_time`,
   ];
 
   visibleFields = [
@@ -49,11 +49,11 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.description`,
     `${LISTINGS_TABLE}.postcode`,
     `${LISTINGS_TABLE}.owner_id as ownerId`,
-    `${LISTINGS_TABLE}.rental_lat as rentalLat`,
-    `${LISTINGS_TABLE}.rental_lng as rentalLng`,
-    `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
-    `${LISTINGS_TABLE}.defects`,
-    `${LISTINGS_TABLE}.total_price` 
+    `${LISTINGS_TABLE}.lat as lat`,
+    `${LISTINGS_TABLE}.lng as lng`,
+    `${LISTINGS_TABLE}.radius as radius`,
+    `${LISTINGS_TABLE}.total_price as totalPrice`,
+    `${LISTINGS_TABLE}.finish_time as finishTime`,
   ];
 
   fullVisibleFields = [
@@ -93,16 +93,9 @@ class ListingsModel extends Model {
 
   strFullFilterFields = [...this.strFilterFields, `${USERS_TABLE}.name`];
 
-  orderFields = [
-    "id",
-    "name",
-    "city",
-    "users.name",
-    "approved",
-    "active",
-  ];
+  orderFields = ["id", "name", "city", "users.name", "approved", "active"];
 
-  generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
+  generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - lng) * COS(lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
 
   createImage = async ({ type, link, listingId }) => {
     const res = await db(LISTING_IMAGES_TABLE)
@@ -142,43 +135,32 @@ class ListingsModel extends Model {
     address,
     name,
     categoryId = null,
-    countStoredItems,
     description = "",
     postcode,
-    pricePerDay,
-    rentalLat,
-    rentalLng,
-    rentalRadius,
+    lat,
+    lng,
+    radius,
     ownerId,
     approved = false,
-    minRentalDays = null,
     listingImages = [],
     city,
     backgroundPhoto = null,
     active = true,
     otherCategory = null,
     otherCategoryParentId = null,
-    defects = null,
+    totalPrice,
+    finishTime,
   }) => {
-    if (!minRentalDays) {
-      minRentalDays = null;
-    }
-
-    if (!defects) {
-      defects = "";
-    }
-
     const res = await db(LISTINGS_TABLE)
       .insert({
         name,
-        defects,
         description,
         postcode,
         address,
         approved,
-        rental_lat: Number(rentalLat),
-        rental_lng: Number(rentalLng),
-        rental_radius: rentalRadius,
+        lat: Number(lat),
+        lng: Number(lng),
+        radius,
         category_id: categoryId,
         owner_id: ownerId,
         city,
@@ -186,6 +168,8 @@ class ListingsModel extends Model {
         background_photo: backgroundPhoto,
         other_category: otherCategory,
         other_category_parent_id: otherCategoryParentId,
+        total_price: totalPrice,
+        finish_time: finishTime,
       })
       .returning("id");
 
@@ -293,15 +277,12 @@ class ListingsModel extends Model {
     id,
     name,
     categoryId = null,
-    countStoredItems,
     description,
     postcode,
     approved,
-    pricePerDay,
-    rentalLat,
-    rentalLng,
-    rentalRadius,
-    minRentalDays = null,
+    lat,
+    lng,
+    radius,
     listingImages = [],
     city,
     ownerId,
@@ -310,32 +291,26 @@ class ListingsModel extends Model {
     backgroundPhoto = null,
     otherCategory = null,
     otherCategoryParentId = null,
-    defects = null,
+    totalPrice,
+    finishTime,
   }) => {
-    if (!minRentalDays) {
-      minRentalDays = null;
-    }
-
-    if (!defects) {
-      defects = "";
-    }
-
     const updateData = {
       name,
       city,
       description,
       postcode,
       approved,
-      rental_lat: Number(rentalLat),
-      rental_lng: Number(rentalLng),
-      rental_radius: rentalRadius,
+      lat: Number(lat),
+      lng: Number(lng),
+      radius,
       category_id: categoryId,
       owner_id: ownerId,
       address,
       active,
       other_category: otherCategory,
       other_category_parent_id: otherCategoryParentId,
-      defects,
+      total_price: totalPrice,
+      finish_time: finishTime,
     };
 
     if (backgroundPhoto) {
@@ -966,7 +941,7 @@ class ListingsModel extends Model {
       query = query.where({ owner_id: props.userId });
     }
 
-    query = query.where(`${USERS_TABLE}.deleted`, false)
+    query = query.where(`${USERS_TABLE}.deleted`, false);
 
     return query;
   };

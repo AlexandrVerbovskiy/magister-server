@@ -9,19 +9,6 @@ class OrderUpdateRequestController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
-      const dateErrorMessage = this.baseListingDatesValidation(
-        newStartDate,
-        newEndDate,
-      );
-
-      if (dateErrorMessage) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.BAD_REQUEST,
-          dateErrorMessage
-        );
-      }
-
       const { workerId, ownerId } = order;
 
       if (

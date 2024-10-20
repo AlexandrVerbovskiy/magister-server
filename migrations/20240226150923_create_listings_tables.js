@@ -17,9 +17,9 @@ exports.up = function (knex) {
     table.text("postcode");
     table.string("city");
 
-    table.float("rental_lat");
-    table.float("rental_lng");
-    table.float("rental_radius");
+    table.float("lat");
+    table.float("lng");
+    table.float("radius");
 
     table.string("other_category").defaultTo(null);
     table.string("background_photo").defaultTo(null);
@@ -27,7 +27,6 @@ exports.up = function (knex) {
 
     table.integer("category_id").unsigned().nullable();
     table.integer("other_category_parent_id").defaultTo(null);
-    table.text("defects");
 
     table.boolean("active").defaultTo(true);
     table.timestamps(true, true);
