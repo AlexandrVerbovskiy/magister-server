@@ -4,17 +4,17 @@ const Controller = require("./Controller");
 class OrderUpdateRequestController extends Controller {
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { orderId, newStartDate, newFinishDate, newPrice } = req.body;
+      const { orderId, newStartDate, newEndDate } = req.body;
       const senderId = req.userData.userId;
 
       const order = await this.orderModel.getFullById(orderId);
 
-      const { renterId, ownerId } = order;
+      const { workerId, ownerId } = order;
 
       if (
         !(
-          (order.status == STATIC.ORDER_STATUSES.PENDING_RENTER &&
-            order.renterId == senderId) ||
+          (order.status == STATIC.ORDER_STATUSES.PENDING_WORKER &&
+            order.workerId == senderId) ||
           (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
             order.ownerId == senderId)
         ) ||
@@ -37,18 +37,18 @@ class OrderUpdateRequestController extends Controller {
 
       let newStatus = null;
 
-      if (renterId == senderId) {
+      if (workerId == senderId) {
         newStatus = await this.orderModel.setPendingOwnerStatus(orderId);
-      } else {
-        newStatus = await this.orderModel.setPendingRenterStatus(orderId);
       }
+
+      const fee = await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
       const createdRequestId = await this.orderUpdateRequestModel.create({
         orderId,
-        newFinishDate,
         newStartDate,
-        newPrice,
+        newEndDate,
         senderId,
+        fee,
       });
 
       const request = await this.orderUpdateRequestModel.getFullById(
@@ -65,8 +65,7 @@ class OrderUpdateRequestController extends Controller {
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
         offerStartDate: newStartDate,
-        offerFinishDate: newFinishDate,
-        offerPrice: newPrice,
+        offerEndDate: newEndDate,
       };
       let orderPart = {
         id: order.id,
