@@ -63,7 +63,7 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  baseCreate = async ({ listingId, feeActive, workerId }) => {
+  baseCreate = async ({ finishTime, totalPrice, listingId, workerId }) => {
     const listing = await this.listingModel.getLightById(listingId);
 
     if (!listing) {
@@ -81,12 +81,12 @@ class OrderController extends Controller {
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
     const orderId = await this.orderModel.create({
-      pricePerDay: listing.pricePerDay,
+      totalPrice,
+      finishTime,
       listingId,
       workerId,
       ownerFee: ownerFee,
       workerFee: workerFee,
-      feeActive,
     });
 
     return {
@@ -97,12 +97,13 @@ class OrderController extends Controller {
   };
 
   baseCreateWithMessageSend = async (req, needReturnMessage = false) => {
-    const { listingId, feeActive, message } = req.body;
+    const { finishTime, totalPrice, listingId, message } = req.body;
     const workerId = req.userData.userId;
 
     const result = await this.baseCreate({
+      finishTime,
+      totalPrice,
       listingId,
-      feeActive,
       workerId,
     });
 

@@ -1,3 +1,4 @@
+require("dotenv").config();
 const Controller = require("./Controller");
 const db = require("../database");
 const STATIC = require("../static");
@@ -47,11 +48,7 @@ class CronCommandController extends Controller {
   resetDatabase = (req, res) =>
     this.baseWrapper(req, res, async () => {
       await this.baseReset(STATIC.TABLES.OWNER_COMMENTS);
-<<<<<<< HEAD
-      await this.baseReset(STATIC.TABLES.TENANT_COMMENTS);
-=======
-      await this.baseReset(STATIC.TABLES.RENTER_COMMENTS);
->>>>>>> fad5f76 (start)
+      await this.baseReset(STATIC.TABLES.WORKER_COMMENTS);
 
       await this.baseReset(STATIC.TABLES.CHAT_MESSAGE_CONTENTS);
       await this.baseReset(STATIC.TABLES.CHAT_MESSAGES);
@@ -63,6 +60,8 @@ class CronCommandController extends Controller {
       await this.baseReset(STATIC.TABLES.SENDER_PAYMENTS);
       await this.baseReset(STATIC.TABLES.ORDER_UPDATE_REQUESTS);
 
+      await this.baseReset(STATIC.TABLES.CHECKLIST_PHOTOS);
+      await this.baseReset(STATIC.TABLES.CHECKLISTS);
       await this.baseReset(STATIC.TABLES.ORDERS);
 
       await this.baseReset(STATIC.TABLES.USER_LISTING_FAVORITES);
@@ -77,13 +76,14 @@ class CronCommandController extends Controller {
       await this.baseReset(STATIC.TABLES.USER_EVENT_LOGS);
       await this.baseReset(STATIC.TABLES.ACTIVE_ACTIONS);
       await this.baseReset(STATIC.TABLES.PHONE_VERIFIED_CODES);
+      await this.baseReset(STATIC.TABLES.EMAIL_VERIFIED_CODES);
       await this.baseReset(STATIC.TABLES.SOCKETS);
       await this.baseReset(STATIC.TABLES.TWO_FACTOR_AUTH_CODES);
       await this.baseReset(STATIC.TABLES.USER_DOCUMENTS);
       await this.baseReset(STATIC.TABLES.USER_VERIFY_REQUESTS);
-      await db(STATIC.TABLES.USERS).whereNot("email", "admin@ydk.com").delete();
+      await db(STATIC.TABLES.USERS).whereNot("email", process.env.ADMIN_EMAIL).delete();
       await db(STATIC.TABLES.USERS)
-        .where("email", "admin@ydk.com")
+        .where("email", process.env.ADMIN_EMAIL)
         .update({ paypal_id: null });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
