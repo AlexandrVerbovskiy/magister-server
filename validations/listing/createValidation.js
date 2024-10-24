@@ -1,8 +1,10 @@
 const { body } = require("express-validator");
 const {
   validateSmallStringBody,
+  validateIntegerBody,
   validateBigStringBody,
   validateFloat,
+  validateDateTime,
 } = require("../base");
 
 module.exports = [
@@ -48,7 +50,8 @@ module.exports = [
     fieldName: "Lng",
     canBeNegative: true,
   }),
-  ...validateFloat({ field: "price", fieldName: "Price" }),
+  ...validateFloat({ field: "totalPrice", fieldName: "Total Price" }),
+  ...validateDateTime({field:"finishTime", fieldName: "Finish Time"}),
   ...validateSmallStringBody({ field: "city", fieldName: "City" }),
   ...validateSmallStringBody({ field: "postcode", fieldName: "Postcode" }),
   ...validateFloat({ field: "radius", fieldName: "radius" }),
