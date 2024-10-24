@@ -13,10 +13,8 @@ exports.up = function (knex) {
       table.string("new_end_date");
       table.float("new_price_per_day");
       table.boolean("active").defaultTo(true);
-      table.float("new_price");
-      table.timestamp("new_start_time");
-      table.timestamp("new_finish_time");
-
+      table.integer("new_duration");
+      table.float("fact_total_price");
       table.timestamps(true, true);
 
       table

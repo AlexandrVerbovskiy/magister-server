@@ -11,25 +11,19 @@ exports.up = function (knex) {
     table.text("status");
     table.string("cancel_status").nullable().defaultTo(null);
 
-    table.float("price");
-    table.timestamp("start_time");
+    table.float("total_price");
     table.timestamp("finish_time");
 
-    table.float("prev_price").nullable().defaultTo(null);
-    table.timestamp("prev_start_time").nullable().defaultTo(null);
+    table.float("prev_total_price").nullable().defaultTo(null);
     table.timestamp("prev_finish_time").nullable().defaultTo(null);
 
-    table.float("renter_fee").nullable().defaultTo(null);
+    table.float("worker_fee").nullable().defaultTo(null);
     table.float("owner_fee").nullable().defaultTo(null);
     table.timestamp("finished_at").nullable().defaultTo(null);
     table.timestamps(true, true);
 
     table
-<<<<<<< HEAD
       .integer("tenant_id")
-=======
-      .integer("renter_id")
->>>>>>> fad5f76 (start)
       .unsigned()
       .references(STATIC.TABLES.USERS + ".id");
 
