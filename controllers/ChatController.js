@@ -379,21 +379,8 @@ class ChatController extends Controller {
       entity["canFastCancelPayed"] =
         this.orderModel.canFastCancelPayedOrder(entity);
 
-      const canViewFullInfo = entity.ownerId === userId;
-
-      const resGetConflictOrders = await this.orderModel.getConflictOrders(
-        [entity.id],
-        canViewFullInfo
-      );
-
-      entity["conflictOrders"] = resGetConflictOrders[entity.id];
-
-      entity["childrenList"] = await this.orderModel.getChildrenList(
-        chat.entityId
-      );
-
-      dopEntityInfo["tenantBaseCommission"] =
-        await this.systemOptionModel.getTenantBaseCommissionPercent();
+      dopEntityInfo["workerBaseCommission"] =
+        await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
       dopEntityInfo["bankInfo"] =
         await this.systemOptionModel.getBankAccountInfo();
@@ -425,12 +412,8 @@ class ChatController extends Controller {
       dispute = await this.disputeModel.getFullById(order.disputeId);
     }
 
-    order["childrenList"] = await this.orderModel.getChildrenList(
-      chat.entityId
-    );
-
-    dopInfo["tenantBaseCommission"] =
-      await this.systemOptionModel.getTenantBaseCommissionPercent();
+    dopInfo["workerBaseCommission"] =
+      await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
     dopInfo["bankInfo"] = await this.systemOptionModel.getBankAccountInfo();
 

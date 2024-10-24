@@ -61,7 +61,6 @@ class CronCommandController extends Controller {
 
       await this.baseReset(STATIC.TABLES.CHECKLIST_PHOTOS);
       await this.baseReset(STATIC.TABLES.CHECKLISTS);
-      await db(STATIC.TABLES.ORDERS).whereNotNull("parent_id").delete();
       await this.baseReset(STATIC.TABLES.ORDERS);
 
       await this.baseReset(STATIC.TABLES.USER_LISTING_FAVORITES);

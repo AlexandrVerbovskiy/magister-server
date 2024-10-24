@@ -31,10 +31,6 @@ class TenantCommentController extends BaseCommentController {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.orderParentId) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
       if (
         order.cancelStatus ||
         order.disputeStatus ||

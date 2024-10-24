@@ -8,20 +8,18 @@ exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.ORDERS, function (table) {
     table.increments("id").primary();
 
-    table.float("price_per_day");
-    table.string("start_date");
-    table.string("end_date");
-    table.string("accept_listing_qr_code");
-    table.integer("fee");
-    table.integer("duration");
-    table.float("fact_total_price");
+    table.text("status");
+    table.string("cancel_status").nullable().defaultTo(null);
 
-    table.enum("status", Object.values(STATIC.ORDER_STATUSES));
-    table.enum(
-      "cancel_status",
-      Object.values(STATIC.ORDER_CANCELATION_STATUSES)
-    );
+    table.float("total_price");
+    table.timestamp("finish_time");
 
+    table.float("prev_total_price").nullable().defaultTo(null);
+    table.timestamp("prev_finish_time").nullable().defaultTo(null);
+
+    table.float("worker_fee").nullable().defaultTo(null);
+    table.float("owner_fee").nullable().defaultTo(null);
+    table.timestamp("finished_at").nullable().defaultTo(null);
     table.timestamps(true, true);
 
     table

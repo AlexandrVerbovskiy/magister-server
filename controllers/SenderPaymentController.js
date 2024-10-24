@@ -1,7 +1,7 @@
 const STATIC = require("../static");
 const {
   createPaypalOrder,
-  tenantPaymentCalculate,
+  workerPaymentCalculate,
   invoicePdfGeneration,
 } = require("../utils");
 
@@ -15,14 +15,14 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getFullWithPaymentById(orderId);
 
-      if (order.tenantId != userId) {
+      if (order.workerId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       if (
         order.cancelStatus ||
         order.disputeStatus ||
-        order.status !== STATIC.ORDER_STATUSES.PENDING_TENANT_PAYMENT ||
+        order.status !== STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT ||
         (order.payedId &&
           order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
         order.payedAdminApproved
@@ -34,11 +34,10 @@ class SenderPaymentController extends Controller {
         );
       }
 
-      const amount = tenantPaymentCalculate(
+      const amount = workerPaymentCalculate(
         order.offerStartDate,
         order.offerEndDate,
-        order.tenantFee,
-        order.offerPricePerDay
+        order.workerFee,
       );
 
       const result = await createPaypalOrder(
@@ -176,7 +175,7 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.tenantId != userId) {
+      if (order.workerId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -211,137 +210,44 @@ class SenderPaymentController extends Controller {
 
       await this.senderPaymentModel.approveTransaction(orderId);
 
-      let newStatus = null;
+      let newStatus = await this.orderModel.orderFinishedById(orderId);
 
-      if (order.orderParentId) {
-        const { token: ownerToken, image: generatedImage } =
-          await this.generateQrCodeInfo(
-            STATIC.ORDER_OWNER_GOT_ITEM_APPROVE_URL
-          );
+      const chatId = order.chatId;
 
-        newStatus = await this.orderModel.orderTenantGotListing(orderId, {
-          token: ownerToken,
-          qrCode: generatedImage,
-        });
+      if (chatId) {
+        const message =
+          await this.chatMessageModel.createWorkerPayedOrderMessage({
+            chatId,
+            senderId: order.workerId,
+          });
 
-        await this.recipientPaymentModel.paypalPaymentPlanGeneration({
-          startDate: order.offerStartDate,
-          endDate: order.offerEndDate,
-          pricePerDay: order.offerPricePerDay,
-          userId: order.ownerId,
-          orderId: order.id,
-          fee: order.ownerFee,
-        });
+        const worker = await this.userModel.getById(order.workerId);
+        const owner = await this.userModel.getById(order.ownerId);
 
-        newStatus = await this.orderModel.orderFinishedById(orderId);
-      } else {
-        const { token: tenantToken, image: generatedImage } =
-          await this.generateQrCodeInfo(
-            STATIC.ORDER_TENANT_GOT_ITEM_APPROVE_URL
-          );
+        await this.sendSocketMessageToUserOpponent(
+          chatId,
+          order.ownerId,
+          "update-order-message",
+          {
+            message,
+            opponent: worker,
+            orderPart: { id: orderId, status: newStatus },
+          }
+        );
 
-        newStatus = await this.orderModel.orderTenantPayed(orderId, {
-          token: tenantToken,
-          qrCode: generatedImage,
-        });
+        await this.sendSocketMessageToUserOpponent(
+          chatId,
+          order.workerId,
+          "update-order-message",
+          {
+            message,
+            opponent: owner,
+            orderPart: { id: orderId, status: newStatus },
+          }
+        );
       }
 
-      if (order.orderParentId) {
-        const chatId = order.parentChatId;
-
-        if (chatId) {
-          const parentOrderExtensions = await this.orderModel.getOrderExtends(
-            order.orderParentId
-          );
-
-          const orderPart = {
-            id: order.orderParentId,
-            extendOrders: parentOrderExtensions,
-          };
-
-          const message =
-            await this.chatMessageModel.createTenantPayedExtensionMessage({
-              chatId,
-              senderId: order.tenantId,
-              data: {
-                offerStartDate: order.offerStartDate,
-                offerEndDate: order.offerEndDate,
-                offerPrice: order.offerPricePerDay,
-                extensionId: order.id,
-              },
-            });
-
-          const tenant = await this.userModel.getById(order.tenantId);
-          const owner = await this.userModel.getById(order.ownerId);
-
-          await this.sendSocketMessageToUserOpponent(
-            chatId,
-            order.ownerId,
-            "update-order-message",
-            {
-              message,
-              opponent: tenant,
-              orderPart,
-            }
-          );
-
-          await this.sendSocketMessageToUserOpponent(
-            chatId,
-            order.tenantId,
-            "update-order-message",
-            {
-              message,
-              opponent: owner,
-              orderPart,
-            }
-          );
-
-          await this.orderModel.orderUpdateEndDate(
-            order.orderParentId,
-            order.offerEndDate
-          );
-        }
-
-        this.sendPaymentNotificationMail(order.ownerEmail, order.orderParentId);
-      } else {
-        const chatId = order.chatId;
-
-        if (chatId) {
-          const message =
-            await this.chatMessageModel.createTenantPayedOrderMessage({
-              chatId,
-              senderId: order.tenantId,
-            });
-
-          const tenant = await this.userModel.getById(order.tenantId);
-          const owner = await this.userModel.getById(order.ownerId);
-
-          await this.sendSocketMessageToUserOpponent(
-            chatId,
-            order.ownerId,
-            "update-order-message",
-            {
-              message,
-              opponent: tenant,
-              orderPart: { id: orderId, status: newStatus },
-            }
-          );
-
-          await this.sendSocketMessageToUserOpponent(
-            chatId,
-            order.tenantId,
-            "update-order-message",
-            {
-              message,
-              opponent: owner,
-              orderPart: { id: orderId, status: newStatus },
-            }
-          );
-        }
-
-        this.sendPaymentNotificationMail(order.ownerEmail, order.id);
-      }
-
+      this.sendPaymentNotificationMail(order.ownerEmail, order.id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 

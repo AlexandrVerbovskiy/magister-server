@@ -9,15 +9,12 @@ exports.up = function (knex) {
     STATIC.TABLES.ORDER_UPDATE_REQUESTS,
     function (table) {
       table.increments("id").primary();
-
       table.string("new_start_date");
       table.string("new_end_date");
       table.float("new_price_per_day");
       table.boolean("active").defaultTo(true);
-      table.integer("fee");
       table.integer("new_duration");
       table.float("fact_total_price");
-
       table.timestamps(true, true);
 
       table
