@@ -26,7 +26,6 @@ class DisputeModel extends Model {
     `${ORDERS_TABLE}.worker_fee as workerFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.finished_at as offerFinishedAt`,
-    `${ORDERS_TABLE}.parent_id as orderParentId`,
     `workers.id as workerId`,
     `workers.name as workerName`,
     `workers.email as workerEmail`,

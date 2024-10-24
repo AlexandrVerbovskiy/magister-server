@@ -1,13 +1,15 @@
 const { body } = require("express-validator");
 const {
-  validateBoolean,
   validateBigStringBody,
   validateIntegerBody,
+  validateFloat,
+  validateDateTime,
 } = require("../base");
 
 module.exports = [
   ...validateIntegerBody({ field: "listingId", fieldName: "Listing Id" }),
-  ...validateBoolean({ field: "feeActive", fieldName: "Fee Active" }),
+  ...validateFloat({ field: "totalPrice", fieldName: "Total Price" }),
+  ...validateDateTime({field:"finishTime", fieldName: "Finish Time"}),
   ...validateBigStringBody({
     field: "message",
     fieldName: "Message",

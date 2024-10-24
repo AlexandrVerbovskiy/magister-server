@@ -7,6 +7,7 @@ module.exports = {
   validateCheckbox: require("./validateCheckbox"),
   validateFloat: require("./validateFloat"),
   validateDate: require("./validateDate"),
+  validateDateTime: require("./validateDateTime"),
   validateBoolean: require("./validateBoolean"),
   userRoleValidation: require("./userRoleValidation"),
   emailValidation: require("./emailValidation"),

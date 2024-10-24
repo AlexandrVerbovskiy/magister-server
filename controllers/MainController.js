@@ -295,7 +295,7 @@ class MainController extends Controller {
             id
           );
       }
-      
+
       const workerBaseCommissionPercent =
         await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
@@ -413,15 +413,8 @@ class MainController extends Controller {
     const { id } = req.params;
     const userId = req.userData.userId;
 
-    const getOrderByRequest = async () => {
-      const order = await this.orderModel.getFullWithCommentsById(id, userId);
-
-      if (order && order.orderParentId) {
-        return null;
-      }
-
-      return order;
-    };
+    const getOrderByRequest = async () =>
+      await this.orderModel.getFullWithCommentsById(id, userId);
 
     const getDopOrderOptions = async (order) => {
       const paymentInfo =
@@ -1149,7 +1142,7 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
       let order = await this.orderModel.getFullById(id);
 
-      if (!order || order.orderParentId) {
+      if (!order) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
@@ -1191,7 +1184,7 @@ class MainController extends Controller {
       const categories = await this.getNavigationCategories();
       let order = await this.orderModel.getFullById(id);
 
-      if (!order || order.orderParentId) {
+      if (!order) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 

@@ -31,13 +31,10 @@ class SenderPayment extends Model {
     `${USERS_TABLE}.photo as payerPhoto`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
-    `${ORDERS_TABLE}.start_date as offerStartDate`,
-    `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.worker_fee as workerFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.status as orderStatus`,
     `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
-    `${ORDERS_TABLE}.parent_id as orderParentId`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
     `owners.id as ownerId`,
@@ -320,7 +317,7 @@ class SenderPayment extends Model {
       .joinRaw(
         `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
       ).joinRaw(
-        `LEFT JOIN ${CHAT_TABLE} as parent_chats ON (parent_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND parent_chats.entity_id = ${ORDERS_TABLE}.parent_id)`
+        `LEFT JOIN ${CHAT_TABLE} as parent_chats ON (parent_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}'`
       );
 
   baseTypeWhere = (query, type) => {
@@ -509,7 +506,6 @@ class SenderPayment extends Model {
         `${ORDERS_TABLE}.id as orderId`,
         `${ORDERS_TABLE}.status as orderStatus`,
         `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
-        `${ORDERS_TABLE}.start_date as orderOfferStartDate`,
         `${ORDERS_TABLE}.worker_fee as workerFee`,
         `owners.id as ownerId`,
         `owners.name as ownerName`,
@@ -552,7 +548,6 @@ class SenderPayment extends Model {
       .select([
         `${ORDERS_TABLE}.id as orderId`,
         `${SENDER_PAYMENTS_TABLE}.type as type`,
-        `${ORDERS_TABLE}.start_date as startDate`,
         `${SENDER_PAYMENTS_TABLE}.type as transactionId`,
         `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
       ]);

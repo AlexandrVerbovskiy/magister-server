@@ -210,21 +210,7 @@ class SenderPaymentController extends Controller {
 
       await this.senderPaymentModel.approveTransaction(orderId);
 
-      let newStatus = null;
-
-      if (order.orderParentId) {
-        newStatus = await this.orderModel.orderWorkerSendFinishedRequest(
-          orderId
-        );
-
-        await this.recipientPaymentModel.paypalPaymentPlanGeneration({
-          userId: order.ownerId,
-          orderId: order.id,
-          fee: order.ownerFee,
-        });
-      }
-
-      newStatus = await this.orderModel.orderFinishedById(orderId);
+      let newStatus = await this.orderModel.orderFinishedById(orderId);
 
       const chatId = order.chatId;
 

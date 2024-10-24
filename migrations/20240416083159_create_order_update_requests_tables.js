@@ -10,7 +10,6 @@ exports.up = function (knex) {
     function (table) {
       table.increments("id").primary();
       table.boolean("active").defaultTo(true);
-      table.float("fee").defaultTo(null);
       table.integer("new_duration");
       table.float("fact_total_price");
       table.timestamps(true, true);

@@ -7,12 +7,15 @@ const STATIC = require("../static");
 exports.up = function (knex) {
   return knex.schema.createTable(STATIC.TABLES.ORDERS, function (table) {
     table.increments("id").primary();
-    table.string("accept_listing_qr_code");
-    table.integer("fee");
 
     table.text("status");
     table.string("cancel_status").nullable().defaultTo(null);
-    table.boolean("fee_active");
+
+    table.float("total_price");
+    table.timestamp("finish_time");
+
+    table.float("prev_total_price").nullable().defaultTo(null);
+    table.timestamp("prev_finish_time").nullable().defaultTo(null);
 
     table.float("worker_fee").nullable().defaultTo(null);
     table.float("owner_fee").nullable().defaultTo(null);
@@ -28,13 +31,6 @@ exports.up = function (knex) {
       .integer("listing_id")
       .unsigned()
       .references(STATIC.TABLES.LISTINGS + ".id");
-
-    table
-      .integer("parent_id")
-      .unsigned()
-      .nullable()
-      .defaultTo(null)
-      .references(STATIC.TABLES.ORDERS + ".id");
   });
 };
 

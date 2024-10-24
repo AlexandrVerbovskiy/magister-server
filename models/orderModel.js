@@ -33,7 +33,8 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.worker_fee as workerFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.finished_at as offerFinishedAt`,
-    `${ORDERS_TABLE}.parent_id as orderParentId`,
+    `${ORDERS_TABLE}.total_price as orderTotalPrice`,
+    `${ORDERS_TABLE}.finish_time as orderFinishTime`,
     `workers.id as workerId`,
     `workers.name as workerName`,
     `workers.email as workerEmail`,
@@ -59,9 +60,7 @@ class OrderModel extends Model {
     `${CHAT_TABLE}.id as chatId`,
   ];
 
-  requestVisibleFields = [
-    `${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`,
-  ];
+  requestVisibleFields = [`${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`];
 
   fullVisibleFields = [
     ...this.lightVisibleFields,
@@ -96,6 +95,8 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.cancel_status`,
     `${ORDERS_TABLE}.worker_fee`,
     `${ORDERS_TABLE}.owner_fee`,
+    `${ORDERS_TABLE}.total_price`,
+    `${ORDERS_TABLE}.finish_time`,
     `workers.id`,
     `workers.name`,
     `workers.email`,
@@ -134,9 +135,7 @@ class OrderModel extends Model {
     `parent_chats.id`,
   ];
 
-  requestGroupBy = [
-    `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
-  ];
+  requestGroupBy = [`${ORDER_UPDATE_REQUESTS_TABLE}.id`];
 
   strFilterFields = [
     `workers.name`,
@@ -270,10 +269,6 @@ class OrderModel extends Model {
 
     query = query.joinRaw(
       `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
-    );
-
-    query = query.joinRaw(
-      `LEFT JOIN ${CHAT_TABLE} as parent_chats ON (parent_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND parent_chats.entity_id = ${ORDERS_TABLE}.parent_id)`
     );
 
     return query;
@@ -410,14 +405,12 @@ class OrderModel extends Model {
     const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
     let query = baseGetReq(filter);
     query = this.payedInfoJoin(query);
-    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
     return query.whereRaw("workers.id = ?", workerId);
   };
 
   ownerBaseGetQuery = (filter, ownerId) => {
     const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
     let query = baseGetReq(filter);
-    query = query.whereNull(`${ORDERS_TABLE}.parent_id`);
     return query.whereRaw("owners.id = ?", ownerId);
   };
 
@@ -590,10 +583,7 @@ class OrderModel extends Model {
 
     query = this.baseQueryListByType(query, type);
 
-    const result = await query
-      .whereNull(`${ORDERS_TABLE}.parent_id`)
-      .count("* as count")
-      .first();
+    const result = await query.count("* as count").first();
     return +result?.count;
   };
 
@@ -608,8 +598,6 @@ class OrderModel extends Model {
     query = this.baseQueryListByType(query, type);
 
     return await query
-      .whereNull(`${ORDERS_TABLE}.parent_id`)
-
       .select([...this.fullVisibleFields, ...this.selectPartPayedInfo])
       .orderBy(order, orderType)
       .limit(count)
@@ -621,8 +609,8 @@ class OrderModel extends Model {
     workerId,
     ownerFee,
     workerFee,
-    feeActive,
-    orderParentId = null,
+    totalPrice,
+    finishTime,
   }) => {
     const res = await db(ORDERS_TABLE)
       .insert({
@@ -631,8 +619,8 @@ class OrderModel extends Model {
         owner_fee: ownerFee,
         worker_fee: workerFee,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
-        fee_active: feeActive,
-        parent_id: orderParentId,
+        total_price: totalPrice,
+        finish_time: finishTime,
       })
       .returning("id");
 
@@ -675,16 +663,12 @@ class OrderModel extends Model {
   getByIdWithDisputeChat = (id, userId) =>
     this.getByWhereWithDisputeChat(`${ORDERS_TABLE}.id`, id, false, userId);
 
-  getChildrenList = (parentId) =>
-    this.getByWhere(`${ORDERS_TABLE}.parent_id`, parentId, true);
-
   getLastActive = async (id) => {
     let lastOrderQuery = db(ORDERS_TABLE);
     lastOrderQuery = this.fullOrdersJoin(lastOrderQuery);
 
     const lastOrder = await lastOrderQuery
       .select(this.fullVisibleFields)
-      .where(`${ORDERS_TABLE}.parent_id`, id)
       .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT,
         STATIC.ORDER_STATUSES.PENDING_WORKER,
@@ -801,15 +785,9 @@ class OrderModel extends Model {
 
   updateOrder = async (
     orderId,
-    {
-      orderParentId,
-      status = null,
-      cancelStatus = null,
-    }
+    { status = null, cancelStatus = null }
   ) => {
-    const updateProps = {
-      parent_id: orderParentId,
-    };
+    const updateProps = {};
 
     if (status) {
       updateProps["status"] = status;
@@ -1054,7 +1032,6 @@ class OrderModel extends Model {
             THEN 1 ELSE 0 END) AS "activeCount"`
         )
       )
-      .whereNull(`${ORDERS_TABLE}.parent_id`)
       .first();
 
     return {
