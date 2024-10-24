@@ -379,8 +379,8 @@ class ChatController extends Controller {
       entity["canFastCancelPayed"] =
         this.orderModel.canFastCancelPayedOrder(entity);
 
-      dopEntityInfo["renterBaseCommission"] =
-        await this.systemOptionModel.getRenterBaseCommissionPercent();
+      dopEntityInfo["workerBaseCommission"] =
+        await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
       dopEntityInfo["bankInfo"] =
         await this.systemOptionModel.getBankAccountInfo();
@@ -412,8 +412,8 @@ class ChatController extends Controller {
       dispute = await this.disputeModel.getFullById(order.disputeId);
     }
 
-    dopInfo["renterBaseCommission"] =
-      await this.systemOptionModel.getRenterBaseCommissionPercent();
+    dopInfo["workerBaseCommission"] =
+      await this.systemOptionModel.getWorkerBaseCommissionPercent();
 
     dopInfo["bankInfo"] = await this.systemOptionModel.getBankAccountInfo();
 

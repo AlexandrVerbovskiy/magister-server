@@ -1,9 +1,8 @@
 const STATIC = require("../static");
 const {
   createPaypalOrder,
+  workerPaymentCalculate,
   invoicePdfGeneration,
-  getPriceByDays,
-  renterPaysCalculate,
 } = require("../utils");
 
 const Controller = require("./Controller");
@@ -16,14 +15,14 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getFullWithPaymentById(orderId);
 
-      if (order.renterId != userId) {
+      if (order.workerId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       if (
         order.cancelStatus ||
         order.disputeStatus ||
-        order.status !== STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT ||
+        order.status !== STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT ||
         (order.payedId &&
           order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
         order.payedAdminApproved
@@ -35,13 +34,10 @@ class SenderPaymentController extends Controller {
         );
       }
 
-      const amount = renterPaysCalculate(
-        getPriceByDays(
-          order.offerPrice,
-          order.offerStartDate,
-          order.offerFinishDate
-        ),
-        order.renterFee
+      const amount = workerPaymentCalculate(
+        order.offerStartDate,
+        order.offerEndDate,
+        order.workerFee,
       );
 
       const result = await createPaypalOrder(
@@ -179,11 +175,11 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.ownerId != userId) {
+      if (order.workerId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const proofUrl = this.moveUploadsFileToFolder(
+      const proofUrl = await this.moveUploadsFileToFolder(
         req.file,
         "paymentProofs"
       );
@@ -214,18 +210,18 @@ class SenderPaymentController extends Controller {
 
       await this.senderPaymentModel.approveTransaction(orderId);
 
-      let newStatus = await this.orderModel.orderRenterPayed(orderId);
+      let newStatus = await this.orderModel.orderFinishedById(orderId);
 
       const chatId = order.chatId;
 
       if (chatId) {
         const message =
-          await this.chatMessageModel.createRenterPayedOrderMessage({
+          await this.chatMessageModel.createWorkerPayedOrderMessage({
             chatId,
-            senderId: order.ownerId,
+            senderId: order.workerId,
           });
 
-        const renter = await this.userModel.getById(order.ownerId);
+        const worker = await this.userModel.getById(order.workerId);
         const owner = await this.userModel.getById(order.ownerId);
 
         await this.sendSocketMessageToUserOpponent(
@@ -234,14 +230,14 @@ class SenderPaymentController extends Controller {
           "update-order-message",
           {
             message,
-            opponent: renter,
+            opponent: worker,
             orderPart: { id: orderId, status: newStatus },
           }
         );
 
         await this.sendSocketMessageToUserOpponent(
           chatId,
-          order.ownerId,
+          order.workerId,
           "update-order-message",
           {
             message,

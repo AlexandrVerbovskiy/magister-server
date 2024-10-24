@@ -31,19 +31,20 @@ class SenderPayment extends Model {
     `${USERS_TABLE}.photo as payerPhoto`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
-    `${ORDERS_TABLE}.renter_fee as renterFee`,
+    `${ORDERS_TABLE}.worker_fee as workerFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.status as orderStatus`,
     `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
     `owners.id as ownerId`,
-    `renters.name as renterName`,
-    `renters.email as renterEmail`,
-    `renters.id as renterId`,
+    `workers.name as workerName`,
+    `workers.email as workerEmail`,
+    `workers.id as workerId`,
     `${CHAT_TABLE}.id as chatId`,
     `${DISPUTES_TABLE}.id as disputeId`,
     `${DISPUTES_TABLE}.status as disputeStatus`,
+    `parent_chats.id as parentChatId`,
   ];
 
   strFilterFields = [`${LISTINGS_TABLE}.name`, `owners.name`];
@@ -302,10 +303,10 @@ class SenderPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
-        `${USERS_TABLE} as renters`,
-        `renters.id`,
+        `${USERS_TABLE} as workers`,
+        `workers.id`,
         "=",
-        `${ORDERS_TABLE}.renter_id`
+        `${ORDERS_TABLE}.worker_id`
       )
       .leftJoin(
         `${DISPUTES_TABLE}`,
@@ -315,6 +316,8 @@ class SenderPayment extends Model {
       )
       .joinRaw(
         `LEFT JOIN ${CHAT_TABLE} ON (${CHAT_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}' AND ${CHAT_TABLE}.entity_id = ${ORDERS_TABLE}.id)`
+      ).joinRaw(
+        `LEFT JOIN ${CHAT_TABLE} as parent_chats ON (parent_chats.entity_type = '${STATIC.CHAT_TYPES.ORDER}'`
       );
 
   baseTypeWhere = (query, type) => {
@@ -503,10 +506,7 @@ class SenderPayment extends Model {
         `${ORDERS_TABLE}.id as orderId`,
         `${ORDERS_TABLE}.status as orderStatus`,
         `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
-        `${ORDERS_TABLE}.renter_fee as renterFee`,
-        `${ORDERS_TABLE}.price as offerPrice`,
-        `${ORDERS_TABLE}.finish_time as offerFinishDate`,
-        `${ORDERS_TABLE}.start_time as offerStartDate`,
+        `${ORDERS_TABLE}.worker_fee as workerFee`,
         `owners.id as ownerId`,
         `owners.name as ownerName`,
         `owners.email as ownerEmail`,
@@ -547,9 +547,6 @@ class SenderPayment extends Model {
       .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .select([
         `${ORDERS_TABLE}.id as orderId`,
-        `${ORDERS_TABLE}.price as pricePerDay`,
-        `${ORDERS_TABLE}.start_time as startDate`,
-        `${ORDERS_TABLE}.finish_time as finishDate`,
         `${SENDER_PAYMENTS_TABLE}.type as type`,
         `${SENDER_PAYMENTS_TABLE}.type as transactionId`,
         `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
