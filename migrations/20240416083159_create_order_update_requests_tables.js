@@ -10,8 +10,9 @@ exports.up = function (knex) {
     function (table) {
       table.increments("id").primary();
       table.boolean("active").defaultTo(true);
-      table.integer("new_duration");
-      table.float("fact_total_price");
+      table.float("new_price");
+      table.timestamp("new_finish_time");
+
       table.timestamps(true, true);
 
       table

@@ -2,12 +2,7 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
-const {
-  separateDate,
-  generateDatesBetween,
-  formatDateToSQLFormat,
-  cloneObject,
-} = require("../utils");
+const { formatDateToSQLFormat } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
 const checklistModel = require("./checklistModel");
@@ -33,8 +28,8 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.worker_fee as workerFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.finished_at as offerFinishedAt`,
-    `${ORDERS_TABLE}.total_price as orderTotalPrice`,
-    `${ORDERS_TABLE}.finish_time as orderFinishTime`,
+    `${ORDERS_TABLE}.price as offerPrice`,
+    `${ORDERS_TABLE}.finish_time as offerFinishTime`,
     `workers.id as workerId`,
     `workers.name as workerName`,
     `workers.email as workerEmail`,
@@ -70,6 +65,8 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.lat as listingRentalLat`,
     `${LISTINGS_TABLE}.lng as listingRentalLng`,
     `${LISTINGS_TABLE}.radius as listingRentalRadius`,
+    `${LISTINGS_TABLE}.price as listingPrice`,
+    `${LISTINGS_TABLE}.finish_time as listingFinishTime`,
     `workers.phone as workerPhone`,
     `owners.phone as ownerPhone`,
     `owners.facebook_url as ownerFacebookUrl`,
@@ -78,7 +75,6 @@ class OrderModel extends Model {
     `workers.facebook_url as workerFacebookUrl`,
     `workers.linkedin_url as workerLinkedinUrl`,
     `workers.instagram_url as workerInstagramUrl`,
-    `parent_chats.id as parentChatId`,
   ];
 
   selectPartPayedInfo = [
@@ -95,7 +91,7 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.cancel_status`,
     `${ORDERS_TABLE}.worker_fee`,
     `${ORDERS_TABLE}.owner_fee`,
-    `${ORDERS_TABLE}.total_price`,
+    `${ORDERS_TABLE}.price`,
     `${ORDERS_TABLE}.finish_time`,
     `workers.id`,
     `workers.name`,
@@ -112,6 +108,8 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.city`,
     `${LISTINGS_TABLE}.category_id`,
     `${LISTINGS_TABLE}.other_category`,
+    `${LISTINGS_TABLE}.price`,
+    `${LISTINGS_TABLE}.finish_time`,
     `${LISTING_CATEGORIES_TABLE}.name`,
     `${LISTINGS_TABLE}.description`,
     `${LISTINGS_TABLE}.address`,
@@ -132,7 +130,6 @@ class OrderModel extends Model {
     `${DISPUTES_TABLE}.type`,
     `${DISPUTES_TABLE}.description`,
     `${CHAT_TABLE}.id`,
-    `parent_chats.id`,
   ];
 
   requestGroupBy = [`${ORDER_UPDATE_REQUESTS_TABLE}.id`];
@@ -609,7 +606,7 @@ class OrderModel extends Model {
     workerId,
     ownerFee,
     workerFee,
-    totalPrice,
+    price,
     finishTime,
   }) => {
     const res = await db(ORDERS_TABLE)
@@ -619,7 +616,7 @@ class OrderModel extends Model {
         owner_fee: ownerFee,
         worker_fee: workerFee,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
-        total_price: totalPrice,
+        price,
         finish_time: finishTime,
       })
       .returning("id");
@@ -777,16 +774,18 @@ class OrderModel extends Model {
       this.getByWhere(`${ORDERS_TABLE}.owner_accept_listing_token`, token)
     );
 
-  setPendingOwnerStatus = async (id) => {
-    const status = STATIC.ORDER_STATUSES.PENDING_OWNER;
+  setPendingStatus = async (id, status) => {
     await db(ORDERS_TABLE).where("id", id).update("status", status);
     return status;
   };
 
-  updateOrder = async (
-    orderId,
-    { status = null, cancelStatus = null }
-  ) => {
+  setPendingOwnerStatus = async (id) =>
+    await this.setPendingStatus(id, STATIC.ORDER_STATUSES.PENDING_OWNER);
+
+  setPendingWorkerStatus = async (id) =>
+    await this.setPendingStatus(id, STATIC.ORDER_STATUSES.PENDING_WORKER);
+
+  updateOrder = async (orderId, { status = null, cancelStatus = null }) => {
     const updateProps = {};
 
     if (status) {
