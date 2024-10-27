@@ -63,7 +63,7 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  baseCreate = async ({ finishTime, totalPrice, listingId, workerId }) => {
+  baseCreate = async ({ finishTime, price, listingId, workerId }) => {
     const listing = await this.listingModel.getLightById(listingId);
 
     if (!listing) {
@@ -81,7 +81,7 @@ class OrderController extends Controller {
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
 
     const orderId = await this.orderModel.create({
-      totalPrice,
+      price,
       finishTime,
       listingId,
       workerId,
@@ -97,12 +97,12 @@ class OrderController extends Controller {
   };
 
   baseCreateWithMessageSend = async (req, needReturnMessage = false) => {
-    const { finishTime, totalPrice, listingId, message } = req.body;
+    const { finishTime, price, listingId, message } = req.body;
     const workerId = req.userData.userId;
 
     const result = await this.baseCreate({
       finishTime,
-      totalPrice,
+      price,
       listingId,
       workerId,
     });
@@ -649,7 +649,7 @@ class OrderController extends Controller {
       order.offerStartDate,
       order.offerEndDate,
       order.workerFee,
-      order.offerTotalPrice
+      order.offerPrice
     );
 
     let type = "created";
@@ -850,7 +850,7 @@ class OrderController extends Controller {
       };
     }
 
-    const factTotalPrice = workerPaymentCalculate(
+    const factPrice = workerPaymentCalculate(
       offerStartDate,
       offerEndDate,
       workerFee
@@ -860,7 +860,7 @@ class OrderController extends Controller {
       await this.systemOptionModel.getWorkerCancelCommissionPercent();
 
     const factTotalPriceWithoutCommission =
-      (factTotalPrice * (100 - workerCancelFeePercent)) / 100;
+      (factPrice * (100 - workerCancelFeePercent)) / 100;
 
     const refundData = {
       money: factTotalPriceWithoutCommission,

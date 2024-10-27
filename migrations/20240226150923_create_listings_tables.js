@@ -15,6 +15,7 @@ exports.up = function (knex) {
     table.text("rental_terms");
     table.text("address");
     table.float("price");
+    table.timestamp("finish_time");
 
     table.text("postcode");
     table.string("city");
