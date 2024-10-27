@@ -11,28 +11,19 @@ class OrderUpdateRequestModel extends Model {
     `${ORDER_UPDATE_REQUESTS_TABLE}.fee as newFee`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.order_id as orderId`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.active`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.created_at as createdAt`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as newPrice`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishTime`,
   ];
 
-  create = async ({
-    orderId,
-    newStartDate,
-    newEndDate,
-    newPricePerDay,
-    senderId,
-    fee,
-  }) => {
+  create = async ({ orderId, newFinishTime, newPrice, senderId, fee }) => {
     const res = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .insert({
         order_id: orderId,
-        new_start_date: newStartDate,
-        new_end_date: newEndDate,
-        new_price_per_day: newPricePerDay,
         sender_id: senderId,
+        new_finish_time: newFinishTime,
+        new_price: newPrice,
         fee,
       })
       .returning("id");
@@ -74,10 +65,10 @@ class OrderUpdateRequestModel extends Model {
   getPreviousRequestInfo = async (orderId) => {
     const request = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .select([
+        `${ORDER_UPDATE_REQUESTS_TABLE}.id as id`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as price`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as finishTime`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as startDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as endDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as pricePerDay`,
       ])
       .where("order_id", orderId)
       .where("active", false)
@@ -90,10 +81,9 @@ class OrderUpdateRequestModel extends Model {
     const request = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .select([
         `${ORDER_UPDATE_REQUESTS_TABLE}.id as id`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as newPrice`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishTime`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date as newStartDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date as newEndDate`,
-        `${ORDER_UPDATE_REQUESTS_TABLE}.new_price_per_day as newPricePerDay`,
       ])
       .where("order_id", orderId)
       .where("active", true)

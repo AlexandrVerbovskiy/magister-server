@@ -11,14 +11,11 @@ exports.up = function (knex) {
     table.string("name");
     table.text("key_words");
 
-    table.float("compensation_cost");
-    table.integer("count_stored_items");
-    table.float("price_per_day");
-    table.integer("min_rental_days").nullable().defaultTo(null);
-
     table.text("description");
     table.text("rental_terms");
     table.text("address");
+    table.float("price");
+    table.timestamp("finish_time");
 
     table.text("postcode");
     table.string("city");

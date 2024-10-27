@@ -25,18 +25,15 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.category_id`,
     `${LISTINGS_TABLE}.other_category`,
     `${LISTINGS_TABLE}.other_category_parent_id`,
-    `${LISTINGS_TABLE}.compensation_cost`,
-    `${LISTINGS_TABLE}.count_stored_items`,
     `${LISTINGS_TABLE}.description`,
     `${LISTINGS_TABLE}.postcode`,
     `${LISTINGS_TABLE}.owner_id`,
-    `${LISTINGS_TABLE}.price_per_day`,
-    `${LISTINGS_TABLE}.min_rental_days`,
-    `${LISTINGS_TABLE}.rental_lat`,
-    `${LISTINGS_TABLE}.rental_lng`,
-    `${LISTINGS_TABLE}.rental_radius`,
+    `${LISTINGS_TABLE}.lat`,
+    `${LISTINGS_TABLE}.lng`,
+    `${LISTINGS_TABLE}.radius`,
     `${LISTINGS_TABLE}.background_photo`,
-    `${LISTINGS_TABLE}.defects`,
+    `${LISTINGS_TABLE}.price`,
+    `${LISTINGS_TABLE}.finish_time`,
   ];
 
   visibleFields = [
@@ -49,17 +46,14 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.category_id as categoryId`,
     `${LISTINGS_TABLE}.other_category as otherCategory`,
     `${LISTINGS_TABLE}.other_category_parent_id as otherCategoryParentId`,
-    `${LISTINGS_TABLE}.compensation_cost as compensationCost`,
-    `${LISTINGS_TABLE}.count_stored_items as countStoredItems`,
     `${LISTINGS_TABLE}.description`,
     `${LISTINGS_TABLE}.postcode`,
     `${LISTINGS_TABLE}.owner_id as ownerId`,
-    `${LISTINGS_TABLE}.price_per_day as pricePerDay`,
-    `${LISTINGS_TABLE}.min_rental_days as minRentalDays`,
-    `${LISTINGS_TABLE}.rental_lat as rentalLat`,
-    `${LISTINGS_TABLE}.rental_lng as rentalLng`,
-    `${LISTINGS_TABLE}.rental_radius as rentalRadius`,
-    `${LISTINGS_TABLE}.defects`,
+    `${LISTINGS_TABLE}.lat as lat`,
+    `${LISTINGS_TABLE}.lng as lng`,
+    `${LISTINGS_TABLE}.radius as radius`,
+    `${LISTINGS_TABLE}.price as price`,
+    `${LISTINGS_TABLE}.finish_time as finishTime`,
   ];
 
   fullVisibleFields = [
@@ -99,19 +93,9 @@ class ListingsModel extends Model {
 
   strFullFilterFields = [...this.strFilterFields, `${USERS_TABLE}.name`];
 
-  orderFields = [
-    "id",
-    "name",
-    "city",
-    "min_rental_days",
-    "count_stored_items",
-    "price_per_day",
-    "users.name",
-    "approved",
-    "active",
-  ];
+  orderFields = ["id", "name", "city", "users.name", "approved", "active"];
 
-  generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (rental_lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - rental_lng) * COS(rental_lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
+  generateDistanceRow = `SQRT(POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (lat - ?), 2) + POW(${STATIC.LATITUDE_LONGITUDE_TO_KILOMETERS} * (? - lng) * COS(lat / ${STATIC.DEGREES_TO_RADIANS}), 2))`;
 
   createImage = async ({ type, link, listingId }) => {
     const res = await db(LISTING_IMAGES_TABLE)
@@ -151,55 +135,41 @@ class ListingsModel extends Model {
     address,
     name,
     categoryId = null,
-    compensationCost,
-    countStoredItems,
     description = "",
     postcode,
-    pricePerDay,
-    rentalLat,
-    rentalLng,
-    rentalRadius,
+    lat,
+    lng,
+    radius,
     ownerId,
     approved = false,
-    minRentalDays = null,
     listingImages = [],
     city,
     backgroundPhoto = null,
     active = true,
     otherCategory = null,
     otherCategoryParentId = null,
-    defects = null,
+    price,
+    finishTime,
   }) => {
-    if (!minRentalDays) {
-      minRentalDays = null;
-    }
-
-    if (!defects) {
-      defects = "";
-    }
-
     const res = await db(LISTINGS_TABLE)
       .insert({
         name,
-        defects,
         description,
         postcode,
         address,
         approved,
-        rental_lat: Number(rentalLat),
-        rental_lng: Number(rentalLng),
-        rental_radius: rentalRadius,
+        lat: Number(lat),
+        lng: Number(lng),
+        radius,
         category_id: categoryId,
-        price_per_day: pricePerDay,
-        min_rental_days: minRentalDays,
-        compensation_cost: compensationCost,
-        count_stored_items: countStoredItems,
         owner_id: ownerId,
         city,
         active,
         background_photo: backgroundPhoto,
         other_category: otherCategory,
         other_category_parent_id: otherCategoryParentId,
+        price: price,
+        finish_time: finishTime,
       })
       .returning("id");
 
@@ -307,16 +277,12 @@ class ListingsModel extends Model {
     id,
     name,
     categoryId = null,
-    compensationCost,
-    countStoredItems,
     description,
     postcode,
     approved,
-    pricePerDay,
-    rentalLat,
-    rentalLng,
-    rentalRadius,
-    minRentalDays = null,
+    lat,
+    lng,
+    radius,
     listingImages = [],
     city,
     ownerId,
@@ -325,36 +291,26 @@ class ListingsModel extends Model {
     backgroundPhoto = null,
     otherCategory = null,
     otherCategoryParentId = null,
-    defects = null,
+    price,
+    finishTime,
   }) => {
-    if (!minRentalDays) {
-      minRentalDays = null;
-    }
-
-    if (!defects) {
-      defects = "";
-    }
-
     const updateData = {
       name,
       city,
       description,
       postcode,
       approved,
-      rental_lat: Number(rentalLat),
-      rental_lng: Number(rentalLng),
-      rental_radius: rentalRadius,
+      lat: Number(lat),
+      lng: Number(lng),
+      radius,
       category_id: categoryId,
-      price_per_day: pricePerDay,
-      min_rental_days: minRentalDays,
-      compensation_cost: compensationCost,
-      count_stored_items: countStoredItems,
       owner_id: ownerId,
       address,
       active,
       other_category: otherCategory,
       other_category_parent_id: otherCategoryParentId,
-      defects,
+      price,
+      finish_time: finishTime,
     };
 
     if (backgroundPhoto) {
@@ -508,56 +464,6 @@ class ListingsModel extends Model {
     );
   };
 
-  listTimeWhere = (timeInfos, query) => {
-    const { serverFromTime, serverToTime } = timeInfos;
-
-    return query.whereNotIn(`${LISTINGS_TABLE}.id`, function () {
-      this.select("listing_id")
-        .from(ORDERS_TABLE)
-        .joinRaw(
-          `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-               ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`
-        ).whereRaw(`${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_OWNER}' AND
-            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.PENDING_TENANT}' AND
-            (${ORDERS_TABLE}.cancel_status IS NULL OR ${ORDERS_TABLE}.cancel_status != '${STATIC.ORDER_CANCELATION_STATUSES.CANCELLED}') AND
-            ${ORDERS_TABLE}.status != '${STATIC.ORDER_STATUSES.REJECTED}'`);
-
-      const whereQueryParts = [];
-      const props = [];
-
-      if (serverFromTime) {
-        const formattedFromTime = listingListDateConverter(serverFromTime);
-
-        whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
-              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
-
-        props.push(
-          formattedFromTime,
-          formattedFromTime,
-          formattedFromTime,
-          formattedFromTime
-        );
-      }
-
-      if (serverToTime) {
-        const formattedToTime = listingListDateConverter(serverToTime);
-
-        whereQueryParts.push(`(${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND (${ORDER_UPDATE_REQUESTS_TABLE}.new_start_date <= ? AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?)) OR
-              (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND (${ORDERS_TABLE}.start_date <= ? AND ${ORDERS_TABLE}.end_date >= ?))`);
-
-        props.push(
-          formattedToTime,
-          formattedToTime,
-          formattedToTime,
-          formattedToTime
-        );
-      }
-
-      const where = "(" + whereQueryParts.join(" OR ") + ")";
-      this.whereRaw(where, props);
-    });
-  };
-
   baseDistanceFilter = (query, distance = null, lat = null, lng = null) => {
     if (distance && lat && lng) {
       distance = query.whereRaw(`${this.generateDistanceRow} <= ?`, [
@@ -572,11 +478,11 @@ class ListingsModel extends Model {
 
   basePriceFilter = (query, minPrice = null, maxPrice = null) => {
     if (minPrice) {
-      query = query.where(`${LISTINGS_TABLE}.price_per_day`, ">=", minPrice);
+      query = query.where(`${LISTINGS_TABLE}.price`, ">=", minPrice);
     }
 
     if (maxPrice) {
-      query = query.where(`${LISTINGS_TABLE}.price_per_day`, "<=", maxPrice);
+      query = query.where(`${LISTINGS_TABLE}.price`, "<=", maxPrice);
     }
 
     return query;
@@ -786,24 +692,24 @@ class ListingsModel extends Model {
     return +result?.count;
   };
 
-  bindTenantListCountListings = async (
+  bindWorkerListCountListings = async (
     entities,
     key = "id",
-    resultKey = "tenantCountItems"
+    resultKey = "workerCountItems"
   ) => {
     const userIds = entities.map((entity) => entity[key]);
 
     const countInfos = await db(ORDERS_TABLE)
-      .select("tenant_id as tenantId")
+      .select("worker_id as workerId")
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
-      .whereIn("tenant_id", userIds)
-      .groupBy("tenant_id");
+      .whereIn("worker_id", userIds)
+      .groupBy("worker_id");
 
     entities.forEach((entity, index) => {
       entities[index][resultKey] = 0;
 
       countInfos.forEach((countInfo) => {
-        if (entities[index] === countInfo["tenantId"]) {
+        if (entities[index] === countInfo["workerId"]) {
           entities[index][resultKey] = countInfo["count"];
         }
       });
@@ -812,9 +718,9 @@ class ListingsModel extends Model {
     return entities;
   };
 
-  getTenantCountListings = async (userId) => {
+  getWorkerCountListings = async (userId) => {
     const result = await db(ORDERS_TABLE)
-      .where({ tenant_id: userId })
+      .where({ worker_id: userId })
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
       .first();
 
@@ -962,12 +868,12 @@ class ListingsModel extends Model {
     }
 
     if (order == "price_to_high") {
-      orderField = "price_per_day";
+      orderField = "price";
       orderType = "asc";
     }
 
     if (order == "price_to_low") {
-      orderField = "price_per_day";
+      orderField = "price";
       orderType = "desc";
     }
 
@@ -1035,7 +941,7 @@ class ListingsModel extends Model {
       query = query.where({ owner_id: props.userId });
     }
 
-    query = query.where(`${USERS_TABLE}.deleted`, false)
+    query = query.where(`${USERS_TABLE}.deleted`, false);
 
     return query;
   };
@@ -1111,8 +1017,8 @@ class ListingsModel extends Model {
 
   priceLimits = async () => {
     const result = await db(LISTINGS_TABLE)
-      .min("price_per_day as minLimitPrice")
-      .max("price_per_day as maxLimitPrice")
+      .min("price as minLimitPrice")
+      .max("price as maxLimitPrice")
       .first();
 
     return {
