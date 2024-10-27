@@ -11,7 +11,7 @@ exports.up = function (knex) {
 
     table.text("description");
     table.text("address");
-    table.float("total_price");
+    table.float("price");
     table.timestamp("finish_time");
 
     table.text("postcode");

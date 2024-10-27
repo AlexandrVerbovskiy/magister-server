@@ -50,7 +50,7 @@ module.exports = [
     fieldName: "Lng",
     canBeNegative: true,
   }),
-  ...validateFloat({ field: "totalPrice", fieldName: "Total Price" }),
+  ...validateFloat({ field: "price", fieldName: "Price" }),
   ...validateDateTime({field:"finishTime", fieldName: "Finish Time"}),
   ...validateSmallStringBody({ field: "city", fieldName: "City" }),
   ...validateSmallStringBody({ field: "postcode", fieldName: "Postcode" }),

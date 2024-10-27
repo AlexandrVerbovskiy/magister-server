@@ -11,10 +11,10 @@ exports.up = function (knex) {
     table.text("status");
     table.string("cancel_status").nullable().defaultTo(null);
 
-    table.float("total_price");
+    table.float("price");
     table.timestamp("finish_time");
 
-    table.float("prev_total_price").nullable().defaultTo(null);
+    table.float("prev_price").nullable().defaultTo(null);
     table.timestamp("prev_finish_time").nullable().defaultTo(null);
 
     table.float("worker_fee").nullable().defaultTo(null);
