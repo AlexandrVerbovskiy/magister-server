@@ -8,7 +8,7 @@ const {
 
 module.exports = [
   ...validateIntegerBody({ field: "listingId", fieldName: "Listing Id" }),
-  ...validateFloat({ field: "totalPrice", fieldName: "Total Price" }),
+  ...validateFloat({ field: "price", fieldName: "Price" }),
   ...validateDateTime({field:"finishTime", fieldName: "Finish Time"}),
   ...validateBigStringBody({
     field: "message",

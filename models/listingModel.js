@@ -32,7 +32,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.lng`,
     `${LISTINGS_TABLE}.radius`,
     `${LISTINGS_TABLE}.background_photo`,
-    `${LISTINGS_TABLE}.total_price`,
+    `${LISTINGS_TABLE}.price`,
     `${LISTINGS_TABLE}.finish_time`,
   ];
 
@@ -52,7 +52,7 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.lat as lat`,
     `${LISTINGS_TABLE}.lng as lng`,
     `${LISTINGS_TABLE}.radius as radius`,
-    `${LISTINGS_TABLE}.total_price as totalPrice`,
+    `${LISTINGS_TABLE}.price as price`,
     `${LISTINGS_TABLE}.finish_time as finishTime`,
   ];
 
@@ -148,7 +148,7 @@ class ListingsModel extends Model {
     active = true,
     otherCategory = null,
     otherCategoryParentId = null,
-    totalPrice,
+    price,
     finishTime,
   }) => {
     const res = await db(LISTINGS_TABLE)
@@ -168,7 +168,7 @@ class ListingsModel extends Model {
         background_photo: backgroundPhoto,
         other_category: otherCategory,
         other_category_parent_id: otherCategoryParentId,
-        total_price: totalPrice,
+        price: price,
         finish_time: finishTime,
       })
       .returning("id");
@@ -291,7 +291,7 @@ class ListingsModel extends Model {
     backgroundPhoto = null,
     otherCategory = null,
     otherCategoryParentId = null,
-    totalPrice,
+    price,
     finishTime,
   }) => {
     const updateData = {
@@ -309,7 +309,7 @@ class ListingsModel extends Model {
       active,
       other_category: otherCategory,
       other_category_parent_id: otherCategoryParentId,
-      total_price: totalPrice,
+      price,
       finish_time: finishTime,
     };
 
@@ -478,11 +478,11 @@ class ListingsModel extends Model {
 
   basePriceFilter = (query, minPrice = null, maxPrice = null) => {
     if (minPrice) {
-      query = query.where(`${LISTINGS_TABLE}.total_price`, ">=", minPrice);
+      query = query.where(`${LISTINGS_TABLE}.price`, ">=", minPrice);
     }
 
     if (maxPrice) {
-      query = query.where(`${LISTINGS_TABLE}.total_price`, "<=", maxPrice);
+      query = query.where(`${LISTINGS_TABLE}.price`, "<=", maxPrice);
     }
 
     return query;
@@ -868,12 +868,12 @@ class ListingsModel extends Model {
     }
 
     if (order == "price_to_high") {
-      orderField = "total_price";
+      orderField = "price";
       orderType = "asc";
     }
 
     if (order == "price_to_low") {
-      orderField = "total_price";
+      orderField = "price";
       orderType = "desc";
     }
 
@@ -1017,8 +1017,8 @@ class ListingsModel extends Model {
 
   priceLimits = async () => {
     const result = await db(LISTINGS_TABLE)
-      .min("total_price as minLimitPrice")
-      .max("total_price as maxLimitPrice")
+      .min("price as minLimitPrice")
+      .max("price as maxLimitPrice")
       .first();
 
     return {
