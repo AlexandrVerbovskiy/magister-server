@@ -47,6 +47,8 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.city as listingCity`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTINGS_TABLE}.other_category as listingOtherCategory`,
+    `${LISTINGS_TABLE}.price as listingPrice`,
+    `${LISTINGS_TABLE}.finish_time as listingFinishTime`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
     `${DISPUTES_TABLE}.id as disputeId`,
     `${DISPUTES_TABLE}.status as disputeStatus`,
@@ -55,7 +57,11 @@ class OrderModel extends Model {
     `${CHAT_TABLE}.id as chatId`,
   ];
 
-  requestVisibleFields = [`${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`];
+  requestVisibleFields = [
+    `${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as newPrice`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishTime`,
+  ];
 
   fullVisibleFields = [
     ...this.lightVisibleFields,
@@ -65,8 +71,6 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.lat as listingRentalLat`,
     `${LISTINGS_TABLE}.lng as listingRentalLng`,
     `${LISTINGS_TABLE}.radius as listingRentalRadius`,
-    `${LISTINGS_TABLE}.price as listingPrice`,
-    `${LISTINGS_TABLE}.finish_time as listingFinishTime`,
     `workers.phone as workerPhone`,
     `owners.phone as ownerPhone`,
     `owners.facebook_url as ownerFacebookUrl`,
@@ -132,7 +136,11 @@ class OrderModel extends Model {
     `${CHAT_TABLE}.id`,
   ];
 
-  requestGroupBy = [`${ORDER_UPDATE_REQUESTS_TABLE}.id`];
+  requestGroupBy = [
+    `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_price`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time`,
+  ];
 
   strFilterFields = [
     `workers.name`,
