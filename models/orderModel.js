@@ -793,7 +793,17 @@ class OrderModel extends Model {
   setPendingWorkerStatus = async (id) =>
     await this.setPendingStatus(id, STATIC.ORDER_STATUSES.PENDING_WORKER);
 
-  updateOrder = async (orderId, { status = null, cancelStatus = null }) => {
+  updateOrder = async (
+    orderId,
+    {
+      status = null,
+      cancelStatus = null,
+      finishTime,
+      price,
+      prevFinishTime,
+      prevPrice,
+    }
+  ) => {
     const updateProps = {};
 
     if (status) {
@@ -803,6 +813,22 @@ class OrderModel extends Model {
     if (cancelStatus) {
       updateProps["cancel_status"] = cancelStatus;
     }
+
+    if (finishTime) {
+      updateProps["finish_time"] = finishTime;
+    }
+
+    if (price) {
+      updateProps["price"] = price;
+    }
+
+    /*if (prevFinishTime) {
+      updateProps["prev_finish_time"] = finishTime;
+    }
+
+    if (prevPrice) {
+      updateProps["prev_price"] = prevPrice;
+    }*/
 
     await db(ORDERS_TABLE).where("id", orderId).update(updateProps);
   };
