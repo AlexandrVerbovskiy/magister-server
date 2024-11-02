@@ -384,13 +384,15 @@ class OrderController extends Controller {
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
+      const orderPart = {
+        finishTime: lastUpdateRequestInfo.newFinishTime,
+        price: lastUpdateRequestInfo.newPrice,
+        prevFinishTime: order.offerFinishTime,
+        prevPrice: order.offerPrice,
+      };
+
       if (lastUpdateRequestInfo) {
-        await this.orderModel.acceptUpdateRequest(id, {
-          newStartDate: lastUpdateRequestInfo.newStartDate,
-          newEndDate: lastUpdateRequestInfo.newEndDate,
-          prevStartDate: order.offerStartDate,
-          prevEndDate: order.offerEndDate,
-        });
+        await this.orderModel.acceptUpdateRequest(id, orderPart);
         await this.orderUpdateRequestModel.closeLast(id);
       } else {
         await this.orderModel.acceptOrder(id);
@@ -401,10 +403,9 @@ class OrderController extends Controller {
       let chatId = order.chatId;
       let createMessageFunc = this.chatMessageModel.createAcceptedOrderMessage;
       let messageData = {};
-      let orderPart = {
-        id: order.id,
-        status: newStatus,
-      };
+
+      orderPart["id"] = order.id;
+      orderPart["status"] = newStatus;
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId,
@@ -438,12 +439,12 @@ class OrderController extends Controller {
 
     if (
       !(
-        ((order.status == STATIC.ORDER_STATUSES.PENDING_OWNER ||
-          (order.status == STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT &&
-            !(order.payedId && order.payedWaitingApproved))) &&
-          order.ownerId == userId) ||
-        (order.status == STATIC.ORDER_STATUSES.PENDING_WORKER &&
-          order.workerId == userId)
+        !order.paymentInfo?.waitingApproved &&
+        [
+          STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT,
+          STATIC.ORDER_STATUSES.PENDING_WORKER,
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
+        ].includes(order.status)
       )
     ) {
       return {
