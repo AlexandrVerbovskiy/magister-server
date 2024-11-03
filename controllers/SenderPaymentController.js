@@ -1,7 +1,7 @@
 const STATIC = require("../static");
 const {
   createPaypalOrder,
-  workerPaymentCalculate,
+  ownerPaymentCalculate,
   invoicePdfGeneration,
 } = require("../utils");
 
@@ -15,14 +15,14 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getFullWithPaymentById(orderId);
 
-      if (order.workerId != userId) {
+      if (order.ownerId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       if (
         order.cancelStatus ||
         order.disputeStatus ||
-        order.status !== STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT ||
+        order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT ||
         (order.payedId &&
           order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
         order.payedAdminApproved
@@ -34,11 +34,7 @@ class SenderPaymentController extends Controller {
         );
       }
 
-      const amount = workerPaymentCalculate(
-        order.offerStartDate,
-        order.offerEndDate,
-        order.workerFee,
-      );
+      const amount = ownerPaymentCalculate(order.offerPrice, order.workerFee);
 
       const result = await createPaypalOrder(
         amount,
@@ -175,7 +171,7 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getById(orderId);
 
-      if (order.workerId != userId) {
+      if (order.ownerId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
@@ -218,10 +214,10 @@ class SenderPaymentController extends Controller {
         const message =
           await this.chatMessageModel.createWorkerPayedOrderMessage({
             chatId,
-            senderId: order.workerId,
+            senderId: order.ownerId,
           });
 
-        const worker = await this.userModel.getById(order.workerId);
+        const worker = await this.userModel.getById(order.ownerId);
         const owner = await this.userModel.getById(order.ownerId);
 
         await this.sendSocketMessageToUserOpponent(
@@ -237,7 +233,7 @@ class SenderPaymentController extends Controller {
 
         await this.sendSocketMessageToUserOpponent(
           chatId,
-          order.workerId,
+          order.ownerId,
           "update-order-message",
           {
             message,
