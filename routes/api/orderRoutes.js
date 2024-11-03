@@ -99,7 +99,12 @@ module.exports = (io) => {
     orderController.fullCancel
   );
 
-  router.post("/finish", isAuth, idBodyValidation, orderController.finish);
+  router.post(
+    "/finish",
+    isAuth,
+    idBodyValidation,
+    orderController.finish
+  );
 
   router.post(
     "/accept-finish",
@@ -113,12 +118,6 @@ module.exports = (io) => {
     isAuth,
     validateIdParam(),
     orderController.generateInvoicePdf
-  );
-
-  router.post(
-    "/predict-temp-order-dispute",
-    isAuth,
-    orderController.getNewPrediction
   );
 
   return router;
