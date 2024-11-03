@@ -1,37 +1,35 @@
 const PDFDocument = require("pdfkit");
 const {
-  getPriceByDays,
-  renterPaysCalculate,
-  renterPaysFeeCalculate,
+  ownerPaymentCalculate,
+  ownerPaymentFeeCalculate,
 } = require("./paymentCalculations");
-const { shortTimeConverter } = require("./dateHelpers");
+const { shortTimeConverter, getFactOrderDays } = require("./dateHelpers");
 const STATIC = require("../static");
 
 baseConvertPaymentProps = (payment) => {
   const offerStartDate = payment.orderOfferStartDate;
-  const offerFinishDate = payment.orderOfferFinishDate;
+  const offerEndDate = payment.orderOfferEndDate;
 
-  const offerSubTotalPrice = getPriceByDays(
-    payment.orderOfferPrice,
+  const offerTotalPrice = ownerPaymentCalculate(
     offerStartDate,
-    offerFinishDate
+    offerEndDate,
+    payment.workerFee,
   );
 
-  const offerTotalPrice = renterPaysCalculate(
-    offerSubTotalPrice,
-    payment.ownerFee
-  );
+  const offerSubTotalPrice =
+    getFactOrderDays(offerStartDate, offerEndDate);
 
-  const factTotalFee = renterPaysFeeCalculate(
-    offerSubTotalPrice,
-    payment.ownerFee
+  const factTotalFee = ownerPaymentFeeCalculate(
+    offerStartDate,
+    offerEndDate,
+    payment.workerFee,
   );
 
   const duration =
-    offerStartDate == offerFinishDate
+    offerStartDate == offerEndDate
       ? shortTimeConverter(offerStartDate)
       : `${shortTimeConverter(offerStartDate)} - ${shortTimeConverter(
-          offerFinishDate
+          offerEndDate
         )}`;
 
   const createdInfo = payment.createdAt
@@ -51,7 +49,7 @@ baseConvertPaymentProps = (payment) => {
     dueDate: dueInfo,
     offer: {
       factTotalPrice: offerTotalPrice.toFixed(2),
-      fee: payment.renterFee,
+      fee: payment.workerFee,
       listingName: payment.listingName,
       subTotalPrice: offerSubTotalPrice.toFixed(2),
       factTotalFee: factTotalFee.toFixed(2),
@@ -140,7 +138,7 @@ const invoicePdfGeneration = async (payment, res) => {
     .moveDown(0.25)
     .fontSize(12)
     .fillColor(COLORS.GRAY)
-    .text("DressRenter", { align: "left" })
+    .text("TaskAbout", { align: "left" })
     .fillColor(COLORS.BLACK);
 
   doc
