@@ -35,6 +35,8 @@ class OrderModel extends Model {
     `workers.email as workerEmail`,
     `workers.photo as workerPhoto`,
     `workers.phone as workerPhone`,
+    `workers.verified as workerVerified`,
+    `workers.paypal_id as workerPaypalId`,
     `owners.id as ownerId`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
@@ -188,7 +190,7 @@ class OrderModel extends Model {
   ];
 
   processStatuses = [
-    STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT,
+    STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
     STATIC.ORDER_STATUSES.PENDING_WORKER,
     STATIC.ORDER_STATUSES.PENDING_OWNER,
     STATIC.ORDER_STATUSES.IN_PROCESS,
@@ -455,7 +457,7 @@ class OrderModel extends Model {
       query = query
         .where(
           `${ORDERS_TABLE}.status`,
-          STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT
+          STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT
         )
         .whereRaw(`${DISPUTES_TABLE}.id IS NULL`)
         .whereNull(`${ORDERS_TABLE}.cancel_status`);
@@ -675,7 +677,7 @@ class OrderModel extends Model {
     const lastOrder = await lastOrderQuery
       .select(this.fullVisibleFields)
       .whereIn(`${ORDERS_TABLE}.status`, [
-        STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
         STATIC.ORDER_STATUSES.PENDING_WORKER,
         STATIC.ORDER_STATUSES.PENDING_OWNER,
       ])
@@ -822,24 +824,24 @@ class OrderModel extends Model {
       updateProps["price"] = price;
     }
 
-    /*if (prevFinishTime) {
+    if (prevFinishTime) {
       updateProps["prev_finish_time"] = finishTime;
     }
 
     if (prevPrice) {
       updateProps["prev_price"] = prevPrice;
-    }*/
+    }
 
     await db(ORDERS_TABLE).where("id", orderId).update(updateProps);
   };
 
   acceptUpdateRequest = (orderId, newData = {}) => {
-    newData["status"] = STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT;
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT;
     return this.updateOrder(orderId, newData);
   };
 
   acceptOrder = async (orderId, newData = {}) => {
-    newData["status"] = STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT;
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT;
     return this.updateOrder(orderId, newData);
   };
 
@@ -863,6 +865,16 @@ class OrderModel extends Model {
   needAdminCancel = async (orderId, newData = {}) => {
     newData["cancelStatus"] =
       STATIC.ORDER_CANCELATION_STATUSES.WAITING_ADMIN_APPROVE;
+    return this.updateOrder(orderId, newData);
+  };
+
+  finish = async (orderId, newData = {}) => {
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED;
+    return this.updateOrder(orderId, newData);
+  };
+
+  acceptFinish = async (orderId, newData = {}) => {
+    newData["status"] = STATIC.ORDER_STATUSES.FINISHED;
     return this.updateOrder(orderId, newData);
   };
 
@@ -1018,7 +1030,7 @@ class OrderModel extends Model {
         STATIC.ORDER_STATUSES.PENDING_WORKER,
         STATIC.ORDER_STATUSES.IN_PROCESS,
         STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
-        STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
       ])
       .whereNot("cancel_status", STATIC.ORDER_CANCELATION_STATUSES.CANCELLED)
       .first();
