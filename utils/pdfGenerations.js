@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const {
-  tenantPaymentCalculate,
-  tenantPaymentFeeCalculate,
+  ownerPaymentCalculate,
+  ownerPaymentFeeCalculate,
 } = require("./paymentCalculations");
 const { shortTimeConverter, getFactOrderDays } = require("./dateHelpers");
 const STATIC = require("../static");
@@ -11,20 +11,20 @@ baseConvertPaymentProps = (payment) => {
   const offerEndDate = payment.orderOfferEndDate;
   const offerPricePerDay = payment.orderOfferPricePerDay;
 
-  const offerTotalPrice = tenantPaymentCalculate(
+  const offerTotalPrice = ownerPaymentCalculate(
     offerStartDate,
     offerEndDate,
-    payment.tenantFee,
+    payment.workerFee,
     offerPricePerDay
   );
 
   const offerSubTotalPrice =
     getFactOrderDays(offerStartDate, offerEndDate) * offerPricePerDay;
 
-  const factTotalFee = tenantPaymentFeeCalculate(
+  const factTotalFee = ownerPaymentFeeCalculate(
     offerStartDate,
     offerEndDate,
-    payment.tenantFee,
+    payment.workerFee,
     offerPricePerDay
   );
 
@@ -52,7 +52,7 @@ baseConvertPaymentProps = (payment) => {
     dueDate: dueInfo,
     offer: {
       factTotalPrice: offerTotalPrice.toFixed(2),
-      fee: payment.tenantFee,
+      fee: payment.workerFee,
       listingName: payment.listingName,
       pricePerDay: offerPricePerDay.toFixed(2),
       subTotalPrice: offerSubTotalPrice.toFixed(2),
@@ -142,7 +142,7 @@ const invoicePdfGeneration = async (payment, res) => {
     .moveDown(0.25)
     .fontSize(12)
     .fillColor(COLORS.GRAY)
-    .text("RentAbout", { align: "left" })
+    .text("TaskAbout", { align: "left" })
     .fillColor(COLORS.BLACK);
 
   doc

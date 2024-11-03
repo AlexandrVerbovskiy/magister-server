@@ -124,6 +124,20 @@ module.exports = (io) => {
     orderController.fullCancel
   );
 
+  router.post(
+    "/finish",
+    isAuth,
+    idBodyValidation,
+    orderController.finish
+  );
+
+  router.post(
+    "/accept-finish",
+    isAuth,
+    idBodyValidation,
+    orderController.acceptFinish
+  );
+
   router.get(
     "/invoice-pdf/:id",
     isAuth,

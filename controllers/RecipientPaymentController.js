@@ -1,9 +1,4 @@
 const STATIC = require("../static");
-const {
-  sendMoneyToPaypalByPaypalID,
-  tenantPaymentCalculate,
-  isPayedUsedPaypal,
-} = require("../utils");
 const Controller = require("./Controller");
 
 class RecipientPaymentController extends Controller {

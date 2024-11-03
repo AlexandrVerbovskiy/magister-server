@@ -1,47 +1,44 @@
 const { getFactOrderDays } = require("./dateHelpers");
 const STATIC = require("../static");
 
-const paymentFeeCalculate = (startDay, endDay, fee, pricePerDay) => {
-  const duration = getFactOrderDays(startDay, endDay);
-  const resPayment = (duration * fee * pricePerDay) / 100;
+const paymentFeeCalculate = (price, fee) => {
+  const resPayment = (fee * price) / 100;
   return +resPayment.toFixed(2);
 };
 
-const tenantPaymentFeeCalculate = (startDay, endDay, fee, pricePerDay) => {
-  const result = paymentFeeCalculate(startDay, endDay, fee, pricePerDay);
+const workerGetsFeeCalculate = (price, fee) => {
+  const result = paymentFeeCalculate(price, fee);
 
-  if (result < STATIC.LIMITS.MIN_TENANT_COMMISSION) {
-    return STATIC.LIMITS.MIN_TENANT_COMMISSION;
+  if (result < STATIC.LIMITS.MIN_WORKER_COMMISSION) {
+    return STATIC.LIMITS.MIN_WORKER_COMMISSION;
   }
 
   return result;
 };
 
-const ownerGetsFeeCalculate = paymentFeeCalculate;
+const ownerPaymentFeeCalculate = (price, fee) => {
+  const result = paymentFeeCalculate(price, fee);
 
-const tenantPaymentCalculate = (startDay, endDay, fee, pricePerDay) => {
-  const duration = getFactOrderDays(startDay, endDay);
+  if (result < STATIC.LIMITS.MIN_OWNER_COMMISSION) {
+    return STATIC.LIMITS.MIN_OWNER_COMMISSION;
+  }
 
-  const resPayment =
-    duration * pricePerDay +
-    tenantPaymentFeeCalculate(startDay, endDay, fee, pricePerDay);
+  return result;
+};
 
+const workerGetsCalculate = (price, fee) => {
+  const resPayment = price - workerGetsFeeCalculate(price, fee);
   return +resPayment.toFixed(2);
 };
 
-const ownerGetsCalculate = (startDay, endDay, fee, pricePerDay) => {
-  const duration = getFactOrderDays(startDay, endDay);
-
-  const resPayment =
-    duration * pricePerDay -
-    ownerGetsFeeCalculate(startDay, endDay, fee, pricePerDay);
-
+const ownerPaymentCalculate = (price, fee) => {
+  const resPayment = price + ownerPaymentFeeCalculate(price, fee);
   return +resPayment.toFixed(2);
 };
 
 module.exports = {
-  tenantPaymentCalculate,
-  ownerGetsCalculate,
-  tenantPaymentFeeCalculate,
-  ownerGetsFeeCalculate,
+  workerGetsCalculate,
+  ownerPaymentCalculate,
+  workerGetsFeeCalculate,
+  ownerPaymentFeeCalculate,
 };
