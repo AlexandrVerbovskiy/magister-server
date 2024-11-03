@@ -2,7 +2,7 @@ const STATIC = require("../static");
 const {
   getPaypalOrderInfo,
   capturePaypalOrder,
-  workerPaymentCalculate,
+  ownerPaymentCalculate,
   invoicePdfGeneration,
 } = require("../utils");
 const Controller = require("./Controller");
@@ -54,7 +54,7 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.status === STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT) {
+      if (order.status === STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT) {
         order["payedInfo"] = await this.senderPaymentModel.getInfoByOrderId(
           order.id
         );
@@ -384,21 +384,21 @@ class OrderController extends Controller {
       const lastUpdateRequestInfo =
         await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-      const orderPart = {
-        finishTime: lastUpdateRequestInfo.newFinishTime,
-        price: lastUpdateRequestInfo.newPrice,
-        prevFinishTime: order.offerFinishTime,
-        prevPrice: order.offerPrice,
-      };
+      const orderPart = {};
 
       if (lastUpdateRequestInfo) {
+        orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
+        orderPart["price"] = lastUpdateRequestInfo.newPrice;
+        orderPart["prevFinishTime"] = order.offerFinishTime;
+        orderPart["prevPrice"] = order.offerPrice;
+
         await this.orderModel.acceptUpdateRequest(id, orderPart);
         await this.orderUpdateRequestModel.closeLast(id);
       } else {
         await this.orderModel.acceptOrder(id);
       }
 
-      const newStatus = STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT;
+      const newStatus = STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT;
 
       let chatId = order.chatId;
       let createMessageFunc = this.chatMessageModel.createAcceptedOrderMessage;
@@ -441,7 +441,7 @@ class OrderController extends Controller {
       !(
         !order.paymentInfo?.waitingApproved &&
         [
-          STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT,
+          STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
           STATIC.ORDER_STATUSES.PENDING_WORKER,
           STATIC.ORDER_STATUSES.PENDING_OWNER,
         ].includes(order.status)
@@ -465,25 +465,23 @@ class OrderController extends Controller {
     const lastUpdateRequestInfo =
       await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-    let newData = {};
+    const orderPart = {};
 
     if (lastUpdateRequestInfo) {
-      newData = {
-        newStartDate: lastUpdateRequestInfo.newStartDate,
-        newEndDate: lastUpdateRequestInfo.newEndDate,
-        prevStartDate: order.offerStartDate,
-        prevEndDate: order.offerEndDate,
-      };
+      orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
+      orderPart["price"] = lastUpdateRequestInfo.newPrice;
+      orderPart["prevFinishTime"] = order.offerFinishTime;
+      orderPart["prevPrice"] = order.offerPrice;
     }
 
     let newStatus = null;
     let newCancelStatus = null;
 
     if (order.workerId == userId) {
-      await this.orderModel.successCancelled(id, newData);
+      await this.orderModel.successCancelled(id, orderPart);
       newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
     } else {
-      await this.orderModel.rejectOrder(id, newData);
+      await this.orderModel.rejectOrder(id, orderPart);
       newCancelStatus = STATIC.ORDER_STATUSES.REJECTED;
       newStatus = order.status;
     }
@@ -493,11 +491,10 @@ class OrderController extends Controller {
     let chatId = order.chatId;
     let createMessageFunc = this.chatMessageModel.createRejectedOrderMessage;
     let messageData = {};
-    let orderPart = {
-      id: order.id,
-      status: newStatus,
-      cancelStatus: newCancelStatus,
-    };
+
+    orderPart["id"] = order.id;
+    orderPart["status"] = newStatus;
+    orderPart["cancelStatus"] = newCancelStatus;
 
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
       chatId,
@@ -567,9 +564,9 @@ class OrderController extends Controller {
       const orderId = payment.orderId;
 
       if (
-        payment.workerId != userId ||
+        payment.ownerId != userId ||
         payment.disputeStatus ||
-        payment.orderStatus !== STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT
+        payment.orderStatus !== STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
@@ -623,14 +620,14 @@ class OrderController extends Controller {
       return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
     }
 
-    if (order.workerId != userId) {
+    if (order.ownerId != userId) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
     if (
       order.cancelStatus ||
       order.disputeStatus ||
-      order.status !== STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT ||
+      order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT ||
       (order.payedId && order.payedType == STATIC.PAYMENT_TYPES.PAYPAL) ||
       order.payedAdminApproved
     ) {
@@ -646,7 +643,7 @@ class OrderController extends Controller {
       "paymentProofs"
     );
 
-    const money = workerPaymentCalculate(
+    const money = ownerPaymentCalculate(
       order.offerStartDate,
       order.offerEndDate,
       order.workerFee,
@@ -756,26 +753,23 @@ class OrderController extends Controller {
     const lastUpdateRequestInfo =
       await this.orderUpdateRequestModel.getFullForLastActive(id);
 
-    let newData = {};
+    const orderPart = {};
 
     if (lastUpdateRequestInfo) {
-      newData = {
-        newStartDate: lastUpdateRequestInfo.newStartDate,
-        newEndDate: lastUpdateRequestInfo.newEndDate,
-        prevStartDate: orderInfo.offerStartDate,
-        prevEndDate: orderInfo.offerEndDate,
-      };
+      orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
+      orderPart["price"] = lastUpdateRequestInfo.newPrice;
+      orderPart["prevFinishTime"] = orderInfo.offerFinishTime;
+      orderPart["prevPrice"] = orderInfo.offerPrice;
     }
 
-    const cancelStatus = await cancelFunc(id, newData);
+    const cancelStatus = await cancelFunc(id, orderPart);
 
     let chatId = orderInfo.chatId;
     createMessageFunc = createMessageFunc;
     let messageData = {};
-    let orderPart = {
-      id: orderInfo.id,
-      cancelStatus,
-    };
+
+    orderPart["id"] = orderInfo.id;
+    orderPart["cancelStatus"] = cancelStatus;
 
     const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
       chatId,
@@ -851,7 +845,7 @@ class OrderController extends Controller {
       };
     }
 
-    const factPrice = workerPaymentCalculate(
+    const factPrice = ownerPaymentCalculate(
       offerStartDate,
       offerEndDate,
       workerFee
@@ -933,7 +927,7 @@ class OrderController extends Controller {
         userType: "worker",
         availableStatusesToCancel: [
           STATIC.ORDER_STATUSES.PENDING_OWNER,
-          STATIC.ORDER_STATUSES.PENDING_WORKER_PAYMENT,
+          STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
         ],
         cancelFunc: this.orderModel.successCancelled,
         createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
@@ -948,6 +942,50 @@ class OrderController extends Controller {
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
+
+  finish = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.body;
+      const { userId } = req.userData;
+
+      const order = await this.orderModel.getById(id);
+
+      if (!order) {
+        return { error: { status: STATIC.ERRORS.NOT_FOUND } };
+      }
+
+      if (order.workerId != userId) {
+        return { error: { status: STATIC.ERRORS.FORBIDDEN } };
+      }
+
+      await this.orderModel.finish(id);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        status: STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
+      });
+    });
+
+  acceptFinish = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.body;
+      const { userId } = req.userData;
+
+      const order = await this.orderModel.getById(id);
+
+      if (!order) {
+        return { error: { status: STATIC.ERRORS.NOT_FOUND } };
+      }
+
+      if (order.ownerId != userId) {
+        return { error: { status: STATIC.ERRORS.FORBIDDEN } };
+      }
+
+      await this.orderModel.acceptFinish(id);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        status: STATIC.ORDER_STATUSES.FINISHED,
+      });
     });
 
   generateInvoicePdf = (req, res) =>
