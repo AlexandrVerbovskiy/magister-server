@@ -112,7 +112,7 @@ module.exports = {
   ORDER_STATUSES: {
     PENDING_OWNER: "pending_owner",
     PENDING_WORKER: "pending_worker",
-    PENDING_WORKER_PAYMENT: "pending_worker_payment",
+    PENDING_OWNER_PAYMENT: "pending_owner_payment",
     IN_PROCESS: "in_process",
     PENDING_OWNER_FINISHED: "pending_owner_finished",
     FINISHED: "finished",
@@ -223,6 +223,7 @@ module.exports = {
   },
   LIMITS: {
     MIN_WORKER_COMMISSION: 5,
+    MIN_OWNER_COMMISSION: 5,
   },
   DEFAULTS: { LOCATION: { lat: 53.390044, lng: -2.59695 } },
   JWT_DEFAULT_ACCESS_LIFETIME: "7d",

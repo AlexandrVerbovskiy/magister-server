@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const {
-  workerPaymentCalculate,
-  workerPaymentFeeCalculate,
+  ownerPaymentCalculate,
+  ownerPaymentFeeCalculate,
 } = require("./paymentCalculations");
 const { shortTimeConverter, getFactOrderDays } = require("./dateHelpers");
 const STATIC = require("../static");
@@ -10,7 +10,7 @@ baseConvertPaymentProps = (payment) => {
   const offerStartDate = payment.orderOfferStartDate;
   const offerEndDate = payment.orderOfferEndDate;
 
-  const offerTotalPrice = workerPaymentCalculate(
+  const offerTotalPrice = ownerPaymentCalculate(
     offerStartDate,
     offerEndDate,
     payment.workerFee,
@@ -19,7 +19,7 @@ baseConvertPaymentProps = (payment) => {
   const offerSubTotalPrice =
     getFactOrderDays(offerStartDate, offerEndDate);
 
-  const factTotalFee = workerPaymentFeeCalculate(
+  const factTotalFee = ownerPaymentFeeCalculate(
     offerStartDate,
     offerEndDate,
     payment.workerFee,

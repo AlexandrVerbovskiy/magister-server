@@ -721,6 +721,7 @@ class ListingsModel extends Model {
   getWorkerCountListings = async (userId) => {
     const result = await db(ORDERS_TABLE)
       .where({ worker_id: userId })
+      .where({ status: STATIC.ORDER_STATUSES.FINISHED })
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
       .first();
 
