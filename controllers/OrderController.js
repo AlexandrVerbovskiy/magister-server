@@ -92,7 +92,8 @@ class OrderController extends Controller {
     return {
       error: null,
       orderId,
-      pricePerDay: listing.pricePerDay,
+      finishTime,
+      price,
     };
   };
 
@@ -138,7 +139,8 @@ class OrderController extends Controller {
       orderInfo: {
         orderId: createdOrderId,
         listingName: listing.name,
-        offerPrice: result.pricePerDay,
+        offerPrice: result.price,
+        offerFinishTime: result.finishTime,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
         description: message,
@@ -877,10 +879,10 @@ class OrderController extends Controller {
 
     const newCancelStatus = await this.orderModel.successCancelled(id);
 
-    let chatId = orderInfo.chatId;
-    let createMessageFunc = this.chatMessageModel.createCanceledOrderMessage;
-    let messageData = {};
-    let orderPart = {
+    const chatId = orderInfo.chatId;
+    const createMessageFunc = this.chatMessageModel.createCanceledOrderMessage;
+    const messageData = {};
+    const orderPart = {
       id: orderInfo.id,
       cancelStatus: newCancelStatus,
     };
@@ -955,14 +957,37 @@ class OrderController extends Controller {
         return { error: { status: STATIC.ERRORS.NOT_FOUND } };
       }
 
-      if (order.workerId != userId) {
+      if (
+        order.workerId != userId ||
+        order.status != STATIC.ORDER_STATUSES.IN_PROCESS ||
+        order.disputeStatus ||
+        order.cancelStatus != null
+      ) {
         return { error: { status: STATIC.ERRORS.FORBIDDEN } };
       }
 
       await this.orderModel.finish(id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      const chatId = order.chatId;
+      const createMessageFunc =
+        this.chatMessageModel.createWaitingFinishedOrderMessage;
+      const messageData = {};
+      const orderPart = {
+        id: order.id,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
+      };
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId,
+        messageData,
+        senderId: userId,
+        createMessageFunc,
+        orderPart,
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...orderPart,
+        chatMessage,
       });
     });
 
@@ -977,14 +1002,37 @@ class OrderController extends Controller {
         return { error: { status: STATIC.ERRORS.NOT_FOUND } };
       }
 
-      if (order.ownerId != userId) {
+      if (
+        order.ownerId != userId ||
+        order.status != STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED ||
+        order.disputeStatus ||
+        order.cancelStatus != null
+      ) {
         return { error: { status: STATIC.ERRORS.FORBIDDEN } };
       }
 
       await this.orderModel.acceptFinish(id);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+      const chatId = order.chatId;
+      const createMessageFunc =
+        this.chatMessageModel.createFinishedOrderMessage;
+      const messageData = {};
+      const orderPart = {
+        id: order.id,
         status: STATIC.ORDER_STATUSES.FINISHED,
+      };
+
+      const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
+        chatId,
+        messageData,
+        senderId: userId,
+        createMessageFunc,
+        orderPart,
+      });
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...orderPart,
+        chatMessage,
       });
     });
 
