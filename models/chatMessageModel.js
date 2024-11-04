@@ -198,18 +198,18 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createWorkerPayedOrderMessage = async ({ chatId, senderId }) => {
+  createOwnerPayedOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.WORKER_PAYED,
+      type: STATIC.MESSAGE_TYPES.OWNER_PAYED,
       senderId,
     });
   };
 
-  createWorkerPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
+  createOwnerPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.WORKER_PAYED_WAITING,
+      type: STATIC.MESSAGE_TYPES.OWNER_PAYED_WAITING,
       senderId,
     });
   };
