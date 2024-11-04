@@ -66,8 +66,8 @@ class OrderUpdateRequestController extends Controller {
         listingName: order.listingName,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
-        offerNewFinishTime: newFinishTime,
-        offerNewPrice: newPrice,
+        offerFinishTime: newFinishTime,
+        offerPrice: newPrice,
       };
       let orderPart = {
         id: order.id,
