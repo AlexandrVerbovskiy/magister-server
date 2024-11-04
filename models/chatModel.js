@@ -42,10 +42,10 @@ class ChatModel extends Model {
 
   fullVisibleFieldsForAdmin = [
     ...this.fullVisibleFields,
-    "renters.id as renterId",
-    "renters.name as renterName",
-    "renters.photo as renterPhoto",
-    "renter_chats.id as renterChatId",
+    "workers.id as workerId",
+    "workers.name as workerName",
+    "workers.photo as workerPhoto",
+    "worker_chats.id as workerChatId",
     "owners.id as ownerId",
     "owners.name as ownerName",
     "owners.photo as ownerPhoto",
@@ -72,15 +72,14 @@ class ChatModel extends Model {
 
   createForOrder = async ({
     ownerId,
-    renterId,
+    workerId,
     orderInfo: {
       orderId,
       listingName,
       offerPrice,
       listingPhotoType,
       listingPhotoPath,
-      offerFinishDate,
-      offerStartDate,
+      offerFinishTime,
       description,
     },
   }) => {
@@ -90,20 +89,19 @@ class ChatModel extends Model {
       name: `Rental ${listingName}`,
     });
 
-    for (const userId of [ownerId, renterId]) {
+    for (const userId of [ownerId, workerId]) {
       await chatRelationModel.create(chatId, userId);
     }
 
     return await chatMessageModel.createNewOrderMessage({
       chatId,
-      senderId: renterId,
+      senderId: workerId,
       data: {
         listingName,
         offerPrice,
         listingPhotoType,
         listingPhotoPath,
-        offerFinishDate,
-        offerStartDate,
+        offerFinishTime,
         description,
       },
     });
@@ -436,10 +434,10 @@ class ChatModel extends Model {
         `${ORDER_TABLE}.id`
       )
       .leftJoin(
-        `${USER_TABLE} as renters`,
-        `renters.id`,
+        `${USER_TABLE} as workers`,
+        `workers.id`,
         "=",
-        `${ORDER_TABLE}.renter_id`
+        `${ORDER_TABLE}.worker_id`
       )
       .leftJoin(
         LISTING_TABLE,
@@ -460,10 +458,10 @@ class ChatModel extends Model {
         `JOIN ${CHAT_RELATION_TABLE} as owner_chat_relations ON (owner_chat_relations.user_id = owners.id AND owner_chats.id = owner_chat_relations.chat_id)`
       )
       .joinRaw(
-        `JOIN ${CHAT_TABLE} as renter_chats ON (renter_chats.entity_id = ${DISPUTE_TABLE}.id AND renter_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+        `JOIN ${CHAT_TABLE} as worker_chats ON (worker_chats.entity_id = ${DISPUTE_TABLE}.id AND worker_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
       )
       .joinRaw(
-        `JOIN ${CHAT_RELATION_TABLE} as renter_chat_relations ON (renter_chat_relations.user_id = renters.id AND renter_chats.id = renter_chat_relations.chat_id)`
+        `JOIN ${CHAT_RELATION_TABLE} as worker_chat_relations ON (worker_chat_relations.user_id = workers.id AND worker_chats.id = worker_chat_relations.chat_id)`
       );
 
     return this.messageJoin(query);
@@ -471,7 +469,7 @@ class ChatModel extends Model {
 
   baseChatListFilter = (builder, chatFilter) => {
     return builder
-      .whereILike(`renters.name`, `%${chatFilter}%`)
+      .whereILike(`workers.name`, `%${chatFilter}%`)
       .orWhereILike(`owners.name`, `%${chatFilter}%`)
       .orWhereRaw(this.filterIdLikeString(chatFilter, `${DISPUTE_TABLE}.id`));
   };

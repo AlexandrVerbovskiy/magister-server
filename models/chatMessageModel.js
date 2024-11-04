@@ -18,7 +18,6 @@ class ChatMessageModel extends Model {
     `${CHAT_MESSAGE_TABLE}.chat_id as chatId`,
     `${CHAT_MESSAGE_TABLE}.sender_id as senderId`,
     `${CHAT_MESSAGE_TABLE}.created_at as createdAt`,
-    `${CHAT_MESSAGE_TABLE}.admin_send as adminSend`
   ];
 
   fullVisibleFields = [
@@ -124,7 +123,7 @@ class ChatMessageModel extends Model {
       listingPhotoType,
       listingPhotoPath,
       offerStartDate,
-      offerFinishDate,
+      offerEndDate,
       description,
     },
   }) => {
@@ -139,7 +138,7 @@ class ChatMessageModel extends Model {
         listingPhotoType,
         listingPhotoPath,
         offerStartDate,
-        offerFinishDate,
+        offerEndDate,
         description,
       },
     });
@@ -154,8 +153,7 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoPath,
       listingPhotoType,
-      offerFinishDate,
-      offerStartDate,
+      offerFinishTime,
     },
   }) => {
     return await this.create({
@@ -169,8 +167,7 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoPath,
         listingPhotoType,
-        offerFinishDate,
-        offerStartDate
+        offerFinishTime,
       },
     });
   };
@@ -201,18 +198,18 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createRenterPayedOrderMessage = async ({ chatId, senderId }) => {
+  createWorkerPayedOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.RENTER_PAYED,
+      type: STATIC.MESSAGE_TYPES.WORKER_PAYED,
       senderId,
     });
   };
 
-  createRenterPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
+  createWorkerPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.RENTER_PAYED_WAITING,
+      type: STATIC.MESSAGE_TYPES.WORKER_PAYED_WAITING,
       senderId,
     });
   };
@@ -293,7 +290,7 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createRenterReviewMessage = async ({
+  createWorkerReviewMessage = async ({
     chatId,
     senderId,
     data: {
@@ -312,7 +309,7 @@ class ChatMessageModel extends Model {
   }) => {
     return await this.create({
       chatId,
-      type: STATIC.MESSAGE_TYPES.RENTER_REVIEW,
+      type: STATIC.MESSAGE_TYPES.WORKER_REVIEW,
       isAdminSender: false,
       senderId,
       content: {
