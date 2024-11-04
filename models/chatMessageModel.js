@@ -198,26 +198,18 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createTenantPayedOrderMessage = async ({ chatId, senderId }) => {
+  createOwnerPayedOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.TENANT_PAYED,
+      type: STATIC.MESSAGE_TYPES.OWNER_PAYED,
       senderId,
     });
   };
 
-  createTenantPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
+  createOwnerPayedWaitingOrderMessage = async ({ chatId, senderId }) => {
     return await this.createUpdatedTypeMessage({
       chatId,
-      type: STATIC.MESSAGE_TYPES.TENANT_PAYED_WAITING,
-      senderId,
-    });
-  };
-
-  createPendedToTenantOrderMessage = async ({ chatId, senderId }) => {
-    return await this.createUpdatedTypeMessage({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.PENDED_TO_TENANT,
+      type: STATIC.MESSAGE_TYPES.OWNER_PAYED_WAITING,
       senderId,
     });
   };
@@ -298,7 +290,7 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createTenantReviewMessage = async ({
+  createWorkerReviewMessage = async ({
     chatId,
     senderId,
     data: {
@@ -317,7 +309,7 @@ class ChatMessageModel extends Model {
   }) => {
     return await this.create({
       chatId,
-      type: STATIC.MESSAGE_TYPES.TENANT_REVIEW,
+      type: STATIC.MESSAGE_TYPES.WORKER_REVIEW,
       isAdminSender: false,
       senderId,
       content: {
@@ -561,194 +553,6 @@ class ChatMessageModel extends Model {
 
     const result = await query.select(`${CHAT_MESSAGE_TABLE}.id`);
     return result.length;
-  };
-
-  createExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: {
-      listingName,
-      offerPrice,
-      listingPhotoType,
-      listingPhotoPath,
-      offerStartDate,
-      offerEndDate,
-      description,
-      extensionId,
-    },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.NEW_EXTENSION,
-      isAdminSender: false,
-      senderId,
-      content: {
-        listingName,
-        offerPrice,
-        listingPhotoType,
-        listingPhotoPath,
-        offerStartDate,
-        offerEndDate,
-        description,
-        extensionId,
-      },
-    });
-  };
-
-  createNewOrderByExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: {
-      listingName,
-      offerPrice,
-      listingPhotoType,
-      listingPhotoPath,
-      offerStartDate,
-      offerEndDate,
-      description,
-      extensionId,
-      extensionChatId,
-    },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.NEW_ORDER_BY_EXTENSION,
-      isAdminSender: false,
-      senderId,
-      content: {
-        listingName,
-        offerPrice,
-        listingPhotoType,
-        listingPhotoPath,
-        offerStartDate,
-        offerEndDate,
-        description,
-        extensionId,
-        extensionChatId,
-      },
-    });
-  };
-
-  createAcceptedExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: { extensionId, offerPrice, offerStartDate, offerEndDate },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.ACCEPTED_EXTENSION,
-      senderId,
-      content: {
-        offerPrice,
-        offerStartDate,
-        offerEndDate,
-        extensionId,
-      },
-    });
-  };
-
-  createRejectedExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: { extensionId, offerPrice, offerStartDate, offerEndDate },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.REJECTED_EXTENSION,
-      senderId,
-      content: {
-        offerPrice,
-        offerStartDate,
-        offerEndDate,
-        extensionId,
-      },
-    });
-  };
-
-  createUpdateExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: {
-      requestId,
-      listingName,
-      offerPrice,
-      listingPhotoPath,
-      listingPhotoType,
-      offerStartDate,
-      offerEndDate,
-      extensionId,
-    },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.UPDATE_EXTENSION,
-      isAdminSender: false,
-      senderId,
-      content: {
-        requestId,
-        listingName,
-        offerPrice,
-        listingPhotoPath,
-        listingPhotoType,
-        offerStartDate,
-        offerEndDate,
-        extensionId,
-      },
-    });
-  };
-
-  createTenantPayedExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: { offerStartDate, offerEndDate, offerPrice, extensionId },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.TENANT_PAYED_EXTENSION,
-      senderId,
-      content: {
-        offerStartDate,
-        offerEndDate,
-        extensionId,
-        offerPrice,
-      },
-    });
-  };
-
-  createTenantPayedWaitingExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: { offerStartDate, offerEndDate, offerPrice, extensionId },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.TENANT_PAYED_WAITING_EXTENSION,
-      senderId,
-      content: {
-        offerStartDate,
-        offerEndDate,
-        extensionId,
-        offerPrice,
-      },
-    });
-  };
-
-  createCanceledExtensionMessage = async ({
-    chatId,
-    senderId,
-    data: { offerStartDate, offerEndDate, offerPrice, extensionId },
-  }) => {
-    return await this.create({
-      chatId,
-      type: STATIC.MESSAGE_TYPES.CANCELED_ORDER,
-      senderId,
-      content: {
-        offerStartDate,
-        offerEndDate,
-        extensionId,
-        offerPrice,
-      },
-    });
   };
 }
 
