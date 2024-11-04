@@ -153,8 +153,7 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoPath,
       listingPhotoType,
-      offerStartDate,
-      offerEndDate,
+      offerFinishTime,
     },
   }) => {
     return await this.create({
@@ -168,8 +167,7 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoPath,
         listingPhotoType,
-        offerStartDate,
-        offerEndDate,
+        offerFinishTime,
       },
     });
   };
@@ -220,6 +218,14 @@ class ChatMessageModel extends Model {
     return await this.createUpdatedTypeMessage({
       chatId,
       type: STATIC.MESSAGE_TYPES.PENDED_TO_TENANT,
+      senderId,
+    });
+  };
+
+  createWaitingFinishedOrderMessage = async ({ chatId, senderId }) => {
+    return await this.createUpdatedTypeMessage({
+      chatId,
+      type: STATIC.MESSAGE_TYPES.WAITING_FINISHED_APPROVE,
       senderId,
     });
   };
