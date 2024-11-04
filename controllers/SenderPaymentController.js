@@ -212,7 +212,7 @@ class SenderPaymentController extends Controller {
 
       if (chatId) {
         const message =
-          await this.chatMessageModel.createWorkerPayedOrderMessage({
+          await this.chatMessageModel.createOwnerPayedOrderMessage({
             chatId,
             senderId: order.ownerId,
           });

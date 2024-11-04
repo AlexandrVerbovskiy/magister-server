@@ -589,7 +589,7 @@ class OrderController extends Controller {
 
       let chatId = payment.chatId;
       let createMessageFunc =
-        this.chatMessageModel.createWorkerPayedOrderMessage;
+        this.chatMessageModel.createOwnerPayedOrderMessage;
       let messageData = {};
       let orderPart = {
         id: orderId,
