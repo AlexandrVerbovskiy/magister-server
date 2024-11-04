@@ -163,6 +163,7 @@ module.exports = {
     REJECTED_ORDER: "rejected-order",
     WORKER_PAYED: "worker-payed",
     WORKER_PAYED_WAITING: "worker-payed-waiting",
+    WAITING_FINISHED_APPROVE: "waiting-finished-approve",
     FINISHED: "finished",
     CANCELED_ORDER: "canceled-order",
     CREATED_CANCEL_REQUEST: "created-cancel",
