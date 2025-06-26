@@ -34,12 +34,12 @@ class DisputeController extends Controller {
       }
     );
 
-    disputes = await this.workerCommentModel.bindAverageForKeyEntities(
+    disputes = await this.renterCommentModel.bindAverageForKeyEntities(
       disputes,
-      "workerId",
+      "renterId",
       {
-        commentCountName: "workerCommentCount",
-        averageRatingName: "workerAverageRating",
+        commentCountName: "renterCommentCount",
+        averageRatingName: "renterAverageRating",
       }
     );
 
@@ -63,14 +63,14 @@ class DisputeController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
-      const workerId = +order.workerId;
+      const renterId = +order.renterId;
       const ownerId = +order.ownerId;
 
       const isOwnerCreatedDispute = userId == ownerId;
-      const isWorkerCreatedDispute = userId == workerId;
+      const isRenterCreatedDispute = userId == renterId;
 
       if (
-        (!isWorkerCreatedDispute && !isOwnerCreatedDispute) ||
+        (!isRenterCreatedDispute && !isOwnerCreatedDispute) ||
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         ![
           STATIC.ORDER_STATUSES.IN_PROCESS,
@@ -91,29 +91,29 @@ class DisputeController extends Controller {
       const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
       const senderName = isOwnerCreatedDispute
         ? order.ownerName
-        : order.workerName;
+        : order.renterName;
 
       const createdMessages = await this.chatModel.createForDispute({
         orderId,
         disputeId,
-        userIds: [workerId, ownerId],
+        userIds: [renterId, ownerId],
         data: { senderId: userId, senderName, description, type },
       });
 
       if (isOwnerCreatedDispute) {
-        await this.sendSocketMessageToUser(workerId, "get-message", {
-          message: createdMessages[workerId],
+        await this.sendSocketMessageToUser(renterId, "get-message", {
+          message: createdMessages[renterId],
         });
       }
 
-      if (isWorkerCreatedDispute) {
+      if (isRenterCreatedDispute) {
         await this.sendSocketMessageToUser(ownerId, "get-message", {
           message: createdMessages[ownerId],
         });
       }
 
       const ownerDisputeChatId = createdMessages[ownerId].chatId;
-      const workerDisputeChatId = createdMessages[workerId].chatId;
+      const renterDisputeChatId = createdMessages[renterId].chatId;
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -127,7 +127,7 @@ class DisputeController extends Controller {
           disputeType: type,
           disputeDescription: description,
           disputeChatId: isOwnerCreatedDispute
-            ? workerDisputeChatId
+            ? renterDisputeChatId
             : ownerDisputeChatId,
         },
       });
@@ -142,7 +142,7 @@ class DisputeController extends Controller {
           disputeDescription: description,
           disputeChatId: isOwnerCreatedDispute
             ? ownerDisputeChatId
-            : workerDisputeChatId,
+            : renterDisputeChatId,
         },
       });
     });

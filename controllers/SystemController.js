@@ -14,22 +14,22 @@ class SystemController extends Controller {
       const {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
-        workerBaseCommissionPercent,
-        workerCancelFeePercent,
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
       } = req.body;
 
       await this.systemOptionModel.setOptions({
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
-        workerBaseCommissionPercent,
-        workerCancelFeePercent,
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
-        workerBaseCommissionPercent,
-        workerCancelFeePercent,
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
       });
     });
 

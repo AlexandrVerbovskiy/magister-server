@@ -6,11 +6,11 @@ const paymentFeeCalculate = (price, fee) => {
   return +resPayment.toFixed(2);
 };
 
-const workerGetsFeeCalculate = (price, fee) => {
+const renterGetsFeeCalculate = (price, fee) => {
   const result = paymentFeeCalculate(price, fee);
 
-  if (result < STATIC.LIMITS.MIN_WORKER_COMMISSION) {
-    return STATIC.LIMITS.MIN_WORKER_COMMISSION;
+  if (result < STATIC.LIMITS.MIN_RENTER_COMMISSION) {
+    return STATIC.LIMITS.MIN_RENTER_COMMISSION;
   }
 
   return result;
@@ -26,8 +26,8 @@ const ownerPaymentFeeCalculate = (price, fee) => {
   return result;
 };
 
-const workerGetsCalculate = (price, fee) => {
-  const resPayment = price - workerGetsFeeCalculate(price, fee);
+const renterGetsCalculate = (price, fee) => {
+  const resPayment = price - renterGetsFeeCalculate(price, fee);
   return +resPayment.toFixed(2);
 };
 
@@ -37,8 +37,8 @@ const ownerPaymentCalculate = (price, fee) => {
 };
 
 module.exports = {
-  workerGetsCalculate,
+  renterGetsCalculate,
   ownerPaymentCalculate,
-  workerGetsFeeCalculate,
+  renterGetsFeeCalculate,
   ownerPaymentFeeCalculate,
 };

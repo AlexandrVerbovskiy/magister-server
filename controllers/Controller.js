@@ -45,7 +45,7 @@ const {
   senderPaymentModel,
   recipientPaymentModel,
   ownerCommentModel,
-  workerCommentModel,
+  renterCommentModel,
   userListingFavoriteModel,
   disputeModel,
   chatMessageContentModel,
@@ -58,7 +58,6 @@ const {
 
 const STATIC = require("../static");
 const { generateRandomString } = require("../utils");
-const checklistModel = require("../models/checklistModel");
 const CLIENT_URL = process.env.CLIENT_URL;
 
 class Controller {
@@ -90,7 +89,7 @@ class Controller {
       listingCategoryCreateNotificationModel;
 
     this.ownerCommentModel = ownerCommentModel;
-    this.workerCommentModel = workerCommentModel;
+    this.renterCommentModel = renterCommentModel;
 
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
@@ -102,7 +101,6 @@ class Controller {
     this.chatRelationModel = chatRelationModel;
 
     this.socketModel = socketModel;
-    this.checklistModel = checklistModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -291,11 +289,11 @@ class Controller {
     });
   };
 
-  sendBookingCancellationWorkerMail = async (email, orderId) => {
+  sendBookingCancellationRenterMail = async (email, orderId) => {
     const title = "Booking Request Cancelled";
     const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
-    await this.sendMail(email, title, "bookingCancellationWorker", {
+    await this.sendMail(email, title, "bookingCancellationRenter", {
       link,
     });
   };

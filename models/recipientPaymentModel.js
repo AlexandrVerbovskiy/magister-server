@@ -23,7 +23,7 @@ class RecipientPayment extends Model {
     `${RECIPIENT_PAYMENTS_TABLE}.user_id as recipientId`,
     `${RECIPIENT_PAYMENTS_TABLE}.order_id as orderId`,
     `${ORDERS_TABLE}.status as orderStatus`,
-    `${ORDERS_TABLE}.worker_fee as workerFee`,
+    `${ORDERS_TABLE}.renter_fee as renterFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
@@ -41,11 +41,11 @@ class RecipientPayment extends Model {
     `owners.email as ownerEmail`,
     `owners.phone as ownerPhone`,
     `owners.photo as ownerPhoto`,
-    `workers.id as workerId`,
-    `workers.name as workerName`,
-    `workers.email as workerEmail`,
-    `workers.phone as workerPhone`,
-    `workers.photo as workerPhoto`,
+    `renters.id as renterId`,
+    `renters.name as renterName`,
+    `renters.email as renterEmail`,
+    `renters.phone as renterPhone`,
+    `renters.photo as renterPhoto`,
     `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
     `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
     `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -57,7 +57,7 @@ class RecipientPayment extends Model {
     ...this.strFilterFields,
     `${USERS_TABLE}.name`,
     `owners.name`,
-    `workers.name`,
+    `renters.name`,
   ];
 
   orderFields = [
@@ -168,10 +168,10 @@ class RecipientPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
-        `${USERS_TABLE} as workers`,
-        `workers.id`,
+        `${USERS_TABLE} as renters`,
+        `renters.id`,
         "=",
-        `${ORDERS_TABLE}.worker_id`
+        `${ORDERS_TABLE}.renter_id`
       );
 
   baseListStatusSelect = (query, status) => {

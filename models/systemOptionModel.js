@@ -69,13 +69,13 @@ class SystemOptionModel extends Model {
     return value ? Number(value) : 0;
   };
 
-  getWorkerBaseCommissionPercent = async () => {
-    const value = await this.getByKey("worker_base_commission_percent");
+  getRenterBaseCommissionPercent = async () => {
+    const value = await this.getByKey("renter_base_commission_percent");
     return value ? Number(value) : 0;
   };
 
-  getWorkerCancelCommissionPercent = async () => {
-    const value = await this.getByKey("worker_cancel_fee_percent");
+  getRenterCancelCommissionPercent = async () => {
+    const value = await this.getByKey("renter_cancel_fee_percent");
     return value ? Number(value) : 0;
   };
 
@@ -83,8 +83,8 @@ class SystemOptionModel extends Model {
     const commissions = await db(SYSTEM_TABLE).whereIn("key", [
       "owner_base_commission_percent",
       "owner_boost_commission_percent",
-      "worker_base_commission_percent",
-      "worker_cancel_fee_percent",
+      "renter_base_commission_percent",
+      "renter_cancel_fee_percent",
     ]);
 
     const ownerBaseCommissionPercentInfo = commissions.find(
@@ -95,12 +95,12 @@ class SystemOptionModel extends Model {
       (commission) => commission.key == "owner_boost_commission_percent"
     );
 
-    const workerBaseCommissionPercentInfo = commissions.find(
-      (commission) => commission.key == "worker_base_commission_percent"
+    const renterBaseCommissionPercentInfo = commissions.find(
+      (commission) => commission.key == "renter_base_commission_percent"
     );
 
-    const workerCancelFeePercentInfo = commissions.find(
-      (commission) => commission.key == "worker_cancel_fee_percent"
+    const renterCancelFeePercentInfo = commissions.find(
+      (commission) => commission.key == "renter_cancel_fee_percent"
     );
 
     const result = {
@@ -110,11 +110,11 @@ class SystemOptionModel extends Model {
       ownerBoostCommissionPercent: ownerBoostCommissionPercentInfo
         ? Number(ownerBoostCommissionPercentInfo.value)
         : 0,
-      workerBaseCommissionPercent: workerBaseCommissionPercentInfo
-        ? Number(workerBaseCommissionPercentInfo.value)
+      renterBaseCommissionPercent: renterBaseCommissionPercentInfo
+        ? Number(renterBaseCommissionPercentInfo.value)
         : 0,
-      workerCancelFeePercent: workerCancelFeePercentInfo
-        ? Number(workerCancelFeePercentInfo.value)
+      renterCancelFeePercent: renterCancelFeePercentInfo
+        ? Number(renterCancelFeePercentInfo.value)
         : 0,
     };
 
@@ -134,9 +134,9 @@ class SystemOptionModel extends Model {
       resObj["owner_base_commission_percent"] ?? "";
     const ownerBoostCommissionPercent =
       resObj["owner_boost_commission_percent"] ?? "";
-    const workerBaseCommissionPercent =
-      resObj["worker_base_commission_percent"] ?? "";
-    const workerCancelFeePercent = resObj["worker_cancel_fee_percent"] ?? "";
+    const renterBaseCommissionPercent =
+      resObj["renter_base_commission_percent"] ?? "";
+    const renterCancelFeePercent = resObj["renter_cancel_fee_percent"] ?? "";
     const bankAccountIban = resObj["bank_account_iban"] ?? "";
     const bankAccountSwiftBic = resObj["bank_account_swift_bic"] ?? "";
     const bankAccountBeneficiary = resObj["bank_account_beneficiary"] ?? "";
@@ -147,8 +147,8 @@ class SystemOptionModel extends Model {
       userLogActive,
       ownerBaseCommissionPercent,
       ownerBoostCommissionPercent,
-      workerBaseCommissionPercent,
-      workerCancelFeePercent,
+      renterBaseCommissionPercent,
+      renterCancelFeePercent,
       bankAccountIban,
       bankAccountSwiftBic,
       bankAccountBeneficiary,
@@ -160,8 +160,8 @@ class SystemOptionModel extends Model {
     userLogActive = null,
     ownerBaseCommissionPercent = null,
     ownerBoostCommissionPercent = null,
-    workerBaseCommissionPercent = null,
-    workerCancelFeePercent = null,
+    renterBaseCommissionPercent = null,
+    renterCancelFeePercent = null,
     bankAccountIban = null,
     bankAccountSwiftBic = null,
     bankAccountBeneficiary = null,
@@ -186,17 +186,17 @@ class SystemOptionModel extends Model {
       );
     }
 
-    if (workerBaseCommissionPercent !== null) {
+    if (renterBaseCommissionPercent !== null) {
       await this.updateByKey(
-        "worker_base_commission_percent",
-        workerBaseCommissionPercent
+        "renter_base_commission_percent",
+        renterBaseCommissionPercent
       );
     }
 
-    if (workerCancelFeePercent !== null) {
+    if (renterCancelFeePercent !== null) {
       await this.updateByKey(
-        "worker_cancel_fee_percent",
-        workerCancelFeePercent
+        "renter_cancel_fee_percent",
+        renterCancelFeePercent
       );
     }
 

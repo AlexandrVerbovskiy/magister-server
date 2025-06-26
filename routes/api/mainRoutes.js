@@ -328,10 +328,10 @@ module.exports = (io) => {
   );
 
   router.get(
-    "/get-order-review-by-worker/:id",
+    "/get-order-review-by-renter/:id",
     isAuth,
     validateIdParam(),
-    mainController.getOrderReviewByWorkerOptions
+    mainController.getOrderReviewByRenterOptions
   );
 
   router.get(
@@ -342,11 +342,11 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/admin-worker-comment-list-options",
+    "/admin-renter-comment-list-options",
     isAuth,
     isSupport,
     adminCommentListOptionsValidation,
-    mainController.getAdminWorkerCommentsPageOptions
+    mainController.getAdminRenterCommentsPageOptions
   );
 
   router.post(

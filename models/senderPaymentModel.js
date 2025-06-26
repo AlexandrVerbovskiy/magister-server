@@ -31,16 +31,16 @@ class SenderPayment extends Model {
     `${USERS_TABLE}.photo as payerPhoto`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
-    `${ORDERS_TABLE}.worker_fee as workerFee`,
+    `${ORDERS_TABLE}.renter_fee as renterFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.status as orderStatus`,
     `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
     `owners.id as ownerId`,
-    `workers.name as workerName`,
-    `workers.email as workerEmail`,
-    `workers.id as workerId`,
+    `renters.name as renterName`,
+    `renters.email as renterEmail`,
+    `renters.id as renterId`,
     `${CHAT_TABLE}.id as chatId`,
     `${DISPUTES_TABLE}.id as disputeId`,
     `${DISPUTES_TABLE}.status as disputeStatus`,
@@ -302,10 +302,10 @@ class SenderPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
-        `${USERS_TABLE} as workers`,
-        `workers.id`,
+        `${USERS_TABLE} as renters`,
+        `renters.id`,
         "=",
-        `${ORDERS_TABLE}.worker_id`
+        `${ORDERS_TABLE}.renter_id`
       )
       .leftJoin(
         `${DISPUTES_TABLE}`,
@@ -503,7 +503,7 @@ class SenderPayment extends Model {
         `${ORDERS_TABLE}.id as orderId`,
         `${ORDERS_TABLE}.status as orderStatus`,
         `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
-        `${ORDERS_TABLE}.worker_fee as workerFee`,
+        `${ORDERS_TABLE}.renter_fee as renterFee`,
         `owners.id as ownerId`,
         `owners.name as ownerName`,
         `owners.email as ownerEmail`,

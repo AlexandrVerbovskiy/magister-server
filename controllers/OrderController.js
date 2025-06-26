@@ -9,21 +9,6 @@ const Controller = require("./Controller");
 const fs = require("fs");
 
 class OrderController extends Controller {
-  getChecklistImages = async (req) => {
-    const imagesToSave = [];
-
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-
-      if (fs.existsSync(file.path)) {
-        const filePath = await this.moveUploadsFileToFolder(file, "checklists");
-        imagesToSave.push({ type: "storage", link: filePath });
-      }
-    }
-
-    return [...imagesToSave];
-  };
-
   sendMessageForNewOrder = async ({ message, senderId, opponentId = null }) => {
     if (!opponentId) {
       opponentId = senderId;
@@ -50,7 +35,7 @@ class OrderController extends Controller {
 
       const order = await this.orderModel.getFullById(id);
 
-      if (!order || (userId != order.workerId && userId != order.ownerId)) {
+      if (!order || (userId != order.renterId && userId != order.ownerId)) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
@@ -63,19 +48,25 @@ class OrderController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, order);
     });
 
-  baseCreate = async ({ finishTime, price, listingId, workerId }) => {
+  baseCreate = async ({
+    finishTime,
+    startTime,
+    price,
+    listingId,
+    renterId,
+  }) => {
     const listing = await this.listingModel.getLightById(listingId);
 
     if (!listing) {
       return { error: "Listing not found", orderId: null };
     }
 
-    if (!listing.approved || !listing.active || listing.ownerId == workerId) {
+    if (!listing.approved || !listing.active || listing.ownerId == renterId) {
       return { error: "Access denied", orderId: null };
     }
 
-    const workerFee =
-      await this.systemOptionModel.getWorkerBaseCommissionPercent();
+    const renterFee =
+      await this.systemOptionModel.getRenterBaseCommissionPercent();
 
     const ownerFee =
       await this.systemOptionModel.getOwnerBaseCommissionPercent();
@@ -83,29 +74,32 @@ class OrderController extends Controller {
     const orderId = await this.orderModel.create({
       price,
       finishTime,
+      startTime,
       listingId,
-      workerId,
+      renterId,
       ownerFee: ownerFee,
-      workerFee: workerFee,
+      renterFee: renterFee,
     });
 
     return {
       error: null,
       orderId,
       finishTime,
+      startTime,
       price,
     };
   };
 
   baseCreateWithMessageSend = async (req, needReturnMessage = false) => {
-    const { finishTime, price, listingId, message } = req.body;
-    const workerId = req.userData.userId;
+    const { finishTime, startTime, price, listingId, message } = req.body;
+    const renterId = req.userData.userId;
 
     const result = await this.baseCreate({
       finishTime,
+      startTime,
       price,
       listingId,
-      workerId,
+      renterId,
     });
 
     if (result.error) {
@@ -135,12 +129,13 @@ class OrderController extends Controller {
 
     const createdMessage = await this.chatModel.createForOrder({
       ownerId,
-      workerId,
+      renterId,
       orderInfo: {
         orderId: createdOrderId,
         listingName: listing.name,
         offerPrice: result.price,
         offerFinishTime: result.finishTime,
+        offerStartTime: result.startTime,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
         description: message,
@@ -149,7 +144,7 @@ class OrderController extends Controller {
 
     await this.sendMessageForNewOrder({
       message: createdMessage,
-      senderId: workerId,
+      senderId: renterId,
     });
 
     const returningResult = {
@@ -187,7 +182,7 @@ class OrderController extends Controller {
     });
 
   baseRequestsList = async (req, totalCountCall, listCall) => {
-    const type = req.body.type == "owner" ? "owner" : "worker";
+    const type = req.body.type == "owner" ? "owner" : "renter";
     const userId = req.userData.userId;
 
     let { options, countItems } = await this.baseList(req, ({ filter = "" }) =>
@@ -224,15 +219,15 @@ class OrderController extends Controller {
     );
 
     requestsWithRatingImages =
-      await this.listingModel.bindWorkerListCountListings(
+      await this.listingModel.bindRenterListCountListings(
         requestsWithRatingImages,
-        "workerId"
+        "renterId"
       );
 
     requestsWithRatingImages =
       await this.listingModel.bindOwnerListCountListings(
         requestsWithRatingImages,
-        "workerId"
+        "renterId"
       );
 
     return {
@@ -254,12 +249,12 @@ class OrderController extends Controller {
   };
 
   bindOrderRating = async (orders) => {
-    orders = await this.workerCommentModel.bindAverageForKeyEntities(
+    orders = await this.renterCommentModel.bindAverageForKeyEntities(
       orders,
-      "workerId",
+      "renterId",
       {
-        commentCountName: "workerCommentCount",
-        averageRatingName: "workerAverageRating",
+        commentCountName: "renterCommentCount",
+        averageRatingName: "renterAverageRating",
       }
     );
 
@@ -275,15 +270,15 @@ class OrderController extends Controller {
     return orders;
   };
 
-  baseWorkerOrderList = async (req) => {
-    const workerId = req.userData.userId;
+  baseRenterOrderList = async (req) => {
+    const renterId = req.userData.userId;
 
     const totalCountCall = (filter) =>
-      this.orderModel.workerOrdersTotalCount(filter, workerId);
+      this.orderModel.renterOrdersTotalCount(filter, renterId);
 
     const listCall = (options) => {
-      options["workerId"] = workerId;
-      return this.orderModel.workerOrdersList(options);
+      options["renterId"] = renterId;
+      return this.orderModel.renterOrdersList(options);
     };
 
     return await this.baseRequestsList(req, totalCountCall, listCall);
@@ -304,10 +299,10 @@ class OrderController extends Controller {
   };
 
   baseOrderList = async (req) => {
-    const isForWorker = req.body.type !== "owner";
+    const isForRenter = req.body.type !== "owner";
 
-    const request = isForWorker
-      ? this.baseWorkerOrderList
+    const request = isForRenter
+      ? this.baseRenterOrderList
       : this.baseListingOwnerOrderList;
 
     return await request(req);
@@ -372,8 +367,8 @@ class OrderController extends Controller {
         !(
           (order.status == STATIC.ORDER_STATUSES.PENDING_OWNER &&
             order.ownerId == userId) ||
-          (order.status == STATIC.ORDER_STATUSES.PENDING_WORKER &&
-            order.workerId == userId)
+          (order.status == STATIC.ORDER_STATUSES.PENDING_RENTER &&
+            order.renterId == userId)
         )
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
@@ -390,8 +385,10 @@ class OrderController extends Controller {
 
       if (lastUpdateRequestInfo) {
         orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
+        orderPart["startTime"] = lastUpdateRequestInfo.newStartTime;
         orderPart["price"] = lastUpdateRequestInfo.newPrice;
         orderPart["prevFinishTime"] = order.offerFinishTime;
+        orderPart["prevStartTime"] = order.offerStartTime;
         orderPart["prevPrice"] = order.offerPrice;
 
         await this.orderModel.acceptUpdateRequest(id, orderPart);
@@ -417,7 +414,7 @@ class OrderController extends Controller {
         orderPart,
       });
 
-      this.sendAssetPickupMail(order.workerEmail, order.id);
+      this.sendAssetPickupMail(order.renterEmail, order.id);
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
@@ -444,7 +441,7 @@ class OrderController extends Controller {
         !order.paymentInfo?.waitingApproved &&
         [
           STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
-          STATIC.ORDER_STATUSES.PENDING_WORKER,
+          STATIC.ORDER_STATUSES.PENDING_RENTER,
           STATIC.ORDER_STATUSES.PENDING_OWNER,
         ].includes(order.status)
       )
@@ -471,15 +468,17 @@ class OrderController extends Controller {
 
     if (lastUpdateRequestInfo) {
       orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
+      orderPart["startTime"] = lastUpdateRequestInfo.newStartTime;
       orderPart["price"] = lastUpdateRequestInfo.newPrice;
       orderPart["prevFinishTime"] = order.offerFinishTime;
+      orderPart["prevStartTime"] = order.offerStartTime;
       orderPart["prevPrice"] = order.offerPrice;
     }
 
     let newStatus = null;
     let newCancelStatus = null;
 
-    if (order.workerId == userId) {
+    if (order.renterId == userId) {
       await this.orderModel.successCancelled(id, orderPart);
       newStatus = STATIC.ORDER_CANCELATION_STATUSES.CANCELLED;
     } else {
@@ -506,7 +505,7 @@ class OrderController extends Controller {
       orderPart,
     });
 
-    this.sendBookingCancellationOwnerMail(order.workerEmail, order.id);
+    this.sendBookingCancellationOwnerMail(order.renterEmail, order.id);
 
     return {
       chatMessage,
@@ -576,7 +575,7 @@ class OrderController extends Controller {
       const paypalCaptureId =
         paypalOrderInfo.purchase_units[0].payments.captures[0].id;
 
-      const newStatus = await this.orderModel.orderWorkerPayed(orderId);
+      const newStatus = await this.orderModel.orderRenterPayed(orderId);
 
       await this.senderPaymentModel.updateByPaypal({
         orderId: orderId,
@@ -648,7 +647,7 @@ class OrderController extends Controller {
     const money = ownerPaymentCalculate(
       order.offerStartDate,
       order.offerEndDate,
-      order.workerFee,
+      order.renterFee,
       order.offerPrice
     );
 
@@ -683,7 +682,7 @@ class OrderController extends Controller {
 
       let chatId = order.chatId;
       let createMessageFunc =
-        this.chatMessageModel.createWorkerPayedWaitingOrderMessage;
+        this.chatMessageModel.createRenterPayedWaitingOrderMessage;
       let messageData = {};
 
       await this.createAndSendMessageForUpdatedOrder({
@@ -719,12 +718,12 @@ class OrderController extends Controller {
     }
 
     const isOwner = userType === "owner";
-    const isWorker = userType === "worker";
+    const isRenter = userType === "renter";
 
-    const isCancelByWorker = isWorker && orderInfo.workerId === userId;
+    const isCancelByRenter = isRenter && orderInfo.renterId === userId;
     const isCancelByOwner = isOwner && orderInfo.ownerId === userId;
 
-    if ((!isCancelByWorker && !isCancelByOwner) || orderInfo.disputeStatus) {
+    if ((!isCancelByRenter && !isCancelByOwner) || orderInfo.disputeStatus) {
       return { error: { status: STATIC.ERRORS.FORBIDDEN } };
     }
 
@@ -741,7 +740,7 @@ class OrderController extends Controller {
       };
     }
 
-    this.sendBookingCancellationWorkerMail(orderInfo.ownerEmail, orderInfo.id);
+    this.sendBookingCancellationRenterMail(orderInfo.ownerEmail, orderInfo.id);
 
     if (!availableStatusesToCancel.includes(orderInfo.status)) {
       return {
@@ -759,8 +758,10 @@ class OrderController extends Controller {
 
     if (lastUpdateRequestInfo) {
       orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
+      orderPart["startTime"] = lastUpdateRequestInfo.newStartTime;
       orderPart["price"] = lastUpdateRequestInfo.newPrice;
       orderPart["prevFinishTime"] = orderInfo.offerFinishTime;
+      orderPart["prevStartTime"] = orderInfo.offerStartTime;
       orderPart["prevPrice"] = orderInfo.offerPrice;
     }
 
@@ -798,15 +799,15 @@ class OrderController extends Controller {
     }
 
     const {
-      workerId,
+      renterId,
       status,
       cancelStatus,
       offerStartDate,
       offerEndDate,
-      workerFee,
+      renterFee,
     } = orderInfo;
 
-    if (workerId != userId || orderInfo.disputeStatus) {
+    if (renterId != userId || orderInfo.disputeStatus) {
       return { error: { status: STATIC.ERRORS.FORBIDDEN } };
     }
 
@@ -850,14 +851,14 @@ class OrderController extends Controller {
     const factPrice = ownerPaymentCalculate(
       offerStartDate,
       offerEndDate,
-      workerFee
+      renterFee
     );
 
-    const workerCancelFeePercent =
-      await this.systemOptionModel.getWorkerCancelCommissionPercent();
+    const renterCancelFeePercent =
+      await this.systemOptionModel.getRenterCancelCommissionPercent();
 
     const factTotalPriceWithoutCommission =
-      (factPrice * (100 - workerCancelFeePercent)) / 100;
+      (factPrice * (100 - renterCancelFeePercent)) / 100;
 
     const refundData = {
       money: factTotalPriceWithoutCommission,
@@ -895,7 +896,7 @@ class OrderController extends Controller {
       orderPart,
     });
 
-    this.sendRefundProcessMail(orderInfo.workerEmail, orderInfo.id);
+    this.sendRefundProcessMail(orderInfo.renterEmail, orderInfo.id);
 
     return {
       chatMessage,
@@ -926,7 +927,7 @@ class OrderController extends Controller {
         req,
         res,
         userId,
-        userType: "worker",
+        userType: "renter",
         availableStatusesToCancel: [
           STATIC.ORDER_STATUSES.PENDING_OWNER,
           STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
@@ -958,7 +959,7 @@ class OrderController extends Controller {
       }
 
       if (
-        order.workerId != userId ||
+        order.renterId != userId ||
         order.status != STATIC.ORDER_STATUSES.IN_PROCESS ||
         order.disputeStatus ||
         order.cancelStatus != null
@@ -1042,7 +1043,7 @@ class OrderController extends Controller {
       const userId = req.userData.userId;
       const order = await this.orderModel.getFullById(id);
 
-      if (!order || order.workerId != userId) {
+      if (!order || order.renterId != userId) {
         return res.sendStatus(404);
       }
 
@@ -1053,7 +1054,7 @@ class OrderController extends Controller {
         {
           orderOfferStartDate: order.offerStartDate,
           orderOfferEndDate: order.offerEndDate,
-          workerFee: order.workerFee,
+          renterFee: order.renterFee,
           listingAddress: order.listingAddress,
           listingCity: order.listingCity,
           orderId: order.id,
@@ -1072,8 +1073,8 @@ class OrderController extends Controller {
     order["previousUpdateRequest"] =
       await this.orderUpdateRequestModel.getPreviousRequestInfo(order.id);
 
-    order["workerCountItems"] = await this.listingModel.getWorkerCountListings(
-      order.workerId
+    order["renterCountItems"] = await this.listingModel.getRenterCountListings(
+      order.renterId
     );
 
     order["ownerCountItems"] = await this.listingModel.getOwnerCountListings(

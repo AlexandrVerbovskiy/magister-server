@@ -5,7 +5,6 @@ const Model = require("./Model");
 const { formatDateToSQLFormat } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
-const checklistModel = require("./checklistModel");
 
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
@@ -14,29 +13,29 @@ const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
 const ORDER_UPDATE_REQUESTS_TABLE = STATIC.TABLES.ORDER_UPDATE_REQUESTS;
 const SENDER_PAYMENTS_TABLE = STATIC.TABLES.SENDER_PAYMENTS;
 const OWNER_COMMENTS_TABLE = STATIC.TABLES.OWNER_COMMENTS;
-const WORKER_COMMENTS_TABLE = STATIC.TABLES.WORKER_COMMENTS;
+const RENTER_COMMENTS_TABLE = STATIC.TABLES.RENTER_COMMENTS;
 const DISPUTES_TABLE = STATIC.TABLES.DISPUTES;
 const CHAT_TABLE = STATIC.TABLES.CHATS;
 const CHAT_RELATION_TABLE = STATIC.TABLES.CHAT_RELATIONS;
-const CHECKLISTS_TABLE = STATIC.TABLES.CHECKLISTS;
 
 class OrderModel extends Model {
   lightVisibleFields = [
     `${ORDERS_TABLE}.id`,
     `${ORDERS_TABLE}.status`,
     `${ORDERS_TABLE}.cancel_status as cancelStatus`,
-    `${ORDERS_TABLE}.worker_fee as workerFee`,
+    `${ORDERS_TABLE}.renter_fee as renterFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.finished_at as offerFinishedAt`,
     `${ORDERS_TABLE}.price as offerPrice`,
     `${ORDERS_TABLE}.finish_time as offerFinishTime`,
-    `workers.id as workerId`,
-    `workers.name as workerName`,
-    `workers.email as workerEmail`,
-    `workers.photo as workerPhoto`,
-    `workers.phone as workerPhone`,
-    `workers.verified as workerVerified`,
-    `workers.paypal_id as workerPaypalId`,
+    `${ORDERS_TABLE}.start_time as offerStartTime`,
+    `renters.id as renterId`,
+    `renters.name as renterName`,
+    `renters.email as renterEmail`,
+    `renters.photo as renterPhoto`,
+    `renters.phone as renterPhone`,
+    `renters.verified as renterVerified`,
+    `renters.paypal_id as renterPaypalId`,
     `owners.id as ownerId`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
@@ -50,7 +49,6 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTINGS_TABLE}.other_category as listingOtherCategory`,
     `${LISTINGS_TABLE}.price as listingPrice`,
-    `${LISTINGS_TABLE}.finish_time as listingFinishTime`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
     `${DISPUTES_TABLE}.id as disputeId`,
     `${DISPUTES_TABLE}.status as disputeStatus`,
@@ -62,6 +60,7 @@ class OrderModel extends Model {
   requestVisibleFields = [
     `${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as newPrice`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_time as newStartTime`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishTime`,
   ];
 
@@ -73,14 +72,14 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.lat as listingRentalLat`,
     `${LISTINGS_TABLE}.lng as listingRentalLng`,
     `${LISTINGS_TABLE}.radius as listingRentalRadius`,
-    `workers.phone as workerPhone`,
+    `renters.phone as renterPhone`,
     `owners.phone as ownerPhone`,
     `owners.facebook_url as ownerFacebookUrl`,
     `owners.linkedin_url as ownerLinkedinUrl`,
     `owners.instagram_url as ownerInstagramUrl`,
-    `workers.facebook_url as workerFacebookUrl`,
-    `workers.linkedin_url as workerLinkedinUrl`,
-    `workers.instagram_url as workerInstagramUrl`,
+    `renters.facebook_url as renterFacebookUrl`,
+    `renters.linkedin_url as renterLinkedinUrl`,
+    `renters.instagram_url as renterInstagramUrl`,
   ];
 
   selectPartPayedInfo = [
@@ -95,15 +94,16 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.id`,
     `${ORDERS_TABLE}.status`,
     `${ORDERS_TABLE}.cancel_status`,
-    `${ORDERS_TABLE}.worker_fee`,
+    `${ORDERS_TABLE}.renter_fee`,
     `${ORDERS_TABLE}.owner_fee`,
     `${ORDERS_TABLE}.price`,
+    `${ORDERS_TABLE}.start_time`,
     `${ORDERS_TABLE}.finish_time`,
-    `workers.id`,
-    `workers.name`,
-    `workers.email`,
-    `workers.photo`,
-    `workers.phone`,
+    `renters.id`,
+    `renters.name`,
+    `renters.email`,
+    `renters.photo`,
+    `renters.phone`,
     `owners.id`,
     `owners.name`,
     `owners.email`,
@@ -115,6 +115,7 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.category_id`,
     `${LISTINGS_TABLE}.other_category`,
     `${LISTINGS_TABLE}.price`,
+    `${LISTINGS_TABLE}.start_time`,
     `${LISTINGS_TABLE}.finish_time`,
     `${LISTING_CATEGORIES_TABLE}.name`,
     `${LISTINGS_TABLE}.description`,
@@ -123,14 +124,14 @@ class OrderModel extends Model {
     `${LISTINGS_TABLE}.lat`,
     `${LISTINGS_TABLE}.lng`,
     `${LISTINGS_TABLE}.radius`,
-    `workers.phone`,
+    `renters.phone`,
     `owners.phone`,
     `owners.facebook_url`,
     `owners.linkedin_url`,
     `owners.instagram_url`,
-    `workers.facebook_url`,
-    `workers.linkedin_url`,
-    `workers.instagram_url`,
+    `renters.facebook_url`,
+    `renters.linkedin_url`,
+    `renters.instagram_url`,
     `${DISPUTES_TABLE}.id`,
     `${DISPUTES_TABLE}.status`,
     `${DISPUTES_TABLE}.type`,
@@ -142,56 +143,41 @@ class OrderModel extends Model {
     `${ORDER_UPDATE_REQUESTS_TABLE}.id`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_time`,
   ];
 
   strFilterFields = [
-    `workers.name`,
-    `workers.email`,
+    `renters.name`,
+    `renters.email`,
     `owners.name`,
     `owners.email`,
     `${LISTINGS_TABLE}.name`,
   ];
 
-  strFilterFieldsForWorkers = [
+  strFilterFieldsForRenters = [
     `owners.name`,
     `owners.email`,
     `${LISTINGS_TABLE}.name`,
   ];
 
   strFilterFieldsForOwners = [
-    `workers.name`,
-    `workers.email`,
+    `renters.name`,
+    `renters.email`,
     `${LISTINGS_TABLE}.name`,
   ];
 
   orderFields = [
     `${ORDERS_TABLE}.id`,
-    `workers.name`,
-    `workers.email`,
+    `renters.name`,
+    `renters.email`,
     `owners.name`,
     `owners.email`,
     `${LISTINGS_TABLE}.name`,
   ];
 
-  checklistsFields = [
-    `owner_checklists.id as ownerChecklistId`,
-    `owner_checklists.item_matches_description as ownerChecklistItemMatchesDescription`,
-    `owner_checklists.item_matches_photos as ownerChecklistItemMatchesPhotos`,
-    `owner_checklists.item_fully_functional as ownerChecklistItemFullyFunctional`,
-    `owner_checklists.parts_good_condition as ownerChecklistPartsGoodCondition`,
-    `owner_checklists.provided_guidelines as ownerChecklistProvidedGuidelines`,
-
-    `worker_checklists.id as workerChecklistId`,
-    `worker_checklists.item_matches_description as workerChecklistItemMatchesDescription`,
-    `worker_checklists.item_matches_photos as workerChecklistItemMatchesPhotos`,
-    `worker_checklists.item_fully_functional as workerChecklistItemFullyFunctional`,
-    `worker_checklists.parts_good_condition as workerChecklistPartsGoodCondition`,
-    `worker_checklists.provided_guidelines as workerChecklistProvidedGuidelines`,
-  ];
-
   processStatuses = [
     STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
-    STATIC.ORDER_STATUSES.PENDING_WORKER,
+    STATIC.ORDER_STATUSES.PENDING_RENTER,
     STATIC.ORDER_STATUSES.PENDING_OWNER,
     STATIC.ORDER_STATUSES.IN_PROCESS,
     STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
@@ -262,10 +248,10 @@ class OrderModel extends Model {
         `${listingTable}.owner_id`
       )
       .join(
-        `${USERS_TABLE} as workers`,
-        `workers.id`,
+        `${USERS_TABLE} as renters`,
+        `renters.id`,
         "=",
-        `${orderTable}.worker_id`
+        `${orderTable}.renter_id`
       );
   };
 
@@ -279,16 +265,6 @@ class OrderModel extends Model {
     );
 
     return query;
-  };
-
-  orderChecklistsJoin = (query, orderTable = ORDERS_TABLE) => {
-    return query
-      .joinRaw(
-        `LEFT JOIN ${CHECKLISTS_TABLE} as owner_checklists ON (owner_checklists.order_id = ${orderTable}.id AND owner_checklists.type = '${STATIC.CHECKLIST_TYPES.OWNER}')`
-      )
-      .joinRaw(
-        `LEFT JOIN ${CHECKLISTS_TABLE} as worker_checklists ON (worker_checklists.order_id = ${orderTable}.id AND worker_checklists.type = '${STATIC.CHECKLIST_TYPES.WORKER}')`
-      );
   };
 
   fullBaseGetQuery = (filter) => {
@@ -377,8 +353,8 @@ class OrderModel extends Model {
 
   commentsInfoJoin = (query) => {
     query = query.joinRaw(
-      `LEFT JOIN ${WORKER_COMMENTS_TABLE} as "worker_comments" 
-      ON worker_comments.order_id = ${ORDERS_TABLE}.id`
+      `LEFT JOIN ${RENTER_COMMENTS_TABLE} as "renter_comments" 
+      ON renter_comments.order_id = ${ORDERS_TABLE}.id`
     );
 
     query = query.joinRaw(
@@ -393,13 +369,13 @@ class OrderModel extends Model {
     return [
       ...visibleFields,
 
-      `worker_comments.id as workerCommentId`,
+      `renter_comments.id as renterCommentId`,
       `owner_comments.id as ownerCommentId`,
 
-      `worker_comments.waiting_admin as workerCommentWaitingAdmin`,
+      `renter_comments.waiting_admin as renterCommentWaitingAdmin`,
       `owner_comments.waiting_admin as ownerCommentWaitingAdmin`,
 
-      `worker_comments.waiting_admin as workerCommentApproved`,
+      `renter_comments.waiting_admin as renterCommentApproved`,
       `owner_comments.waiting_admin as ownerCommentApproved`,
     ];
   };
@@ -408,11 +384,11 @@ class OrderModel extends Model {
     return [...visibleFields, `dispute_chats.id as disputeChatId`];
   };
 
-  workerBaseGetQuery = (filter, workerId) => {
+  renterBaseGetQuery = (filter, renterId) => {
     const baseGetReq = this.fullBaseGetQueryWithRequestInfo;
     let query = baseGetReq(filter);
     query = this.payedInfoJoin(query);
-    return query.whereRaw("workers.id = ?", workerId);
+    return query.whereRaw("renters.id = ?", renterId);
   };
 
   ownerBaseGetQuery = (filter, ownerId) => {
@@ -502,12 +478,12 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  baseWorkerTotalCount = async (filter, workerId) => {
+  baseRenterTotalCount = async (filter, renterId) => {
     let query = db(ORDERS_TABLE).whereRaw(
       this.filterIdLikeString(filter, `${ORDERS_TABLE}.id`)
     );
 
-    query = this.workerBaseGetQuery(filter, workerId);
+    query = this.renterBaseGetQuery(filter, renterId);
 
     const result = await query.count("* as count").first();
     return +result?.count;
@@ -524,13 +500,13 @@ class OrderModel extends Model {
     return +result?.count;
   };
 
-  baseWorkerList = async (props) => {
-    const { filter, start, count, workerId } = props;
+  baseRenterList = async (props) => {
+    const { filter, start, count, renterId } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    let query = this.workerBaseGetQuery(filter, workerId);
+    let query = this.renterBaseGetQuery(filter, renterId);
     query = this.commentsInfoJoin(query);
-    query = this.disputeChatInfoJoin(query, workerId);
+    query = this.disputeChatInfoJoin(query, renterId);
 
     let visibleFields = [
       ...this.lightVisibleFields,
@@ -568,12 +544,12 @@ class OrderModel extends Model {
       .offset(start);
   };
 
-  workerOrdersTotalCount = async (filter, userId) => {
-    return await this.baseWorkerTotalCount(filter, userId);
+  renterOrdersTotalCount = async (filter, userId) => {
+    return await this.baseRenterTotalCount(filter, userId);
   };
 
-  workerOrdersList = async (props) => {
-    return await this.baseWorkerList(props);
+  renterOrdersList = async (props) => {
+    return await this.baseRenterList(props);
   };
 
   ownerOrdersTotalCount = async (filter, userId) => {
@@ -613,21 +589,23 @@ class OrderModel extends Model {
 
   create = async ({
     listingId,
-    workerId,
+    renterId,
     ownerFee,
-    workerFee,
+    renterFee,
     price,
     finishTime,
+    startTime,
   }) => {
     const res = await db(ORDERS_TABLE)
       .insert({
         listing_id: listingId,
-        worker_id: workerId,
+        renter_id: renterId,
         owner_fee: ownerFee,
-        worker_fee: workerFee,
+        renter_fee: renterFee,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
         price,
         finish_time: finishTime,
+        start_time: startTime,
       })
       .returning("id");
 
@@ -678,7 +656,7 @@ class OrderModel extends Model {
       .select(this.fullVisibleFields)
       .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
-        STATIC.ORDER_STATUSES.PENDING_WORKER,
+        STATIC.ORDER_STATUSES.PENDING_RENTER,
         STATIC.ORDER_STATUSES.PENDING_OWNER,
       ])
       .whereNull(`${ORDERS_TABLE}.cancel_status`)
@@ -717,44 +695,6 @@ class OrderModel extends Model {
         .first();
     });
 
-  getFullWithPaymentAndChecklistsById = (id) =>
-    this.getFullByBaseRequest(async () => {
-      let query = db(ORDERS_TABLE);
-      query = this.fullOrdersJoin(query);
-      query = this.payedInfoJoin(query);
-      query = this.orderChecklistsJoin(query);
-      query = query.where(`${ORDERS_TABLE}.id`, id);
-
-      const order = await query
-        .select([
-          ...this.checklistsFields,
-          ...this.fullVisibleFields,
-          ...this.selectPartPayedInfo,
-        ])
-        .first();
-
-      if (!order) {
-        return null;
-      }
-
-      order["ownerChecklistsImages"] = [];
-      order["workerChecklistsImages"] = [];
-
-      if (order["ownerChecklistId"]) {
-        order["ownerChecklistsImages"] = await checklistModel.getImages(
-          order["ownerChecklistId"]
-        );
-      }
-
-      if (order["workerChecklistId"]) {
-        order["workerChecklistsImages"] = await checklistModel.getImages(
-          order["workerChecklistId"]
-        );
-      }
-
-      return order;
-    });
-
   getFullByIdWithDisputeChat = (id, userId) =>
     this.getFullByBaseRequest(() => this.getByIdWithDisputeChat(id, userId));
 
@@ -774,9 +714,9 @@ class OrderModel extends Model {
       return await query.first();
     });
 
-  getFullByWorkerListingToken = (token) =>
+  getFullByRenterListingToken = (token) =>
     this.getFullByBaseRequest(() =>
-      this.getByWhere(`${ORDERS_TABLE}.worker_accept_listing_token`, token)
+      this.getByWhere(`${ORDERS_TABLE}.renter_accept_listing_token`, token)
     );
 
   getFullByOwnerListingToken = (token) =>
@@ -792,16 +732,18 @@ class OrderModel extends Model {
   setPendingOwnerStatus = async (id) =>
     await this.setPendingStatus(id, STATIC.ORDER_STATUSES.PENDING_OWNER);
 
-  setPendingWorkerStatus = async (id) =>
-    await this.setPendingStatus(id, STATIC.ORDER_STATUSES.PENDING_WORKER);
+  setPendingRenterStatus = async (id) =>
+    await this.setPendingStatus(id, STATIC.ORDER_STATUSES.PENDING_RENTER);
 
   updateOrder = async (
     orderId,
     {
       status = null,
       cancelStatus = null,
+      startTime,
       finishTime,
       price,
+      prevStartTime,
       prevFinishTime,
       prevPrice,
     }
@@ -820,12 +762,20 @@ class OrderModel extends Model {
       updateProps["finish_time"] = finishTime;
     }
 
+    if (startTime) {
+      updateProps["start_time"] = startTime;
+    }
+
     if (price) {
       updateProps["price"] = price;
     }
 
     if (prevFinishTime) {
-      updateProps["prev_finish_time"] = finishTime;
+      updateProps["prev_finish_time"] = prevFinishTime;
+    }
+
+    if (prevStartTime) {
+      updateProps["prev_start_time"] = prevStartTime;
     }
 
     if (prevPrice) {
@@ -852,11 +802,11 @@ class OrderModel extends Model {
 
   startCancelByOwner = async (orderId, newData = {}) => {
     newData["cancelStatus"] =
-      STATIC.ORDER_CANCELATION_STATUSES.WAITING_WORKER_APPROVE;
+      STATIC.ORDER_CANCELATION_STATUSES.WAITING_RENTER_APPROVE;
     return this.updateOrder(orderId, newData);
   };
 
-  startCancelByWorker = async (orderId, newData = {}) => {
+  startCancelByRenter = async (orderId, newData = {}) => {
     newData["cancelStatus"] =
       STATIC.ORDER_CANCELATION_STATUSES.WAITING_OWNER_APPROVE;
     return this.updateOrder(orderId, newData);
@@ -883,11 +833,11 @@ class OrderModel extends Model {
     return this.updateOrder(orderId, newData);
   };
 
-  getUnfinishedWorkerCount = async (workerId) => {
+  getUnfinishedRenterCount = async (renterId) => {
     const result = await db(ORDERS_TABLE)
       .whereIn(`${ORDERS_TABLE}.status`, this.processStatuses)
       .whereNull(`${ORDERS_TABLE}.cancel_status`)
-      .where("worker_id", workerId)
+      .where("renter_id", renterId)
       .count("* as count")
       .first();
 
@@ -911,14 +861,14 @@ class OrderModel extends Model {
   };
 
   getUnfinishedUserCount = async (userId) => {
-    const countUnfinishedWorkerOrders = await this.getUnfinishedWorkerCount(
+    const countUnfinishedRenterOrders = await this.getUnfinishedRenterCount(
       userId
     );
     const countUnfinishedOwnerOrders = await this.getUnfinishedOwnerCount(
       userId
     );
 
-    return +countUnfinishedWorkerOrders + +countUnfinishedOwnerOrders;
+    return +countUnfinishedRenterOrders + +countUnfinishedOwnerOrders;
   };
 
   getUnfinishedListingCount = async (listingId) => {
@@ -944,7 +894,7 @@ class OrderModel extends Model {
     await db(ORDERS_TABLE).where("id", orderId).delete();
   };
 
-  orderWorkerPayed = async (orderId) => {
+  orderRenterPayed = async (orderId) => {
     const status = STATIC.ORDER_STATUSES.IN_PROCESS;
 
     await db(ORDERS_TABLE).where({ id: orderId }).update({
@@ -954,7 +904,7 @@ class OrderModel extends Model {
     return status;
   };
 
-  orderWorkerSendFinishedRequest = async (orderId) => {
+  orderRenterSendFinishedRequest = async (orderId) => {
     const status = STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED;
 
     await db(ORDERS_TABLE).where({ id: orderId }).update({
@@ -999,7 +949,7 @@ class OrderModel extends Model {
       .where(function () {
         this.where(`${LISTINGS_TABLE}.owner_id`, userId);
         /*.orWhere(
-          `${ORDERS_TABLE}.worker_id`,
+          `${ORDERS_TABLE}.renter_id`,
           userId
         );*/
       })
@@ -1021,13 +971,13 @@ class OrderModel extends Model {
       .select(db.raw("COUNT(*) as count"))
       .where(function () {
         this.where(`${LISTINGS_TABLE}.owner_id`, userId).orWhere(
-          `${ORDERS_TABLE}.worker_id`,
+          `${ORDERS_TABLE}.renter_id`,
           userId
         );
       })
       .whereIn(`${ORDERS_TABLE}.status`, [
         STATIC.ORDER_STATUSES.PENDING_OWNER,
-        STATIC.ORDER_STATUSES.PENDING_WORKER,
+        STATIC.ORDER_STATUSES.PENDING_RENTER,
         STATIC.ORDER_STATUSES.IN_PROCESS,
         STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
         STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
@@ -1086,6 +1036,66 @@ class OrderModel extends Model {
       disputeCount: result["disputeCount"] ?? 0,
       activeCount: result["activeCount"] ?? 0,
     };
+  };
+
+  getBlockedListingsDatesForListings = async (listingIds, renterId = null) => {
+    const currentDate = separateDate(new Date());
+
+    const orders = await db(ORDERS_TABLE)
+      .joinRaw(
+        `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
+         ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`, // Join with active order update requests
+      )
+      .whereIn('listing_id', listingIds)
+      .whereRaw(
+        `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?) OR (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND end_date >= ? ))`, // Filter by the end date of the orders
+        [currentDate, currentDate],
+      )
+      .where(function () {
+        if (renterId) {
+          this.where(function () {
+            this.whereNot(
+              `${ORDERS_TABLE}.status`,
+              STATIC.ORDER_STATUSES.PENDING_OWNER,
+            ).orWhere('renter_id', renterId);
+          });
+        }
+
+        this.whereRaw(
+          `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCEL_STATUSES.CANCELLED}')`, // Exclude cancelled orders
+        ).whereNotIn(`${ORDERS_TABLE}.status`, [
+          STATIC.ORDER_STATUSES.PENDING_OWNER,
+          STATIC.ORDER_STATUSES.REJECTED,
+          STATIC.ORDER_STATUSES.FINISHED,
+        ]);
+      })
+      .select([
+        `${ORDERS_TABLE}.id`,
+        'start_date as offerStartDate',
+        'end_date as offerEndDate',
+        'listing_id as listingId',
+        'new_end_date as newEndDate',
+        'new_start_date as newStartDate',
+      ]);
+
+    const listingBlockedDates = {};
+
+    listingIds.forEach((listingId) => {
+      const listingOrders = [];
+
+      orders.forEach((order) => {
+        if (order.listingId == listingId) {
+          listingOrders.push(order);
+        }
+      });
+
+      listingBlockedDates[listingId] =
+        listingOrders.length > 0
+          ? this.generateBlockedDatesByOrders(listingOrders) 
+          : [];
+    });
+
+    return listingBlockedDates; 
   };
 }
 

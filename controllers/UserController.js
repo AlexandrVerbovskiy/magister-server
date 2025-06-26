@@ -577,12 +577,12 @@ class UserController extends Controller {
 
     let users = await this.userModel.list(options);
 
-    users = await this.workerCommentModel.bindAverageForKeyEntities(
+    users = await this.renterCommentModel.bindAverageForKeyEntities(
       users,
       "id",
       {
-        commentCountName: "workerCommentCount",
-        averageRatingName: "workerAverageRating",
+        commentCountName: "renterCommentCount",
+        averageRatingName: "renterAverageRating",
       }
     );
 
@@ -595,13 +595,13 @@ class UserController extends Controller {
       }
     );
 
-    users = await this.disputeModel.bindWorkersCounts(
+    users = await this.disputeModel.bindRentersCounts(
       users,
       "id",
-      "workerDisputesCount"
+      "renterDisputesCount"
     );
 
-    users = await this.disputeModel.bindWorkersCounts(
+    users = await this.disputeModel.bindRentersCounts(
       users,
       "id",
       "ownerDisputesCount"

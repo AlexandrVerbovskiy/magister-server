@@ -1,11 +1,11 @@
 const STATIC = require("../static");
 const BaseCommentController = require("./BaseCommentController");
 
-class WorkerCommentController extends BaseCommentController {
-  model = this.workerCommentModel;
+class RenterCommentController extends BaseCommentController {
+  model = this.renterCommentModel;
 
   ratingJoin = async (items) => {
-    items = await this.workerCommentModel.bindAverageForKeyEntities(
+    items = await this.renterCommentModel.bindAverageForKeyEntities(
       items,
       "userId",
       {
@@ -40,22 +40,22 @@ class WorkerCommentController extends BaseCommentController {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const orderHasWorkerComment =
-        await this.workerCommentModel.checkOrderHasComment(orderId);
+      const orderHasRenterComment =
+        await this.renterCommentModel.checkOrderHasComment(orderId);
 
-      if (orderHasWorkerComment) {
+      if (orderHasRenterComment) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const workerCommentId = await this.workerCommentModel.create({
+      const renterCommentId = await this.renterCommentModel.create({
         ...userCommentInfo,
         orderId,
       });
 
       const chatId = order.chatId;
 
-      const workerMessage =
-        await this.chatMessageModel.createWorkerReviewMessage({
+      const renterMessage =
+        await this.chatMessageModel.createRenterReviewMessage({
           chatId,
           senderId,
           data: { ...userCommentInfo },
@@ -64,14 +64,14 @@ class WorkerCommentController extends BaseCommentController {
       const sender = await this.userModel.getById(senderId);
 
       this.sendSocketMessageToUserOpponent(chatId, senderId, "get-message", {
-        message: workerMessage,
+        message: renterMessage,
         opponent: sender,
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        workerCommentId,
+        renterCommentId,
       });
     });
 }
 
-module.exports = WorkerCommentController;
+module.exports = RenterCommentController;

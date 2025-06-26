@@ -51,7 +51,6 @@ module.exports = [
     canBeNegative: true,
   }),
   ...validateFloat({ field: "price", fieldName: "Price" }),
-  ...validateDateTime({field:"finishTime", fieldName: "Finish Time"}),
   ...validateSmallStringBody({ field: "city", fieldName: "City" }),
   ...validateSmallStringBody({ field: "postcode", fieldName: "Postcode" }),
   ...validateFloat({ field: "radius", fieldName: "radius" }),

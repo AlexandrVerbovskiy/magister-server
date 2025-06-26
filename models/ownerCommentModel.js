@@ -12,7 +12,7 @@ class OwnerCommentModel extends BaseCommentModel {
   type = "owner";
   keyFieldName = `userId`;
   keyField = `${LISTINGS_TABLE}.owner_id`;
-  reviewerIdField = `${ORDERS_TABLE}.worker_id`;
+  reviewerIdField = `${ORDERS_TABLE}.renter_id`;
   table = OWNER_COMMENTS_TABLE;
 
   pointFields = [

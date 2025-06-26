@@ -1,19 +1,19 @@
 const { Router } = require("express");
 const router = Router();
 const { isAuth, isSupport } = require("../../middlewares");
-const WorkerCommentController = require("../../controllers/WorkerCommentController");
+const RenterCommentController = require("../../controllers/RenterCommentController");
 const OwnerCommentController = require("../../controllers/OwnerCommentController");
 const {
   commentListValidation,
   createOwnerCommentValidation,
-  createWorkerCommentValidation,
+  createRenterCommentValidation,
   commentRejectValidation,
   commentApproveValidation,
 } = require("../../validations/comments");
 
 module.exports = (io) => {
   const ownerCommentController = new OwnerCommentController(io);
-  const workerCommentController = new WorkerCommentController(io);
+  const renterCommentController = new RenterCommentController(io);
 
   router.post(
     "/create-owner-review",
@@ -23,18 +23,18 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/create-worker-review",
+    "/create-renter-review",
     isAuth,
-    createWorkerCommentValidation,
-    workerCommentController.createComment
+    createRenterCommentValidation,
+    renterCommentController.createComment
   );
 
   router.post(
-    "/worker-list",
+    "/renter-list",
     isAuth,
     isSupport,
     commentListValidation,
-    workerCommentController.commentList
+    renterCommentController.commentList
   );
 
   router.post(
@@ -46,11 +46,11 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/worker-approve",
+    "/renter-approve",
     isAuth,
     isSupport,
     commentApproveValidation,
-    workerCommentController.approve
+    renterCommentController.approve
   );
 
   router.post(
@@ -62,11 +62,11 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/worker-reject",
+    "/renter-reject",
     isAuth,
     isSupport,
     commentRejectValidation,
-    workerCommentController.reject
+    renterCommentController.reject
   );
 
   router.post(
