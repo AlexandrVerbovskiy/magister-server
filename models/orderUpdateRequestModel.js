@@ -14,14 +14,23 @@ class OrderUpdateRequestModel extends Model {
     `${ORDER_UPDATE_REQUESTS_TABLE}.active`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.created_at as createdAt`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as newPrice`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_time as newStartTime`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishTime`,
   ];
 
-  create = async ({ orderId, newFinishTime, newPrice, senderId, fee }) => {
+  create = async ({
+    orderId,
+    newStartTime,
+    newFinishTime,
+    newPrice,
+    senderId,
+    fee,
+  }) => {
     const res = await db(ORDER_UPDATE_REQUESTS_TABLE)
       .insert({
         order_id: orderId,
         sender_id: senderId,
+        new_start_time: newStartTime,
         new_finish_time: newFinishTime,
         new_price: newPrice,
         fee,
@@ -67,6 +76,7 @@ class OrderUpdateRequestModel extends Model {
       .select([
         `${ORDER_UPDATE_REQUESTS_TABLE}.id as id`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as price`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_time as startTime`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as finishTime`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
       ])
@@ -82,6 +92,7 @@ class OrderUpdateRequestModel extends Model {
       .select([
         `${ORDER_UPDATE_REQUESTS_TABLE}.id as id`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as newPrice`,
+        `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_time as newStartTime`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishTime`,
         `${ORDER_UPDATE_REQUESTS_TABLE}.sender_id as senderId`,
       ])

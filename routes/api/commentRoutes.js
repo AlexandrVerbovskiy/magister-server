@@ -2,19 +2,39 @@ const { Router } = require("express");
 const router = Router();
 const { isAuth, isSupport } = require("../../middlewares");
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
 const TenantCommentController = require("../../controllers/TenantCommentController");
 =======
 const RenterCommentController = require("../../controllers/RenterCommentController");
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+const WorkerCommentController = require("../../controllers/WorkerCommentController");
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
 const OwnerCommentController = require("../../controllers/OwnerCommentController");
 const {
   commentListValidation,
   createOwnerCommentValidation,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
   createTenantCommentValidation,
 =======
   createRenterCommentValidation,
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+  createWorkerCommentValidation,
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
   commentRejectValidation,
   commentApproveValidation,
 } = require("../../validations/comments");
@@ -22,10 +42,20 @@ const {
 module.exports = (io) => {
   const ownerCommentController = new OwnerCommentController(io);
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
   const tenantCommentController = new TenantCommentController(io);
 =======
   const renterCommentController = new RenterCommentController(io);
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+  const workerCommentController = new WorkerCommentController(io);
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
 
   router.post(
     "/create-owner-review",
@@ -36,17 +66,25 @@ module.exports = (io) => {
 
   router.post(
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     "/create-tenant-review",
+=======
+    "/create-worker-review",
+>>>>>>> e08e27f (total rotation)
     isAuth,
-    createTenantCommentValidation,
-    tenantCommentController.createComment
+    createWorkerCommentValidation,
+    workerCommentController.createComment
   );
 
   router.post(
-    "/tenant-list",
+    "/worker-list",
     isAuth,
     isSupport,
     commentListValidation,
+<<<<<<< HEAD
     tenantCommentController.commentList
 =======
     "/create-renter-review",
@@ -62,6 +100,12 @@ module.exports = (io) => {
     commentListValidation,
     renterCommentController.commentList
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    workerCommentController.commentList
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
   );
 
   router.post(
@@ -74,6 +118,10 @@ module.exports = (io) => {
 
   router.post(
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     "/tenant-approve",
     isAuth,
     isSupport,
@@ -86,6 +134,16 @@ module.exports = (io) => {
     commentApproveValidation,
     renterCommentController.approve
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    "/worker-approve",
+    isAuth,
+    isSupport,
+    commentApproveValidation,
+    workerCommentController.approve
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
   );
 
   router.post(
@@ -98,6 +156,10 @@ module.exports = (io) => {
 
   router.post(
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     "/tenant-reject",
     isAuth,
     isSupport,
@@ -110,6 +172,16 @@ module.exports = (io) => {
     commentRejectValidation,
     renterCommentController.reject
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    "/worker-reject",
+    isAuth,
+    isSupport,
+    commentRejectValidation,
+    workerCommentController.reject
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
   );
 
   router.post(

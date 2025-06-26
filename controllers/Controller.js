@@ -45,7 +45,11 @@ const {
   senderPaymentModel,
   recipientPaymentModel,
   ownerCommentModel,
+<<<<<<< HEAD
+  workerCommentModel,
+=======
   renterCommentModel,
+>>>>>>> bd4adb2 (start)
   userListingFavoriteModel,
   disputeModel,
   chatMessageContentModel,
@@ -54,8 +58,6 @@ const {
   chatRelationModel,
   socketModel,
   activeActionModel,
-  relationModel,
-  disputePredictionModel
 } = require("../models");
 
 const STATIC = require("../static");
@@ -91,7 +93,11 @@ class Controller {
       listingCategoryCreateNotificationModel;
 
     this.ownerCommentModel = ownerCommentModel;
+<<<<<<< HEAD
+    this.workerCommentModel = workerCommentModel;
+=======
     this.renterCommentModel = renterCommentModel;
+>>>>>>> bd4adb2 (start)
 
     this.senderPaymentModel = senderPaymentModel;
     this.recipientPaymentModel = recipientPaymentModel;
@@ -103,9 +109,6 @@ class Controller {
     this.chatRelationModel = chatRelationModel;
 
     this.socketModel = socketModel;
-    this.relationModel = relationModel;
-
-    this.disputePredictionModel = disputePredictionModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -114,6 +117,7 @@ class Controller {
         pass: process.env.MAIL_PASSWORD,
       },
     });
+
 
     this.mailTransporter.use(
       "compile",
@@ -218,14 +222,14 @@ class Controller {
     }
   };
 
-  sendEmailVerificationMail = async (email, name, token) => {
+  sendEmailVerificationMail = async (email, name, code) => {
     const title = "Account Verification";
-    const link =
-      CLIENT_URL + "/" + STATIC.CLIENT_LINKS.EMAIL_VERIFICATION + "/" + token;
+    const link = CLIENT_URL + "/";
 
     await this.sendMail(email, title, "emailVerification", {
-      name,
       link,
+      name,
+      code,
       title,
     });
   };
@@ -293,11 +297,15 @@ class Controller {
     });
   };
 
+<<<<<<< HEAD
+  sendBookingCancellationWorkerMail = async (email, orderId) => {
+=======
   sendBookingCancellationRenterMail = async (email, orderId) => {
+>>>>>>> bd4adb2 (start)
     const title = "Booking Request Cancelled";
     const link = CLIENT_URL + "/dashboard/orders/" + orderId;
 
-    await this.sendMail(email, title, "bookingCancellationRenter", {
+    await this.sendMail(email, title, "bookingCancellationWorker", {
       link,
     });
   };
@@ -387,12 +395,15 @@ class Controller {
     });
   };
 
+<<<<<<< HEAD
+=======
   createFolderIfNotExists = (folderPath) => {
     if (!fs.existsSync(folderPath)) {
       fs.mkdirSync(folderPath, { recursive: true });
     }
   };
 
+>>>>>>> bd4adb2 (start)
   moveUploadsFileToFolder = (file, folder) => {
     const originalFilePath = file.path;
     const name = generateRandomString();
@@ -530,21 +541,21 @@ class Controller {
     let toTime = null;
 
     if (timeFilterType === "last-week") {
-      const { startDate, finishDate } = getStartAndEndOfLastWeek(clientTime);
+      const { startDate, endDate } = getStartAndEndOfLastWeek(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     } else if (timeFilterType === "last-month") {
-      const { startDate, finishDate } = getStartAndEndOfLastMonth(clientTime);
+      const { startDate, endDate } = getStartAndEndOfLastMonth(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     } else if (timeFilterType === "last-year") {
-      const { startDate, finishDate } = getStartAndEndOfLastYear(clientTime);
+      const { startDate, endDate } = getStartAndEndOfLastYear(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     } else {
-      const { startDate, finishDate } = getStartAndEndOfYesterday(clientTime);
+      const { startDate, endDate } = getStartAndEndOfYesterday(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     }
 
     const serverFromTime = adaptClientTimeToServer(
@@ -776,6 +787,17 @@ class Controller {
       successSentIds
     );
   };
+<<<<<<< HEAD
+
+  baseListingDatesValidation = (startDate, endDate, minRentalDays) => {
+    if (minRentalDays && getFactOrderDays(startDate, endDate) < minRentalDays) {
+      return `You can rent ads only for a period of more than ${minRentalDays} days`;
+    }
+
+    return null;
+  };
+=======
+>>>>>>> bd4adb2 (start)
 }
 
 module.exports = Controller;

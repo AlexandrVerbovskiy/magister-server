@@ -23,20 +23,14 @@ class DisputeModel extends Model {
     `${ORDERS_TABLE}.id as orderId`,
     `${ORDERS_TABLE}.status as orderStatus`,
     `${ORDERS_TABLE}.cancel_status as orderCancelStatus`,
-    `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
-    `${ORDERS_TABLE}.start_date as offerStartDate`,
-    `${ORDERS_TABLE}.end_date as offerEndDate`,
-    `${ORDERS_TABLE}.worker_fee as workerFee`,
+    `${ORDERS_TABLE}.renter_fee as renterFee`,
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
-    `${ORDERS_TABLE}.prev_price_per_day as prevPricePerDay`,
-    `${ORDERS_TABLE}.prev_start_date as prevStartDate`,
-    `${ORDERS_TABLE}.prev_end_date as prevEndDate`,
     `${ORDERS_TABLE}.finished_at as offerFinishedAt`,
-    `workers.id as workerId`,
-    `workers.name as workerName`,
-    `workers.email as workerEmail`,
-    `workers.photo as workerPhoto`,
-    `workers.phone as workerPhone`,
+    `renters.id as renterId`,
+    `renters.name as renterName`,
+    `renters.email as renterEmail`,
+    `renters.photo as renterPhoto`,
+    `renters.phone as renterPhone`,
     `owners.id as ownerId`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
@@ -45,9 +39,6 @@ class DisputeModel extends Model {
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${LISTINGS_TABLE}.city as listingCity`,
-    `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
-    `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
-    `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `${LISTINGS_TABLE}.category_id as listingCategoryId`,
     `${LISTINGS_TABLE}.other_category as listingOtherCategory`,
     `${LISTING_CATEGORIES_TABLE}.name as listingCategoryName`,
@@ -57,14 +48,12 @@ class DisputeModel extends Model {
   orderFields = [
     `${DISPUTES_TABLE}.id`,
     `owners.name`,
-    `workers.name`,
+    `renters.name`,
     `${LISTINGS_TABLE}.name`,
-    `${ORDERS_TABLE}.start_date`,
-    `${ORDERS_TABLE}.end_date`,
     `${DISPUTES_TABLE}.created_at`,
   ];
 
-  strFilterFields = [`${LISTINGS_TABLE}.name`, `workers.name`, `owners.name`];
+  strFilterFields = [`${LISTINGS_TABLE}.name`, `renters.name`, `owners.name`];
 
   baseListJoin = (query) =>
     query
@@ -93,10 +82,10 @@ class DisputeModel extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
-        `${USERS_TABLE} as workers`,
-        `workers.id`,
+        `${USERS_TABLE} as renters`,
+        `renters.id`,
         "=",
-        `${ORDERS_TABLE}.worker_id`
+        `${ORDERS_TABLE}.renter_id`
       )
       .joinRaw(
         `LEFT JOIN ${CHATS_TABLE} ON (${CHATS_TABLE}.entity_id = ${ORDERS_TABLE}.id AND ${CHATS_TABLE}.entity_type = '${STATIC.CHAT_TYPES.ORDER}')`
@@ -176,7 +165,7 @@ class DisputeModel extends Model {
   getFullById = async (id) => {
     const fields = [
       ...this.visibleFields,
-      "worker_chats.id as workerChatId",
+      "renter_chats.id as renterChatId",
       "owner_chats.id as ownerChatId",
     ];
 
@@ -190,10 +179,10 @@ class DisputeModel extends Model {
         `JOIN ${CHAT_RELATIONS_TABLE} as owner_chat_relations ON (owner_chat_relations.user_id = owners.id AND owner_chats.id = owner_chat_relations.chat_id)`
       )
       .joinRaw(
-        `JOIN ${CHATS_TABLE} as worker_chats ON (worker_chats.entity_id = ${DISPUTES_TABLE}.id AND worker_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+        `JOIN ${CHATS_TABLE} as renter_chats ON (renter_chats.entity_id = ${DISPUTES_TABLE}.id AND renter_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
       )
       .joinRaw(
-        `JOIN ${CHAT_RELATIONS_TABLE} as worker_chat_relations ON (worker_chat_relations.user_id = workers.id AND worker_chats.id = worker_chat_relations.chat_id)`
+        `JOIN ${CHAT_RELATIONS_TABLE} as renter_chat_relations ON (renter_chat_relations.user_id = renters.id AND renter_chats.id = renter_chat_relations.chat_id)`
       );
     query = query = query.select(fields).where(`${DISPUTES_TABLE}.id`, id);
     return await query.first();
@@ -262,8 +251,8 @@ class DisputeModel extends Model {
   bindOwnersCounts = (entities, key = "ownerId", resField = "disputes") =>
     this.bindEntitiesCounts(entities, key, `owners.id`, resField);
 
-  bindWorkersCounts = (entities, key = "workerId", resField = "disputes") =>
-    this.bindEntitiesCounts(entities, key, `workers.id`, resField);
+  bindRentersCounts = (entities, key = "renterId", resField = "disputes") =>
+    this.bindEntitiesCounts(entities, key, `renters.id`, resField);
 
   bindListingsCounts = (entities, key = "listingId", resField = "disputes") =>
     this.bindEntitiesCounts(entities, key, `${LISTINGS_TABLE}.id`, resField);
@@ -369,7 +358,7 @@ class DisputeModel extends Model {
       )
       .where(function () {
         this.where(`${LISTINGS_TABLE}.owner_id`, "=", userId).orWhere(
-          `${ORDERS_TABLE}.worker_id`,
+          `${ORDERS_TABLE}.renter_id`,
           "=",
           userId
         );

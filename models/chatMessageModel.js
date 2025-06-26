@@ -154,6 +154,7 @@ class ChatMessageModel extends Model {
       listingPhotoPath,
       listingPhotoType,
       offerFinishTime,
+      offerStartTime,
     },
   }) => {
     return await this.create({
@@ -168,6 +169,7 @@ class ChatMessageModel extends Model {
         listingPhotoPath,
         listingPhotoType,
         offerFinishTime,
+        offerStartTime
       },
     });
   };
@@ -290,7 +292,7 @@ class ChatMessageModel extends Model {
     });
   };
 
-  createWorkerReviewMessage = async ({
+  createRenterReviewMessage = async ({
     chatId,
     senderId,
     data: {
@@ -309,7 +311,7 @@ class ChatMessageModel extends Model {
   }) => {
     return await this.create({
       chatId,
-      type: STATIC.MESSAGE_TYPES.WORKER_REVIEW,
+      type: STATIC.MESSAGE_TYPES.RENTER_REVIEW,
       isAdminSender: false,
       senderId,
       content: {

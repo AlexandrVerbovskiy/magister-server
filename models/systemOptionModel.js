@@ -76,6 +76,10 @@ class SystemOptionModel extends Model {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
   getTenantBaseCommissionPercent = async () => {
     const value = await this.getByKey("tenant_base_commission_percent");
     return value ? Number(value) : 0;
@@ -92,6 +96,18 @@ class SystemOptionModel extends Model {
   getRenterCancelCommissionPercent = async () => {
     const value = await this.getByKey("renter_cancel_fee_percent");
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+  getWorkerBaseCommissionPercent = async () => {
+    const value = await this.getByKey("worker_base_commission_percent");
+    return value ? Number(value) : 0;
+  };
+
+  getWorkerCancelCommissionPercent = async () => {
+    const value = await this.getByKey("worker_cancel_fee_percent");
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
     return value ? Number(value) : 0;
   };
 
@@ -100,12 +116,23 @@ class SystemOptionModel extends Model {
       "owner_base_commission_percent",
       "owner_boost_commission_percent",
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
       "tenant_base_commission_percent",
       "tenant_cancel_fee_percent",
 =======
       "renter_base_commission_percent",
       "renter_cancel_fee_percent",
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+      "worker_base_commission_percent",
+      "worker_cancel_fee_percent",
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
     ]);
 
     const ownerBaseCommissionPercentInfo = commissions.find(
@@ -117,6 +144,10 @@ class SystemOptionModel extends Model {
     );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     const tenantBaseCommissionPercentInfo = commissions.find(
       (commission) => commission.key == "tenant_base_commission_percent"
     );
@@ -131,6 +162,17 @@ class SystemOptionModel extends Model {
     const renterCancelFeePercentInfo = commissions.find(
       (commission) => commission.key == "renter_cancel_fee_percent"
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    const workerBaseCommissionPercentInfo = commissions.find(
+      (commission) => commission.key == "worker_base_commission_percent"
+    );
+
+    const workerCancelFeePercentInfo = commissions.find(
+      (commission) => commission.key == "worker_cancel_fee_percent"
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
     );
 
     const result = {
@@ -141,6 +183,10 @@ class SystemOptionModel extends Model {
         ? Number(ownerBoostCommissionPercentInfo.value)
         : 0,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
       tenantBaseCommissionPercent: tenantBaseCommissionPercentInfo
         ? Number(tenantBaseCommissionPercentInfo.value)
         : 0,
@@ -153,6 +199,16 @@ class SystemOptionModel extends Model {
       renterCancelFeePercent: renterCancelFeePercentInfo
         ? Number(renterCancelFeePercentInfo.value)
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+      workerBaseCommissionPercent: workerBaseCommissionPercentInfo
+        ? Number(workerBaseCommissionPercentInfo.value)
+        : 0,
+      workerCancelFeePercent: workerCancelFeePercentInfo
+        ? Number(workerCancelFeePercentInfo.value)
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
         : 0,
     };
 
@@ -173,6 +229,10 @@ class SystemOptionModel extends Model {
     const ownerBoostCommissionPercent =
       resObj["owner_boost_commission_percent"] ?? "";
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     const tenantBaseCommissionPercent =
       resObj["tenant_base_commission_percent"] ?? "";
     const tenantCancelFeePercent = resObj["tenant_cancel_fee_percent"] ?? "";
@@ -181,6 +241,14 @@ class SystemOptionModel extends Model {
       resObj["renter_base_commission_percent"] ?? "";
     const renterCancelFeePercent = resObj["renter_cancel_fee_percent"] ?? "";
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    const workerBaseCommissionPercent =
+      resObj["worker_base_commission_percent"] ?? "";
+    const workerCancelFeePercent = resObj["worker_cancel_fee_percent"] ?? "";
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
     const bankAccountIban = resObj["bank_account_iban"] ?? "";
     const bankAccountSwiftBic = resObj["bank_account_swift_bic"] ?? "";
     const bankAccountBeneficiary = resObj["bank_account_beneficiary"] ?? "";
@@ -199,12 +267,23 @@ class SystemOptionModel extends Model {
       ownerBaseCommissionPercent,
       ownerBoostCommissionPercent,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
       tenantBaseCommissionPercent,
       tenantCancelFeePercent,
 =======
       renterBaseCommissionPercent,
       renterCancelFeePercent,
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+      workerBaseCommissionPercent,
+      workerCancelFeePercent,
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       bankAccountIban,
       bankAccountSwiftBic,
       bankAccountBeneficiary,
@@ -223,12 +302,23 @@ class SystemOptionModel extends Model {
     ownerBaseCommissionPercent = null,
     ownerBoostCommissionPercent = null,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     tenantBaseCommissionPercent = null,
     tenantCancelFeePercent = null,
 =======
     renterBaseCommissionPercent = null,
     renterCancelFeePercent = null,
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    workerBaseCommissionPercent = null,
+    workerCancelFeePercent = null,
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
     bankAccountIban = null,
     bankAccountSwiftBic = null,
     bankAccountBeneficiary = null,
@@ -254,15 +344,23 @@ class SystemOptionModel extends Model {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     if (tenantBaseCommissionPercent !== null) {
+=======
+    if (workerBaseCommissionPercent !== null) {
+>>>>>>> e08e27f (total rotation)
       await this.updateByKey(
-        "tenant_base_commission_percent",
-        tenantBaseCommissionPercent
+        "worker_base_commission_percent",
+        workerBaseCommissionPercent
       );
     }
 
-    if (tenantCancelFeePercent !== null) {
+    if (workerCancelFeePercent !== null) {
       await this.updateByKey(
+<<<<<<< HEAD
         "tenant_cancel_fee_percent",
         tenantCancelFeePercent
 =======
@@ -278,6 +376,13 @@ class SystemOptionModel extends Model {
         "renter_cancel_fee_percent",
         renterCancelFeePercent
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        "worker_cancel_fee_percent",
+        workerCancelFeePercent
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       );
     }
 

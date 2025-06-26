@@ -14,10 +14,20 @@ class OwnerCommentController extends BaseCommentController {
       }
     );
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     items = await this.tenantCommentModel.bindAverageForKeyEntities(
 =======
     items = await this.renterCommentModel.bindAverageForKeyEntities(
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    items = await this.workerCommentModel.bindAverageForKeyEntities(
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       items,
       "reviewerId",
       {
@@ -40,10 +50,20 @@ class OwnerCommentController extends BaseCommentController {
         order.disputeStatus ||
         order.status != STATIC.ORDER_STATUSES.FINISHED ||
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
         order.tenantId != senderId
 =======
         order.renterId != senderId
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        order.workerId != senderId
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }

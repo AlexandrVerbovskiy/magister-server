@@ -35,10 +35,18 @@ class DisputeController extends Controller {
     );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     disputes = await this.tenantCommentModel.bindAverageForKeyEntities(
+=======
+    disputes = await this.workerCommentModel.bindAverageForKeyEntities(
+>>>>>>> e08e27f (total rotation)
       disputes,
-      "tenantId",
+      "workerId",
       {
+<<<<<<< HEAD
         commentCountName: "tenantCommentCount",
         averageRatingName: "tenantAverageRating",
 =======
@@ -49,6 +57,13 @@ class DisputeController extends Controller {
         commentCountName: "renterCommentCount",
         averageRatingName: "renterAverageRating",
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        commentCountName: "workerCommentCount",
+        averageRatingName: "workerAverageRating",
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       }
     );
 
@@ -73,13 +88,21 @@ class DisputeController extends Controller {
       const order = await this.orderModel.getFullById(orderId);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
       const tenantId = +order.tenantId;
+=======
+      const workerId = +order.workerId;
+>>>>>>> e08e27f (total rotation)
       const ownerId = +order.ownerId;
 
       const isOwnerCreatedDispute = userId == ownerId;
-      const isTenantCreatedDispute = userId == tenantId;
+      const isWorkerCreatedDispute = userId == workerId;
 
       if (
+<<<<<<< HEAD
         (!isTenantCreatedDispute && !isOwnerCreatedDispute) ||
 =======
       const renterId = +order.renterId;
@@ -91,11 +114,16 @@ class DisputeController extends Controller {
       if (
         (!isRenterCreatedDispute && !isOwnerCreatedDispute) ||
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        (!isWorkerCreatedDispute && !isOwnerCreatedDispute) ||
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         ![
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-          STATIC.ORDER_STATUSES.FINISHED,
+          STATIC.ORDER_STATUSES.IN_PROCESS,
+          STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
         ].includes(order.status) ||
         order.disputeId
       ) {
@@ -113,24 +141,48 @@ class DisputeController extends Controller {
       const senderName = isOwnerCreatedDispute
         ? order.ownerName
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
         : order.tenantName;
 =======
         : order.renterName;
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        : order.workerName;
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
 
       const createdMessages = await this.chatModel.createForDispute({
         orderId,
         disputeId,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
         userIds: [tenantId, ownerId],
 =======
         userIds: [renterId, ownerId],
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        userIds: [workerId, ownerId],
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
         data: { senderId: userId, senderName, description, type },
       });
 
       if (isOwnerCreatedDispute) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
         await this.sendSocketMessageToUser(tenantId, "get-message", {
           message: createdMessages[tenantId],
         });
@@ -145,6 +197,17 @@ class DisputeController extends Controller {
 
       if (isRenterCreatedDispute) {
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        await this.sendSocketMessageToUser(workerId, "get-message", {
+          message: createdMessages[workerId],
+        });
+      }
+
+      if (isWorkerCreatedDispute) {
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
         await this.sendSocketMessageToUser(ownerId, "get-message", {
           message: createdMessages[ownerId],
         });
@@ -152,10 +215,20 @@ class DisputeController extends Controller {
 
       const ownerDisputeChatId = createdMessages[ownerId].chatId;
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
       const tenantDisputeChatId = createdMessages[tenantId].chatId;
 =======
       const renterDisputeChatId = createdMessages[renterId].chatId;
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+      const workerDisputeChatId = createdMessages[workerId].chatId;
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -170,20 +243,24 @@ class DisputeController extends Controller {
           disputeDescription: description,
           disputeChatId: isOwnerCreatedDispute
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
             ? tenantDisputeChatId
 =======
             ? renterDisputeChatId
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+            ? workerDisputeChatId
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
             : ownerDisputeChatId,
         },
       });
-
-      await this.orderModel.orderCancelExtends(order.id);
-
-      const parentOrderExtensions = await this.orderModel.getOrderExtends(
-        order.id
-      );
-
+      
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         orderPart: {
@@ -195,11 +272,21 @@ class DisputeController extends Controller {
           disputeChatId: isOwnerCreatedDispute
             ? ownerDisputeChatId
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
             : tenantDisputeChatId,
           extendOrders: parentOrderExtensions,
 =======
             : renterDisputeChatId,
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+            : workerDisputeChatId,
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
         },
       });
     });

@@ -554,6 +554,10 @@ class UserController extends Controller {
     let users = await this.userModel.list(options);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     users = await this.tenantCommentModel.bindAverageForKeyEntities(
       users,
       "id",
@@ -568,6 +572,17 @@ class UserController extends Controller {
         commentCountName: "renterCommentCount",
         averageRatingName: "renterAverageRating",
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    users = await this.workerCommentModel.bindAverageForKeyEntities(
+      users,
+      "id",
+      {
+        commentCountName: "workerCommentCount",
+        averageRatingName: "workerAverageRating",
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       }
     );
 
@@ -581,12 +596,20 @@ class UserController extends Controller {
     );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
     users = await this.disputeModel.bindTenantsCounts(
+=======
+    users = await this.disputeModel.bindWorkersCounts(
+>>>>>>> e08e27f (total rotation)
       users,
       "id",
-      "tenantDisputesCount"
+      "workerDisputesCount"
     );
 
+<<<<<<< HEAD
     users = await this.disputeModel.bindTenantsCounts(
 =======
     users = await this.disputeModel.bindRentersCounts(
@@ -597,6 +620,12 @@ class UserController extends Controller {
 
     users = await this.disputeModel.bindRentersCounts(
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+    users = await this.disputeModel.bindWorkersCounts(
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       users,
       "id",
       "ownerDisputesCount"

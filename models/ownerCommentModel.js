@@ -13,10 +13,20 @@ class OwnerCommentModel extends BaseCommentModel {
   keyFieldName = `userId`;
   keyField = `${LISTINGS_TABLE}.owner_id`;
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
   reviewerIdField = `${ORDERS_TABLE}.tenant_id`;
 =======
   reviewerIdField = `${ORDERS_TABLE}.renter_id`;
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+  reviewerIdField = `${ORDERS_TABLE}.worker_id`;
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
   table = OWNER_COMMENTS_TABLE;
 
   pointFields = [

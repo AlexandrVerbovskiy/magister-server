@@ -14,10 +14,20 @@ module.exports = {
   senderPaymentModel: require("./senderPaymentModel"),
   recipientPaymentModel: require("./recipientPaymentModel"),
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
   tenantCommentModel: require("./tenantCommentModel"),
 =======
   renterCommentModel: require("./renterCommentModel"),
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+  workerCommentModel: require("./workerCommentModel"),
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
   ownerCommentModel: require("./ownerCommentModel"),
   userListingFavoriteModel: require("./userListingFavoriteModel"),
   disputeModel: require("./disputeModel"),

@@ -15,36 +15,69 @@ class SystemController extends Controller {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        workerBaseCommissionPercent,
+        workerCancelFeePercent,
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       } = req.body;
 
       await this.systemOptionModel.setOptions({
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        workerBaseCommissionPercent,
+        workerCancelFeePercent,
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd4adb2 (start)
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> fad5f76 (start)
+<<<<<<< HEAD
+=======
+        workerBaseCommissionPercent,
+        workerCancelFeePercent,
+>>>>>>> e08e27f (total rotation)
+=======
+>>>>>>> bd4adb2 (start)
       });
     });
 
