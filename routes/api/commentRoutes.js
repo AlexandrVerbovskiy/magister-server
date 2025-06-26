@@ -3,38 +3,26 @@ const router = Router();
 const { isAuth, isSupport } = require("../../middlewares");
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
 const TenantCommentController = require("../../controllers/TenantCommentController");
 =======
 const RenterCommentController = require("../../controllers/RenterCommentController");
 >>>>>>> fad5f76 (start)
-<<<<<<< HEAD
 =======
-const WorkerCommentController = require("../../controllers/WorkerCommentController");
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+const RenterCommentController = require("../../controllers/RenterCommentController");
+>>>>>>> 45e89f9 (start)
 const OwnerCommentController = require("../../controllers/OwnerCommentController");
 const {
   commentListValidation,
   createOwnerCommentValidation,
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
   createTenantCommentValidation,
 =======
   createRenterCommentValidation,
 >>>>>>> fad5f76 (start)
-<<<<<<< HEAD
 =======
-  createWorkerCommentValidation,
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+  createRenterCommentValidation,
+>>>>>>> 45e89f9 (start)
   commentRejectValidation,
   commentApproveValidation,
 } = require("../../validations/comments");
@@ -43,19 +31,13 @@ module.exports = (io) => {
   const ownerCommentController = new OwnerCommentController(io);
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
   const tenantCommentController = new TenantCommentController(io);
 =======
   const renterCommentController = new RenterCommentController(io);
 >>>>>>> fad5f76 (start)
-<<<<<<< HEAD
 =======
-  const workerCommentController = new WorkerCommentController(io);
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+  const renterCommentController = new RenterCommentController(io);
+>>>>>>> 45e89f9 (start)
 
   router.post(
     "/create-owner-review",
@@ -67,26 +49,21 @@ module.exports = (io) => {
   router.post(
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
     "/create-tenant-review",
-=======
-    "/create-worker-review",
->>>>>>> e08e27f (total rotation)
     isAuth,
-    createWorkerCommentValidation,
-    workerCommentController.createComment
+    createTenantCommentValidation,
+    tenantCommentController.createComment
   );
 
   router.post(
-    "/worker-list",
+    "/tenant-list",
     isAuth,
     isSupport,
     commentListValidation,
-<<<<<<< HEAD
     tenantCommentController.commentList
 =======
+=======
+>>>>>>> 45e89f9 (start)
     "/create-renter-review",
     isAuth,
     createRenterCommentValidation,
@@ -99,13 +76,10 @@ module.exports = (io) => {
     isSupport,
     commentListValidation,
     renterCommentController.commentList
->>>>>>> fad5f76 (start)
 <<<<<<< HEAD
+>>>>>>> fad5f76 (start)
 =======
-    workerCommentController.commentList
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+>>>>>>> 45e89f9 (start)
   );
 
   router.post(
@@ -119,31 +93,23 @@ module.exports = (io) => {
   router.post(
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
     "/tenant-approve",
     isAuth,
     isSupport,
     commentApproveValidation,
     tenantCommentController.approve
 =======
+=======
+>>>>>>> 45e89f9 (start)
     "/renter-approve",
     isAuth,
     isSupport,
     commentApproveValidation,
     renterCommentController.approve
->>>>>>> fad5f76 (start)
 <<<<<<< HEAD
+>>>>>>> fad5f76 (start)
 =======
-    "/worker-approve",
-    isAuth,
-    isSupport,
-    commentApproveValidation,
-    workerCommentController.approve
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+>>>>>>> 45e89f9 (start)
   );
 
   router.post(
@@ -157,31 +123,23 @@ module.exports = (io) => {
   router.post(
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
     "/tenant-reject",
     isAuth,
     isSupport,
     commentRejectValidation,
     tenantCommentController.reject
 =======
+=======
+>>>>>>> 45e89f9 (start)
     "/renter-reject",
     isAuth,
     isSupport,
     commentRejectValidation,
     renterCommentController.reject
->>>>>>> fad5f76 (start)
 <<<<<<< HEAD
+>>>>>>> fad5f76 (start)
 =======
-    "/worker-reject",
-    isAuth,
-    isSupport,
-    commentRejectValidation,
-    workerCommentController.reject
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+>>>>>>> 45e89f9 (start)
   );
 
   router.post(

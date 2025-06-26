@@ -4,14 +4,19 @@ const BaseCommentModel = require("./BaseCommentModel");
 const db = require("../database");
 
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
 const TENANT_COMMENTS_TABLE = STATIC.TABLES.TENANT_COMMENTS;
 =======
 const RENTER_COMMENTS_TABLE = STATIC.TABLES.RENTER_COMMENTS;
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+const RENTER_COMMENTS_TABLE = STATIC.TABLES.RENTER_COMMENTS;
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 
+<<<<<<< HEAD:models/tenantCommentModel.js
 <<<<<<< HEAD:models/tenantCommentModel.js
 class TenantCommentModel extends BaseCommentModel {
   type = "tenant";
@@ -20,13 +25,18 @@ class TenantCommentModel extends BaseCommentModel {
   reviewerIdField = `${LISTINGS_TABLE}.owner_id`;
   table = TENANT_COMMENTS_TABLE;
 =======
+=======
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
 class RenterCommentModel extends BaseCommentModel {
   type = "renter";
   keyFieldName = `userId`;
   keyField = `${ORDERS_TABLE}.renter_id`;
   reviewerIdField = `${LISTINGS_TABLE}.owner_id`;
   table = RENTER_COMMENTS_TABLE;
+<<<<<<< HEAD:models/tenantCommentModel.js
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
 
   pointFields = [
     "care",
@@ -41,6 +51,7 @@ class RenterCommentModel extends BaseCommentModel {
   ];
 
   visibleFields = [
+<<<<<<< HEAD:models/tenantCommentModel.js
 <<<<<<< HEAD:models/tenantCommentModel.js
     `${TENANT_COMMENTS_TABLE}.id`,
     `${TENANT_COMMENTS_TABLE}.description`,
@@ -62,6 +73,8 @@ class RenterCommentModel extends BaseCommentModel {
     `${TENANT_COMMENTS_TABLE}.created_at as createdAt`,
     `${TENANT_COMMENTS_TABLE}.order_id as orderId`,
 =======
+=======
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
     `${RENTER_COMMENTS_TABLE}.id`,
     `${RENTER_COMMENTS_TABLE}.description`,
     `${RENTER_COMMENTS_TABLE}.leave_feedback as leaveFeedback`,
@@ -81,7 +94,10 @@ class RenterCommentModel extends BaseCommentModel {
     `${RENTER_COMMENTS_TABLE}.rejected_description as rejectedDescription`,
     `${RENTER_COMMENTS_TABLE}.created_at as createdAt`,
     `${RENTER_COMMENTS_TABLE}.order_id as orderId`,
+<<<<<<< HEAD:models/tenantCommentModel.js
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
 
     `reviewers.id as reviewerId`,
     `reviewers.name as reviewerName`,
@@ -99,12 +115,17 @@ class RenterCommentModel extends BaseCommentModel {
 
   orderFields = [
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
     `${TENANT_COMMENTS_TABLE}.id`,
     `${TENANT_COMMENTS_TABLE}.created_at`,
 =======
     `${RENTER_COMMENTS_TABLE}.id`,
     `${RENTER_COMMENTS_TABLE}.created_at`,
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+    `${RENTER_COMMENTS_TABLE}.id`,
+    `${RENTER_COMMENTS_TABLE}.created_at`,
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
     `${USERS_TABLE}.name`,
     `reviewers.name`,
   ];
@@ -116,10 +137,14 @@ class RenterCommentModel extends BaseCommentModel {
         `${ORDERS_TABLE}.id`,
         "=",
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
         `${TENANT_COMMENTS_TABLE}.order_id`
 =======
         `${RENTER_COMMENTS_TABLE}.order_id`
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+        `${RENTER_COMMENTS_TABLE}.order_id`
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
       )
       .join(
         LISTINGS_TABLE,
@@ -138,10 +163,14 @@ class RenterCommentModel extends BaseCommentModel {
 
   baseSelect = () => {
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
     let query = db(TENANT_COMMENTS_TABLE);
 =======
     let query = db(RENTER_COMMENTS_TABLE);
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+    let query = db(RENTER_COMMENTS_TABLE);
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
     query = this.baseJoin(query);
     return query;
   };
@@ -152,10 +181,14 @@ class RenterCommentModel extends BaseCommentModel {
       `${USERS_TABLE}.id`,
       "=",
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
       `${ORDERS_TABLE}.tenant_id`
 =======
       `${ORDERS_TABLE}.renter_id`
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+      `${ORDERS_TABLE}.renter_id`
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
     );
   };
 
@@ -174,10 +207,14 @@ class RenterCommentModel extends BaseCommentModel {
     satisfaction,
   }) => {
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
     const res = await db(TENANT_COMMENTS_TABLE)
 =======
     const res = await db(RENTER_COMMENTS_TABLE)
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+    const res = await db(RENTER_COMMENTS_TABLE)
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
       .insert({
         description,
         leave_feedback: leaveFeedback,
@@ -199,6 +236,7 @@ class RenterCommentModel extends BaseCommentModel {
   };
 
   getBaseUserStatisticQuery = () => {
+<<<<<<< HEAD:models/tenantCommentModel.js
 <<<<<<< HEAD:models/tenantCommentModel.js
     let query = db(TENANT_COMMENTS_TABLE)
       .select([
@@ -233,6 +271,8 @@ class RenterCommentModel extends BaseCommentModel {
             + AVG(${TENANT_COMMENTS_TABLE}.reliability) + AVG(${TENANT_COMMENTS_TABLE}.honesty)
              + AVG(${TENANT_COMMENTS_TABLE}.satisfaction)
 =======
+=======
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
     let query = db(RENTER_COMMENTS_TABLE)
       .select([
         `${USERS_TABLE}.id`,
@@ -265,7 +305,10 @@ class RenterCommentModel extends BaseCommentModel {
             + AVG(${RENTER_COMMENTS_TABLE}.usage_guidelines) + AVG(${RENTER_COMMENTS_TABLE}.terms_of_service)
             + AVG(${RENTER_COMMENTS_TABLE}.reliability) + AVG(${RENTER_COMMENTS_TABLE}.honesty)
              + AVG(${RENTER_COMMENTS_TABLE}.satisfaction)
+<<<<<<< HEAD:models/tenantCommentModel.js
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
             ) / 9 AS "averageRating"`),
       ])
       .join(
@@ -273,10 +316,14 @@ class RenterCommentModel extends BaseCommentModel {
         `${ORDERS_TABLE}.id`,
         "=",
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
         `${TENANT_COMMENTS_TABLE}.order_id`
 =======
         `${RENTER_COMMENTS_TABLE}.order_id`
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+        `${RENTER_COMMENTS_TABLE}.order_id`
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
       );
 
     query = this.getBaseUserStatisticQueryJoin(query);
@@ -285,12 +332,17 @@ class RenterCommentModel extends BaseCommentModel {
       .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true)
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
       .where(`${TENANT_COMMENTS_TABLE}.approved`, true)
       .where(`${TENANT_COMMENTS_TABLE}.waiting_admin`, false)
 =======
       .where(`${RENTER_COMMENTS_TABLE}.approved`, true)
       .where(`${RENTER_COMMENTS_TABLE}.waiting_admin`, false)
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+      .where(`${RENTER_COMMENTS_TABLE}.approved`, true)
+      .where(`${RENTER_COMMENTS_TABLE}.waiting_admin`, false)
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js
       .groupBy([`${USERS_TABLE}.id`]);
   };
 
@@ -323,7 +375,11 @@ class RenterCommentModel extends BaseCommentModel {
 }
 
 <<<<<<< HEAD:models/tenantCommentModel.js
+<<<<<<< HEAD:models/tenantCommentModel.js
 module.exports = new TenantCommentModel();
 =======
 module.exports = new RenterCommentModel();
 >>>>>>> fad5f76 (start):models/workerCommentModel.js
+=======
+module.exports = new RenterCommentModel();
+>>>>>>> 45e89f9 (start):models/workerCommentModel.js

@@ -16,22 +16,16 @@ class SystemController extends Controller {
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> fad5f76 (start)
-<<<<<<< HEAD
 =======
-        workerBaseCommissionPercent,
-        workerCancelFeePercent,
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> 45e89f9 (start)
       } = req.body;
 
       await this.systemOptionModel.setOptions({
@@ -39,22 +33,16 @@ class SystemController extends Controller {
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> fad5f76 (start)
-<<<<<<< HEAD
 =======
-        workerBaseCommissionPercent,
-        workerCancelFeePercent,
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> 45e89f9 (start)
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -62,22 +50,16 @@ class SystemController extends Controller {
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> fad5f76 (start)
-<<<<<<< HEAD
 =======
-        workerBaseCommissionPercent,
-        workerCancelFeePercent,
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> 45e89f9 (start)
       });
     });
 
@@ -115,44 +97,6 @@ class SystemController extends Controller {
         bankAccountSwiftBic,
         bankAccountBeneficiary,
         bankAccountReferenceConceptCode,
-      });
-    });
-
-  saveApiKey = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { apiKey } = req.body;
-      await this.systemOptionModel.saveApiKey(apiKey ?? "");
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        message: "API Key saved successfully!",
-        apiKey,
-      });
-    });
-
-  saveTrainingSettings = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const {
-        correlationThreshold,
-        pValueThreshold,
-        nEstimators,
-        randomState,
-        trainTestSplit,
-      } = req.body;
-
-      await this.systemOptionModel.saveTrainingSettings({
-        correlationThreshold,
-        pValueThreshold,
-        nEstimators,
-        randomState,
-        trainTestSplit,
-      });
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        message: "Training settings saved successfully!",
-        correlationThreshold,
-        pValueThreshold,
-        nEstimators,
-        randomState,
-        trainTestSplit,
       });
     });
 }

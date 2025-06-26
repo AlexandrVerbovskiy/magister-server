@@ -111,9 +111,12 @@ class Controller {
     this.chatRelationModel = chatRelationModel;
 
     this.socketModel = socketModel;
+<<<<<<< HEAD
     this.relationModel = relationModel;
 
     this.disputePredictionModel = disputePredictionModel;
+=======
+>>>>>>> 45e89f9 (start)
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,

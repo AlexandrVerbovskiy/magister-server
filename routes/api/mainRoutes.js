@@ -350,6 +350,7 @@ module.exports = (io) => {
 
   router.get(
 <<<<<<< HEAD
+<<<<<<< HEAD
     "/get-order-review-by-tenant/:id",
     isAuth,
     validateIdParam(),
@@ -360,6 +361,12 @@ module.exports = (io) => {
     validateIdParam(),
     mainController.getOrderReviewByRenterOptions
 >>>>>>> fad5f76 (start)
+=======
+    "/get-order-review-by-renter/:id",
+    isAuth,
+    validateIdParam(),
+    mainController.getOrderReviewByRenterOptions
+>>>>>>> 45e89f9 (start)
   );
 
   router.get(
@@ -370,6 +377,7 @@ module.exports = (io) => {
   );
 
   router.post(
+<<<<<<< HEAD
 <<<<<<< HEAD
     "/admin-tenant-comment-list-options",
     isAuth,
@@ -383,6 +391,13 @@ module.exports = (io) => {
     adminCommentListOptionsValidation,
     mainController.getAdminRenterCommentsPageOptions
 >>>>>>> fad5f76 (start)
+=======
+    "/admin-renter-comment-list-options",
+    isAuth,
+    isSupport,
+    adminCommentListOptionsValidation,
+    mainController.getAdminRenterCommentsPageOptions
+>>>>>>> 45e89f9 (start)
   );
 
   router.post(

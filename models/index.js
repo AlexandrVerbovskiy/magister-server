@@ -14,10 +14,14 @@ module.exports = {
   senderPaymentModel: require("./senderPaymentModel"),
   recipientPaymentModel: require("./recipientPaymentModel"),
 <<<<<<< HEAD
+<<<<<<< HEAD
   tenantCommentModel: require("./tenantCommentModel"),
 =======
   renterCommentModel: require("./renterCommentModel"),
 >>>>>>> fad5f76 (start)
+=======
+  renterCommentModel: require("./renterCommentModel"),
+>>>>>>> 45e89f9 (start)
   ownerCommentModel: require("./ownerCommentModel"),
   userListingFavoriteModel: require("./userListingFavoriteModel"),
   disputeModel: require("./disputeModel"),
@@ -27,6 +31,4 @@ module.exports = {
   chatMessageContentModel: require("./chatMessageContentModel"),
   socketModel: require("./socketModel"),
   activeActionModel: require("./activeActionModel"),
-  relationModel: require("./relationModel"),
-  disputePredictionModel: require("./disputePredictionModel"),
 };

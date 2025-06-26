@@ -27,10 +27,14 @@ class RecipientPayment extends Model {
     `${ORDERS_TABLE}.end_date as offerEndDate`,
     `${ORDERS_TABLE}.status as orderStatus`,
 <<<<<<< HEAD
+<<<<<<< HEAD
     `${ORDERS_TABLE}.tenant_fee as tenantFee`,
 =======
     `${ORDERS_TABLE}.renter_fee as renterFee`,
 >>>>>>> fad5f76 (start)
+=======
+    `${ORDERS_TABLE}.renter_fee as renterFee`,
+>>>>>>> 45e89f9 (start)
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
@@ -51,18 +55,24 @@ class RecipientPayment extends Model {
     `owners.phone as ownerPhone`,
     `owners.photo as ownerPhoto`,
 <<<<<<< HEAD
+<<<<<<< HEAD
     `tenants.id as tenantId`,
     `tenants.name as tenantName`,
     `tenants.email as tenantEmail`,
     `tenants.phone as tenantPhone`,
     `tenants.photo as tenantPhoto`,
 =======
+=======
+>>>>>>> 45e89f9 (start)
     `renters.id as renterId`,
     `renters.name as renterName`,
     `renters.email as renterEmail`,
     `renters.phone as renterPhone`,
     `renters.photo as renterPhoto`,
+<<<<<<< HEAD
 >>>>>>> fad5f76 (start)
+=======
+>>>>>>> 45e89f9 (start)
     `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
     `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
     `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -75,10 +85,14 @@ class RecipientPayment extends Model {
     `${USERS_TABLE}.name`,
     `owners.name`,
 <<<<<<< HEAD
+<<<<<<< HEAD
     `tenants.name`,
 =======
     `renters.name`,
 >>>>>>> fad5f76 (start)
+=======
+    `renters.name`,
+>>>>>>> 45e89f9 (start)
   ];
 
   orderFields = [
@@ -190,6 +204,7 @@ class RecipientPayment extends Model {
       )
       .join(
 <<<<<<< HEAD
+<<<<<<< HEAD
         `${USERS_TABLE} as tenants`,
         `tenants.id`,
         "=",
@@ -200,6 +215,12 @@ class RecipientPayment extends Model {
         "=",
         `${ORDERS_TABLE}.renter_id`
 >>>>>>> fad5f76 (start)
+=======
+        `${USERS_TABLE} as renters`,
+        `renters.id`,
+        "=",
+        `${ORDERS_TABLE}.renter_id`
+>>>>>>> 45e89f9 (start)
       );
 
   baseListStatusSelect = (query, status) => {

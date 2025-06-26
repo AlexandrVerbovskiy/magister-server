@@ -17,21 +17,14 @@ module.exports = {
   OwnerCommentController: require("./OwnerCommentController"),
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
   TenantCommentController: require("./TenantCommentController"),
 =======
   RenterCommentController: require("./RenterCommentController"),
 >>>>>>> fad5f76 (start)
-<<<<<<< HEAD
 =======
-  WorkerCommentController: require("./WorkerCommentController"),
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+  RenterCommentController: require("./RenterCommentController"),
+>>>>>>> 45e89f9 (start)
   DisputeController: require("./DisputeController"),
   ChatController: require("./ChatController"),
   CronCommandController: require("./CronCommandController"),
-  DisputePredictionModelController: require("./DisputePredictionModelController"),
 };

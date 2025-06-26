@@ -31,9 +31,6 @@ module.exports = [
   ...validatePercent({
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bd4adb2 (start)
     field: "tenantBaseCommissionPercent",
     fieldName: "Tenant Rent Commission",
   }),
@@ -41,23 +38,17 @@ module.exports = [
     field: "tenantCancelFeePercent",
     fieldName: "Tenant Cancel Commission",
 =======
+=======
+>>>>>>> 45e89f9 (start)
     field: "renterBaseCommissionPercent",
     fieldName: "Renter Rent Commission",
   }),
   ...validatePercent({
     field: "renterCancelFeePercent",
     fieldName: "Renter Cancel Commission",
->>>>>>> fad5f76 (start)
 <<<<<<< HEAD
+>>>>>>> fad5f76 (start)
 =======
-    field: "workerBaseCommissionPercent",
-    fieldName: "Worker Rent Commission",
-  }),
-  ...validatePercent({
-    field: "workerCancelFeePercent",
-    fieldName: "Worker Cancel Commission",
->>>>>>> e08e27f (total rotation)
-=======
->>>>>>> bd4adb2 (start)
+>>>>>>> 45e89f9 (start)
   }),
 ];
