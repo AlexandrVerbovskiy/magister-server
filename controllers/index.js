@@ -15,21 +15,8 @@ module.exports = {
   SenderPaymentController: require("./SenderPaymentController"),
   RecipientPaymentController: require("./RecipientPaymentController"),
   OwnerCommentController: require("./OwnerCommentController"),
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  TenantCommentController: require("./TenantCommentController"),
-=======
   RenterCommentController: require("./RenterCommentController"),
->>>>>>> fad5f76 (start)
-=======
-  RenterCommentController: require("./RenterCommentController"),
->>>>>>> 45e89f9 (start)
-=======
-  RenterCommentController: require("./RenterCommentController"),
->>>>>>> 2cdae2d (start)
   DisputeController: require("./DisputeController"),
   ChatController: require("./ChatController"),
   CronCommandController: require("./CronCommandController"),
-  DisputePredictionModelController: require("./DisputePredictionModelController"),
 };

@@ -11,11 +11,6 @@ class SystemOptionModel extends Model {
     return res?.["value"];
   };
 
-  getValue = async (key, defaultValue = null) => {
-    const res = await db(SYSTEM_TABLE).where("key", key).first();
-    return res?.value ?? defaultValue;
-  };
-
   updateByKey = async (key, newValue) => {
     const existingRow = await db(SYSTEM_TABLE).where("key", key).first();
 
@@ -60,11 +55,10 @@ class SystemOptionModel extends Model {
     );
 
     const result = {
-      bankAccountIban: bankAccountIban?.value ?? "",
-      bankAccountSwiftBic: bankAccountSwiftBic?.value ?? "",
-      bankAccountBeneficiary: bankAccountBeneficiary?.value ?? "",
-      bankAccountReferenceConceptCode:
-        bankAccountReferenceConceptCode?.value ?? "",
+      bankAccountIban: bankAccountIban?.value?? "",
+      bankAccountSwiftBic: bankAccountSwiftBic?.value?? "",
+      bankAccountBeneficiary: bankAccountBeneficiary?.value?? "",
+      bankAccountReferenceConceptCode: bankAccountReferenceConceptCode?.value?? "",
     };
 
     return result;
@@ -75,19 +69,6 @@ class SystemOptionModel extends Model {
     return value ? Number(value) : 0;
   };
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  getTenantBaseCommissionPercent = async () => {
-    const value = await this.getByKey("tenant_base_commission_percent");
-    return value ? Number(value) : 0;
-  };
-
-  getTenantCancelCommissionPercent = async () => {
-    const value = await this.getByKey("tenant_cancel_fee_percent");
-=======
-=======
->>>>>>> 45e89f9 (start)
   getRenterBaseCommissionPercent = async () => {
     const value = await this.getByKey("renter_base_commission_percent");
     return value ? Number(value) : 0;
@@ -95,19 +76,6 @@ class SystemOptionModel extends Model {
 
   getRenterCancelCommissionPercent = async () => {
     const value = await this.getByKey("renter_cancel_fee_percent");
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
-  getRenterBaseCommissionPercent = async () => {
-    const value = await this.getByKey("renter_base_commission_percent");
-    return value ? Number(value) : 0;
-  };
-
-  getRenterCancelCommissionPercent = async () => {
-    const value = await this.getByKey("renter_cancel_fee_percent");
->>>>>>> 2cdae2d (start)
     return value ? Number(value) : 0;
   };
 
@@ -115,23 +83,8 @@ class SystemOptionModel extends Model {
     const commissions = await db(SYSTEM_TABLE).whereIn("key", [
       "owner_base_commission_percent",
       "owner_boost_commission_percent",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "tenant_base_commission_percent",
-      "tenant_cancel_fee_percent",
-=======
       "renter_base_commission_percent",
       "renter_cancel_fee_percent",
->>>>>>> fad5f76 (start)
-=======
-      "renter_base_commission_percent",
-      "renter_cancel_fee_percent",
->>>>>>> 45e89f9 (start)
-=======
-      "renter_base_commission_percent",
-      "renter_cancel_fee_percent",
->>>>>>> 2cdae2d (start)
     ]);
 
     const ownerBaseCommissionPercentInfo = commissions.find(
@@ -142,36 +95,12 @@ class SystemOptionModel extends Model {
       (commission) => commission.key == "owner_boost_commission_percent"
     );
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const tenantBaseCommissionPercentInfo = commissions.find(
-      (commission) => commission.key == "tenant_base_commission_percent"
-    );
-
-    const tenantCancelFeePercentInfo = commissions.find(
-      (commission) => commission.key == "tenant_cancel_fee_percent"
-=======
-=======
->>>>>>> 45e89f9 (start)
     const renterBaseCommissionPercentInfo = commissions.find(
       (commission) => commission.key == "renter_base_commission_percent"
     );
 
     const renterCancelFeePercentInfo = commissions.find(
       (commission) => commission.key == "renter_cancel_fee_percent"
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
-    const renterBaseCommissionPercentInfo = commissions.find(
-      (commission) => commission.key == "renter_base_commission_percent"
-    );
-
-    const renterCancelFeePercentInfo = commissions.find(
-      (commission) => commission.key == "renter_cancel_fee_percent"
->>>>>>> 2cdae2d (start)
     );
 
     const result = {
@@ -181,33 +110,11 @@ class SystemOptionModel extends Model {
       ownerBoostCommissionPercent: ownerBoostCommissionPercentInfo
         ? Number(ownerBoostCommissionPercentInfo.value)
         : 0,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      tenantBaseCommissionPercent: tenantBaseCommissionPercentInfo
-        ? Number(tenantBaseCommissionPercentInfo.value)
-        : 0,
-      tenantCancelFeePercent: tenantCancelFeePercentInfo
-        ? Number(tenantCancelFeePercentInfo.value)
-=======
-=======
->>>>>>> 45e89f9 (start)
       renterBaseCommissionPercent: renterBaseCommissionPercentInfo
         ? Number(renterBaseCommissionPercentInfo.value)
         : 0,
       renterCancelFeePercent: renterCancelFeePercentInfo
         ? Number(renterCancelFeePercentInfo.value)
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
-      renterBaseCommissionPercent: renterBaseCommissionPercentInfo
-        ? Number(renterBaseCommissionPercentInfo.value)
-        : 0,
-      renterCancelFeePercent: renterCancelFeePercentInfo
-        ? Number(renterCancelFeePercentInfo.value)
->>>>>>> 2cdae2d (start)
         : 0,
     };
 
@@ -227,71 +134,25 @@ class SystemOptionModel extends Model {
       resObj["owner_base_commission_percent"] ?? "";
     const ownerBoostCommissionPercent =
       resObj["owner_boost_commission_percent"] ?? "";
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const tenantBaseCommissionPercent =
-      resObj["tenant_base_commission_percent"] ?? "";
-    const tenantCancelFeePercent = resObj["tenant_cancel_fee_percent"] ?? "";
-=======
     const renterBaseCommissionPercent =
       resObj["renter_base_commission_percent"] ?? "";
     const renterCancelFeePercent = resObj["renter_cancel_fee_percent"] ?? "";
->>>>>>> fad5f76 (start)
-=======
-    const renterBaseCommissionPercent =
-      resObj["renter_base_commission_percent"] ?? "";
-    const renterCancelFeePercent = resObj["renter_cancel_fee_percent"] ?? "";
->>>>>>> 45e89f9 (start)
-=======
-    const renterBaseCommissionPercent =
-      resObj["renter_base_commission_percent"] ?? "";
-    const renterCancelFeePercent = resObj["renter_cancel_fee_percent"] ?? "";
->>>>>>> 2cdae2d (start)
     const bankAccountIban = resObj["bank_account_iban"] ?? "";
     const bankAccountSwiftBic = resObj["bank_account_swift_bic"] ?? "";
     const bankAccountBeneficiary = resObj["bank_account_beneficiary"] ?? "";
     const bankAccountReferenceConceptCode =
       resObj["bank_account_reference_concept_code"] ?? "";
 
-    const apiKey = resObj["api_key"] ?? "";
-    const correlationThreshold = resObj["correlation_threshold"] ?? "0.8";
-    const pValueThreshold = resObj["p_value_threshold"] ?? "0.05";
-    const nEstimators = resObj["n_estimators"] ?? "100";
-    const randomState = resObj["random_state"] ?? "42";
-    const trainTestSplit = resObj["train_test_split"] ?? "80";
-
     return {
       userLogActive,
       ownerBaseCommissionPercent,
       ownerBoostCommissionPercent,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      tenantBaseCommissionPercent,
-      tenantCancelFeePercent,
-=======
       renterBaseCommissionPercent,
       renterCancelFeePercent,
->>>>>>> fad5f76 (start)
-=======
-      renterBaseCommissionPercent,
-      renterCancelFeePercent,
->>>>>>> 45e89f9 (start)
-=======
-      renterBaseCommissionPercent,
-      renterCancelFeePercent,
->>>>>>> 2cdae2d (start)
       bankAccountIban,
       bankAccountSwiftBic,
       bankAccountBeneficiary,
       bankAccountReferenceConceptCode,
-      apiKey,
-      correlationThreshold,
-      pValueThreshold,
-      nEstimators,
-      randomState,
-      trainTestSplit,
     };
   };
 
@@ -299,23 +160,8 @@ class SystemOptionModel extends Model {
     userLogActive = null,
     ownerBaseCommissionPercent = null,
     ownerBoostCommissionPercent = null,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    tenantBaseCommissionPercent = null,
-    tenantCancelFeePercent = null,
-=======
     renterBaseCommissionPercent = null,
     renterCancelFeePercent = null,
->>>>>>> fad5f76 (start)
-=======
-    renterBaseCommissionPercent = null,
-    renterCancelFeePercent = null,
->>>>>>> 45e89f9 (start)
-=======
-    renterBaseCommissionPercent = null,
-    renterCancelFeePercent = null,
->>>>>>> 2cdae2d (start)
     bankAccountIban = null,
     bankAccountSwiftBic = null,
     bankAccountBeneficiary = null,
@@ -340,23 +186,6 @@ class SystemOptionModel extends Model {
       );
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    if (tenantBaseCommissionPercent !== null) {
-      await this.updateByKey(
-        "tenant_base_commission_percent",
-        tenantBaseCommissionPercent
-      );
-    }
-
-    if (tenantCancelFeePercent !== null) {
-      await this.updateByKey(
-        "tenant_cancel_fee_percent",
-        tenantCancelFeePercent
-=======
-=======
->>>>>>> 45e89f9 (start)
     if (renterBaseCommissionPercent !== null) {
       await this.updateByKey(
         "renter_base_commission_percent",
@@ -368,23 +197,6 @@ class SystemOptionModel extends Model {
       await this.updateByKey(
         "renter_cancel_fee_percent",
         renterCancelFeePercent
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
-    if (renterBaseCommissionPercent !== null) {
-      await this.updateByKey(
-        "renter_base_commission_percent",
-        renterBaseCommissionPercent
-      );
-    }
-
-    if (renterCancelFeePercent !== null) {
-      await this.updateByKey(
-        "renter_cancel_fee_percent",
-        renterCancelFeePercent
->>>>>>> 2cdae2d (start)
       );
     }
 
@@ -409,48 +221,6 @@ class SystemOptionModel extends Model {
         bankAccountReferenceConceptCode
       );
     }
-  };
-
-  getApiKey = async (defaultValue = "") => {
-    return await this.getValue("api_key", defaultValue);
-  };
-
-  getCorrelationThreshold = async (defaultValue = "0.8") => {
-    return await this.getValue("correlation_threshold", defaultValue);
-  };
-
-  getPValueThreshold = async (defaultValue = "0.05") => {
-    return await this.getValue("p_value_threshold", defaultValue);
-  };
-
-  getNEstimators = async (defaultValue = "100") => {
-    return await this.getValue("n_estimators", defaultValue);
-  };
-
-  getRandomState = async (defaultValue = "42") => {
-    return await this.getValue("random_state", defaultValue);
-  };
-
-  getTrainTestSplit = async (defaultValue = "80") => {
-    return await this.getValue("train_test_split", defaultValue);
-  };
-
-  saveApiKey = async (apiKey) => {
-    await this.updateByKey("api_key", apiKey);
-  };
-
-  saveTrainingSettings = async ({
-    correlationThreshold,
-    pValueThreshold,
-    nEstimators,
-    randomState,
-    trainTestSplit,
-  }) => {
-    await this.updateByKey("correlation_threshold", correlationThreshold);
-    await this.updateByKey("p_value_threshold", pValueThreshold);
-    await this.updateByKey("n_estimators", nEstimators);
-    await this.updateByKey("random_state", randomState);
-    await this.updateByKey("train_test_split", trainTestSplit);
   };
 }
 

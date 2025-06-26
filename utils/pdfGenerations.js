@@ -13,7 +13,7 @@ baseConvertPaymentProps = (payment) => {
   const offerTotalPrice = ownerPaymentCalculate(
     offerStartDate,
     offerEndDate,
-    payment.workerFee,
+    payment.renterFee,
   );
 
   const offerSubTotalPrice =
@@ -22,7 +22,7 @@ baseConvertPaymentProps = (payment) => {
   const factTotalFee = ownerPaymentFeeCalculate(
     offerStartDate,
     offerEndDate,
-    payment.workerFee,
+    payment.renterFee,
   );
 
   const duration =
@@ -49,7 +49,7 @@ baseConvertPaymentProps = (payment) => {
     dueDate: dueInfo,
     offer: {
       factTotalPrice: offerTotalPrice.toFixed(2),
-      fee: payment.workerFee,
+      fee: payment.renterFee,
       listingName: payment.listingName,
       subTotalPrice: offerSubTotalPrice.toFixed(2),
       factTotalFee: factTotalFee.toFixed(2),

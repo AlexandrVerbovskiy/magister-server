@@ -94,27 +94,6 @@ module.exports = (io) => {
   );
 
   router.post(
-    "/admin-dispute-prediction-model-list-options",
-    isAuth,
-    isAdmin,
-    mainController.getAdminDisputePredictionModelListPageOptions
-  );
-
-  router.post(
-    "/admin-dispute-prediction-model-list-options",
-    isAuth,
-    isAdmin,
-    mainController.getAdminDisputePredictionModelListPageOptions
-  );
-
-  router.post(
-    "/admin-dispute-prediction-model-list-options",
-    isAuth,
-    isAdmin,
-    mainController.getAdminDisputePredictionModelListPageOptions
-  );
-
-  router.post(
     "/admin-user-event-log-list-options",
     isAuth,
     isAdmin,
@@ -186,20 +165,6 @@ module.exports = (io) => {
     isAuth,
     orderFullByIdOptionsValidation,
     mainController.getOrderFullForCardPay
-  );
-
-  router.get(
-    "/tenant-scanning-listing-rental-code/:token",
-    isAuth,
-    orderFullByTokenOptionsValidation,
-    mainController.getOrderTenantQrCodeInfo
-  );
-
-  router.get(
-    "/owner-scanning-listing-rental-code/:token",
-    isAuth,
-    orderFullByTokenOptionsValidation,
-    mainController.getOrderOwnerQrCodeInfo
   );
 
   router.post(
@@ -363,31 +328,10 @@ module.exports = (io) => {
   );
 
   router.get(
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "/get-order-review-by-tenant/:id",
-    isAuth,
-    validateIdParam(),
-    mainController.getOrderReviewByTenantOptions
-=======
     "/get-order-review-by-renter/:id",
     isAuth,
     validateIdParam(),
     mainController.getOrderReviewByRenterOptions
->>>>>>> fad5f76 (start)
-=======
-    "/get-order-review-by-renter/:id",
-    isAuth,
-    validateIdParam(),
-    mainController.getOrderReviewByRenterOptions
->>>>>>> 45e89f9 (start)
-=======
-    "/get-order-review-by-renter/:id",
-    isAuth,
-    validateIdParam(),
-    mainController.getOrderReviewByRenterOptions
->>>>>>> 2cdae2d (start)
   );
 
   router.get(
@@ -398,35 +342,11 @@ module.exports = (io) => {
   );
 
   router.post(
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "/admin-tenant-comment-list-options",
-    isAuth,
-    isSupport,
-    adminCommentListOptionsValidation,
-    mainController.getAdminTenantCommentsPageOptions
-=======
     "/admin-renter-comment-list-options",
     isAuth,
     isSupport,
     adminCommentListOptionsValidation,
     mainController.getAdminRenterCommentsPageOptions
->>>>>>> fad5f76 (start)
-=======
-    "/admin-renter-comment-list-options",
-    isAuth,
-    isSupport,
-    adminCommentListOptionsValidation,
-    mainController.getAdminRenterCommentsPageOptions
->>>>>>> 45e89f9 (start)
-=======
-    "/admin-renter-comment-list-options",
-    isAuth,
-    isSupport,
-    adminCommentListOptionsValidation,
-    mainController.getAdminRenterCommentsPageOptions
->>>>>>> 2cdae2d (start)
   );
 
   router.post(
@@ -479,13 +399,6 @@ module.exports = (io) => {
 
   router.post("/coords-to-address", isAuth, mainController.getCoordsAddress);
 
-  router.post(
-    "/check-more-query",
-    isAuth,
-    isAdmin,
-    mainController.checkModelQuery
-  );
-
   router.get(
     "/get-order-checkout-info/:id",
     isAuth,
@@ -493,22 +406,7 @@ module.exports = (io) => {
     mainController.getOrderCheckoutInfo
   );
 
-  router.get(
-    "/get-dispute-prediction-model-details/:id",
-    isAuth,
-    isAdmin,
-    idParamValidation,
-    mainController.getDisputePredictionModelDetails
-  );
-
   router.get("/test", mainController.test);
-
-  router.get(
-    "/get-table-relations",
-    isAuth,
-    isAdmin,
-    mainController.getTableRelations
-  );
 
   return router;
 };

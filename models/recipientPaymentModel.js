@@ -22,23 +22,8 @@ class RecipientPayment extends Model {
     `${RECIPIENT_PAYMENTS_TABLE}.status as status`,
     `${RECIPIENT_PAYMENTS_TABLE}.user_id as recipientId`,
     `${RECIPIENT_PAYMENTS_TABLE}.order_id as orderId`,
-    `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
-    `${ORDERS_TABLE}.start_date as offerStartDate`,
-    `${ORDERS_TABLE}.end_date as offerEndDate`,
     `${ORDERS_TABLE}.status as orderStatus`,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    `${ORDERS_TABLE}.tenant_fee as tenantFee`,
-=======
     `${ORDERS_TABLE}.renter_fee as renterFee`,
->>>>>>> fad5f76 (start)
-=======
-    `${ORDERS_TABLE}.renter_fee as renterFee`,
->>>>>>> 45e89f9 (start)
-=======
-    `${ORDERS_TABLE}.renter_fee as renterFee`,
->>>>>>> 2cdae2d (start)
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
@@ -46,43 +31,21 @@ class RecipientPayment extends Model {
     `${USERS_TABLE}.email as recipientEmail`,
     `${USERS_TABLE}.phone as recipientPhone`,
     `${USERS_TABLE}.photo as recipientPhoto`,
+    `${USERS_TABLE}.paypal_id as recipientPaypalId`,
     `${LISTINGS_TABLE}.id as listingId`,
     `${LISTINGS_TABLE}.name as listingName`,
     `${LISTINGS_TABLE}.address as listingAddress`,
     `${LISTINGS_TABLE}.city as listingCity`,
-    `${LISTINGS_TABLE}.price_per_day as listingPricePerDay`,
-    `${LISTINGS_TABLE}.min_rental_days as listingMinRentalDays`,
-    `${LISTINGS_TABLE}.count_stored_items as listingCountStoredItems`,
     `owners.id as ownerId`,
     `owners.name as ownerName`,
     `owners.email as ownerEmail`,
     `owners.phone as ownerPhone`,
     `owners.photo as ownerPhoto`,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    `tenants.id as tenantId`,
-    `tenants.name as tenantName`,
-    `tenants.email as tenantEmail`,
-    `tenants.phone as tenantPhone`,
-    `tenants.photo as tenantPhoto`,
-=======
-=======
->>>>>>> 45e89f9 (start)
-=======
->>>>>>> 2cdae2d (start)
     `renters.id as renterId`,
     `renters.name as renterName`,
     `renters.email as renterEmail`,
     `renters.phone as renterPhone`,
     `renters.photo as renterPhoto`,
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
->>>>>>> 2cdae2d (start)
     `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
     `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
     `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -94,19 +57,7 @@ class RecipientPayment extends Model {
     ...this.strFilterFields,
     `${USERS_TABLE}.name`,
     `owners.name`,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    `tenants.name`,
-=======
     `renters.name`,
->>>>>>> fad5f76 (start)
-=======
-    `renters.name`,
->>>>>>> 45e89f9 (start)
-=======
-    `renters.name`,
->>>>>>> 2cdae2d (start)
   ];
 
   orderFields = [
@@ -217,31 +168,10 @@ class RecipientPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        `${USERS_TABLE} as tenants`,
-        `tenants.id`,
-        "=",
-        `${ORDERS_TABLE}.tenant_id`
-=======
         `${USERS_TABLE} as renters`,
         `renters.id`,
         "=",
         `${ORDERS_TABLE}.renter_id`
->>>>>>> fad5f76 (start)
-=======
-        `${USERS_TABLE} as renters`,
-        `renters.id`,
-        "=",
-        `${ORDERS_TABLE}.renter_id`
->>>>>>> 45e89f9 (start)
-=======
-        `${USERS_TABLE} as renters`,
-        `renters.id`,
-        "=",
-        `${ORDERS_TABLE}.renter_id`
->>>>>>> 2cdae2d (start)
       );
 
   baseListStatusSelect = (query, status) => {
@@ -261,7 +191,7 @@ class RecipientPayment extends Model {
 
   baseListReceivedTypeSelect = (query, receivedType) => {
     if (
-      [STATIC.RECIPIENT_TYPES.REFUND, STATIC.RECIPIENT_TYPES.RENTAL].includes(
+      [STATIC.RECIPIENT_TYPES.REFUND, STATIC.RECIPIENT_TYPES.RECIPIENT].includes(
         receivedType
       )
     ) {
@@ -374,24 +304,24 @@ class RecipientPayment extends Model {
 
   paypalPaymentPlanGeneration = async ({
     startDate,
-    finishDate,
+    endDate,
     pricePerDay,
     userId,
     orderId,
     fee,
   }) => {
-    const dateDuration = getFactOrderDays(startDate, finishDate);
+    const dateDuration = getFactOrderDays(startDate, endDate);
 
     const paymentDays = {};
 
-    paymentDays[finishDate] = +(
+    paymentDays[endDate] = +(
       (dateDuration * pricePerDay * (100 - fee)) /
       100
     ).toFixed(2);
 
     /*if (dateDuration > STATIC.MONTH_DURATION) {
       let currentDate = new Date(startDate);
-      const end = new Date(finishDate);
+      const end = new Date(endDate);
       const monthEnds = [];
       let iteration = 0;
 
@@ -407,8 +337,8 @@ class RecipientPayment extends Model {
         let paymentDate = separateDate(lastDay);
 
         ----
-        if (paymentDate > finishDate) {
-          paymentDate = finishDate;
+        if (paymentDate > endDate) {
+          paymentDate = endDate;
         }
         ----
 
@@ -424,7 +354,7 @@ class RecipientPayment extends Model {
         iteration++;
       }
     } else {
-      paymentDays[finishDate] = +(
+      paymentDays[endDate] = +(
         (dateDuration * pricePerDay * (100 - fee)) /
         100
       ).toFixed(2);
@@ -436,7 +366,7 @@ class RecipientPayment extends Model {
       dataToInsert.push({
         money: paymentDays[date],
         planned_time: date,
-        received_type: STATIC.RECIPIENT_TYPES.RENTAL,
+        received_type: STATIC.RECIPIENT_TYPES.RECIPIENT,
         status: STATIC.RECIPIENT_STATUSES.WAITING,
         failed_details: "",
         user_id: userId,
@@ -527,7 +457,7 @@ class RecipientPayment extends Model {
     const query = db(RECIPIENT_PAYMENTS_TABLE)
       .where("order_id", orderId)
       .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
-      .where("received_type", STATIC.RECIPIENT_TYPES.RENTAL);
+      .where("received_type", STATIC.RECIPIENT_TYPES.RECIPIENT);
 
     let sum = 0;
 
@@ -566,11 +496,25 @@ class RecipientPayment extends Model {
     return query;
   };
 
-  complete = async (id) => {
-    await db(RECIPIENT_PAYMENTS_TABLE).where({ id: id }).update({
-      status: STATIC.RECIPIENT_STATUSES.COMPLETED,
-      failed_description: null,
-    });
+  complete = async (id, type, paypalId, cardNumber) => {
+    let data = {};
+
+    if (type == STATIC.PAYMENT_TYPES.BANK_TRANSFER) {
+      data = { cardNumber: cardNumber };
+    }
+
+    if (type == STATIC.PAYMENT_TYPES.PAYPAL) {
+      data = { paypalId: paypalId };
+    }
+
+    await db(RECIPIENT_PAYMENTS_TABLE)
+      .where({ id: id })
+      .update({
+        status: STATIC.RECIPIENT_STATUSES.COMPLETED,
+        failed_description: null,
+        data: JSON.stringify(data),
+        type: type,
+      });
   };
 
   reject = async (id, description) => {

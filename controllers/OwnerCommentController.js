@@ -13,19 +13,7 @@ class OwnerCommentController extends BaseCommentController {
         averageRatingName: "userAverageRating",
       }
     );
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    items = await this.tenantCommentModel.bindAverageForKeyEntities(
-=======
     items = await this.renterCommentModel.bindAverageForKeyEntities(
->>>>>>> fad5f76 (start)
-=======
-    items = await this.renterCommentModel.bindAverageForKeyEntities(
->>>>>>> 45e89f9 (start)
-=======
-    items = await this.renterCommentModel.bindAverageForKeyEntities(
->>>>>>> 2cdae2d (start)
       items,
       "reviewerId",
       {
@@ -47,19 +35,7 @@ class OwnerCommentController extends BaseCommentController {
         order.cancelStatus ||
         order.disputeStatus ||
         order.status != STATIC.ORDER_STATUSES.FINISHED ||
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        order.tenantId != senderId
-=======
         order.renterId != senderId
->>>>>>> fad5f76 (start)
-=======
-        order.renterId != senderId
->>>>>>> 45e89f9 (start)
-=======
-        order.renterId != senderId
->>>>>>> 2cdae2d (start)
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }

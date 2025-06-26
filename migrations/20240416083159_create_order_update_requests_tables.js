@@ -11,6 +11,7 @@ exports.up = function (knex) {
       table.increments("id").primary();
       table.boolean("active").defaultTo(true);
       table.float("new_price");
+      table.timestamp("new_start_time");
       table.timestamp("new_finish_time");
 
       table.timestamps(true, true);

@@ -34,36 +34,12 @@ class DisputeController extends Controller {
       }
     );
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    disputes = await this.tenantCommentModel.bindAverageForKeyEntities(
-      disputes,
-      "tenantId",
-      {
-        commentCountName: "tenantCommentCount",
-        averageRatingName: "tenantAverageRating",
-=======
-=======
->>>>>>> 45e89f9 (start)
     disputes = await this.renterCommentModel.bindAverageForKeyEntities(
       disputes,
       "renterId",
       {
         commentCountName: "renterCommentCount",
         averageRatingName: "renterAverageRating",
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
-    disputes = await this.renterCommentModel.bindAverageForKeyEntities(
-      disputes,
-      "renterId",
-      {
-        commentCountName: "renterCommentCount",
-        averageRatingName: "renterAverageRating",
->>>>>>> 2cdae2d (start)
       }
     );
 
@@ -87,20 +63,6 @@ class DisputeController extends Controller {
 
       const order = await this.orderModel.getFullById(orderId);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      const tenantId = +order.tenantId;
-      const ownerId = +order.ownerId;
-
-      const isOwnerCreatedDispute = userId == ownerId;
-      const isTenantCreatedDispute = userId == tenantId;
-
-      if (
-        (!isTenantCreatedDispute && !isOwnerCreatedDispute) ||
-=======
-=======
->>>>>>> 45e89f9 (start)
       const renterId = +order.renterId;
       const ownerId = +order.ownerId;
 
@@ -109,25 +71,10 @@ class DisputeController extends Controller {
 
       if (
         (!isRenterCreatedDispute && !isOwnerCreatedDispute) ||
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
-      const renterId = +order.renterId;
-      const ownerId = +order.ownerId;
-
-      const isOwnerCreatedDispute = userId == ownerId;
-      const isRenterCreatedDispute = userId == renterId;
-
-      if (
-        (!isRenterCreatedDispute && !isOwnerCreatedDispute) ||
->>>>>>> 2cdae2d (start)
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         ![
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
-          STATIC.ORDER_STATUSES.PENDING_ITEM_TO_OWNER,
-          STATIC.ORDER_STATUSES.FINISHED,
+          STATIC.ORDER_STATUSES.IN_PROCESS,
+          STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
         ].includes(order.status) ||
         order.disputeId
       ) {
@@ -144,89 +91,29 @@ class DisputeController extends Controller {
       const disputeStatus = STATIC.DISPUTE_STATUSES.OPEN;
       const senderName = isOwnerCreatedDispute
         ? order.ownerName
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        : order.tenantName;
-=======
         : order.renterName;
->>>>>>> fad5f76 (start)
-=======
-        : order.renterName;
->>>>>>> 45e89f9 (start)
-=======
-        : order.renterName;
->>>>>>> 2cdae2d (start)
 
       const createdMessages = await this.chatModel.createForDispute({
         orderId,
         disputeId,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        userIds: [tenantId, ownerId],
-=======
         userIds: [renterId, ownerId],
->>>>>>> fad5f76 (start)
-=======
-        userIds: [renterId, ownerId],
->>>>>>> 45e89f9 (start)
-=======
-        userIds: [renterId, ownerId],
->>>>>>> 2cdae2d (start)
         data: { senderId: userId, senderName, description, type },
       });
 
       if (isOwnerCreatedDispute) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        await this.sendSocketMessageToUser(tenantId, "get-message", {
-          message: createdMessages[tenantId],
-        });
-      }
-
-      if (isTenantCreatedDispute) {
-=======
-=======
->>>>>>> 45e89f9 (start)
         await this.sendSocketMessageToUser(renterId, "get-message", {
           message: createdMessages[renterId],
         });
       }
 
       if (isRenterCreatedDispute) {
-<<<<<<< HEAD
->>>>>>> fad5f76 (start)
-=======
->>>>>>> 45e89f9 (start)
-=======
-        await this.sendSocketMessageToUser(renterId, "get-message", {
-          message: createdMessages[renterId],
-        });
-      }
-
-      if (isRenterCreatedDispute) {
->>>>>>> 2cdae2d (start)
         await this.sendSocketMessageToUser(ownerId, "get-message", {
           message: createdMessages[ownerId],
         });
       }
 
       const ownerDisputeChatId = createdMessages[ownerId].chatId;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      const tenantDisputeChatId = createdMessages[tenantId].chatId;
-=======
       const renterDisputeChatId = createdMessages[renterId].chatId;
->>>>>>> fad5f76 (start)
-=======
-      const renterDisputeChatId = createdMessages[renterId].chatId;
->>>>>>> 45e89f9 (start)
-=======
-      const renterDisputeChatId = createdMessages[renterId].chatId;
->>>>>>> 2cdae2d (start)
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -240,29 +127,11 @@ class DisputeController extends Controller {
           disputeType: type,
           disputeDescription: description,
           disputeChatId: isOwnerCreatedDispute
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-            ? tenantDisputeChatId
-=======
             ? renterDisputeChatId
->>>>>>> fad5f76 (start)
-=======
-            ? renterDisputeChatId
->>>>>>> 45e89f9 (start)
-=======
-            ? renterDisputeChatId
->>>>>>> 2cdae2d (start)
             : ownerDisputeChatId,
         },
       });
-
-      await this.orderModel.orderCancelExtends(order.id);
-
-      const parentOrderExtensions = await this.orderModel.getOrderExtends(
-        order.id
-      );
-
+      
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         chatMessage,
         orderPart: {
@@ -273,20 +142,7 @@ class DisputeController extends Controller {
           disputeDescription: description,
           disputeChatId: isOwnerCreatedDispute
             ? ownerDisputeChatId
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-            : tenantDisputeChatId,
-          extendOrders: parentOrderExtensions,
-=======
             : renterDisputeChatId,
->>>>>>> fad5f76 (start)
-=======
-            : renterDisputeChatId,
->>>>>>> 45e89f9 (start)
-=======
-            : renterDisputeChatId,
->>>>>>> 2cdae2d (start)
         },
       });
     });

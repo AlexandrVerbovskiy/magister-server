@@ -14,67 +14,22 @@ class SystemController extends Controller {
       const {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        tenantBaseCommissionPercent,
-        tenantCancelFeePercent,
-=======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
->>>>>>> fad5f76 (start)
-=======
-        renterBaseCommissionPercent,
-        renterCancelFeePercent,
->>>>>>> 45e89f9 (start)
-=======
-        renterBaseCommissionPercent,
-        renterCancelFeePercent,
->>>>>>> 2cdae2d (start)
       } = req.body;
 
       await this.systemOptionModel.setOptions({
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        tenantBaseCommissionPercent,
-        tenantCancelFeePercent,
-=======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
->>>>>>> fad5f76 (start)
-=======
-        renterBaseCommissionPercent,
-        renterCancelFeePercent,
->>>>>>> 45e89f9 (start)
-=======
-        renterBaseCommissionPercent,
-        renterCancelFeePercent,
->>>>>>> 2cdae2d (start)
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        tenantBaseCommissionPercent,
-        tenantCancelFeePercent,
-=======
         renterBaseCommissionPercent,
         renterCancelFeePercent,
->>>>>>> fad5f76 (start)
-=======
-        renterBaseCommissionPercent,
-        renterCancelFeePercent,
->>>>>>> 45e89f9 (start)
-=======
-        renterBaseCommissionPercent,
-        renterCancelFeePercent,
->>>>>>> 2cdae2d (start)
       });
     });
 
@@ -112,44 +67,6 @@ class SystemController extends Controller {
         bankAccountSwiftBic,
         bankAccountBeneficiary,
         bankAccountReferenceConceptCode,
-      });
-    });
-
-  saveApiKey = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const { apiKey } = req.body;
-      await this.systemOptionModel.saveApiKey(apiKey ?? "");
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        message: "API Key saved successfully!",
-        apiKey,
-      });
-    });
-
-  saveTrainingSettings = (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const {
-        correlationThreshold,
-        pValueThreshold,
-        nEstimators,
-        randomState,
-        trainTestSplit,
-      } = req.body;
-
-      await this.systemOptionModel.saveTrainingSettings({
-        correlationThreshold,
-        pValueThreshold,
-        nEstimators,
-        randomState,
-        trainTestSplit,
-      });
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        message: "Training settings saved successfully!",
-        correlationThreshold,
-        pValueThreshold,
-        nEstimators,
-        randomState,
-        trainTestSplit,
       });
     });
 }
