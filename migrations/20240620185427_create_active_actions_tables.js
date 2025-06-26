@@ -9,11 +9,15 @@ exports.up = function (knex) {
     STATIC.TABLES.ACTIVE_ACTIONS,
     function (table) {
       table.increments("id").primary().notNullable();
-      table.integer("user_id").notNullable();
       table.text("type").notNullable();
       table.text("data");
       table.text("key");
-      table.foreign("user_id").references("id").inTable(STATIC.TABLES.USERS);
+
+      table
+        .integer("user_id")
+        .unsigned()
+        .notNullable()
+        .references(STATIC.TABLES.ORDERS + ".id");
     }
   );
 };

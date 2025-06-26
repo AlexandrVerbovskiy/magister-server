@@ -15,7 +15,11 @@ module.exports = {
   SenderPaymentController: require("./SenderPaymentController"),
   RecipientPaymentController: require("./RecipientPaymentController"),
   OwnerCommentController: require("./OwnerCommentController"),
+<<<<<<< HEAD
   TenantCommentController: require("./TenantCommentController"),
+=======
+  RenterCommentController: require("./RenterCommentController"),
+>>>>>>> fad5f76 (start)
   DisputeController: require("./DisputeController"),
   ChatController: require("./ChatController"),
   CronCommandController: require("./CronCommandController"),

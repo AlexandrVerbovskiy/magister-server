@@ -14,22 +14,37 @@ class SystemController extends Controller {
       const {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
+<<<<<<< HEAD
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
+=======
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> fad5f76 (start)
       } = req.body;
 
       await this.systemOptionModel.setOptions({
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
+<<<<<<< HEAD
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
+=======
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> fad5f76 (start)
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ownerBaseCommissionPercent,
         ownerBoostCommissionPercent,
+<<<<<<< HEAD
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
+=======
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> fad5f76 (start)
       });
     });
 

@@ -34,7 +34,7 @@ class SenderPaymentController extends Controller {
         );
       }
 
-      const amount = ownerPaymentCalculate(order.offerPrice, order.workerFee);
+      const amount = ownerPaymentCalculate(order.offerPrice, order.renterFee);
 
       const result = await createPaypalOrder(
         amount,
@@ -217,7 +217,7 @@ class SenderPaymentController extends Controller {
             senderId: order.ownerId,
           });
 
-        const worker = await this.userModel.getById(order.ownerId);
+        const renter = await this.userModel.getById(order.ownerId);
         const owner = await this.userModel.getById(order.ownerId);
 
         await this.sendSocketMessageToUserOpponent(
@@ -226,7 +226,7 @@ class SenderPaymentController extends Controller {
           "update-order-message",
           {
             message,
-            opponent: worker,
+            opponent: renter,
             orderPart: { id: orderId, status: newStatus },
           }
         );

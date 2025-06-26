@@ -42,10 +42,17 @@ class ChatModel extends Model {
 
   fullVisibleFieldsForAdmin = [
     ...this.fullVisibleFields,
+<<<<<<< HEAD
     "tenants.id as tenantId",
     "tenants.name as tenantName",
     "tenants.photo as tenantPhoto",
     "tenant_chats.id as tenantChatId",
+=======
+    "renters.id as renterId",
+    "renters.name as renterName",
+    "renters.photo as renterPhoto",
+    "renter_chats.id as renterChatId",
+>>>>>>> fad5f76 (start)
     "owners.id as ownerId",
     "owners.name as ownerName",
     "owners.photo as ownerPhoto",
@@ -72,7 +79,11 @@ class ChatModel extends Model {
 
   createForOrder = async ({
     ownerId,
+<<<<<<< HEAD
     tenantId,
+=======
+    renterId,
+>>>>>>> fad5f76 (start)
     orderInfo: {
       orderId,
       listingName,
@@ -80,6 +91,7 @@ class ChatModel extends Model {
       listingPhotoType,
       listingPhotoPath,
       offerFinishTime,
+      offerStartTime,
       description,
     },
   }) => {
@@ -89,19 +101,28 @@ class ChatModel extends Model {
       name: `Rental ${listingName}`,
     });
 
+<<<<<<< HEAD
     for (const userId of [ownerId, tenantId]) {
+=======
+    for (const userId of [ownerId, renterId]) {
+>>>>>>> fad5f76 (start)
       await chatRelationModel.create(chatId, userId);
     }
 
     return await chatMessageModel.createNewOrderMessage({
       chatId,
+<<<<<<< HEAD
       senderId: tenantId,
+=======
+      senderId: renterId,
+>>>>>>> fad5f76 (start)
       data: {
         listingName,
         offerPrice,
         listingPhotoType,
         listingPhotoPath,
         offerFinishTime,
+        offerStartTime,
         description,
       },
     });
@@ -434,10 +455,17 @@ class ChatModel extends Model {
         `${ORDER_TABLE}.id`
       )
       .leftJoin(
+<<<<<<< HEAD
         `${USER_TABLE} as tenants`,
         `tenants.id`,
         "=",
         `${ORDER_TABLE}.tenant_id`
+=======
+        `${USER_TABLE} as renters`,
+        `renters.id`,
+        "=",
+        `${ORDER_TABLE}.renter_id`
+>>>>>>> fad5f76 (start)
       )
       .leftJoin(
         LISTING_TABLE,
@@ -458,10 +486,17 @@ class ChatModel extends Model {
         `JOIN ${CHAT_RELATION_TABLE} as owner_chat_relations ON (owner_chat_relations.user_id = owners.id AND owner_chats.id = owner_chat_relations.chat_id)`
       )
       .joinRaw(
+<<<<<<< HEAD
         `JOIN ${CHAT_TABLE} as tenant_chats ON (tenant_chats.entity_id = ${DISPUTE_TABLE}.id AND tenant_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
       )
       .joinRaw(
         `JOIN ${CHAT_RELATION_TABLE} as tenant_chat_relations ON (tenant_chat_relations.user_id = tenants.id AND tenant_chats.id = tenant_chat_relations.chat_id)`
+=======
+        `JOIN ${CHAT_TABLE} as renter_chats ON (renter_chats.entity_id = ${DISPUTE_TABLE}.id AND renter_chats.entity_type = '${STATIC.CHAT_TYPES.DISPUTE}')`
+      )
+      .joinRaw(
+        `JOIN ${CHAT_RELATION_TABLE} as renter_chat_relations ON (renter_chat_relations.user_id = renters.id AND renter_chats.id = renter_chat_relations.chat_id)`
+>>>>>>> fad5f76 (start)
       );
 
     return this.messageJoin(query);
@@ -469,7 +504,11 @@ class ChatModel extends Model {
 
   baseChatListFilter = (builder, chatFilter) => {
     return builder
+<<<<<<< HEAD
       .whereILike(`tenants.name`, `%${chatFilter}%`)
+=======
+      .whereILike(`renters.name`, `%${chatFilter}%`)
+>>>>>>> fad5f76 (start)
       .orWhereILike(`owners.name`, `%${chatFilter}%`)
       .orWhereRaw(this.filterIdLikeString(chatFilter, `${DISPUTE_TABLE}.id`));
   };

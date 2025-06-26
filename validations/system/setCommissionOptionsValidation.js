@@ -29,11 +29,20 @@ module.exports = [
     fieldName: "Listing Owner Commission For Boost Position",
   }),
   ...validatePercent({
+<<<<<<< HEAD
     field: "tenantBaseCommissionPercent",
     fieldName: "Tenant Rent Commission",
   }),
   ...validatePercent({
     field: "tenantCancelFeePercent",
     fieldName: "Tenant Cancel Commission",
+=======
+    field: "renterBaseCommissionPercent",
+    fieldName: "Renter Rent Commission",
+  }),
+  ...validatePercent({
+    field: "renterCancelFeePercent",
+    fieldName: "Renter Cancel Commission",
+>>>>>>> fad5f76 (start)
   }),
 ];

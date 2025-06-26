@@ -13,7 +13,11 @@ module.exports = {
   orderUpdateRequestModel: require("./orderUpdateRequestModel"),
   senderPaymentModel: require("./senderPaymentModel"),
   recipientPaymentModel: require("./recipientPaymentModel"),
+<<<<<<< HEAD
   tenantCommentModel: require("./tenantCommentModel"),
+=======
+  renterCommentModel: require("./renterCommentModel"),
+>>>>>>> fad5f76 (start)
   ownerCommentModel: require("./ownerCommentModel"),
   userListingFavoriteModel: require("./userListingFavoriteModel"),
   disputeModel: require("./disputeModel"),

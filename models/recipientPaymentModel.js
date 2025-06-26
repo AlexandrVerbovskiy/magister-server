@@ -25,8 +25,12 @@ class RecipientPayment extends Model {
     `${ORDERS_TABLE}.price_per_day as offerPricePerDay`,
     `${ORDERS_TABLE}.start_date as offerStartDate`,
     `${ORDERS_TABLE}.end_date as offerEndDate`,
-    `${ORDERS_TABLE}.start_date as offerStartDate`,
+    `${ORDERS_TABLE}.status as orderStatus`,
+<<<<<<< HEAD
     `${ORDERS_TABLE}.tenant_fee as tenantFee`,
+=======
+    `${ORDERS_TABLE}.renter_fee as renterFee`,
+>>>>>>> fad5f76 (start)
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
@@ -46,11 +50,19 @@ class RecipientPayment extends Model {
     `owners.email as ownerEmail`,
     `owners.phone as ownerPhone`,
     `owners.photo as ownerPhoto`,
+<<<<<<< HEAD
     `tenants.id as tenantId`,
     `tenants.name as tenantName`,
     `tenants.email as tenantEmail`,
     `tenants.phone as tenantPhone`,
     `tenants.photo as tenantPhoto`,
+=======
+    `renters.id as renterId`,
+    `renters.name as renterName`,
+    `renters.email as renterEmail`,
+    `renters.phone as renterPhone`,
+    `renters.photo as renterPhoto`,
+>>>>>>> fad5f76 (start)
     `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
     `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
     `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -62,7 +74,11 @@ class RecipientPayment extends Model {
     ...this.strFilterFields,
     `${USERS_TABLE}.name`,
     `owners.name`,
+<<<<<<< HEAD
     `tenants.name`,
+=======
+    `renters.name`,
+>>>>>>> fad5f76 (start)
   ];
 
   orderFields = [
@@ -173,10 +189,17 @@ class RecipientPayment extends Model {
         `${LISTINGS_TABLE}.owner_id`
       )
       .join(
+<<<<<<< HEAD
         `${USERS_TABLE} as tenants`,
         `tenants.id`,
         "=",
         `${ORDERS_TABLE}.tenant_id`
+=======
+        `${USERS_TABLE} as renters`,
+        `renters.id`,
+        "=",
+        `${ORDERS_TABLE}.renter_id`
+>>>>>>> fad5f76 (start)
       );
 
   baseListStatusSelect = (query, status) => {
@@ -385,8 +408,18 @@ class RecipientPayment extends Model {
         "=",
         `${RECIPIENT_PAYMENTS_TABLE}.user_id`
       )
-      .where("status", STATIC.RECIPIENT_STATUSES.WAITING)
-      .where("type", STATIC.PAYMENT_TYPES.PAYPAL)
+      .join(
+        ORDERS_TABLE,
+        `${ORDERS_TABLE}.id`,
+        "=",
+        `${RECIPIENT_PAYMENTS_TABLE}.order_id`
+      )
+      .where(
+        `${RECIPIENT_PAYMENTS_TABLE}.status`,
+        STATIC.RECIPIENT_STATUSES.WAITING
+      )
+      .where(`${ORDERS_TABLE}.status`, STATIC.ORDER_STATUSES.FINISHED)
+      .where(`${RECIPIENT_PAYMENTS_TABLE}.type`, STATIC.PAYMENT_TYPES.PAYPAL)
       .select([
         `${RECIPIENT_PAYMENTS_TABLE}.id`,
         `${RECIPIENT_PAYMENTS_TABLE}.money`,
@@ -402,6 +435,7 @@ class RecipientPayment extends Model {
     const currentDate = separateDate(new Date());
 
     const res = await this.baseFullWaitingPaypalSelectQuery()
+      .where("planned_time", "<=", currentDate)
       .where("planned_time", "<=", currentDate)
       .limit(limit)
       .offset(start);

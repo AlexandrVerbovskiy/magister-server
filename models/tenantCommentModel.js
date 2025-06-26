@@ -3,17 +3,30 @@ const STATIC = require("../static");
 const BaseCommentModel = require("./BaseCommentModel");
 const db = require("../database");
 
+<<<<<<< HEAD:models/tenantCommentModel.js
 const TENANT_COMMENTS_TABLE = STATIC.TABLES.TENANT_COMMENTS;
+=======
+const RENTER_COMMENTS_TABLE = STATIC.TABLES.RENTER_COMMENTS;
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 
+<<<<<<< HEAD:models/tenantCommentModel.js
 class TenantCommentModel extends BaseCommentModel {
   type = "tenant";
   keyFieldName = `userId`;
   keyField = `${ORDERS_TABLE}.tenant_id`;
   reviewerIdField = `${LISTINGS_TABLE}.owner_id`;
   table = TENANT_COMMENTS_TABLE;
+=======
+class RenterCommentModel extends BaseCommentModel {
+  type = "renter";
+  keyFieldName = `userId`;
+  keyField = `${ORDERS_TABLE}.renter_id`;
+  reviewerIdField = `${LISTINGS_TABLE}.owner_id`;
+  table = RENTER_COMMENTS_TABLE;
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
 
   pointFields = [
     "care",
@@ -28,6 +41,7 @@ class TenantCommentModel extends BaseCommentModel {
   ];
 
   visibleFields = [
+<<<<<<< HEAD:models/tenantCommentModel.js
     `${TENANT_COMMENTS_TABLE}.id`,
     `${TENANT_COMMENTS_TABLE}.description`,
     `${TENANT_COMMENTS_TABLE}.leave_feedback as leaveFeedback`,
@@ -47,6 +61,27 @@ class TenantCommentModel extends BaseCommentModel {
     `${TENANT_COMMENTS_TABLE}.rejected_description as rejectedDescription`,
     `${TENANT_COMMENTS_TABLE}.created_at as createdAt`,
     `${TENANT_COMMENTS_TABLE}.order_id as orderId`,
+=======
+    `${RENTER_COMMENTS_TABLE}.id`,
+    `${RENTER_COMMENTS_TABLE}.description`,
+    `${RENTER_COMMENTS_TABLE}.leave_feedback as leaveFeedback`,
+
+    `${RENTER_COMMENTS_TABLE}.care`,
+    `${RENTER_COMMENTS_TABLE}.timeliness`,
+    `${RENTER_COMMENTS_TABLE}.responsiveness`,
+    `${RENTER_COMMENTS_TABLE}.clarity`,
+    `${RENTER_COMMENTS_TABLE}.usage_guidelines as usageGuidelines`,
+    `${RENTER_COMMENTS_TABLE}.terms_of_service as termsOfService`,
+    `${RENTER_COMMENTS_TABLE}.honesty`,
+    `${RENTER_COMMENTS_TABLE}.reliability`,
+    `${RENTER_COMMENTS_TABLE}.satisfaction`,
+
+    `${RENTER_COMMENTS_TABLE}.approved`,
+    `${RENTER_COMMENTS_TABLE}.waiting_admin as waitingAdmin`,
+    `${RENTER_COMMENTS_TABLE}.rejected_description as rejectedDescription`,
+    `${RENTER_COMMENTS_TABLE}.created_at as createdAt`,
+    `${RENTER_COMMENTS_TABLE}.order_id as orderId`,
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
 
     `reviewers.id as reviewerId`,
     `reviewers.name as reviewerName`,
@@ -63,8 +98,13 @@ class TenantCommentModel extends BaseCommentModel {
   strFilterFields = [`${USERS_TABLE}.name`, `reviewers.name`];
 
   orderFields = [
+<<<<<<< HEAD:models/tenantCommentModel.js
     `${TENANT_COMMENTS_TABLE}.id`,
     `${TENANT_COMMENTS_TABLE}.created_at`,
+=======
+    `${RENTER_COMMENTS_TABLE}.id`,
+    `${RENTER_COMMENTS_TABLE}.created_at`,
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
     `${USERS_TABLE}.name`,
     `reviewers.name`,
   ];
@@ -75,7 +115,11 @@ class TenantCommentModel extends BaseCommentModel {
         ORDERS_TABLE,
         `${ORDERS_TABLE}.id`,
         "=",
+<<<<<<< HEAD:models/tenantCommentModel.js
         `${TENANT_COMMENTS_TABLE}.order_id`
+=======
+        `${RENTER_COMMENTS_TABLE}.order_id`
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
       )
       .join(
         LISTINGS_TABLE,
@@ -93,7 +137,11 @@ class TenantCommentModel extends BaseCommentModel {
   };
 
   baseSelect = () => {
+<<<<<<< HEAD:models/tenantCommentModel.js
     let query = db(TENANT_COMMENTS_TABLE);
+=======
+    let query = db(RENTER_COMMENTS_TABLE);
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
     query = this.baseJoin(query);
     return query;
   };
@@ -103,7 +151,11 @@ class TenantCommentModel extends BaseCommentModel {
       USERS_TABLE,
       `${USERS_TABLE}.id`,
       "=",
+<<<<<<< HEAD:models/tenantCommentModel.js
       `${ORDERS_TABLE}.tenant_id`
+=======
+      `${ORDERS_TABLE}.renter_id`
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
     );
   };
 
@@ -121,7 +173,11 @@ class TenantCommentModel extends BaseCommentModel {
     reliability,
     satisfaction,
   }) => {
+<<<<<<< HEAD:models/tenantCommentModel.js
     const res = await db(TENANT_COMMENTS_TABLE)
+=======
+    const res = await db(RENTER_COMMENTS_TABLE)
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
       .insert({
         description,
         leave_feedback: leaveFeedback,
@@ -143,6 +199,7 @@ class TenantCommentModel extends BaseCommentModel {
   };
 
   getBaseUserStatisticQuery = () => {
+<<<<<<< HEAD:models/tenantCommentModel.js
     let query = db(TENANT_COMMENTS_TABLE)
       .select([
         `${USERS_TABLE}.id`,
@@ -175,13 +232,51 @@ class TenantCommentModel extends BaseCommentModel {
             + AVG(${TENANT_COMMENTS_TABLE}.usage_guidelines) + AVG(${TENANT_COMMENTS_TABLE}.terms_of_service)
             + AVG(${TENANT_COMMENTS_TABLE}.reliability) + AVG(${TENANT_COMMENTS_TABLE}.honesty)
              + AVG(${TENANT_COMMENTS_TABLE}.satisfaction)
+=======
+    let query = db(RENTER_COMMENTS_TABLE)
+      .select([
+        `${USERS_TABLE}.id`,
+        db.raw(`COUNT(${RENTER_COMMENTS_TABLE}.id) AS "commentCount"`),
+
+        db.raw(`AVG(${RENTER_COMMENTS_TABLE}.care) AS "averageCare"`),
+        db.raw(
+          `AVG(${RENTER_COMMENTS_TABLE}.timeliness) AS "averageTimeliness"`
+        ),
+        db.raw(
+          `AVG(${RENTER_COMMENTS_TABLE}.responsiveness) AS "averageResponsiveness"`
+        ),
+        db.raw(`AVG(${RENTER_COMMENTS_TABLE}.clarity) AS "averageClarity"`),
+        db.raw(
+          `AVG(${RENTER_COMMENTS_TABLE}.usage_guidelines) AS "averageUsageGuidelines"`
+        ),
+        db.raw(
+          `AVG(${RENTER_COMMENTS_TABLE}.terms_of_service) AS "averageTermsOfService"`
+        ),
+        db.raw(`AVG(${RENTER_COMMENTS_TABLE}.honesty) AS "averageHonesty"`),
+        db.raw(
+          `AVG(${RENTER_COMMENTS_TABLE}.reliability) AS "averageReliability"`
+        ),
+        db.raw(
+          `AVG(${RENTER_COMMENTS_TABLE}.satisfaction) AS "averageSatisfaction"`
+        ),
+        db.raw(`(
+            AVG(${RENTER_COMMENTS_TABLE}.care) + AVG(${RENTER_COMMENTS_TABLE}.timeliness)
+            + AVG(${RENTER_COMMENTS_TABLE}.responsiveness) + AVG(${RENTER_COMMENTS_TABLE}.clarity)
+            + AVG(${RENTER_COMMENTS_TABLE}.usage_guidelines) + AVG(${RENTER_COMMENTS_TABLE}.terms_of_service)
+            + AVG(${RENTER_COMMENTS_TABLE}.reliability) + AVG(${RENTER_COMMENTS_TABLE}.honesty)
+             + AVG(${RENTER_COMMENTS_TABLE}.satisfaction)
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
             ) / 9 AS "averageRating"`),
       ])
       .join(
         ORDERS_TABLE,
         `${ORDERS_TABLE}.id`,
         "=",
+<<<<<<< HEAD:models/tenantCommentModel.js
         `${TENANT_COMMENTS_TABLE}.order_id`
+=======
+        `${RENTER_COMMENTS_TABLE}.order_id`
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
       );
 
     query = this.getBaseUserStatisticQueryJoin(query);
@@ -189,8 +284,13 @@ class TenantCommentModel extends BaseCommentModel {
     return query
       .where(`${USERS_TABLE}.verified`, true)
       .where(`${USERS_TABLE}.active`, true)
+<<<<<<< HEAD:models/tenantCommentModel.js
       .where(`${TENANT_COMMENTS_TABLE}.approved`, true)
       .where(`${TENANT_COMMENTS_TABLE}.waiting_admin`, false)
+=======
+      .where(`${RENTER_COMMENTS_TABLE}.approved`, true)
+      .where(`${RENTER_COMMENTS_TABLE}.waiting_admin`, false)
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
       .groupBy([`${USERS_TABLE}.id`]);
   };
 
@@ -222,4 +322,8 @@ class TenantCommentModel extends BaseCommentModel {
   };
 }
 
+<<<<<<< HEAD:models/tenantCommentModel.js
 module.exports = new TenantCommentModel();
+=======
+module.exports = new RenterCommentModel();
+>>>>>>> fad5f76 (start):models/workerCommentModel.js
