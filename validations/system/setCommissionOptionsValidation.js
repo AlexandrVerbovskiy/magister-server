@@ -31,6 +31,7 @@ module.exports = [
   ...validatePercent({
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     field: "tenantBaseCommissionPercent",
     fieldName: "Tenant Rent Commission",
   }),
@@ -50,5 +51,13 @@ module.exports = [
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+    field: "renterBaseCommissionPercent",
+    fieldName: "Renter Rent Commission",
+  }),
+  ...validatePercent({
+    field: "renterCancelFeePercent",
+    fieldName: "Renter Cancel Commission",
+>>>>>>> 2cdae2d (start)
   }),
 ];

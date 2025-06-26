@@ -555,6 +555,7 @@ class UserController extends Controller {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     users = await this.tenantCommentModel.bindAverageForKeyEntities(
       users,
       "id",
@@ -574,6 +575,14 @@ class UserController extends Controller {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+    users = await this.renterCommentModel.bindAverageForKeyEntities(
+      users,
+      "id",
+      {
+        commentCountName: "renterCommentCount",
+        averageRatingName: "renterAverageRating",
+>>>>>>> 2cdae2d (start)
       }
     );
 
@@ -586,6 +595,7 @@ class UserController extends Controller {
       }
     );
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     users = await this.disputeModel.bindTenantsCounts(
@@ -609,6 +619,15 @@ class UserController extends Controller {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+    users = await this.disputeModel.bindRentersCounts(
+      users,
+      "id",
+      "renterDisputesCount"
+    );
+
+    users = await this.disputeModel.bindRentersCounts(
+>>>>>>> 2cdae2d (start)
       users,
       "id",
       "ownerDisputesCount"

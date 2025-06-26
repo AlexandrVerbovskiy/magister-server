@@ -28,6 +28,7 @@ class RecipientPayment extends Model {
     `${ORDERS_TABLE}.status as orderStatus`,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     `${ORDERS_TABLE}.tenant_fee as tenantFee`,
 =======
     `${ORDERS_TABLE}.renter_fee as renterFee`,
@@ -35,6 +36,9 @@ class RecipientPayment extends Model {
 =======
     `${ORDERS_TABLE}.renter_fee as renterFee`,
 >>>>>>> 45e89f9 (start)
+=======
+    `${ORDERS_TABLE}.renter_fee as renterFee`,
+>>>>>>> 2cdae2d (start)
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     "last_tried_at as lastTriedAt",
     `${RECIPIENT_PAYMENTS_TABLE}.created_at as createdAt`,
@@ -56,6 +60,7 @@ class RecipientPayment extends Model {
     `owners.photo as ownerPhoto`,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     `tenants.id as tenantId`,
     `tenants.name as tenantName`,
     `tenants.email as tenantEmail`,
@@ -64,15 +69,20 @@ class RecipientPayment extends Model {
 =======
 =======
 >>>>>>> 45e89f9 (start)
+=======
+>>>>>>> 2cdae2d (start)
     `renters.id as renterId`,
     `renters.name as renterName`,
     `renters.email as renterEmail`,
     `renters.phone as renterPhone`,
     `renters.photo as renterPhoto`,
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+>>>>>>> 2cdae2d (start)
     `${RECIPIENT_PAYMENTS_TABLE}.type as type`,
     `${RECIPIENT_PAYMENTS_TABLE}.data as data`,
     `${RECIPIENT_PAYMENTS_TABLE}.failed_description as failedDescription`,
@@ -86,6 +96,7 @@ class RecipientPayment extends Model {
     `owners.name`,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     `tenants.name`,
 =======
     `renters.name`,
@@ -93,6 +104,9 @@ class RecipientPayment extends Model {
 =======
     `renters.name`,
 >>>>>>> 45e89f9 (start)
+=======
+    `renters.name`,
+>>>>>>> 2cdae2d (start)
   ];
 
   orderFields = [
@@ -205,6 +219,7 @@ class RecipientPayment extends Model {
       .join(
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         `${USERS_TABLE} as tenants`,
         `tenants.id`,
         "=",
@@ -221,6 +236,12 @@ class RecipientPayment extends Model {
         "=",
         `${ORDERS_TABLE}.renter_id`
 >>>>>>> 45e89f9 (start)
+=======
+        `${USERS_TABLE} as renters`,
+        `renters.id`,
+        "=",
+        `${ORDERS_TABLE}.renter_id`
+>>>>>>> 2cdae2d (start)
       );
 
   baseListStatusSelect = (query, status) => {

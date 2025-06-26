@@ -33,7 +33,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.radius`,
     `${LISTINGS_TABLE}.background_photo`,
     `${LISTINGS_TABLE}.price`,
-    `${LISTINGS_TABLE}.finish_time`,
   ];
 
   visibleFields = [
@@ -53,7 +52,6 @@ class ListingsModel extends Model {
     `${LISTINGS_TABLE}.lng as lng`,
     `${LISTINGS_TABLE}.radius as radius`,
     `${LISTINGS_TABLE}.price as price`,
-    `${LISTINGS_TABLE}.finish_time as finishTime`,
   ];
 
   fullVisibleFields = [
@@ -149,7 +147,6 @@ class ListingsModel extends Model {
     otherCategory = null,
     otherCategoryParentId = null,
     price,
-    finishTime,
   }) => {
     const res = await db(LISTINGS_TABLE)
       .insert({
@@ -169,7 +166,6 @@ class ListingsModel extends Model {
         other_category: otherCategory,
         other_category_parent_id: otherCategoryParentId,
         price: price,
-        finish_time: finishTime,
       })
       .returning("id");
 
@@ -292,7 +288,6 @@ class ListingsModel extends Model {
     otherCategory = null,
     otherCategoryParentId = null,
     price,
-    finishTime,
   }) => {
     const updateData = {
       name,
@@ -310,7 +305,6 @@ class ListingsModel extends Model {
       other_category: otherCategory,
       other_category_parent_id: otherCategoryParentId,
       price,
-      finish_time: finishTime,
     };
 
     if (backgroundPhoto) {
@@ -692,24 +686,24 @@ class ListingsModel extends Model {
     return +result?.count;
   };
 
-  bindWorkerListCountListings = async (
+  bindRenterListCountListings = async (
     entities,
     key = "id",
-    resultKey = "workerCountItems"
+    resultKey = "renterCountItems"
   ) => {
     const userIds = entities.map((entity) => entity[key]);
 
     const countInfos = await db(ORDERS_TABLE)
-      .select("worker_id as workerId")
+      .select("renter_id as renterId")
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
-      .whereIn("worker_id", userIds)
-      .groupBy("worker_id");
+      .whereIn("renter_id", userIds)
+      .groupBy("renter_id");
 
     entities.forEach((entity, index) => {
       entities[index][resultKey] = 0;
 
       countInfos.forEach((countInfo) => {
-        if (entities[index] === countInfo["workerId"]) {
+        if (entities[index] === countInfo["renterId"]) {
           entities[index][resultKey] = countInfo["count"];
         }
       });
@@ -718,9 +712,9 @@ class ListingsModel extends Model {
     return entities;
   };
 
-  getWorkerCountListings = async (userId) => {
+  getRenterCountListings = async (userId) => {
     const result = await db(ORDERS_TABLE)
-      .where({ worker_id: userId })
+      .where({ renter_id: userId })
       .where({ status: STATIC.ORDER_STATUSES.FINISHED })
       .countDistinct(`${ORDERS_TABLE}.listing_id as count`)
       .first();

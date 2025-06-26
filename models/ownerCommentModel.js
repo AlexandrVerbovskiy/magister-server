@@ -14,6 +14,7 @@ class OwnerCommentModel extends BaseCommentModel {
   keyField = `${LISTINGS_TABLE}.owner_id`;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   reviewerIdField = `${ORDERS_TABLE}.tenant_id`;
 =======
   reviewerIdField = `${ORDERS_TABLE}.renter_id`;
@@ -21,6 +22,9 @@ class OwnerCommentModel extends BaseCommentModel {
 =======
   reviewerIdField = `${ORDERS_TABLE}.renter_id`;
 >>>>>>> 45e89f9 (start)
+=======
+  reviewerIdField = `${ORDERS_TABLE}.renter_id`;
+>>>>>>> 2cdae2d (start)
   table = OWNER_COMMENTS_TABLE;
 
   pointFields = [

@@ -3,6 +3,7 @@ const router = Router();
 const { isAuth, isSupport } = require("../../middlewares");
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 const TenantCommentController = require("../../controllers/TenantCommentController");
 =======
 const RenterCommentController = require("../../controllers/RenterCommentController");
@@ -10,10 +11,14 @@ const RenterCommentController = require("../../controllers/RenterCommentControll
 =======
 const RenterCommentController = require("../../controllers/RenterCommentController");
 >>>>>>> 45e89f9 (start)
+=======
+const RenterCommentController = require("../../controllers/RenterCommentController");
+>>>>>>> 2cdae2d (start)
 const OwnerCommentController = require("../../controllers/OwnerCommentController");
 const {
   commentListValidation,
   createOwnerCommentValidation,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   createTenantCommentValidation,
@@ -23,12 +28,16 @@ const {
 =======
   createRenterCommentValidation,
 >>>>>>> 45e89f9 (start)
+=======
+  createRenterCommentValidation,
+>>>>>>> 2cdae2d (start)
   commentRejectValidation,
   commentApproveValidation,
 } = require("../../validations/comments");
 
 module.exports = (io) => {
   const ownerCommentController = new OwnerCommentController(io);
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   const tenantCommentController = new TenantCommentController(io);
@@ -38,6 +47,9 @@ module.exports = (io) => {
 =======
   const renterCommentController = new RenterCommentController(io);
 >>>>>>> 45e89f9 (start)
+=======
+  const renterCommentController = new RenterCommentController(io);
+>>>>>>> 2cdae2d (start)
 
   router.post(
     "/create-owner-review",
@@ -47,6 +59,7 @@ module.exports = (io) => {
   );
 
   router.post(
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     "/create-tenant-review",
@@ -80,6 +93,20 @@ module.exports = (io) => {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+    "/create-renter-review",
+    isAuth,
+    createRenterCommentValidation,
+    renterCommentController.createComment
+  );
+
+  router.post(
+    "/renter-list",
+    isAuth,
+    isSupport,
+    commentListValidation,
+    renterCommentController.commentList
+>>>>>>> 2cdae2d (start)
   );
 
   router.post(
@@ -91,6 +118,7 @@ module.exports = (io) => {
   );
 
   router.post(
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     "/tenant-approve",
@@ -110,6 +138,13 @@ module.exports = (io) => {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+    "/renter-approve",
+    isAuth,
+    isSupport,
+    commentApproveValidation,
+    renterCommentController.approve
+>>>>>>> 2cdae2d (start)
   );
 
   router.post(
@@ -121,6 +156,7 @@ module.exports = (io) => {
   );
 
   router.post(
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     "/tenant-reject",
@@ -140,6 +176,13 @@ module.exports = (io) => {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+    "/renter-reject",
+    isAuth,
+    isSupport,
+    commentRejectValidation,
+    renterCommentController.reject
+>>>>>>> 2cdae2d (start)
   );
 
   router.post(

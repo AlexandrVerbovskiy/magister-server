@@ -15,6 +15,7 @@ module.exports = {
   recipientPaymentModel: require("./recipientPaymentModel"),
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   tenantCommentModel: require("./tenantCommentModel"),
 =======
   renterCommentModel: require("./renterCommentModel"),
@@ -22,6 +23,9 @@ module.exports = {
 =======
   renterCommentModel: require("./renterCommentModel"),
 >>>>>>> 45e89f9 (start)
+=======
+  renterCommentModel: require("./renterCommentModel"),
+>>>>>>> 2cdae2d (start)
   ownerCommentModel: require("./ownerCommentModel"),
   userListingFavoriteModel: require("./userListingFavoriteModel"),
   disputeModel: require("./disputeModel"),

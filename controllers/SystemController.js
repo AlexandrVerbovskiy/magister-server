@@ -16,6 +16,7 @@ class SystemController extends Controller {
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
@@ -26,6 +27,10 @@ class SystemController extends Controller {
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> 45e89f9 (start)
+=======
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> 2cdae2d (start)
       } = req.body;
 
       await this.systemOptionModel.setOptions({
@@ -33,6 +38,7 @@ class SystemController extends Controller {
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
@@ -43,6 +49,10 @@ class SystemController extends Controller {
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> 45e89f9 (start)
+=======
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> 2cdae2d (start)
       });
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -50,6 +60,7 @@ class SystemController extends Controller {
         ownerBoostCommissionPercent,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         tenantBaseCommissionPercent,
         tenantCancelFeePercent,
 =======
@@ -60,6 +71,10 @@ class SystemController extends Controller {
         renterBaseCommissionPercent,
         renterCancelFeePercent,
 >>>>>>> 45e89f9 (start)
+=======
+        renterBaseCommissionPercent,
+        renterCancelFeePercent,
+>>>>>>> 2cdae2d (start)
       });
     });
 

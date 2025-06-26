@@ -36,6 +36,7 @@ class DisputeController extends Controller {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     disputes = await this.tenantCommentModel.bindAverageForKeyEntities(
       disputes,
       "tenantId",
@@ -55,6 +56,14 @@ class DisputeController extends Controller {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+    disputes = await this.renterCommentModel.bindAverageForKeyEntities(
+      disputes,
+      "renterId",
+      {
+        commentCountName: "renterCommentCount",
+        averageRatingName: "renterAverageRating",
+>>>>>>> 2cdae2d (start)
       }
     );
 
@@ -80,6 +89,7 @@ class DisputeController extends Controller {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       const tenantId = +order.tenantId;
       const ownerId = +order.ownerId;
 
@@ -103,6 +113,16 @@ class DisputeController extends Controller {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+      const renterId = +order.renterId;
+      const ownerId = +order.ownerId;
+
+      const isOwnerCreatedDispute = userId == ownerId;
+      const isRenterCreatedDispute = userId == renterId;
+
+      if (
+        (!isRenterCreatedDispute && !isOwnerCreatedDispute) ||
+>>>>>>> 2cdae2d (start)
         order.cancelStatus == STATIC.ORDER_CANCELATION_STATUSES.CANCELLED ||
         ![
           STATIC.ORDER_STATUSES.PENDING_ITEM_TO_TENANT,
@@ -126,6 +146,7 @@ class DisputeController extends Controller {
         ? order.ownerName
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         : order.tenantName;
 =======
         : order.renterName;
@@ -133,10 +154,14 @@ class DisputeController extends Controller {
 =======
         : order.renterName;
 >>>>>>> 45e89f9 (start)
+=======
+        : order.renterName;
+>>>>>>> 2cdae2d (start)
 
       const createdMessages = await this.chatModel.createForDispute({
         orderId,
         disputeId,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         userIds: [tenantId, ownerId],
@@ -146,10 +171,14 @@ class DisputeController extends Controller {
 =======
         userIds: [renterId, ownerId],
 >>>>>>> 45e89f9 (start)
+=======
+        userIds: [renterId, ownerId],
+>>>>>>> 2cdae2d (start)
         data: { senderId: userId, senderName, description, type },
       });
 
       if (isOwnerCreatedDispute) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         await this.sendSocketMessageToUser(tenantId, "get-message", {
@@ -171,12 +200,21 @@ class DisputeController extends Controller {
 >>>>>>> fad5f76 (start)
 =======
 >>>>>>> 45e89f9 (start)
+=======
+        await this.sendSocketMessageToUser(renterId, "get-message", {
+          message: createdMessages[renterId],
+        });
+      }
+
+      if (isRenterCreatedDispute) {
+>>>>>>> 2cdae2d (start)
         await this.sendSocketMessageToUser(ownerId, "get-message", {
           message: createdMessages[ownerId],
         });
       }
 
       const ownerDisputeChatId = createdMessages[ownerId].chatId;
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       const tenantDisputeChatId = createdMessages[tenantId].chatId;
@@ -186,6 +224,9 @@ class DisputeController extends Controller {
 =======
       const renterDisputeChatId = createdMessages[renterId].chatId;
 >>>>>>> 45e89f9 (start)
+=======
+      const renterDisputeChatId = createdMessages[renterId].chatId;
+>>>>>>> 2cdae2d (start)
 
       const { chatMessage } = await this.createAndSendMessageForUpdatedOrder({
         chatId: order.chatId,
@@ -201,6 +242,7 @@ class DisputeController extends Controller {
           disputeChatId: isOwnerCreatedDispute
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             ? tenantDisputeChatId
 =======
             ? renterDisputeChatId
@@ -208,6 +250,9 @@ class DisputeController extends Controller {
 =======
             ? renterDisputeChatId
 >>>>>>> 45e89f9 (start)
+=======
+            ? renterDisputeChatId
+>>>>>>> 2cdae2d (start)
             : ownerDisputeChatId,
         },
       });
@@ -230,6 +275,7 @@ class DisputeController extends Controller {
             ? ownerDisputeChatId
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             : tenantDisputeChatId,
           extendOrders: parentOrderExtensions,
 =======
@@ -238,6 +284,9 @@ class DisputeController extends Controller {
 =======
             : renterDisputeChatId,
 >>>>>>> 45e89f9 (start)
+=======
+            : renterDisputeChatId,
+>>>>>>> 2cdae2d (start)
         },
       });
     });
