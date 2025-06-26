@@ -54,8 +54,6 @@ const {
   chatRelationModel,
   socketModel,
   activeActionModel,
-  relationModel,
-  disputePredictionModel
 } = require("../models");
 
 const STATIC = require("../static");
@@ -103,9 +101,6 @@ class Controller {
     this.chatRelationModel = chatRelationModel;
 
     this.socketModel = socketModel;
-    this.relationModel = relationModel;
-
-    this.disputePredictionModel = disputePredictionModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -114,6 +109,7 @@ class Controller {
         pass: process.env.MAIL_PASSWORD,
       },
     });
+
 
     this.mailTransporter.use(
       "compile",
@@ -530,21 +526,21 @@ class Controller {
     let toTime = null;
 
     if (timeFilterType === "last-week") {
-      const { startDate, finishDate } = getStartAndEndOfLastWeek(clientTime);
+      const { startDate, endDate } = getStartAndEndOfLastWeek(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     } else if (timeFilterType === "last-month") {
-      const { startDate, finishDate } = getStartAndEndOfLastMonth(clientTime);
+      const { startDate, endDate } = getStartAndEndOfLastMonth(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     } else if (timeFilterType === "last-year") {
-      const { startDate, finishDate } = getStartAndEndOfLastYear(clientTime);
+      const { startDate, endDate } = getStartAndEndOfLastYear(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     } else {
-      const { startDate, finishDate } = getStartAndEndOfYesterday(clientTime);
+      const { startDate, endDate } = getStartAndEndOfYesterday(clientTime);
       fromTime = startDate;
-      toTime = finishDate;
+      toTime = endDate;
     }
 
     const serverFromTime = adaptClientTimeToServer(
