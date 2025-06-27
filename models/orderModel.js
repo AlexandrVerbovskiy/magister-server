@@ -2,7 +2,7 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
-const { formatDateToSQLFormat } = require("../utils");
+const { formatDateToSQLFormat, separateDate } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
 
@@ -1048,7 +1048,7 @@ class OrderModel extends Model {
       )
       .whereIn('listing_id', listingIds)
       .whereRaw(
-        `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_end_date >= ?) OR (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND end_date >= ? ))`, // Filter by the end date of the orders
+        `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time >= ?) OR (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND finish_time >= ? ))`, // Filter by the end date of the orders
         [currentDate, currentDate],
       )
       .where(function () {
@@ -1071,11 +1071,11 @@ class OrderModel extends Model {
       })
       .select([
         `${ORDERS_TABLE}.id`,
-        'start_date as offerStartDate',
-        'end_date as offerEndDate',
+        'start_time as offerStartDate',
+        'finish_time as offerFinishTime',
         'listing_id as listingId',
-        'new_end_date as newEndDate',
-        'new_start_date as newStartDate',
+        'new_finish_time as newFinishTime',
+        'new_start_time as newStartDate',
       ]);
 
     const listingBlockedDates = {};
