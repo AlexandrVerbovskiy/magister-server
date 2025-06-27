@@ -115,6 +115,9 @@ module.exports = {
     FINISHED: "finished",
     REJECTED: "rejected",
   },
+  ORDER_CANCEL_STATUSES: {
+    CANCELLED: "cancelled",
+  },
   ORDER_CANCELATION_STATUSES: {
     WAITING_OWNER_APPROVE: "waiting_owner_approve",
     WAITING_RENTER_APPROVE: "waiting_renter_approve",
