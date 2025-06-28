@@ -1,12 +1,15 @@
-const { getFactOrderDays } = require("./dateHelpers");
 const STATIC = require("../static");
+const { getFactOrderDays } = require("./dateHelpers");
+
+const getPriceByDays = (pricePerDay, startDate, finishDate) =>
+  getFactOrderDays(startDate, finishDate) * pricePerDay;
 
 const paymentFeeCalculate = (price, fee) => {
   const resPayment = (fee * price) / 100;
   return +resPayment.toFixed(2);
 };
 
-const renterGetsFeeCalculate = (price, fee) => {
+const renterPaysFeeCalculate = (price, fee) => {
   const result = paymentFeeCalculate(price, fee);
 
   if (result < STATIC.LIMITS.MIN_RENTER_COMMISSION) {
@@ -16,7 +19,7 @@ const renterGetsFeeCalculate = (price, fee) => {
   return result;
 };
 
-const ownerPaymentFeeCalculate = (price, fee) => {
+const ownerEarnFeeCalculate = (price, fee) => {
   const result = paymentFeeCalculate(price, fee);
 
   if (result < STATIC.LIMITS.MIN_OWNER_COMMISSION) {
@@ -26,19 +29,20 @@ const ownerPaymentFeeCalculate = (price, fee) => {
   return result;
 };
 
-const renterGetsCalculate = (price, fee) => {
-  const resPayment = price - renterGetsFeeCalculate(price, fee);
+const renterPaysCalculate = (price, fee) => {
+  const resPayment = price + renterPaysFeeCalculate(price, fee);
   return +resPayment.toFixed(2);
 };
 
-const ownerPaymentCalculate = (price, fee) => {
-  const resPayment = price + ownerPaymentFeeCalculate(price, fee);
+const ownerEarnCalculate = (price, fee) => {
+  const resPayment = price = ownerEarnFeeCalculate(price, fee);
   return +resPayment.toFixed(2);
 };
 
 module.exports = {
-  renterGetsCalculate,
-  ownerPaymentCalculate,
-  renterGetsFeeCalculate,
-  ownerPaymentFeeCalculate,
+  renterPaysCalculate,
+  ownerEarnCalculate,
+  renterPaysFeeCalculate,
+  ownerEarnFeeCalculate,
+  getPriceByDays,
 };
