@@ -456,7 +456,7 @@ class MainController extends Controller {
       if (
         order.cancelStatus ||
         order.disputeStatus ||
-        order.status != STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT
+        order.status != STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
@@ -954,7 +954,7 @@ class MainController extends Controller {
         ),
       (info) => {
         const sum =
-          getFactOrderDays(info.startDate, info.endDate) * info.pricePerDay;
+          getFactOrderDays(info.startDate, info.finishDate) * info.pricePerDay;
         transactionsDetailInfo[info.type].amount += sum;
         transactionsDetailInfo[info.type].count += 1;
         return sum;
@@ -1112,7 +1112,7 @@ class MainController extends Controller {
         ),
       (info) => {
         const sum =
-          getFactOrderDays(info.startDate, info.endDate) * info.pricePerDay;
+          getFactOrderDays(info.startDate, info.finishDate) * info.pricePerDay;
         transactionsDetailInfo[info.type].amount += sum;
         transactionsDetailInfo[info.type].count += 1;
         return sum;
@@ -1374,7 +1374,7 @@ class MainController extends Controller {
       const getOrderByRequest = async () => {
         const order = await this.orderModel.getFullWithCommentsById(id, userId);
 
-        return order?.status == STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT
+        return order?.status == STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT
           ? order
           : null;
       };

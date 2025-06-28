@@ -2,8 +2,9 @@ const STATIC = require("../static");
 const {
   getPaypalOrderInfo,
   capturePaypalOrder,
-  ownerPaymentCalculate,
   invoicePdfGeneration,
+  getPriceByDays,
+  renterPaysCalculate,
 } = require("../utils");
 const Controller = require("./Controller");
 const fs = require("fs");
@@ -39,7 +40,7 @@ class OrderController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
       }
 
-      if (order.status === STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT) {
+      if (order.status === STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT) {
         order["payedInfo"] = await this.senderPaymentModel.getInfoByOrderId(
           order.id
         );
@@ -49,8 +50,8 @@ class OrderController extends Controller {
     });
 
   baseCreate = async ({
-    finishTime,
-    startTime,
+    finishDate,
+    startDate,
     price,
     listingId,
     renterId,
@@ -73,8 +74,8 @@ class OrderController extends Controller {
 
     const orderId = await this.orderModel.create({
       price,
-      finishTime,
-      startTime,
+      finishDate,
+      startDate,
       listingId,
       renterId,
       ownerFee: ownerFee,
@@ -84,19 +85,19 @@ class OrderController extends Controller {
     return {
       error: null,
       orderId,
-      finishTime,
-      startTime,
+      finishDate,
+      startDate,
       price,
     };
   };
 
   baseCreateWithMessageSend = async (req, needReturnMessage = false) => {
-    const { finishTime, startTime, price, listingId, message } = req.body;
+    const { finishDate, startDate, price, listingId, message } = req.body;
     const renterId = req.userData.userId;
 
     const result = await this.baseCreate({
-      finishTime,
-      startTime,
+      finishDate,
+      startDate,
       price,
       listingId,
       renterId,
@@ -134,8 +135,8 @@ class OrderController extends Controller {
         orderId: createdOrderId,
         listingName: listing.name,
         offerPrice: result.price,
-        offerFinishTime: result.finishTime,
-        offerStartTime: result.startTime,
+        offerFinishDate: result.finishDate,
+        offerStartDate: result.startDate,
         listingPhotoPath: firstImage?.link,
         listingPhotoType: firstImage?.type,
         description: message,
@@ -384,11 +385,11 @@ class OrderController extends Controller {
       const orderPart = {};
 
       if (lastUpdateRequestInfo) {
-        orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
-        orderPart["startTime"] = lastUpdateRequestInfo.newStartTime;
+        orderPart["finishDate"] = lastUpdateRequestInfo.newFinishDate;
+        orderPart["startDate"] = lastUpdateRequestInfo.newStartDate;
         orderPart["price"] = lastUpdateRequestInfo.newPrice;
-        orderPart["prevFinishTime"] = order.offerFinishTime;
-        orderPart["prevStartTime"] = order.offerStartTime;
+        orderPart["prevFinishDate"] = order.offerFinishDate;
+        orderPart["prevStartDate"] = order.offerStartDate;
         orderPart["prevPrice"] = order.offerPrice;
 
         await this.orderModel.acceptUpdateRequest(id, orderPart);
@@ -397,7 +398,7 @@ class OrderController extends Controller {
         await this.orderModel.acceptOrder(id);
       }
 
-      const newStatus = STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT;
+      const newStatus = STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT;
 
       let chatId = order.chatId;
       let createMessageFunc = this.chatMessageModel.createAcceptedOrderMessage;
@@ -440,7 +441,7 @@ class OrderController extends Controller {
       !(
         !order.paymentInfo?.waitingApproved &&
         [
-          STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
+          STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT,
           STATIC.ORDER_STATUSES.PENDING_RENTER,
           STATIC.ORDER_STATUSES.PENDING_OWNER,
         ].includes(order.status)
@@ -467,11 +468,11 @@ class OrderController extends Controller {
     const orderPart = {};
 
     if (lastUpdateRequestInfo) {
-      orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
-      orderPart["startTime"] = lastUpdateRequestInfo.newStartTime;
+      orderPart["finishDate"] = lastUpdateRequestInfo.newFinishDate;
+      orderPart["startDate"] = lastUpdateRequestInfo.newStartDate;
       orderPart["price"] = lastUpdateRequestInfo.newPrice;
-      orderPart["prevFinishTime"] = order.offerFinishTime;
-      orderPart["prevStartTime"] = order.offerStartTime;
+      orderPart["prevFinishDate"] = order.offerFinishDate;
+      orderPart["prevStartDate"] = order.offerStartDate;
       orderPart["prevPrice"] = order.offerPrice;
     }
 
@@ -565,9 +566,9 @@ class OrderController extends Controller {
       const orderId = payment.orderId;
 
       if (
-        payment.ownerId != userId ||
+        payment.renterId != userId ||
         payment.disputeStatus ||
-        payment.orderStatus !== STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT
+        payment.orderStatus !== STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT
       ) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
@@ -628,7 +629,7 @@ class OrderController extends Controller {
     if (
       order.cancelStatus ||
       order.disputeStatus ||
-      order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT ||
+      order.status !== STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT ||
       (order.payedId && order.payedType == STATIC.PAYMENT_TYPES.PAYPAL) ||
       order.payedAdminApproved
     ) {
@@ -644,11 +645,13 @@ class OrderController extends Controller {
       "paymentProofs"
     );
 
-    const money = ownerPaymentCalculate(
-      order.offerStartDate,
-      order.offerEndDate,
-      order.renterFee,
-      order.offerPrice
+    const money = renterPaysCalculate(
+      getPriceByDays(
+        order.offerPrice,
+        order.offerStartDate,
+        order.offerFinishDate
+      ),
+      order.renterFee
     );
 
     let type = "created";
@@ -757,11 +760,11 @@ class OrderController extends Controller {
     const orderPart = {};
 
     if (lastUpdateRequestInfo) {
-      orderPart["finishTime"] = lastUpdateRequestInfo.newFinishTime;
-      orderPart["startTime"] = lastUpdateRequestInfo.newStartTime;
+      orderPart["finishDate"] = lastUpdateRequestInfo.newFinishDate;
+      orderPart["startDate"] = lastUpdateRequestInfo.newStartDate;
       orderPart["price"] = lastUpdateRequestInfo.newPrice;
-      orderPart["prevFinishTime"] = orderInfo.offerFinishTime;
-      orderPart["prevStartTime"] = orderInfo.offerStartTime;
+      orderPart["prevFinishDate"] = orderInfo.offerFinishDate;
+      orderPart["prevStartDate"] = orderInfo.offerStartDate;
       orderPart["prevPrice"] = orderInfo.offerPrice;
     }
 
@@ -803,8 +806,9 @@ class OrderController extends Controller {
       status,
       cancelStatus,
       offerStartDate,
-      offerEndDate,
+      offerFinishDate,
       renterFee,
+      offerPrice
     } = orderInfo;
 
     if (renterId != userId || orderInfo.disputeStatus) {
@@ -848,9 +852,8 @@ class OrderController extends Controller {
       };
     }
 
-    const factPrice = ownerPaymentCalculate(
-      offerStartDate,
-      offerEndDate,
+    const factPrice = renterPaysCalculate(
+      getPriceByDays(offerPrice, offerStartDate, offerFinishDate),
       renterFee
     );
 
@@ -930,7 +933,7 @@ class OrderController extends Controller {
         userType: "renter",
         availableStatusesToCancel: [
           STATIC.ORDER_STATUSES.PENDING_OWNER,
-          STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
+          STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT,
         ],
         cancelFunc: this.orderModel.successCancelled,
         createMessageFunc: this.chatMessageModel.createCanceledOrderMessage,
@@ -1053,8 +1056,10 @@ class OrderController extends Controller {
       await invoicePdfGeneration(
         {
           orderOfferStartDate: order.offerStartDate,
-          orderOfferEndDate: order.offerEndDate,
+          orderOfferFinishDate: order.offerFinishDate,
+          orderOfferPrice: order.offerPrice,
           renterFee: order.renterFee,
+          ownerFee: order.ownerFee,
           listingAddress: order.listingAddress,
           listingCity: order.listingCity,
           orderId: order.id,

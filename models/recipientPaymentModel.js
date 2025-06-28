@@ -304,24 +304,24 @@ class RecipientPayment extends Model {
 
   paypalPaymentPlanGeneration = async ({
     startDate,
-    endDate,
+    finishDate,
     pricePerDay,
     userId,
     orderId,
     fee,
   }) => {
-    const dateDuration = getFactOrderDays(startDate, endDate);
+    const dateDuration = getFactOrderDays(startDate, finishDate);
 
     const paymentDays = {};
 
-    paymentDays[endDate] = +(
+    paymentDays[finishDate] = +(
       (dateDuration * pricePerDay * (100 - fee)) /
       100
     ).toFixed(2);
 
     /*if (dateDuration > STATIC.MONTH_DURATION) {
       let currentDate = new Date(startDate);
-      const end = new Date(endDate);
+      const end = new Date(finishDate);
       const monthEnds = [];
       let iteration = 0;
 
@@ -337,8 +337,8 @@ class RecipientPayment extends Model {
         let paymentDate = separateDate(lastDay);
 
         ----
-        if (paymentDate > endDate) {
-          paymentDate = endDate;
+        if (paymentDate > finishDate) {
+          paymentDate = finishDate;
         }
         ----
 
@@ -354,7 +354,7 @@ class RecipientPayment extends Model {
         iteration++;
       }
     } else {
-      paymentDays[endDate] = +(
+      paymentDays[finishDate] = +(
         (dateDuration * pricePerDay * (100 - fee)) /
         100
       ).toFixed(2);

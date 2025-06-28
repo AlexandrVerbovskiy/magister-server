@@ -1,35 +1,37 @@
 const PDFDocument = require("pdfkit");
 const {
-  ownerPaymentCalculate,
-  ownerPaymentFeeCalculate,
+  getPriceByDays,
+  renterPaysCalculate,
+  renterPaysFeeCalculate,
 } = require("./paymentCalculations");
-const { shortTimeConverter, getFactOrderDays } = require("./dateHelpers");
+const { shortTimeConverter } = require("./dateHelpers");
 const STATIC = require("../static");
 
 baseConvertPaymentProps = (payment) => {
   const offerStartDate = payment.orderOfferStartDate;
-  const offerEndDate = payment.orderOfferEndDate;
+  const offerFinishDate = payment.orderOfferFinishDate;
 
-  const offerTotalPrice = ownerPaymentCalculate(
+  const offerSubTotalPrice = getPriceByDays(
+    payment.orderOfferPrice,
     offerStartDate,
-    offerEndDate,
-    payment.renterFee,
+    offerFinishDate
   );
 
-  const offerSubTotalPrice =
-    getFactOrderDays(offerStartDate, offerEndDate);
+  const offerTotalPrice = renterPaysCalculate(
+    offerSubTotalPrice,
+    payment.ownerFee
+  );
 
-  const factTotalFee = ownerPaymentFeeCalculate(
-    offerStartDate,
-    offerEndDate,
-    payment.renterFee,
+  const factTotalFee = renterPaysFeeCalculate(
+    offerSubTotalPrice,
+    payment.ownerFee
   );
 
   const duration =
-    offerStartDate == offerEndDate
+    offerStartDate == offerFinishDate
       ? shortTimeConverter(offerStartDate)
       : `${shortTimeConverter(offerStartDate)} - ${shortTimeConverter(
-          offerEndDate
+          offerFinishDate
         )}`;
 
   const createdInfo = payment.createdAt
