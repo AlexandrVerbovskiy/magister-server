@@ -138,7 +138,7 @@ const invoicePdfGeneration = async (payment, res) => {
     .moveDown(0.25)
     .fontSize(12)
     .fillColor(COLORS.GRAY)
-    .text("TaskAbout", { align: "left" })
+    .text("DressRenter", { align: "left" })
     .fillColor(COLORS.BLACK);
 
   doc
