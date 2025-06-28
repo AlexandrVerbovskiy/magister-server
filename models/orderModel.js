@@ -2,7 +2,7 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
-const { formatDateToSQLFormat, separateDate } = require("../utils");
+const { formatDateToSQLFormat, separateDate, generateDatesBetween } = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
 
@@ -27,8 +27,8 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.owner_fee as ownerFee`,
     `${ORDERS_TABLE}.finished_at as offerFinishedAt`,
     `${ORDERS_TABLE}.price as offerPrice`,
-    `${ORDERS_TABLE}.finish_time as offerFinishTime`,
-    `${ORDERS_TABLE}.start_time as offerStartTime`,
+    `${ORDERS_TABLE}.finish_time as offerFinishDate`,
+    `${ORDERS_TABLE}.start_time as offerStartDate`,
     `renters.id as renterId`,
     `renters.name as renterName`,
     `renters.email as renterEmail`,
@@ -60,8 +60,8 @@ class OrderModel extends Model {
   requestVisibleFields = [
     `${ORDER_UPDATE_REQUESTS_TABLE}.id as requestId`,
     `${ORDER_UPDATE_REQUESTS_TABLE}.new_price as newPrice`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_time as newStartTime`,
-    `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishTime`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_start_time as newStartDate`,
+    `${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time as newFinishDate`,
   ];
 
   fullVisibleFields = [
@@ -176,7 +176,7 @@ class OrderModel extends Model {
   ];
 
   processStatuses = [
-    STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
+    STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT,
     STATIC.ORDER_STATUSES.PENDING_RENTER,
     STATIC.ORDER_STATUSES.PENDING_OWNER,
     STATIC.ORDER_STATUSES.IN_PROCESS,
@@ -204,9 +204,9 @@ class OrderModel extends Model {
 
   canFinalizationOrder = (order) => {
     const today = new Date();
-    const offerEndDate = order.offerEndDate;
+    const offerFinishDate = order.offerFinishDate;
 
-    let quickCancelLastPossible = new Date(offerEndDate);
+    let quickCancelLastPossible = new Date(offerFinishDate);
     return today > quickCancelLastPossible;
   };
 
@@ -433,7 +433,7 @@ class OrderModel extends Model {
       query = query
         .where(
           `${ORDERS_TABLE}.status`,
-          STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT
+          STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT
         )
         .whereRaw(`${DISPUTES_TABLE}.id IS NULL`)
         .whereNull(`${ORDERS_TABLE}.cancel_status`);
@@ -593,8 +593,8 @@ class OrderModel extends Model {
     ownerFee,
     renterFee,
     price,
-    finishTime,
-    startTime,
+    finishDate,
+    startDate,
   }) => {
     const res = await db(ORDERS_TABLE)
       .insert({
@@ -604,8 +604,8 @@ class OrderModel extends Model {
         renter_fee: renterFee,
         status: STATIC.ORDER_STATUSES.PENDING_OWNER,
         price,
-        finish_time: finishTime,
-        start_time: startTime,
+        finish_time: finishDate,
+        start_time: startDate,
       })
       .returning("id");
 
@@ -655,7 +655,7 @@ class OrderModel extends Model {
     const lastOrder = await lastOrderQuery
       .select(this.fullVisibleFields)
       .whereIn(`${ORDERS_TABLE}.status`, [
-        STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT,
         STATIC.ORDER_STATUSES.PENDING_RENTER,
         STATIC.ORDER_STATUSES.PENDING_OWNER,
       ])
@@ -740,11 +740,11 @@ class OrderModel extends Model {
     {
       status = null,
       cancelStatus = null,
-      startTime,
-      finishTime,
+      startDate,
+      finishDate,
       price,
-      prevStartTime,
-      prevFinishTime,
+      prevStartDate,
+      prevFinishDate,
       prevPrice,
     }
   ) => {
@@ -758,24 +758,24 @@ class OrderModel extends Model {
       updateProps["cancel_status"] = cancelStatus;
     }
 
-    if (finishTime) {
-      updateProps["finish_time"] = finishTime;
+    if (finishDate) {
+      updateProps["finish_time"] = finishDate;
     }
 
-    if (startTime) {
-      updateProps["start_time"] = startTime;
+    if (startDate) {
+      updateProps["start_time"] = startDate;
     }
 
     if (price) {
       updateProps["price"] = price;
     }
 
-    if (prevFinishTime) {
-      updateProps["prev_finish_time"] = prevFinishTime;
+    if (prevFinishDate) {
+      updateProps["prev_finish_time"] = prevFinishDate;
     }
 
-    if (prevStartTime) {
-      updateProps["prev_start_time"] = prevStartTime;
+    if (prevStartDate) {
+      updateProps["prev_start_time"] = prevStartDate;
     }
 
     if (prevPrice) {
@@ -786,12 +786,12 @@ class OrderModel extends Model {
   };
 
   acceptUpdateRequest = (orderId, newData = {}) => {
-    newData["status"] = STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT;
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT;
     return this.updateOrder(orderId, newData);
   };
 
   acceptOrder = async (orderId, newData = {}) => {
-    newData["status"] = STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT;
+    newData["status"] = STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT;
     return this.updateOrder(orderId, newData);
   };
 
@@ -980,7 +980,7 @@ class OrderModel extends Model {
         STATIC.ORDER_STATUSES.PENDING_RENTER,
         STATIC.ORDER_STATUSES.IN_PROCESS,
         STATIC.ORDER_STATUSES.PENDING_OWNER_FINISHED,
-        STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT,
+        STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT,
       ])
       .whereNot("cancel_status", STATIC.ORDER_CANCELATION_STATUSES.CANCELLED)
       .first();
@@ -1038,31 +1038,52 @@ class OrderModel extends Model {
     };
   };
 
+  // This function calculates all the dates between the start and end date of orders, marking them as blocked.
+  generateBlockedDatesByOrders = (orders) => {
+    const blockedDatesObj = {}; // Initialize an object to track blocked dates
+
+    orders.forEach((order) => {
+      let startDate = new Date(order["offerStartDate"]); // Get the start date of the order
+      let finishDate = new Date(order["offerFinishDate"]); // Get the end date of the order
+
+      if (order["newStartDate"] && order["newFinishDate"]) {
+        startDate = new Date(order["newStartDate"]); // Use new start date if available
+        finishDate = new Date(order["newFinishDate"]); // Use new end date if available
+      }
+
+      const datesBetween = generateDatesBetween(startDate, finishDate); // Generate all dates between start and end date
+
+      datesBetween.forEach((date) => (blockedDatesObj[date] = true)); // Mark the dates as blocked
+    });
+
+    return Object.keys(blockedDatesObj); // Return the list of blocked dates
+  };
+
   getBlockedListingsDatesForListings = async (listingIds, renterId = null) => {
     const currentDate = separateDate(new Date());
 
     const orders = await db(ORDERS_TABLE)
       .joinRaw(
         `LEFT JOIN ${ORDER_UPDATE_REQUESTS_TABLE} ON
-         ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active`, // Join with active order update requests
+         ${ORDERS_TABLE}.id = ${ORDER_UPDATE_REQUESTS_TABLE}.order_id AND ${ORDER_UPDATE_REQUESTS_TABLE}.active` // Join with active order update requests
       )
-      .whereIn('listing_id', listingIds)
+      .whereIn("listing_id", listingIds)
       .whereRaw(
         `((${ORDER_UPDATE_REQUESTS_TABLE}.id IS NOT NULL AND ${ORDER_UPDATE_REQUESTS_TABLE}.new_finish_time >= ?) OR (${ORDER_UPDATE_REQUESTS_TABLE}.id IS NULL AND finish_time >= ? ))`, // Filter by the end date of the orders
-        [currentDate, currentDate],
+        [currentDate, currentDate]
       )
       .where(function () {
         if (renterId) {
           this.where(function () {
             this.whereNot(
               `${ORDERS_TABLE}.status`,
-              STATIC.ORDER_STATUSES.PENDING_OWNER,
-            ).orWhere('renter_id', renterId);
+              STATIC.ORDER_STATUSES.PENDING_OWNER
+            ).orWhere("renter_id", renterId);
           });
         }
 
         this.whereRaw(
-          `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCEL_STATUSES.CANCELLED}')`, // Exclude cancelled orders
+          `NOT (cancel_status IS NOT NULL AND cancel_status = '${STATIC.ORDER_CANCEL_STATUSES.CANCELLED}')` // Exclude cancelled orders
         ).whereNotIn(`${ORDERS_TABLE}.status`, [
           STATIC.ORDER_STATUSES.PENDING_OWNER,
           STATIC.ORDER_STATUSES.REJECTED,
@@ -1071,11 +1092,11 @@ class OrderModel extends Model {
       })
       .select([
         `${ORDERS_TABLE}.id`,
-        'start_time as offerStartDate',
-        'finish_time as offerFinishTime',
-        'listing_id as listingId',
-        'new_finish_time as newFinishTime',
-        'new_start_time as newStartDate',
+        "start_time as offerStartDate",
+        "finish_time as offerFinishDate",
+        "listing_id as listingId",
+        "new_finish_time as newFinishDate",
+        "new_start_time as newStartDate",
       ]);
 
     const listingBlockedDates = {};
@@ -1091,11 +1112,11 @@ class OrderModel extends Model {
 
       listingBlockedDates[listingId] =
         listingOrders.length > 0
-          ? this.generateBlockedDatesByOrders(listingOrders) 
+          ? this.generateBlockedDatesByOrders(listingOrders)
           : [];
     });
 
-    return listingBlockedDates; 
+    return listingBlockedDates;
   };
 }
 

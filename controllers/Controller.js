@@ -541,21 +541,21 @@ class Controller {
     let toTime = null;
 
     if (timeFilterType === "last-week") {
-      const { startDate, endDate } = getStartAndEndOfLastWeek(clientTime);
+      const { startDate, finishDate } = getStartAndEndOfLastWeek(clientTime);
       fromTime = startDate;
-      toTime = endDate;
+      toTime = finishDate;
     } else if (timeFilterType === "last-month") {
-      const { startDate, endDate } = getStartAndEndOfLastMonth(clientTime);
+      const { startDate, finishDate } = getStartAndEndOfLastMonth(clientTime);
       fromTime = startDate;
-      toTime = endDate;
+      toTime = finishDate;
     } else if (timeFilterType === "last-year") {
-      const { startDate, endDate } = getStartAndEndOfLastYear(clientTime);
+      const { startDate, finishDate } = getStartAndEndOfLastYear(clientTime);
       fromTime = startDate;
-      toTime = endDate;
+      toTime = finishDate;
     } else {
-      const { startDate, endDate } = getStartAndEndOfYesterday(clientTime);
+      const { startDate, finishDate } = getStartAndEndOfYesterday(clientTime);
       fromTime = startDate;
-      toTime = endDate;
+      toTime = finishDate;
     }
 
     const serverFromTime = adaptClientTimeToServer(

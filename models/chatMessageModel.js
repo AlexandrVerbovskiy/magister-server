@@ -123,7 +123,7 @@ class ChatMessageModel extends Model {
       listingPhotoType,
       listingPhotoPath,
       offerStartDate,
-      offerEndDate,
+      offerFinishDate,
       description,
     },
   }) => {
@@ -138,7 +138,7 @@ class ChatMessageModel extends Model {
         listingPhotoType,
         listingPhotoPath,
         offerStartDate,
-        offerEndDate,
+        offerFinishDate,
         description,
       },
     });
@@ -153,8 +153,8 @@ class ChatMessageModel extends Model {
       offerPrice,
       listingPhotoPath,
       listingPhotoType,
-      offerFinishTime,
-      offerStartTime,
+      offerFinishDate,
+      offerStartDate,
     },
   }) => {
     return await this.create({
@@ -168,8 +168,8 @@ class ChatMessageModel extends Model {
         offerPrice,
         listingPhotoPath,
         listingPhotoType,
-        offerFinishTime,
-        offerStartTime
+        offerFinishDate,
+        offerStartDate
       },
     });
   };
