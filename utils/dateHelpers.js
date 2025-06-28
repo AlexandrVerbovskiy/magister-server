@@ -86,15 +86,15 @@ const adaptClientTimeToServer = (
   dopTime = null
 ) => adaptTimeByHoursDiff(clientDateStr, clientServerHoursDiff, dopTime);
 
-const getDaysDifference = (startDate, endDate) => {
+const getDaysDifference = (startDate, finishDate) => {
   const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
+  const end = new Date(finishDate).getTime();
   const difference = Math.abs(end - start);
   return Math.ceil(difference / (1000 * 3600 * 24));
 };
 
-const getFactOrderDays = (startDate, endDate) => {
-  return getDaysDifference(startDate, endDate) + 1;
+const getFactOrderDays = (startDate, finishDate) => {
+  return getDaysDifference(startDate, finishDate) + 1;
 };
 
 const separateDate = (date) => {
@@ -106,13 +106,13 @@ const separateDate = (date) => {
 
 const generateDatesBetween = (start, end) => {
   const startDate = new Date(start);
-  const endDate = new Date(end);
+  const finishDate = new Date(end);
 
   let currentDate = startDate;
 
   const datesObj = {};
 
-  while (currentDate <= endDate) {
+  while (currentDate <= finishDate) {
     const formattedDate = separateDate(currentDate);
     datesObj[formattedDate] = true;
     currentDate.setDate(currentDate.getDate() + 1);
@@ -126,16 +126,16 @@ const listingListDateConverter = (date) => {
   return `${y}-${m}-${d}`;
 };
 
-const baseGetStartEndInfo = (startDate, endDate) => {
+const baseGetStartEndInfo = (startDate, finishDate) => {
   startDate.setHours(0, 0, 0, 0);
-  endDate.setHours(23, 59, 59, 999);
+  finishDate.setHours(23, 59, 59, 999);
 
   const startOfLastDate = timeConverter(startDate);
-  const endOfLastDate = timeConverter(endDate);
+  const endOfLastDate = timeConverter(finishDate);
 
   return {
     startDate: startOfLastDate,
-    endDate: endOfLastDate,
+    finishDate: endOfLastDate,
   };
 };
 
@@ -172,7 +172,7 @@ const getStartAndEndOfYesterday = (clientTime) => {
   return baseGetStartEndInfo(startOfLastDay, endOfLastDay);
 };
 
-const generateDatesByTypeBetween = (startDate, endDate, type = "hours") => {
+const generateDatesByTypeBetween = (startDate, finishDate, type = "hours") => {
   const dateMap = {};
   let currentDate = new Date(startDate);
 
@@ -183,7 +183,7 @@ const generateDatesByTypeBetween = (startDate, endDate, type = "hours") => {
   }
 
   while (
-    new Date(timeConverter(currentDate)) <= new Date(timeConverter(endDate))
+    new Date(timeConverter(currentDate)) <= new Date(timeConverter(finishDate))
   ) {
     if (type == "months") {
       const formattedDate = timeConverter(currentDate);
@@ -270,8 +270,8 @@ const checkDateInDuration = (
       const splittedEndInfo = endInfo.split("/");
       const endInfoMonth = splittedEndInfo[0];
       const endInfoYear = splittedEndInfo[2];
-      const endDate = new Date(endInfoYear, endInfoMonth - 1, 1);
-      endPart = checkDate <= endDate;
+      const finishDate = new Date(endInfoYear, endInfoMonth - 1, 1);
+      endPart = checkDate <= finishDate;
     }
   }
 

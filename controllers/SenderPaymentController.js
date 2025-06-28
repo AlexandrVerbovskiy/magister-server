@@ -1,8 +1,9 @@
 const STATIC = require("../static");
 const {
   createPaypalOrder,
-  ownerPaymentCalculate,
   invoicePdfGeneration,
+  getPriceByDays,
+  renterPaysCalculate,
 } = require("../utils");
 
 const Controller = require("./Controller");
@@ -15,14 +16,14 @@ class SenderPaymentController extends Controller {
 
       const order = await this.orderModel.getFullWithPaymentById(orderId);
 
-      if (order.ownerId != userId) {
+      if (order.renterId != userId) {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
       if (
         order.cancelStatus ||
         order.disputeStatus ||
-        order.status !== STATIC.ORDER_STATUSES.PENDING_OWNER_PAYMENT ||
+        order.status !== STATIC.ORDER_STATUSES.PENDING_RENTER_PAYMENT ||
         (order.payedId &&
           order.payedType == STATIC.PAYMENT_TYPES.BANK_TRANSFER) ||
         order.payedAdminApproved
@@ -34,7 +35,14 @@ class SenderPaymentController extends Controller {
         );
       }
 
-      const amount = ownerPaymentCalculate(order.offerPrice, order.renterFee);
+      const amount = renterPaysCalculate(
+        getPriceByDays(
+          order.offerPrice,
+          order.offerStartDate,
+          order.offerFinishDate
+        ),
+        order.renterFee
+      );
 
       const result = await createPaypalOrder(
         amount,
