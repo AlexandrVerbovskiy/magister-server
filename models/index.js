@@ -24,5 +24,4 @@ module.exports = {
   socketModel: require("./socketModel"),
   activeActionModel: require("./activeActionModel"),
   relationModel: require("./relationModel"),
-  disputePredictionModel: require("./disputePredictionModel"),
 };
