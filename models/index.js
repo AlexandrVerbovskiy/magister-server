@@ -27,4 +27,5 @@ module.exports = {
   chatMessageContentModel: require("./chatMessageContentModel"),
   socketModel: require("./socketModel"),
   activeActionModel: require("./activeActionModel"),
+  relationModel: require("./relationModel"),
 };
