@@ -14,4 +14,5 @@ module.exports = {
   ...require("./helpers"),
   ...require("./geocodingApi"),
   ...require("./pdfGenerations"),
+  ...require("./textConverters"),
 };

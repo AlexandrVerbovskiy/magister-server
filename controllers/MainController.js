@@ -309,16 +309,16 @@ class MainController extends Controller {
         listing.ownerId
       );
 
-            if (userId) {
+      if (userId) {
         const blockedDates =
           await this.orderModel.getBlockedListingsDatesForListings(
             [listing.id],
-            userId,
+            userId
           );
 
-        listing['blockedDates'] = blockedDates[listing.id];
+        listing["blockedDates"] = blockedDates[listing.id];
       } else {
-        listing['blockedDates'] = [];
+        listing["blockedDates"] = [];
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -712,9 +712,7 @@ class MainController extends Controller {
   getFullOrderByIdPageOption = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      const order = await this.orderModel.getFullWithPaymentById(
-        id
-      );
+      const order = await this.orderModel.getFullWithPaymentById(id);
 
       order["requestsToUpdate"] =
         await this.orderUpdateRequestModel.getAllForOrder(id);
@@ -1395,6 +1393,14 @@ class MainController extends Controller {
         getOrderByRequest,
         getDopOrderOptions
       );
+    });
+
+  getTableRelations = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const structure = await this.relationModel.getFullStructure();
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        structure,
+      });
     });
 
   test = (req, res) =>

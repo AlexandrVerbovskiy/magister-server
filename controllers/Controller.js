@@ -54,6 +54,7 @@ const {
   chatRelationModel,
   socketModel,
   activeActionModel,
+  relationModel,
 } = require("../models");
 
 const STATIC = require("../static");
@@ -101,6 +102,7 @@ class Controller {
     this.chatRelationModel = chatRelationModel;
 
     this.socketModel = socketModel;
+    this.relationModel = relationModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
@@ -109,7 +111,6 @@ class Controller {
         pass: process.env.MAIL_PASSWORD,
       },
     });
-
 
     this.mailTransporter.use(
       "compile",
