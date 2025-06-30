@@ -309,16 +309,16 @@ class MainController extends Controller {
         listing.ownerId
       );
 
-            if (userId) {
+      if (userId) {
         const blockedDates =
           await this.orderModel.getBlockedListingsDatesForListings(
             [listing.id],
-            userId,
+            userId
           );
 
-        listing['blockedDates'] = blockedDates[listing.id];
+        listing["blockedDates"] = blockedDates[listing.id];
       } else {
-        listing['blockedDates'] = [];
+        listing["blockedDates"] = [];
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
@@ -712,9 +712,7 @@ class MainController extends Controller {
   getFullOrderByIdPageOption = (req, res) =>
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
-      const order = await this.orderModel.getFullWithPaymentById(
-        id
-      );
+      const order = await this.orderModel.getFullWithPaymentById(id);
 
       order["requestsToUpdate"] =
         await this.orderUpdateRequestModel.getAllForOrder(id);
@@ -1426,34 +1424,11 @@ class MainController extends Controller {
       );
     });
 
-  getEmailVerificationInfo = (req, res) =>
+  getTableRelations = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const { userId } = req.userData;
-      const token = req.body.token;
-
-      if (!userId) {
-        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-          authorized: false,
-        });
-      }
-
-      const user = await this.userModel.getById(userId);
-
-      if (!user) {
-        return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
-      }
-
-      const result = await this.userController.baseVerifyEmail(
-        user.email,
-        token
-      );
-
-      if (result.error) {
-        return this.sendErrorResponse(res, result.error, result.message);
-      }
-
+      const structure = await this.relationModel.getFullStructure();
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        authorized: true,
+        structure,
       });
     });
 

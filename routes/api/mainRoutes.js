@@ -438,5 +438,12 @@ module.exports = (io) => {
 
   router.get("/test", mainController.test);
 
+  router.get(
+    "/get-table-relations",
+    isAuth,
+    isAdmin,
+    mainController.getTableRelations
+  );
+
   return router;
 };
