@@ -13,19 +13,7 @@ module.exports = {
   orderUpdateRequestModel: require("./orderUpdateRequestModel"),
   senderPaymentModel: require("./senderPaymentModel"),
   recipientPaymentModel: require("./recipientPaymentModel"),
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  tenantCommentModel: require("./tenantCommentModel"),
-=======
   renterCommentModel: require("./renterCommentModel"),
->>>>>>> fad5f76 (start)
-=======
-  renterCommentModel: require("./renterCommentModel"),
->>>>>>> 45e89f9 (start)
-=======
-  renterCommentModel: require("./renterCommentModel"),
->>>>>>> 2cdae2d (start)
   ownerCommentModel: require("./ownerCommentModel"),
   userListingFavoriteModel: require("./userListingFavoriteModel"),
   disputeModel: require("./disputeModel"),
@@ -36,5 +24,4 @@ module.exports = {
   socketModel: require("./socketModel"),
   activeActionModel: require("./activeActionModel"),
   relationModel: require("./relationModel"),
-  disputePredictionModel: require("./disputePredictionModel"),
 };
