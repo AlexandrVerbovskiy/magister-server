@@ -95,6 +95,7 @@ app.use("/api/main", apiRoutes.mainRoutes(io));
 app.use("/api/auth", apiRoutes.authRoutes(io));
 app.use("/api/users", apiRoutes.userRoutes(io));
 app.use("/api/user-verify-requests", apiRoutes.userVerifyRequestRoutes(io));
+app.use("/api/dispute-prediction-models", isAuth, isAdmin, apiRoutes.disputePredictionModelRoutes(io))
 app.use("/api/logs", isAuth, isAdmin, apiRoutes.logRoutes(io));
 app.use(
   "/api/user-event-logs",

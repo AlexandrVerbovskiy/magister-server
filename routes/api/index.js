@@ -18,4 +18,5 @@ module.exports = {
   commentRoutes: require("./commentRoutes"),
   disputeRoutes: require("./disputeRoutes"),
   chatRoutes: require("./chatRoutes"),
+  disputePredictionModelRoutes: require("./disputePredictionModelRoutes"),
 };

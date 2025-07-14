@@ -23,4 +23,5 @@ module.exports = {
   DisputeController: require("./DisputeController"),
   ChatController: require("./ChatController"),
   CronCommandController: require("./CronCommandController"),
+  DisputePredictionModelController: require("./DisputePredictionModelController"),
 };
