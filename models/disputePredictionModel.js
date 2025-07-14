@@ -15,13 +15,8 @@ class DisputePrediction extends Model {
     "started",
     "stopped",
     "finished",
-    "checked",
     "body",
-    "check_field as checkField",
     "created_at as createdAt",
-    "progress_percent as progressPercent",
-    "prediction_details as predictionDetails",
-    "selected_fields as selectedFields",
   ];
 
   orderFields = ["id", "created_at"];
@@ -30,7 +25,6 @@ class DisputePrediction extends Model {
     body,
     afterFinishActive = false,
     afterFinishRebuild = false,
-    checkField = "",
   }) => {
     const result = await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .insert({
@@ -39,34 +33,21 @@ class DisputePrediction extends Model {
         after_finish_active: afterFinishActive,
         after_finish_rebuild: afterFinishRebuild,
         body: JSON.stringify(body),
-        check_field: checkField,
       })
       .returning("id");
 
     return result[0]["id"];
   };
 
-  setActive = async (id, afterFinishRebuild) => {
+  setActive = async (id) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where("active", true)
+      .where({ id })
       .update({ active: false });
 
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where({ id })
-      .update({
-        active: true,
-        after_finish_active: true,
-        after_finish_rebuild: afterFinishRebuild,
-      });
-  };
-
-  setStartTrainingStatus = async (id, selectedFields) => {
-    await db(DISPUTE_PREDICTION_MODEL_TABLE)
-      .where({ id })
-      .update({
-        started: true,
-        selected_fields: JSON.stringify(selectedFields),
-      });
+      .update({ active: true });
   };
 
   stop = async (id) => {
@@ -83,12 +64,7 @@ class DisputePrediction extends Model {
 
   update = async (
     id,
-    {
-      body,
-      afterFinishActive = false,
-      afterFinishRebuild = false,
-      checkField = "",
-    }
+    { body, afterFinishActive = false, afterFinishRebuild = false }
   ) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where({ id })
@@ -97,21 +73,16 @@ class DisputePrediction extends Model {
         body: JSON.stringify(body),
         after_finish_active: afterFinishActive,
         after_finish_rebuild: afterFinishRebuild,
-        check_field: checkField,
       });
   };
 
   getDetailsById = async (id) => {
-    const actions = await db(DISPUTE_PREDICTION_MODEL_TABLE)
-      .select(this.visibleFields)
-      .where({ id });
+    const actions = await db(ACTIVE_ACTION_TABLE).select("data").where({ id });
     return actions[0];
   };
 
   totalCount = async () => {
-    const result = await db(DISPUTE_PREDICTION_MODEL_TABLE)
-      .count("* as count")
-      .first();
+    const result = await db(LOGS_TABLE).count("* as count").first();
     return +result?.count;
   };
 
@@ -119,7 +90,7 @@ class DisputePrediction extends Model {
     const { start, count } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    return await db(DISPUTE_PREDICTION_MODEL_TABLE)
+    return await db(LOGS_TABLE)
       .select(this.visibleFields)
       .orderBy(order, orderType)
       .limit(count)
