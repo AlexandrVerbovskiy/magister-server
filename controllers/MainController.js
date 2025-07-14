@@ -31,6 +31,7 @@ const RenterCommentController = require("./RenterCommentController");
 const OwnerCommentController = require("./OwnerCommentController");
 const DisputeController = require("./DisputeController");
 const ChatController = require("./ChatController");
+const DisputePredictionModelController = require("./DisputePredictionModelController");
 
 class MainController extends Controller {
   constructor(io) {
@@ -52,6 +53,8 @@ class MainController extends Controller {
     this.disputeController = new DisputeController(io);
     this.chatController = new ChatController(io);
     this.listingCategoriesController = new ListingCategoriesController(io);
+    this.disputePredictionModelController =
+      new DisputePredictionModelController(io);
   }
 
   getNavigationCategories = () =>
@@ -156,6 +159,17 @@ class MainController extends Controller {
       const logListOptions = await this.logController.baseLogList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         ...logListOptions,
+      });
+    });
+
+  getAdminDisputePredictionModelListPageOptions = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const listOptions =
+        await this.disputePredictionModelController.baseDisputePredictionModelList(
+          req
+        );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        ...listOptions,
       });
     });
 
@@ -1430,6 +1444,13 @@ class MainController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         structure,
       });
+    });
+
+  getDisputePredictionModelDetails = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { id } = req.params;
+      const model = await this.disputePredictionModel.getDetailsById(id);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, model);
     });
 
   test = (req, res) =>

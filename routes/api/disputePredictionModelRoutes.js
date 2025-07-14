@@ -11,8 +11,6 @@ module.exports = (io) => {
   router.post("/unstop", disputePredictionModelController.unstop);
 
   router.post("/set-active", disputePredictionModelController.setActive);
-  router.get("/get-details/:id", disputePredictionModelController.getDetails);
-  router.post("/start-training", disputePredictionModelController.startTraining)
   router.post("/create", disputePredictionModelController.create);
   router.post("/update", disputePredictionModelController.update);
   router.post("/list", disputePredictionModelController.list);
