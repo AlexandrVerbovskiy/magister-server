@@ -55,6 +55,7 @@ const {
   socketModel,
   activeActionModel,
   relationModel,
+  disputePredictionModel
 } = require("../models");
 
 const STATIC = require("../static");
@@ -103,6 +104,8 @@ class Controller {
 
     this.socketModel = socketModel;
     this.relationModel = relationModel;
+
+    this.disputePredictionModel = disputePredictionModel;
 
     this.mailTransporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
