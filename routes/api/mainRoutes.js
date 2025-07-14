@@ -93,6 +93,13 @@ module.exports = (io) => {
     mainController.getAdminLogListPageOptions
   );
 
+    router.post(
+    "/admin-dispute-prediction-model-list-options",
+    isAuth,
+    isAdmin,
+    mainController.getAdminDisputePredictionModelListPageOptions
+  );
+
   router.post(
     "/admin-dispute-prediction-model-list-options",
     isAuth,

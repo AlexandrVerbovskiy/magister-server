@@ -106,6 +106,7 @@ module.exports = {
     CHAT_MESSAGE_CONTENTS: "chat_messages_contents",
     SOCKETS: "sockets",
     ACTIVE_ACTIONS: "active_actions",
+    DISPUTE_PREDICTION_MODELS: "dispute_prediction_models",
   },
   ORDER_STATUSES: {
     PENDING_OWNER: "pending_owner",

@@ -1,10 +1,4 @@
 const STATIC = require("../static");
-const {
-  startCheckingModel,
-  checkModelQuery,
-  startTrainingModel,
-  startRevaluationOrders,
-} = require("../services/forestServerRequests");
 const Controller = require("./Controller");
 
 class DisputePredictionModelController extends Controller {
@@ -22,36 +16,7 @@ class DisputePredictionModelController extends Controller {
 
   setActive = async (req, res) =>
     this.baseWrapper(req, res, async () => {
-      await this.disputePredictionModel.setActive(
-        req.body.id,
-        req.body.rebuild ?? false
-      );
-
-      if (req.body.rebuild) {
-        await startRevaluationOrders();
-      }
-
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
-    });
-
-  getDetails = async (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const model = await this.disputePredictionModel.getDetailsById(
-        req.params.id
-      );
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { model });
-    });
-
-  startTraining = async (req, res) =>
-    this.baseWrapper(req, res, async () => {
-      const modelId = req.body.id;
-      const selectedFields = req.body.selectedFields || [];
-
-      await this.disputePredictionModel.setStartTrainingStatus(
-        modelId,
-        selectedFields
-      );
-      await startTrainingModel(modelId);
+      await this.disputePredictionModel.setActive(req.body.id);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
@@ -59,37 +24,14 @@ class DisputePredictionModelController extends Controller {
     this.baseWrapper(req, res, async () => {
       const {
         body,
-        checkField,
         afterFinishActive = false,
         afterFinishRebuild = false,
       } = req.body;
-
-      try {
-        const errorMessage = await checkModelQuery(body);
-
-        if (errorMessage) {
-          return this.sendErrorResponse(
-            res,
-            STATIC.ERRORS.BAD_REQUEST,
-            errorMessage
-          );
-        }
-      } catch (e) {
-        console.log("forest server error: ", e.message);
-      }
-
       const createdId = await this.disputePredictionModel.create({
         body,
-        checkField,
         afterFinishActive,
         afterFinishRebuild,
       });
-
-      try {
-        await startCheckingModel(createdId);
-      } catch (e) {
-        console.log("forest server error: ", e.message);
-      }
 
       const data = await this.disputePredictionModel.getDetailsById(createdId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
@@ -100,39 +42,16 @@ class DisputePredictionModelController extends Controller {
       const {
         id,
         body,
-        checkField,
         afterFinishActive = false,
         afterFinishRebuild = false,
       } = req.body;
-      try {
-        const errorMessage = await checkModelQuery(body);
-
-        if (errorMessage) {
-          return this.sendErrorResponse(
-            res,
-            STATIC.ERRORS.BAD_REQUEST,
-            errorMessage
-          );
-        }
-      } catch (e) {
-        console.log("forest server error: ", e.message);
-      }
-
       await this.disputePredictionModel.update(id, {
         body,
         afterFinishActive,
         afterFinishRebuild,
-        checkField,
       });
 
       const data = await this.disputePredictionModel.getDetailsById(id);
-
-      try {
-        await startCheckingModel(id);
-      } catch (e) {
-        console.log("forest server error: ", e.message);
-      }
-
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
     });
 
@@ -153,7 +72,7 @@ class DisputePredictionModelController extends Controller {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseDisputePredictionModelList(req);
+      const result = await this.baseLogList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 }
