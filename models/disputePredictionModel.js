@@ -39,7 +39,7 @@ class DisputePrediction extends Model {
     return result[0]["id"];
   };
 
-  setActive = async (id) => {
+  setActive = async (id, afterFinishRebuild) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where("active", true)
       .where({ id })
@@ -47,7 +47,7 @@ class DisputePrediction extends Model {
 
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where({ id })
-      .update({ active: true });
+      .update({ active: true, after_finish_rebuild: afterFinishRebuild });
   };
 
   stop = async (id) => {
@@ -77,12 +77,16 @@ class DisputePrediction extends Model {
   };
 
   getDetailsById = async (id) => {
-    const actions = await db(ACTIVE_ACTION_TABLE).select("data").where({ id });
+    const actions = await db(DISPUTE_PREDICTION_MODEL_TABLE)
+      .select(this.visibleFields)
+      .where({ id });
     return actions[0];
   };
 
   totalCount = async () => {
-    const result = await db(LOGS_TABLE).count("* as count").first();
+    const result = await db(DISPUTE_PREDICTION_MODEL_TABLE)
+      .count("* as count")
+      .first();
     return +result?.count;
   };
 
@@ -90,7 +94,7 @@ class DisputePrediction extends Model {
     const { start, count } = props;
     const { order, orderType } = this.getOrderInfo(props);
 
-    return await db(LOGS_TABLE)
+    return await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .select(this.visibleFields)
       .orderBy(order, orderType)
       .limit(count)
