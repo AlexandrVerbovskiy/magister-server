@@ -16,7 +16,10 @@ class DisputePredictionModelController extends Controller {
 
   setActive = async (req, res) =>
     this.baseWrapper(req, res, async () => {
-      await this.disputePredictionModel.setActive(req.body.id);
+      await this.disputePredictionModel.setActive(
+        req.body.id,
+        req.body.rebuild ?? false
+      );
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
@@ -72,7 +75,7 @@ class DisputePredictionModelController extends Controller {
 
   list = (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const result = await this.baseLogList(req);
+      const result = await this.baseDisputePredictionModelList(req);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
     });
 }
