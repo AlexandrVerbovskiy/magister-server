@@ -1421,7 +1421,12 @@ class MainController extends Controller {
     this.baseWrapper(req, res, async () => {
       const { id } = req.params;
       const model = await this.disputePredictionModel.getDetailsById(id);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, model);
+      const structure = await this.relationModel.getFullStructure();
+      
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        model,
+        structure,
+      });
     });
 
   test = (req, res) =>
