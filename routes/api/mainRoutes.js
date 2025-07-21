@@ -93,7 +93,7 @@ module.exports = (io) => {
     mainController.getAdminLogListPageOptions
   );
 
-    router.post(
+  router.post(
     "/admin-dispute-prediction-model-list-options",
     isAuth,
     isAdmin,
@@ -434,6 +434,13 @@ module.exports = (io) => {
   router.post("/address-to-coords", isAuth, mainController.getAddressCoords);
 
   router.post("/coords-to-address", isAuth, mainController.getCoordsAddress);
+
+  router.post(
+    "/check-more-query",
+    isAuth,
+    isAdmin,
+    mainController.checkModelQuery
+  );
 
   router.get(
     "/get-order-checkout-info/:id",
