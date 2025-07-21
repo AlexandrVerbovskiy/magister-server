@@ -15,7 +15,9 @@ class DisputePrediction extends Model {
     "started",
     "stopped",
     "finished",
+    "checked",
     "body",
+    "check_field as checkField",
     "created_at as createdAt",
   ];
 
@@ -25,6 +27,7 @@ class DisputePrediction extends Model {
     body,
     afterFinishActive = false,
     afterFinishRebuild = false,
+    checkField = "",
   }) => {
     const result = await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .insert({
@@ -33,6 +36,7 @@ class DisputePrediction extends Model {
         after_finish_active: afterFinishActive,
         after_finish_rebuild: afterFinishRebuild,
         body: JSON.stringify(body),
+        check_field: checkField,
       })
       .returning("id");
 
@@ -64,7 +68,12 @@ class DisputePrediction extends Model {
 
   update = async (
     id,
-    { body, afterFinishActive = false, afterFinishRebuild = false }
+    {
+      body,
+      afterFinishActive = false,
+      afterFinishRebuild = false,
+      checkField = "",
+    }
   ) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where({ id })
@@ -73,6 +82,7 @@ class DisputePrediction extends Model {
         body: JSON.stringify(body),
         after_finish_active: afterFinishActive,
         after_finish_rebuild: afterFinishRebuild,
+        check_field: checkField,
       });
   };
 
