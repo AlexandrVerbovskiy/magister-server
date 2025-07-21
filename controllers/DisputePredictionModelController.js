@@ -1,4 +1,8 @@
 const STATIC = require("../static");
+const {
+  startCheckingModel,
+  checkModelQuery,
+} = require("../utils/forestServerRequests");
 const Controller = require("./Controller");
 
 class DisputePredictionModelController extends Controller {
@@ -27,14 +31,29 @@ class DisputePredictionModelController extends Controller {
     this.baseWrapper(req, res, async () => {
       const {
         body,
+        checkField,
         afterFinishActive = false,
         afterFinishRebuild = false,
       } = req.body;
+
+      const errorMessage = await checkModelQuery(body);
+
+      if (errorMessage) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          errorMessage
+        );
+      }
+
       const createdId = await this.disputePredictionModel.create({
         body,
+        checkField,
         afterFinishActive,
         afterFinishRebuild,
       });
+
+      await startCheckingModel(createdId);
 
       const data = await this.disputePredictionModel.getDetailsById(createdId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
@@ -45,16 +64,33 @@ class DisputePredictionModelController extends Controller {
       const {
         id,
         body,
+        checkField,
         afterFinishActive = false,
         afterFinishRebuild = false,
       } = req.body;
+      const errorMessage = await checkModelQuery(body);
+
+      if (errorMessage) {
+        return this.sendErrorResponse(
+          res,
+          STATIC.ERRORS.BAD_REQUEST,
+          errorMessage
+        );
+      }
+
       await this.disputePredictionModel.update(id, {
         body,
         afterFinishActive,
         afterFinishRebuild,
+        checkField,
       });
 
       const data = await this.disputePredictionModel.getDetailsById(id);
+
+      if (data.checked) {
+        await startCheckingModel(createdId);
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
     });
 
