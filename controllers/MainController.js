@@ -32,6 +32,9 @@ const OwnerCommentController = require("./OwnerCommentController");
 const DisputeController = require("./DisputeController");
 const ChatController = require("./ChatController");
 const DisputePredictionModelController = require("./DisputePredictionModelController");
+const {
+  checkModelQuery,
+} = require("../utils/forestServerRequests");
 
 class MainController extends Controller {
   constructor(io) {
@@ -1422,10 +1425,19 @@ class MainController extends Controller {
       const { id } = req.params;
       const model = await this.disputePredictionModel.getDetailsById(id);
       const structure = await this.relationModel.getFullStructure();
-      
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
         model,
         structure,
+      });
+    });
+
+  checkModelQuery = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const errorMessage = await checkModelQuery(req.body.params);
+
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+        errorMessage,
       });
     });
 
