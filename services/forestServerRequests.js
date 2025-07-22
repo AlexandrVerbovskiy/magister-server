@@ -23,41 +23,4 @@ const checkModelQuery = async (params) => {
   return response.data.errorMessage;
 };
 
-const startTrainingModel = async (id) => {
-  const apiKey = await systemOptionModel.getApiKey();
-
-  await axios.post(API_URL + "/api/start-training", {
-    id,
-    apiKey,
-  });
-};
-
-const startRevaluationOrders = async () => {
-  const apiKey = await systemOptionModel.getApiKey();
-
-  await axios.post(API_URL + "/api/revaluation", {
-    apiKey,
-  });
-};
-
-const predictTempOrderDispute = async (orderId) => {
-  const apiKey = await systemOptionModel.getApiKey();
-
-  const response = await axios.post(API_URL + "/api/predict-dispute", {
-    orderId,
-    apiKey,
-  });
-
-  return {
-    probabilityOfDelay: response.data.probability_of_delay,
-    prediction: response.data.prediction,
-  };
-};
-
-module.exports = {
-  startCheckingModel,
-  checkModelQuery,
-  startTrainingModel,
-  startRevaluationOrders,
-  predictTempOrderDispute,
-};
+module.exports = { startCheckingModel, checkModelQuery };
