@@ -34,7 +34,7 @@ const ChatController = require("./ChatController");
 const DisputePredictionModelController = require("./DisputePredictionModelController");
 const {
   checkModelQuery,
-} = require("../utils/forestServerRequests");
+} = require("../services/forestServerRequests");
 
 class MainController extends Controller {
   constructor(io) {

@@ -30,5 +30,9 @@ module.exports = (io) => {
     systemController.setMainCommissionOptions
   );
 
+  router.post("/save-api-key", systemController.saveApiKey);
+
+  router.post("/save-training-settings", systemController.saveTrainingSettings);
+
   return router;
 };

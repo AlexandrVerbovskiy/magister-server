@@ -2,7 +2,7 @@ const STATIC = require("../static");
 const {
   startCheckingModel,
   checkModelQuery,
-} = require("../utils/forestServerRequests");
+} = require("../services/forestServerRequests");
 const Controller = require("./Controller");
 
 class DisputePredictionModelController extends Controller {
