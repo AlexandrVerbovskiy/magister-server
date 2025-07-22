@@ -11,6 +11,11 @@ class SystemOptionModel extends Model {
     return res?.["value"];
   };
 
+  getValue = async (key, defaultValue = null) => {
+    const res = await db(SYSTEM_TABLE).where("key", key).first();
+    return res?.value ?? defaultValue;
+  };
+
   updateByKey = async (key, newValue) => {
     const existingRow = await db(SYSTEM_TABLE).where("key", key).first();
 
@@ -55,10 +60,11 @@ class SystemOptionModel extends Model {
     );
 
     const result = {
-      bankAccountIban: bankAccountIban?.value?? "",
-      bankAccountSwiftBic: bankAccountSwiftBic?.value?? "",
-      bankAccountBeneficiary: bankAccountBeneficiary?.value?? "",
-      bankAccountReferenceConceptCode: bankAccountReferenceConceptCode?.value?? "",
+      bankAccountIban: bankAccountIban?.value ?? "",
+      bankAccountSwiftBic: bankAccountSwiftBic?.value ?? "",
+      bankAccountBeneficiary: bankAccountBeneficiary?.value ?? "",
+      bankAccountReferenceConceptCode:
+        bankAccountReferenceConceptCode?.value ?? "",
     };
 
     return result;
@@ -210,6 +216,13 @@ class SystemOptionModel extends Model {
     const bankAccountReferenceConceptCode =
       resObj["bank_account_reference_concept_code"] ?? "";
 
+    const apiKey = resObj["api_key"] ?? "";
+    const correlationThreshold = resObj["correlation_threshold"] ?? "0.8";
+    const pValueThreshold = resObj["p_value_threshold"] ?? "0.05";
+    const nEstimators = resObj["n_estimators"] ?? "100";
+    const randomState = resObj["random_state"] ?? "42";
+    const trainTestSplit = resObj["train_test_split"] ?? "80";
+
     return {
       userLogActive,
       ownerBaseCommissionPercent,
@@ -230,6 +243,12 @@ class SystemOptionModel extends Model {
       bankAccountSwiftBic,
       bankAccountBeneficiary,
       bankAccountReferenceConceptCode,
+      apiKey,
+      correlationThreshold,
+      pValueThreshold,
+      nEstimators,
+      randomState,
+      trainTestSplit,
     };
   };
 
@@ -328,6 +347,48 @@ class SystemOptionModel extends Model {
         bankAccountReferenceConceptCode
       );
     }
+  };
+
+  getApiKey = async (defaultValue = "") => {
+    return await this.getValue("api_key", defaultValue);
+  };
+
+  getCorrelationThreshold = async (defaultValue = "0.8") => {
+    return await this.getValue("correlation_threshold", defaultValue);
+  };
+
+  getPValueThreshold = async (defaultValue = "0.05") => {
+    return await this.getValue("p_value_threshold", defaultValue);
+  };
+
+  getNEstimators = async (defaultValue = "100") => {
+    return await this.getValue("n_estimators", defaultValue);
+  };
+
+  getRandomState = async (defaultValue = "42") => {
+    return await this.getValue("random_state", defaultValue);
+  };
+
+  getTrainTestSplit = async (defaultValue = "80") => {
+    return await this.getValue("train_test_split", defaultValue);
+  };
+
+  saveApiKey = async (apiKey) => {
+    await this.updateByKey("api_key", apiKey);
+  };
+
+  saveTrainingSettings = async ({
+    correlationThreshold,
+    pValueThreshold,
+    nEstimators,
+    randomState,
+    trainTestSplit,
+  }) => {
+    await this.updateByKey("correlation_threshold", correlationThreshold);
+    await this.updateByKey("p_value_threshold", pValueThreshold);
+    await this.updateByKey("n_estimators", nEstimators);
+    await this.updateByKey("random_state", randomState);
+    await this.updateByKey("train_test_split", trainTestSplit);
   };
 }
 
