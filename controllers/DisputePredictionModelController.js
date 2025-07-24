@@ -27,6 +27,13 @@ class DisputePredictionModelController extends Controller {
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
+  startTraining = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      await this.disputePredictionModel.setStartTrainingStatus(req.body.id);
+      //api
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
   create = async (req, res) =>
     this.baseWrapper(req, res, async () => {
       const {
