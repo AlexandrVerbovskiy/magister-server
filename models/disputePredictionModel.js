@@ -54,6 +54,12 @@ class DisputePrediction extends Model {
       .update({ active: true, after_finish_rebuild: afterFinishRebuild });
   };
 
+  setStartTrainingStatus = async (id) => {
+    await db(DISPUTE_PREDICTION_MODEL_TABLE)
+      .where({ id })
+      .update({ started: true });
+  };
+
   stop = async (id) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where({ id })
