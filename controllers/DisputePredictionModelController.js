@@ -2,6 +2,8 @@ const STATIC = require("../static");
 const {
   startCheckingModel,
   checkModelQuery,
+  startTrainingModel,
+  startRevaluationOrders,
 } = require("../services/forestServerRequests");
 const Controller = require("./Controller");
 
@@ -24,13 +26,32 @@ class DisputePredictionModelController extends Controller {
         req.body.id,
         req.body.rebuild ?? false
       );
+
+      if (req.body.rebuild) {
+        await startRevaluationOrders();
+      }
+
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
+    });
+
+  getDetails = async (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const model = await this.disputePredictionModel.getDetailsById(
+        req.params.id
+      );
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, { model });
     });
 
   startTraining = async (req, res) =>
     this.baseWrapper(req, res, async () => {
-      await this.disputePredictionModel.setStartTrainingStatus(req.body.id);
-      //api
+      const modelId = req.body.id;
+      const selectedFields = req.body.selectedFields || [];
+
+      await this.disputePredictionModel.setStartTrainingStatus(
+        modelId,
+        selectedFields
+      );
+      await startTrainingModel(modelId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK);
     });
 
