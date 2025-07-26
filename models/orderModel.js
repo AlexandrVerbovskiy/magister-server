@@ -29,6 +29,7 @@ class OrderModel extends Model {
     `${ORDERS_TABLE}.price as offerPrice`,
     `${ORDERS_TABLE}.finish_time as offerFinishDate`,
     `${ORDERS_TABLE}.start_time as offerStartDate`,
+    `${ORDERS_TABLE}.dispute_probability as disputeProbability`,
     `renters.id as renterId`,
     `renters.name as renterName`,
     `renters.email as renterEmail`,

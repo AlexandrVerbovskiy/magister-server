@@ -19,6 +19,9 @@ class DisputePrediction extends Model {
     "body",
     "check_field as checkField",
     "created_at as createdAt",
+    "training_percent as progressPercent",
+    "prediction_details as predictionDetails",
+    "selected_fields as selectedFields",
   ];
 
   orderFields = ["id", "created_at"];
@@ -54,9 +57,9 @@ class DisputePrediction extends Model {
       .update({ active: true, after_finish_rebuild: afterFinishRebuild });
   };
 
-  setStartTrainingStatus = async (id) => {
+  setStartTrainingStatus = async (id, selectedFields) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
-      .where({ id })
+      .where({ id, selected_fields: selectedFields })
       .update({ started: true });
   };
 
