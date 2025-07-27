@@ -92,6 +92,7 @@ module.exports = {
     LISTING_CATEGORY_CREATE_NOTIFICATIONS:
       "listing_category_create_notifications",
     ORDERS: "orders",
+    TEMP_ORDERS: "temp_orders",
     ORDER_UPDATE_REQUESTS: "order_update_requests",
     SENDER_PAYMENTS: "sender_payments",
     RECIPIENT_PAYMENTS: "recipient_payments",
