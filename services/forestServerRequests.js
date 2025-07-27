@@ -48,7 +48,10 @@ const predictTempOrderDispute = async (orderId) => {
     apiKey,
   });
 
-  return response.data;
+  return {
+    probabilityOfDelay: response.data.probability_of_delay,
+    prediction: response.data.prediction,
+  };
 };
 
 module.exports = {

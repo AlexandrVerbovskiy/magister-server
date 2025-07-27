@@ -1,3 +1,4 @@
+const { predictTempOrderDispute } = require("../services/forestServerRequests");
 const STATIC = require("../static");
 const {
   getPaypalOrderInfo,
@@ -165,6 +166,57 @@ class OrderController extends Controller {
 
     return returningResult;
   };
+
+  getNewPrediction = (req, res) =>
+    this.baseWrapper(req, res, async () => {
+      const { finishDate, startDate, price, listingId } = req.body;
+      const renterId = req.userData.userId;
+
+      const listing = await this.listingModel.getLightById(listingId);
+
+      if (!listing) {
+        return { error: "Listing not found", orderId: null };
+      }
+
+      if (!listing.approved || !listing.active || listing.ownerId == renterId) {
+        return { error: "Access denied", orderId: null };
+      }
+
+      const renterFee =
+        await this.systemOptionModel.getRenterBaseCommissionPercent();
+
+      const ownerFee =
+        await this.systemOptionModel.getOwnerBaseCommissionPercent();
+
+      let tempOrderId = await this.orderModel.checkTempExist(
+        listingId,
+        renterId
+      );
+
+      if (tempOrderId) {
+        await this.orderModel.updateTemp({
+          tempOrderId,
+          price,
+          finishDate,
+          startDate,
+          ownerFee: ownerFee,
+          renterFee: renterFee,
+        });
+      } else {
+        tempOrderId = await this.orderModel.createTemp({
+          price,
+          finishDate,
+          startDate,
+          listingId,
+          renterId,
+          ownerFee: ownerFee,
+          renterFee: renterFee,
+        });
+      }
+
+      const result = await predictTempOrderDispute(tempOrderId);
+      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+    });
 
   create = (req, res) =>
     this.baseWrapper(req, res, async () => {
@@ -808,7 +860,7 @@ class OrderController extends Controller {
       offerStartDate,
       offerFinishDate,
       renterFee,
-      offerPrice
+      offerPrice,
     } = orderInfo;
 
     if (renterId != userId || orderInfo.disputeStatus) {
