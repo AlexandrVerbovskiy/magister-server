@@ -2,11 +2,16 @@ require("dotenv").config();
 const STATIC = require("../static");
 const db = require("../database");
 const Model = require("./Model");
-const { formatDateToSQLFormat, separateDate, generateDatesBetween } = require("../utils");
+const {
+  formatDateToSQLFormat,
+  separateDate,
+  generateDatesBetween,
+} = require("../utils");
 const listingModel = require("./listingModel");
 const listingCategoryModel = require("./listingCategoryModel");
 
 const ORDERS_TABLE = STATIC.TABLES.ORDERS;
+const TEMP_ORDERS_TABLE = STATIC.TABLES.TEMP_ORDERS;
 const LISTINGS_TABLE = STATIC.TABLES.LISTINGS;
 const USERS_TABLE = STATIC.TABLES.USERS;
 const LISTING_CATEGORIES_TABLE = STATIC.TABLES.LISTING_CATEGORIES;
@@ -611,6 +616,56 @@ class OrderModel extends Model {
       .returning("id");
 
     return res[0]["id"];
+  };
+
+  createTemp = async ({
+    listingId,
+    renterId,
+    ownerFee,
+    renterFee,
+    price,
+    finishDate,
+    startDate,
+  }) => {
+    const res = await db(TEMP_ORDERS_TABLE)
+      .insert({
+        listing_id: listingId,
+        renter_id: renterId,
+        owner_fee: ownerFee,
+        renter_fee: renterFee,
+        status: STATIC.ORDER_STATUSES.PENDING_OWNER,
+        price,
+        finish_time: finishDate,
+        start_time: startDate,
+      })
+      .returning("id");
+
+    return res[0]["id"];
+  };
+
+  checkTempExist = async (listingId, renterId) => {
+    const query = db(TEMP_ORDERS_TABLE)
+      .where("listing_id", listingId)
+      .where("renter_id", renterId);
+
+    return await query.first()?.id;
+  };
+
+  updateTemp = async ({
+    tempOrderId,
+    ownerFee,
+    renterFee,
+    price,
+    finishDate,
+    startDate,
+  }) => {
+    await db(TEMP_ORDERS_TABLE).where("id", tempOrderId).update({
+      owner_fee: ownerFee,
+      renter_fee: renterFee,
+      price,
+      finish_time: finishDate,
+      start_time: startDate,
+    });
   };
 
   getByWhere = async (key, value, needList = false) => {
