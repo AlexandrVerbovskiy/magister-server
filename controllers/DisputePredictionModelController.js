@@ -64,14 +64,18 @@ class DisputePredictionModelController extends Controller {
         afterFinishRebuild = false,
       } = req.body;
 
-      const errorMessage = await checkModelQuery(body);
+      try {
+        const errorMessage = await checkModelQuery(body);
 
-      if (errorMessage) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.BAD_REQUEST,
-          errorMessage
-        );
+        if (errorMessage) {
+          return this.sendErrorResponse(
+            res,
+            STATIC.ERRORS.BAD_REQUEST,
+            errorMessage
+          );
+        }
+      } catch (e) {
+        console.log("forest server error: ", e.message);
       }
 
       const createdId = await this.disputePredictionModel.create({
@@ -81,7 +85,11 @@ class DisputePredictionModelController extends Controller {
         afterFinishRebuild,
       });
 
-      await startCheckingModel(createdId);
+      try {
+        await startCheckingModel(createdId);
+      } catch (e) {
+        console.log("forest server error: ", e.message);
+      }
 
       const data = await this.disputePredictionModel.getDetailsById(createdId);
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
@@ -96,7 +104,19 @@ class DisputePredictionModelController extends Controller {
         afterFinishActive = false,
         afterFinishRebuild = false,
       } = req.body;
-      const errorMessage = await checkModelQuery(body);
+      try {
+        const errorMessage = await checkModelQuery(body);
+
+        if (errorMessage) {
+          return this.sendErrorResponse(
+            res,
+            STATIC.ERRORS.BAD_REQUEST,
+            errorMessage
+          );
+        }
+      } catch (e) {
+        console.log("forest server error: ", e.message);
+      }
 
       if (errorMessage) {
         return this.sendErrorResponse(
@@ -115,8 +135,10 @@ class DisputePredictionModelController extends Controller {
 
       const data = await this.disputePredictionModel.getDetailsById(id);
 
-      if (data.checked) {
-        await startCheckingModel(createdId);
+      try {
+        await startCheckingModel(id);
+      } catch (e) {
+        console.log("forest server error: ", e.message);
       }
 
       return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, data);
