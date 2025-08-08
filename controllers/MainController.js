@@ -32,9 +32,7 @@ const OwnerCommentController = require("./OwnerCommentController");
 const DisputeController = require("./DisputeController");
 const ChatController = require("./ChatController");
 const DisputePredictionModelController = require("./DisputePredictionModelController");
-const {
-  checkModelQuery,
-} = require("../services/forestServerRequests");
+const { checkModelQuery } = require("../services/forestServerRequests");
 
 class MainController extends Controller {
   constructor(io) {
@@ -1434,11 +1432,17 @@ class MainController extends Controller {
 
   checkModelQuery = async (req, res) =>
     this.baseWrapper(req, res, async () => {
-      const errorMessage = await checkModelQuery(req.body.params);
+      try {
+        const errorMessage = await checkModelQuery(req.body.params);
 
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
-        errorMessage,
-      });
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          errorMessage,
+        });
+      } catch (e) {
+        return this.sendErrorResponse(res, STATIC.ERRORS.BAD_REQUEST, null, {
+          errorMessage: e.message,
+        });
+      }
     });
 
   test = (req, res) =>
