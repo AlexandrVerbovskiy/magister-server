@@ -23,9 +23,11 @@ module.exports = ({
       .isISO8601() // Перевірка на формат ISO 8601
       .withMessage(`Body field '${fieldName}' must be a valid ISO 8601 date`)
       .custom((startDate) => {
-        const currentDate = new Date().toISOString();
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+        const isoMidnight = currentDate.toISOString();
 
-        if (startDate < currentDate) {
+        if (startDate < isoMidnight) {
           throw new Error(
             `Body field '${fieldName}' must be greater or equal than the current date and time`
           );
