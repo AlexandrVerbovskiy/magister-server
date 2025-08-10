@@ -601,6 +601,7 @@ class OrderModel extends Model {
     price,
     finishDate,
     startDate,
+    disputeProbability,
   }) => {
     const res = await db(ORDERS_TABLE)
       .insert({
@@ -612,6 +613,7 @@ class OrderModel extends Model {
         price,
         finish_time: finishDate,
         start_time: startDate,
+        dispute_probability: disputeProbability ?? 0,
       })
       .returning("id");
 

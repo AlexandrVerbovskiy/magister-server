@@ -1,10 +1,8 @@
 const { body } = require("express-validator");
 const {
   validateSmallStringBody,
-  validateIntegerBody,
   validateBigStringBody,
   validateFloat,
-  validateDateTime,
 } = require("../base");
 
 module.exports = [
