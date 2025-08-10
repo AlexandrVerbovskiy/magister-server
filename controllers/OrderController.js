@@ -56,6 +56,7 @@ class OrderController extends Controller {
     price,
     listingId,
     renterId,
+    disputeProbability,
   }) => {
     const listing = await this.listingModel.getLightById(listingId);
 
@@ -81,6 +82,7 @@ class OrderController extends Controller {
       renterId,
       ownerFee: ownerFee,
       renterFee: renterFee,
+      disputeProbability,
     });
 
     return {
@@ -93,7 +95,7 @@ class OrderController extends Controller {
   };
 
   baseCreateWithMessageSend = async (req, needReturnMessage = false) => {
-    const { finishDate, startDate, price, listingId, message } = req.body;
+    const { finishDate, startDate, price, listingId, message, disputeProbability = 0 } = req.body;
     const renterId = req.userData.userId;
 
     const result = await this.baseCreate({
@@ -102,6 +104,7 @@ class OrderController extends Controller {
       price,
       listingId,
       renterId,
+      disputeProbability,
     });
 
     if (result.error) {
