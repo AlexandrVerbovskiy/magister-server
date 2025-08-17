@@ -1,6 +1,8 @@
 /node_modules
 /uploads
 /public/*
+!/public/listings
+!/public/users
 !/public/static
 /package-lock.json
 /.env
