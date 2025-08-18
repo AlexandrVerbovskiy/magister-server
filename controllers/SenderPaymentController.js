@@ -183,7 +183,7 @@ class SenderPaymentController extends Controller {
         return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
       }
 
-      const proofUrl = await this.moveUploadsFileToFolder(
+      const proofUrl = this.moveUploadsFileToFolder(
         req.file,
         "paymentProofs"
       );
@@ -214,13 +214,13 @@ class SenderPaymentController extends Controller {
 
       await this.senderPaymentModel.approveTransaction(orderId);
 
-      let newStatus = await this.orderModel.orderFinishedById(orderId);
+      let newStatus = await this.orderModel.orderRenterPayed(orderId);
 
       const chatId = order.chatId;
 
       if (chatId) {
         const message =
-          await this.chatMessageModel.createOwnerPayedOrderMessage({
+          await this.chatMessageModel.createRenterPayedOrderMessage({
             chatId,
             senderId: order.ownerId,
           });

@@ -544,6 +544,9 @@ class SenderPayment extends Model {
       .where(`${SENDER_PAYMENTS_TABLE}.hidden`, false)
       .select([
         `${ORDERS_TABLE}.id as orderId`,
+        `${ORDERS_TABLE}.price as pricePerDay`,
+        `${ORDERS_TABLE}.start_time as startDate`,
+        `${ORDERS_TABLE}.finish_time as finishDate`,
         `${SENDER_PAYMENTS_TABLE}.type as type`,
         `${SENDER_PAYMENTS_TABLE}.type as transactionId`,
         `${SENDER_PAYMENTS_TABLE}.created_at as createdAt`,
