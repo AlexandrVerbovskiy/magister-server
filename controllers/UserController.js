@@ -666,7 +666,7 @@ class UserController extends Controller {
     }
 
     if (file) {
-      dataToSave["photo"] = await this.moveUploadsFileToFolder(file, "users");
+      dataToSave["photo"] = this.moveUploadsFileToFolder(file, "users");
     }
 
     const info = await this.userModel.getById(id);
@@ -714,10 +714,7 @@ class UserController extends Controller {
       await this.baseCheckEmailUnique(dataToSave);
 
       if (req.file) {
-        dataToSave["photo"] = await this.moveUploadsFileToFolder(
-          req.file,
-          "users"
-        );
+        dataToSave["photo"] = this.moveUploadsFileToFolder(req.file, "users");
       }
 
       const userId = await this.userModel.createFull(dataToSave);
@@ -866,20 +863,17 @@ class UserController extends Controller {
       const folder = "documents/" + userId;
 
       if (userPhoto) {
-        userPhoto = await this.moveUploadsFileToFolder(userPhoto, folder);
+        userPhoto = this.moveUploadsFileToFolder(userPhoto, folder);
         dataToSave["userPhoto"] = userPhoto;
       }
 
       if (documentFront) {
-        documentFront = await this.moveUploadsFileToFolder(
-          documentFront,
-          folder
-        );
+        documentFront = this.moveUploadsFileToFolder(documentFront, folder);
         dataToSave["documentFront"] = documentFront;
       }
 
       if (documentBack) {
-        documentBack = await this.moveUploadsFileToFolder(documentBack, folder);
+        documentBack = this.moveUploadsFileToFolder(documentBack, folder);
         dataToSave["documentBack"] = documentBack;
       }
 

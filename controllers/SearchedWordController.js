@@ -80,7 +80,7 @@ class SearchedWordController extends Controller {
       let image = null;
 
       if (req.file) {
-        image = await this.moveUploadsFileToFolder(req.file, "listingCategories");
+        image = this.moveUploadsFileToFolder(req.file, "listingCategories");
       }
 
       const createdId = await this.listingCategoryModel.create({

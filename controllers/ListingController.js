@@ -303,7 +303,7 @@ class ListingController extends Controller {
       }
 
       if (fs.existsSync(file.path)) {
-        const filePath = await this.moveUploadsFileToFolder(file, "listings");
+        const filePath = this.moveUploadsFileToFolder(file, "listings");
         filesToSave.push({ type: "storage", link: filePath, id });
       }
     }
