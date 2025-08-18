@@ -83,7 +83,7 @@ class ListingCategoriesController extends Controller {
 
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
-        const filePath = await this.moveUploadsFileToFolder(file, folder);
+        const filePath = this.moveUploadsFileToFolder(file, folder);
 
         const { level, index } = this.getFileLevelAndIndex(file.fieldname);
         listToSave[level][index]["image"] = filePath;

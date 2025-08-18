@@ -95,7 +95,14 @@ class OrderController extends Controller {
   };
 
   baseCreateWithMessageSend = async (req, needReturnMessage = false) => {
-    const { finishDate, startDate, price, listingId, message, disputeProbability = 0 } = req.body;
+    const {
+      finishDate,
+      startDate,
+      price,
+      listingId,
+      message,
+      disputeProbability = 0,
+    } = req.body;
     const renterId = req.userData.userId;
 
     const result = await this.baseCreate({
@@ -217,8 +224,14 @@ class OrderController extends Controller {
         });
       }
 
-      const result = await predictTempOrderDispute(tempOrderId);
-      return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+      try {
+        const result = await predictTempOrderDispute(tempOrderId);
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, result);
+      } catch (e) {
+        return this.sendSuccessResponse(res, STATIC.SUCCESS.OK, null, {
+          probabilityOfDelay: 0,
+        });
+      }
     });
 
   create = (req, res) =>
@@ -644,7 +657,7 @@ class OrderController extends Controller {
 
       let chatId = payment.chatId;
       let createMessageFunc =
-        this.chatMessageModel.createOwnerPayedOrderMessage;
+        this.chatMessageModel.createRenterPayedOrderMessage;
       let messageData = {};
       let orderPart = {
         id: orderId,
@@ -677,7 +690,7 @@ class OrderController extends Controller {
       return this.sendErrorResponse(res, STATIC.ERRORS.NOT_FOUND);
     }
 
-    if (order.ownerId != userId) {
+    if (order.renterId != userId) {
       return this.sendErrorResponse(res, STATIC.ERRORS.FORBIDDEN);
     }
 
@@ -695,10 +708,7 @@ class OrderController extends Controller {
       );
     }
 
-    const proofUrl = await this.moveUploadsFileToFolder(
-      req.file,
-      "paymentProofs"
-    );
+    const proofUrl = this.moveUploadsFileToFolder(req.file, "paymentProofs");
 
     const money = renterPaysCalculate(
       getPriceByDays(
@@ -740,7 +750,7 @@ class OrderController extends Controller {
 
       let chatId = order.chatId;
       let createMessageFunc =
-        this.chatMessageModel.createRenterPayedWaitingOrderMessage;
+        this.chatMessageModel.createRenterPayedOrderMessage;
       let messageData = {};
 
       await this.createAndSendMessageForUpdatedOrder({
