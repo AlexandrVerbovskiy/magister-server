@@ -43,15 +43,12 @@ class OrderUpdateRequestController extends Controller {
         newStatus = await this.orderModel.setPendingRenterStatus(orderId);
       }
 
-      const fee = await this.systemOptionModel.getRenterBaseCommissionPercent();
-
       const createdRequestId = await this.orderUpdateRequestModel.create({
         orderId,
         newFinishDate,
         newStartDate,
         newPrice,
         senderId,
-        fee,
       });
 
       const request = await this.orderUpdateRequestModel.getFullById(
