@@ -5,7 +5,7 @@
 -- Dumped from database version 16.1
 -- Dumped by pg_dump version 16.1
 
--- Started on 2025-08-22 16:48:14
+-- Started on 2025-08-22 19:40:45
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -2242,6 +2242,141 @@ INSERT INTO public.chat_messages VALUES (533, false, false, 'accepted-order', '2
 INSERT INTO public.chat_messages VALUES (534, false, false, 'renter-payed', '2025-08-22 15:47:13.096501+02', '2025-08-22 15:47:13.096501+02', 171, 24);
 INSERT INTO public.chat_messages VALUES (535, false, false, 'waiting-finished-approve', '2025-08-22 15:47:16.139085+02', '2025-08-22 15:47:16.139085+02', 171, 24);
 INSERT INTO public.chat_messages VALUES (536, false, false, 'finished', '2025-08-22 15:47:22.029143+02', '2025-08-22 15:47:22.029143+02', 171, 16);
+INSERT INTO public.chat_messages VALUES (537, false, false, 'new-order', '2025-08-22 16:52:03.19364+02', '2025-08-22 16:52:03.19364+02', 172, 3);
+INSERT INTO public.chat_messages VALUES (538, false, false, 'accepted-order', '2025-08-22 16:52:12.931823+02', '2025-08-22 16:52:12.931823+02', 172, 6);
+INSERT INTO public.chat_messages VALUES (539, false, false, 'renter-payed', '2025-08-22 16:53:15.307224+02', '2025-08-22 16:53:15.307224+02', 172, 3);
+INSERT INTO public.chat_messages VALUES (540, false, false, 'waiting-finished-approve', '2025-08-22 16:53:20.115153+02', '2025-08-22 16:53:20.115153+02', 172, 3);
+INSERT INTO public.chat_messages VALUES (541, false, false, 'finished', '2025-08-22 16:53:25.860865+02', '2025-08-22 16:53:25.860865+02', 172, 6);
+INSERT INTO public.chat_messages VALUES (542, false, false, 'renter-review', '2025-08-22 16:53:40.993344+02', '2025-08-22 16:53:40.993344+02', 172, 6);
+INSERT INTO public.chat_messages VALUES (543, false, false, 'owner-review', '2025-08-22 16:53:55.753646+02', '2025-08-22 16:53:55.753646+02', 172, 3);
+INSERT INTO public.chat_messages VALUES (544, false, false, 'new-order', '2025-08-22 16:54:27.41316+02', '2025-08-22 16:54:27.41316+02', 173, 3);
+INSERT INTO public.chat_messages VALUES (545, false, false, 'update-order', '2025-08-22 16:54:39.763935+02', '2025-08-22 16:54:39.763935+02', 173, 6);
+INSERT INTO public.chat_messages VALUES (546, false, false, 'accepted-order', '2025-08-22 16:54:44.50735+02', '2025-08-22 16:54:44.50735+02', 173, 3);
+INSERT INTO public.chat_messages VALUES (547, false, false, 'renter-payed', '2025-08-22 16:54:54.194022+02', '2025-08-22 16:54:54.194022+02', 173, 3);
+INSERT INTO public.chat_messages VALUES (548, false, false, 'renter-payed', '2025-08-22 16:55:12.791742+02', '2025-08-22 16:55:12.791742+02', 173, 6);
+INSERT INTO public.chat_messages VALUES (549, false, false, 'waiting-finished-approve', '2025-08-22 16:55:21.610703+02', '2025-08-22 16:55:21.610703+02', 173, 3);
+INSERT INTO public.chat_messages VALUES (550, false, false, 'finished', '2025-08-22 16:55:24.314529+02', '2025-08-22 16:55:24.314529+02', 173, 6);
+INSERT INTO public.chat_messages VALUES (551, false, false, 'new-order', '2025-08-22 16:56:50.722019+02', '2025-08-22 16:56:50.722019+02', 174, 7);
+INSERT INTO public.chat_messages VALUES (552, false, false, 'accepted-order', '2025-08-22 16:57:04.835659+02', '2025-08-22 16:57:04.835659+02', 174, 6);
+INSERT INTO public.chat_messages VALUES (553, false, false, 'renter-payed', '2025-08-22 16:57:15.094785+02', '2025-08-22 16:57:15.094785+02', 174, 7);
+INSERT INTO public.chat_messages VALUES (554, false, false, 'renter-payed', '2025-08-22 16:57:34.173478+02', '2025-08-22 16:57:34.173478+02', 174, 6);
+INSERT INTO public.chat_messages VALUES (555, false, false, 'waiting-finished-approve', '2025-08-22 16:58:36.447448+02', '2025-08-22 16:58:36.447448+02', 174, 7);
+INSERT INTO public.chat_messages VALUES (556, false, false, 'finished', '2025-08-22 16:58:40.913246+02', '2025-08-22 16:58:40.913246+02', 174, 6);
+INSERT INTO public.chat_messages VALUES (557, false, false, 'renter-review', '2025-08-22 17:00:05.091798+02', '2025-08-22 17:00:05.091798+02', 174, 6);
+INSERT INTO public.chat_messages VALUES (558, false, false, 'new-order', '2025-08-22 17:03:12.236885+02', '2025-08-22 17:03:12.236885+02', 175, 7);
+INSERT INTO public.chat_messages VALUES (559, false, false, 'accepted-order', '2025-08-22 17:04:01.745929+02', '2025-08-22 17:04:01.745929+02', 175, 6);
+INSERT INTO public.chat_messages VALUES (560, false, false, 'renter-payed', '2025-08-22 17:04:18.560043+02', '2025-08-22 17:04:18.560043+02', 175, 7);
+INSERT INTO public.chat_messages VALUES (561, false, false, 'waiting-finished-approve', '2025-08-22 17:04:26.29935+02', '2025-08-22 17:04:26.29935+02', 175, 7);
+INSERT INTO public.chat_messages VALUES (562, false, false, 'finished', '2025-08-22 17:04:30.112503+02', '2025-08-22 17:04:30.112503+02', 175, 6);
+INSERT INTO public.chat_messages VALUES (563, false, false, 'owner-review', '2025-08-22 17:04:46.294559+02', '2025-08-22 17:04:46.294559+02', 175, 7);
+INSERT INTO public.chat_messages VALUES (564, false, false, 'new-order', '2025-08-22 17:05:11.988719+02', '2025-08-22 17:05:11.988719+02', 176, 6);
+INSERT INTO public.chat_messages VALUES (565, false, false, 'accepted-order', '2025-08-22 17:05:22.592329+02', '2025-08-22 17:05:22.592329+02', 176, 7);
+INSERT INTO public.chat_messages VALUES (566, false, false, 'renter-payed', '2025-08-22 17:05:31.983817+02', '2025-08-22 17:05:31.983817+02', 176, 6);
+INSERT INTO public.chat_messages VALUES (567, false, false, 'renter-payed', '2025-08-22 17:05:36.647092+02', '2025-08-22 17:05:36.647092+02', 176, 7);
+INSERT INTO public.chat_messages VALUES (568, false, false, 'waiting-finished-approve', '2025-08-22 17:05:40.934149+02', '2025-08-22 17:05:40.934149+02', 176, 6);
+INSERT INTO public.chat_messages VALUES (569, false, false, 'finished', '2025-08-22 17:05:43.98249+02', '2025-08-22 17:05:43.98249+02', 176, 7);
+INSERT INTO public.chat_messages VALUES (570, false, false, 'renter-review', '2025-08-22 17:05:56.530708+02', '2025-08-22 17:05:56.530708+02', 176, 7);
+INSERT INTO public.chat_messages VALUES (571, false, false, 'new-order', '2025-08-22 17:06:38.092975+02', '2025-08-22 17:06:38.092975+02', 177, 6);
+INSERT INTO public.chat_messages VALUES (572, false, false, 'update-order', '2025-08-22 17:06:53.96525+02', '2025-08-22 17:06:53.96525+02', 177, 10);
+INSERT INTO public.chat_messages VALUES (573, false, false, 'accepted-order', '2025-08-22 17:06:57.889402+02', '2025-08-22 17:06:57.889402+02', 177, 6);
+INSERT INTO public.chat_messages VALUES (574, false, false, 'renter-payed', '2025-08-22 17:07:55.45884+02', '2025-08-22 17:07:55.45884+02', 177, 6);
+INSERT INTO public.chat_messages VALUES (575, false, false, 'waiting-finished-approve', '2025-08-22 17:07:59.324667+02', '2025-08-22 17:07:59.324667+02', 177, 6);
+INSERT INTO public.chat_messages VALUES (576, false, false, 'finished', '2025-08-22 17:08:04.671019+02', '2025-08-22 17:08:04.671019+02', 177, 10);
+INSERT INTO public.chat_messages VALUES (577, false, false, 'owner-review', '2025-08-22 17:08:19.329372+02', '2025-08-22 17:08:19.329372+02', 177, 6);
+INSERT INTO public.chat_messages VALUES (578, false, false, 'new-order', '2025-08-22 18:15:45.515491+02', '2025-08-22 18:15:45.515491+02', 178, 10);
+INSERT INTO public.chat_messages VALUES (579, false, false, 'accepted-order', '2025-08-22 18:16:02.88328+02', '2025-08-22 18:16:02.88328+02', 178, 6);
+INSERT INTO public.chat_messages VALUES (580, false, false, 'renter-payed', '2025-08-22 18:16:22.394099+02', '2025-08-22 18:16:22.394099+02', 178, 10);
+INSERT INTO public.chat_messages VALUES (581, false, false, 'renter-payed', '2025-08-22 18:16:32.735936+02', '2025-08-22 18:16:32.735936+02', 178, 6);
+INSERT INTO public.chat_messages VALUES (582, false, false, 'waiting-finished-approve', '2025-08-22 18:16:46.651992+02', '2025-08-22 18:16:46.651992+02', 178, 10);
+INSERT INTO public.chat_messages VALUES (583, false, false, 'finished', '2025-08-22 18:16:53.287415+02', '2025-08-22 18:16:53.287415+02', 178, 6);
+INSERT INTO public.chat_messages VALUES (584, false, false, 'new-order', '2025-08-22 18:18:23.365169+02', '2025-08-22 18:18:23.365169+02', 179, 12);
+INSERT INTO public.chat_messages VALUES (585, false, false, 'accepted-order', '2025-08-22 18:18:28.631561+02', '2025-08-22 18:18:28.631561+02', 179, 10);
+INSERT INTO public.chat_messages VALUES (586, false, false, 'renter-payed', '2025-08-22 18:20:50.363813+02', '2025-08-22 18:20:50.363813+02', 179, 12);
+INSERT INTO public.chat_messages VALUES (587, false, false, 'waiting-finished-approve', '2025-08-22 18:21:06.380679+02', '2025-08-22 18:21:06.380679+02', 179, 12);
+INSERT INTO public.chat_messages VALUES (588, false, false, 'finished', '2025-08-22 18:21:09.12337+02', '2025-08-22 18:21:09.12337+02', 179, 10);
+INSERT INTO public.chat_messages VALUES (589, false, false, 'new-order', '2025-08-22 18:21:30.046556+02', '2025-08-22 18:21:30.046556+02', 180, 10);
+INSERT INTO public.chat_messages VALUES (590, false, false, 'accepted-order', '2025-08-22 18:21:41.317706+02', '2025-08-22 18:21:41.317706+02', 180, 12);
+INSERT INTO public.chat_messages VALUES (591, false, false, 'renter-payed', '2025-08-22 18:21:49.287544+02', '2025-08-22 18:21:49.287544+02', 180, 10);
+INSERT INTO public.chat_messages VALUES (592, false, false, 'renter-payed', '2025-08-22 18:22:42.98542+02', '2025-08-22 18:22:42.98542+02', 180, 12);
+INSERT INTO public.chat_messages VALUES (593, false, false, 'waiting-finished-approve', '2025-08-22 18:22:47.931054+02', '2025-08-22 18:22:47.931054+02', 180, 10);
+INSERT INTO public.chat_messages VALUES (594, false, false, 'finished', '2025-08-22 18:22:51.42697+02', '2025-08-22 18:22:51.42697+02', 180, 12);
+INSERT INTO public.chat_messages VALUES (595, false, false, 'started-dispute', '2025-08-22 18:23:17.585243+02', '2025-08-22 18:23:17.585243+02', 181, NULL);
+INSERT INTO public.chat_messages VALUES (596, false, false, 'started-dispute', '2025-08-22 18:23:17.588018+02', '2025-08-22 18:23:17.588018+02', 182, NULL);
+INSERT INTO public.chat_messages VALUES (597, false, false, 'started-dispute', '2025-08-22 18:23:17.590983+02', '2025-08-22 18:23:17.590983+02', 180, 12);
+INSERT INTO public.chat_messages VALUES (598, false, false, 'new-order', '2025-08-22 18:24:14.570943+02', '2025-08-22 18:24:14.570943+02', 183, 12);
+INSERT INTO public.chat_messages VALUES (599, false, false, 'accepted-order', '2025-08-22 18:24:23.871297+02', '2025-08-22 18:24:23.871297+02', 183, 10);
+INSERT INTO public.chat_messages VALUES (600, false, false, 'renter-payed', '2025-08-22 18:24:38.014996+02', '2025-08-22 18:24:38.014996+02', 183, 12);
+INSERT INTO public.chat_messages VALUES (601, false, false, 'waiting-finished-approve', '2025-08-22 18:24:44.475591+02', '2025-08-22 18:24:44.475591+02', 183, 12);
+INSERT INTO public.chat_messages VALUES (602, false, false, 'finished', '2025-08-22 18:24:48.829232+02', '2025-08-22 18:24:48.829232+02', 183, 10);
+INSERT INTO public.chat_messages VALUES (603, false, false, 'owner-review', '2025-08-22 18:25:02.580042+02', '2025-08-22 18:25:02.580042+02', 183, 12);
+INSERT INTO public.chat_messages VALUES (604, false, false, 'new-order', '2025-08-22 18:25:59.334233+02', '2025-08-22 18:25:59.334233+02', 184, 12);
+INSERT INTO public.chat_messages VALUES (605, false, false, 'update-order', '2025-08-22 18:26:08.983527+02', '2025-08-22 18:26:08.983527+02', 184, 16);
+INSERT INTO public.chat_messages VALUES (606, false, false, 'update-order', '2025-08-22 18:26:15.849621+02', '2025-08-22 18:26:15.849621+02', 184, 12);
+INSERT INTO public.chat_messages VALUES (607, false, false, 'update-order', '2025-08-22 18:26:25.290438+02', '2025-08-22 18:26:25.290438+02', 184, 16);
+INSERT INTO public.chat_messages VALUES (608, false, false, 'accepted-order', '2025-08-22 18:26:30.222609+02', '2025-08-22 18:26:30.222609+02', 184, 12);
+INSERT INTO public.chat_messages VALUES (609, false, false, 'renter-payed', '2025-08-22 18:26:41.178772+02', '2025-08-22 18:26:41.178772+02', 184, 12);
+INSERT INTO public.chat_messages VALUES (610, false, false, 'renter-payed', '2025-08-22 18:26:46.922883+02', '2025-08-22 18:26:46.922883+02', 184, 16);
+INSERT INTO public.chat_messages VALUES (611, false, false, 'waiting-finished-approve', '2025-08-22 18:26:50.756601+02', '2025-08-22 18:26:50.756601+02', 184, 12);
+INSERT INTO public.chat_messages VALUES (612, false, false, 'finished', '2025-08-22 18:26:54.634759+02', '2025-08-22 18:26:54.634759+02', 184, 16);
+INSERT INTO public.chat_messages VALUES (613, false, false, 'new-order', '2025-08-22 18:27:16.148028+02', '2025-08-22 18:27:16.148028+02', 185, 16);
+INSERT INTO public.chat_messages VALUES (614, false, false, 'accepted-order', '2025-08-22 18:27:44.870083+02', '2025-08-22 18:27:44.870083+02', 185, 12);
+INSERT INTO public.chat_messages VALUES (615, false, false, 'renter-payed', '2025-08-22 18:28:30.531997+02', '2025-08-22 18:28:30.531997+02', 185, 16);
+INSERT INTO public.chat_messages VALUES (616, false, false, 'waiting-finished-approve', '2025-08-22 18:28:39.553598+02', '2025-08-22 18:28:39.553598+02', 185, 16);
+INSERT INTO public.chat_messages VALUES (617, false, false, 'finished', '2025-08-22 18:28:43.256875+02', '2025-08-22 18:28:43.256875+02', 185, 12);
+INSERT INTO public.chat_messages VALUES (618, false, false, 'renter-review', '2025-08-22 18:29:02.717186+02', '2025-08-22 18:29:02.717186+02', 185, 12);
+INSERT INTO public.chat_messages VALUES (619, false, false, 'new-order', '2025-08-22 18:29:32.712461+02', '2025-08-22 18:29:32.712461+02', 186, 18);
+INSERT INTO public.chat_messages VALUES (620, false, false, 'accepted-order', '2025-08-22 18:29:40.755332+02', '2025-08-22 18:29:40.755332+02', 186, 16);
+INSERT INTO public.chat_messages VALUES (621, false, false, 'renter-payed', '2025-08-22 18:29:54.478792+02', '2025-08-22 18:29:54.478792+02', 186, 18);
+INSERT INTO public.chat_messages VALUES (622, false, false, 'waiting-finished-approve', '2025-08-22 18:30:01.178433+02', '2025-08-22 18:30:01.178433+02', 186, 18);
+INSERT INTO public.chat_messages VALUES (623, false, false, 'finished', '2025-08-22 18:30:03.853921+02', '2025-08-22 18:30:03.853921+02', 186, 16);
+INSERT INTO public.chat_messages VALUES (624, false, false, 'renter-review', '2025-08-22 18:30:20.401738+02', '2025-08-22 18:30:20.401738+02', 186, 16);
+INSERT INTO public.chat_messages VALUES (625, false, false, 'new-order', '2025-08-22 18:31:10.113566+02', '2025-08-22 18:31:10.113566+02', 187, 18);
+INSERT INTO public.chat_messages VALUES (626, false, false, 'update-order', '2025-08-22 18:31:20.633533+02', '2025-08-22 18:31:20.633533+02', 187, 16);
+INSERT INTO public.chat_messages VALUES (627, false, false, 'update-order', '2025-08-22 18:31:36.912844+02', '2025-08-22 18:31:36.912844+02', 187, 18);
+INSERT INTO public.chat_messages VALUES (628, false, false, 'update-order', '2025-08-22 18:31:44.873457+02', '2025-08-22 18:31:44.873457+02', 187, 16);
+INSERT INTO public.chat_messages VALUES (629, false, false, 'accepted-order', '2025-08-22 18:31:48.885206+02', '2025-08-22 18:31:48.885206+02', 187, 18);
+INSERT INTO public.chat_messages VALUES (630, false, false, 'renter-payed', '2025-08-22 18:32:00.78789+02', '2025-08-22 18:32:00.78789+02', 187, 18);
+INSERT INTO public.chat_messages VALUES (631, false, false, 'renter-payed', '2025-08-22 18:32:06.418925+02', '2025-08-22 18:32:06.418925+02', 187, 16);
+INSERT INTO public.chat_messages VALUES (632, false, false, 'waiting-finished-approve', '2025-08-22 18:32:12.103792+02', '2025-08-22 18:32:12.103792+02', 187, 18);
+INSERT INTO public.chat_messages VALUES (633, false, false, 'finished', '2025-08-22 18:32:14.945872+02', '2025-08-22 18:32:14.945872+02', 187, 16);
+INSERT INTO public.chat_messages VALUES (634, false, false, 'new-order', '2025-08-22 18:33:06.603326+02', '2025-08-22 18:33:06.603326+02', 188, 18);
+INSERT INTO public.chat_messages VALUES (635, false, false, 'accepted-order', '2025-08-22 18:33:12.761753+02', '2025-08-22 18:33:12.761753+02', 188, 19);
+INSERT INTO public.chat_messages VALUES (636, false, false, 'renter-payed', '2025-08-22 18:33:20.817525+02', '2025-08-22 18:33:20.817525+02', 188, 18);
+INSERT INTO public.chat_messages VALUES (637, false, false, 'renter-payed', '2025-08-22 18:33:25.635744+02', '2025-08-22 18:33:25.635744+02', 188, 19);
+INSERT INTO public.chat_messages VALUES (638, false, false, 'waiting-finished-approve', '2025-08-22 18:33:32.88082+02', '2025-08-22 18:33:32.88082+02', 188, 18);
+INSERT INTO public.chat_messages VALUES (639, false, false, 'finished', '2025-08-22 18:33:36.813532+02', '2025-08-22 18:33:36.813532+02', 188, 19);
+INSERT INTO public.chat_messages VALUES (640, false, false, 'new-order', '2025-08-22 18:33:53.120752+02', '2025-08-22 18:33:53.120752+02', 189, 19);
+INSERT INTO public.chat_messages VALUES (641, false, false, 'accepted-order', '2025-08-22 18:34:00.589094+02', '2025-08-22 18:34:00.589094+02', 189, 18);
+INSERT INTO public.chat_messages VALUES (642, false, false, 'renter-payed', '2025-08-22 18:34:15.051111+02', '2025-08-22 18:34:15.051111+02', 189, 19);
+INSERT INTO public.chat_messages VALUES (643, false, false, 'started-dispute', '2025-08-22 18:34:23.879664+02', '2025-08-22 18:34:23.879664+02', 190, NULL);
+INSERT INTO public.chat_messages VALUES (644, false, false, 'started-dispute', '2025-08-22 18:34:23.881719+02', '2025-08-22 18:34:23.881719+02', 191, NULL);
+INSERT INTO public.chat_messages VALUES (645, false, false, 'started-dispute', '2025-08-22 18:34:23.884928+02', '2025-08-22 18:34:23.884928+02', 189, 19);
+INSERT INTO public.chat_messages VALUES (646, false, false, 'new-order', '2025-08-22 18:34:43.406497+02', '2025-08-22 18:34:43.406497+02', 192, 19);
+INSERT INTO public.chat_messages VALUES (647, false, false, 'accepted-order', '2025-08-22 18:34:52.277917+02', '2025-08-22 18:34:52.277917+02', 192, 18);
+INSERT INTO public.chat_messages VALUES (648, false, false, 'renter-payed', '2025-08-22 18:35:00.785035+02', '2025-08-22 18:35:00.785035+02', 192, 19);
+INSERT INTO public.chat_messages VALUES (649, false, false, 'renter-payed', '2025-08-22 18:35:04.304177+02', '2025-08-22 18:35:04.304177+02', 192, 18);
+INSERT INTO public.chat_messages VALUES (650, false, false, 'waiting-finished-approve', '2025-08-22 18:35:10.95188+02', '2025-08-22 18:35:10.95188+02', 192, 19);
+INSERT INTO public.chat_messages VALUES (651, false, false, 'finished', '2025-08-22 18:35:13.91782+02', '2025-08-22 18:35:13.91782+02', 192, 18);
+INSERT INTO public.chat_messages VALUES (652, false, false, 'new-order', '2025-08-22 18:36:23.999846+02', '2025-08-22 18:36:23.999846+02', 193, 18);
+INSERT INTO public.chat_messages VALUES (653, false, false, 'accepted-order', '2025-08-22 18:36:30.173188+02', '2025-08-22 18:36:30.173188+02', 193, 20);
+INSERT INTO public.chat_messages VALUES (654, false, false, 'renter-payed', '2025-08-22 18:36:53.010885+02', '2025-08-22 18:36:53.010885+02', 193, 18);
+INSERT INTO public.chat_messages VALUES (655, false, false, 'waiting-finished-approve', '2025-08-22 18:37:00.550394+02', '2025-08-22 18:37:00.550394+02', 193, 18);
+INSERT INTO public.chat_messages VALUES (656, false, false, 'finished', '2025-08-22 18:37:02.954124+02', '2025-08-22 18:37:02.954124+02', 193, 20);
+INSERT INTO public.chat_messages VALUES (657, false, false, 'renter-review', '2025-08-22 18:37:15.119875+02', '2025-08-22 18:37:15.119875+02', 193, 20);
+INSERT INTO public.chat_messages VALUES (658, false, false, 'new-order', '2025-08-22 18:37:34.522201+02', '2025-08-22 18:37:34.522201+02', 194, 20);
+INSERT INTO public.chat_messages VALUES (659, false, false, 'accepted-order', '2025-08-22 18:37:46.783235+02', '2025-08-22 18:37:46.783235+02', 194, 18);
+INSERT INTO public.chat_messages VALUES (660, false, false, 'renter-payed', '2025-08-22 18:37:56.389213+02', '2025-08-22 18:37:56.389213+02', 194, 20);
+INSERT INTO public.chat_messages VALUES (661, false, false, 'renter-payed', '2025-08-22 18:38:00.218344+02', '2025-08-22 18:38:00.218344+02', 194, 18);
+INSERT INTO public.chat_messages VALUES (662, false, false, 'waiting-finished-approve', '2025-08-22 18:38:03.940755+02', '2025-08-22 18:38:03.940755+02', 194, 20);
+INSERT INTO public.chat_messages VALUES (663, false, false, 'finished', '2025-08-22 18:38:12.017488+02', '2025-08-22 18:38:12.017488+02', 194, 18);
+INSERT INTO public.chat_messages VALUES (664, false, false, 'renter-review', '2025-08-22 18:38:26.287784+02', '2025-08-22 18:38:26.287784+02', 194, 18);
+INSERT INTO public.chat_messages VALUES (665, false, false, 'new-order', '2025-08-22 18:39:29.601554+02', '2025-08-22 18:39:29.601554+02', 195, 20);
+INSERT INTO public.chat_messages VALUES (666, false, false, 'update-order', '2025-08-22 18:39:41.347088+02', '2025-08-22 18:39:41.347088+02', 195, 18);
+INSERT INTO public.chat_messages VALUES (667, false, false, 'accepted-order', '2025-08-22 18:39:47.221944+02', '2025-08-22 18:39:47.221944+02', 195, 20);
+INSERT INTO public.chat_messages VALUES (668, false, false, 'renter-payed', '2025-08-22 18:40:05.994892+02', '2025-08-22 18:40:05.994892+02', 195, 20);
+INSERT INTO public.chat_messages VALUES (669, false, false, 'waiting-finished-approve', '2025-08-22 18:40:12.492969+02', '2025-08-22 18:40:12.492969+02', 195, 20);
+INSERT INTO public.chat_messages VALUES (670, false, false, 'finished', '2025-08-22 18:40:15.58482+02', '2025-08-22 18:40:15.58482+02', 195, 18);
+INSERT INTO public.chat_messages VALUES (671, false, false, 'renter-review', '2025-08-22 18:40:27.024051+02', '2025-08-22 18:40:27.024051+02', 195, 18);
 
 
 --
@@ -2786,6 +2921,141 @@ INSERT INTO public.chat_messages_contents VALUES (533, '{}', '2025-08-22 15:46:5
 INSERT INTO public.chat_messages_contents VALUES (534, '{}', '2025-08-22 15:47:13.097975+02', '2025-08-22 15:47:13.097975+02', 534);
 INSERT INTO public.chat_messages_contents VALUES (535, '{}', '2025-08-22 15:47:16.139745+02', '2025-08-22 15:47:16.139745+02', 535);
 INSERT INTO public.chat_messages_contents VALUES (536, '{}', '2025-08-22 15:47:22.030016+02', '2025-08-22 15:47:22.030016+02', 536);
+INSERT INTO public.chat_messages_contents VALUES (537, '{"listingName":"Pants","offerPrice":5,"listingPhotoType":"storage","listingPhotoPath":"listings/52d469b9f363fa1bb4a7.jpeg","offerStartDate":"2025-08-22 17:51","offerFinishDate":"2025-08-22 17:51","description":"???"}', '2025-08-22 16:52:03.197058+02', '2025-08-22 16:52:03.197058+02', 537);
+INSERT INTO public.chat_messages_contents VALUES (538, '{}', '2025-08-22 16:52:12.93322+02', '2025-08-22 16:52:12.93322+02', 538);
+INSERT INTO public.chat_messages_contents VALUES (539, '{}', '2025-08-22 16:53:15.309692+02', '2025-08-22 16:53:15.309692+02', 539);
+INSERT INTO public.chat_messages_contents VALUES (540, '{}', '2025-08-22 16:53:20.117063+02', '2025-08-22 16:53:20.117063+02', 540);
+INSERT INTO public.chat_messages_contents VALUES (541, '{}', '2025-08-22 16:53:25.862657+02', '2025-08-22 16:53:25.862657+02', 541);
+INSERT INTO public.chat_messages_contents VALUES (542, '{"care":4,"timeliness":2,"responsiveness":3,"clarity":1,"usageGuidelines":2,"termsOfService":3,"honesty":3,"reliability":5,"satisfaction":5,"leaveFeedback":"???","description":"???"}', '2025-08-22 16:53:40.995514+02', '2025-08-22 16:53:40.995514+02', 542);
+INSERT INTO public.chat_messages_contents VALUES (543, '{"itemDescriptionAccuracy":5,"photoAccuracy":5,"pickupCondition":5,"cleanliness":5,"responsiveness":3,"clarity":4,"schedulingFlexibility":5,"issueResolution":5,"leaveFeedback":"???","description":"???"}', '2025-08-22 16:53:55.755969+02', '2025-08-22 16:53:55.755969+02', 543);
+INSERT INTO public.chat_messages_contents VALUES (544, '{"listingName":"Ring","offerPrice":6.06,"listingPhotoType":"storage","listingPhotoPath":"listings/e111a05c272704030bc2.jpeg","offerStartDate":"2025-09-03 00:00","offerFinishDate":"2025-09-05 00:00","description":"???"}', '2025-08-22 16:54:27.414459+02', '2025-08-22 16:54:27.414459+02', 544);
+INSERT INTO public.chat_messages_contents VALUES (545, '{"requestId":42,"listingName":"Ring","offerPrice":6.06,"listingPhotoPath":"listings/e111a05c272704030bc2.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-17 00:00","offerStartDate":"2025-09-18 00:00"}', '2025-08-22 16:54:39.765053+02', '2025-08-22 16:54:39.765053+02', 545);
+INSERT INTO public.chat_messages_contents VALUES (546, '{}', '2025-08-22 16:54:44.509744+02', '2025-08-22 16:54:44.509744+02', 546);
+INSERT INTO public.chat_messages_contents VALUES (547, '{}', '2025-08-22 16:54:54.195255+02', '2025-08-22 16:54:54.195255+02', 547);
+INSERT INTO public.chat_messages_contents VALUES (548, '{}', '2025-08-22 16:55:12.793724+02', '2025-08-22 16:55:12.793724+02', 548);
+INSERT INTO public.chat_messages_contents VALUES (549, '{}', '2025-08-22 16:55:21.612038+02', '2025-08-22 16:55:21.612038+02', 549);
+INSERT INTO public.chat_messages_contents VALUES (550, '{}', '2025-08-22 16:55:24.316322+02', '2025-08-22 16:55:24.316322+02', 550);
+INSERT INTO public.chat_messages_contents VALUES (551, '{"listingName":"Sweater","offerPrice":5,"listingPhotoType":"storage","listingPhotoPath":"listings/80f2ac56a3f579d1b881.jpeg","offerStartDate":"2025-08-26 00:00","offerFinishDate":"2025-08-28 00:00","description":",,,"}', '2025-08-22 16:56:50.723781+02', '2025-08-22 16:56:50.723781+02', 551);
+INSERT INTO public.chat_messages_contents VALUES (552, '{}', '2025-08-22 16:57:04.838112+02', '2025-08-22 16:57:04.838112+02', 552);
+INSERT INTO public.chat_messages_contents VALUES (553, '{}', '2025-08-22 16:57:15.096253+02', '2025-08-22 16:57:15.096253+02', 553);
+INSERT INTO public.chat_messages_contents VALUES (554, '{}', '2025-08-22 16:57:34.175336+02', '2025-08-22 16:57:34.175336+02', 554);
+INSERT INTO public.chat_messages_contents VALUES (555, '{}', '2025-08-22 16:58:36.449523+02', '2025-08-22 16:58:36.449523+02', 555);
+INSERT INTO public.chat_messages_contents VALUES (556, '{}', '2025-08-22 16:58:40.914556+02', '2025-08-22 16:58:40.914556+02', 556);
+INSERT INTO public.chat_messages_contents VALUES (557, '{"care":5,"timeliness":5,"responsiveness":4,"clarity":4,"usageGuidelines":5,"termsOfService":5,"honesty":4,"reliability":5,"satisfaction":5,"leaveFeedback":"???","description":"???"}', '2025-08-22 17:00:05.094029+02', '2025-08-22 17:00:05.094029+02', 557);
+INSERT INTO public.chat_messages_contents VALUES (621, '{}', '2025-08-22 18:29:54.48017+02', '2025-08-22 18:29:54.48017+02', 621);
+INSERT INTO public.chat_messages_contents VALUES (622, '{}', '2025-08-22 18:30:01.179239+02', '2025-08-22 18:30:01.179239+02', 622);
+INSERT INTO public.chat_messages_contents VALUES (558, '{"listingName":"Tracksuit","offerPrice":6.12,"listingPhotoType":"storage","listingPhotoPath":"listings/0db95132e9e2c6d5e6ad.jpeg","offerStartDate":"2025-09-02 00:00","offerFinishDate":"2025-09-05 00:00","description":"???"}', '2025-08-22 17:03:12.238117+02', '2025-08-22 17:03:12.238117+02', 558);
+INSERT INTO public.chat_messages_contents VALUES (559, '{}', '2025-08-22 17:04:01.748553+02', '2025-08-22 17:04:01.748553+02', 559);
+INSERT INTO public.chat_messages_contents VALUES (560, '{}', '2025-08-22 17:04:18.562257+02', '2025-08-22 17:04:18.562257+02', 560);
+INSERT INTO public.chat_messages_contents VALUES (561, '{}', '2025-08-22 17:04:26.301074+02', '2025-08-22 17:04:26.301074+02', 561);
+INSERT INTO public.chat_messages_contents VALUES (562, '{}', '2025-08-22 17:04:30.113606+02', '2025-08-22 17:04:30.113606+02', 562);
+INSERT INTO public.chat_messages_contents VALUES (563, '{"itemDescriptionAccuracy":3,"photoAccuracy":5,"pickupCondition":1,"cleanliness":5,"responsiveness":3,"clarity":4,"schedulingFlexibility":1,"issueResolution":4,"leaveFeedback":"???","description":"???"}', '2025-08-22 17:04:46.296096+02', '2025-08-22 17:04:46.296096+02', 563);
+INSERT INTO public.chat_messages_contents VALUES (564, '{"listingName":"Sweatshirt","offerPrice":5,"listingPhotoType":"storage","listingPhotoPath":"listings/fa217ab74559ae37f015.jpeg","offerStartDate":"2025-08-26 00:00","offerFinishDate":"2025-08-27 00:00","description":"???"}', '2025-08-22 17:05:11.996508+02', '2025-08-22 17:05:11.996508+02', 564);
+INSERT INTO public.chat_messages_contents VALUES (565, '{}', '2025-08-22 17:05:22.594544+02', '2025-08-22 17:05:22.594544+02', 565);
+INSERT INTO public.chat_messages_contents VALUES (566, '{}', '2025-08-22 17:05:31.985126+02', '2025-08-22 17:05:31.985126+02', 566);
+INSERT INTO public.chat_messages_contents VALUES (567, '{}', '2025-08-22 17:05:36.64826+02', '2025-08-22 17:05:36.64826+02', 567);
+INSERT INTO public.chat_messages_contents VALUES (568, '{}', '2025-08-22 17:05:40.936516+02', '2025-08-22 17:05:40.936516+02', 568);
+INSERT INTO public.chat_messages_contents VALUES (569, '{}', '2025-08-22 17:05:43.983778+02', '2025-08-22 17:05:43.983778+02', 569);
+INSERT INTO public.chat_messages_contents VALUES (570, '{"care":3,"timeliness":5,"responsiveness":4,"clarity":4,"usageGuidelines":5,"termsOfService":5,"honesty":5,"reliability":5,"satisfaction":5,"leaveFeedback":"???","description":"???"}', '2025-08-22 17:05:56.531831+02', '2025-08-22 17:05:56.531831+02', 570);
+INSERT INTO public.chat_messages_contents VALUES (571, '{"listingName":"Sunglasses","offerPrice":7.2,"listingPhotoType":"storage","listingPhotoPath":"listings/d9c9758cb6b06f9b21b5.jpeg","offerStartDate":"2025-08-29 00:00","offerFinishDate":"2025-08-31 00:00","description":"???"}', '2025-08-22 17:06:38.094487+02', '2025-08-22 17:06:38.094487+02', 571);
+INSERT INTO public.chat_messages_contents VALUES (572, '{"requestId":43,"listingName":"Sunglasses","offerPrice":7.2,"listingPhotoPath":"listings/d9c9758cb6b06f9b21b5.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-02 00:00","offerStartDate":"2025-09-04 00:00"}', '2025-08-22 17:06:53.967257+02', '2025-08-22 17:06:53.967257+02', 572);
+INSERT INTO public.chat_messages_contents VALUES (573, '{}', '2025-08-22 17:06:57.890624+02', '2025-08-22 17:06:57.890624+02', 573);
+INSERT INTO public.chat_messages_contents VALUES (574, '{}', '2025-08-22 17:07:55.461428+02', '2025-08-22 17:07:55.461428+02', 574);
+INSERT INTO public.chat_messages_contents VALUES (575, '{}', '2025-08-22 17:07:59.326704+02', '2025-08-22 17:07:59.326704+02', 575);
+INSERT INTO public.chat_messages_contents VALUES (576, '{}', '2025-08-22 17:08:04.672153+02', '2025-08-22 17:08:04.672153+02', 576);
+INSERT INTO public.chat_messages_contents VALUES (577, '{"itemDescriptionAccuracy":1,"photoAccuracy":2,"pickupCondition":4,"cleanliness":1,"responsiveness":1,"clarity":1,"schedulingFlexibility":2,"issueResolution":1,"leaveFeedback":"???","description":"???"}', '2025-08-22 17:08:19.3304+02', '2025-08-22 17:08:19.3304+02', 577);
+INSERT INTO public.chat_messages_contents VALUES (578, '{"listingName":"Ring","offerPrice":6.06,"listingPhotoType":"storage","listingPhotoPath":"listings/e111a05c272704030bc2.jpeg","offerStartDate":"2025-08-27 00:00","offerFinishDate":"2025-08-29 00:00","description":"???"}', '2025-08-22 18:15:45.522894+02', '2025-08-22 18:15:45.522894+02', 578);
+INSERT INTO public.chat_messages_contents VALUES (579, '{}', '2025-08-22 18:16:02.88391+02', '2025-08-22 18:16:02.88391+02', 579);
+INSERT INTO public.chat_messages_contents VALUES (580, '{}', '2025-08-22 18:16:22.394714+02', '2025-08-22 18:16:22.394714+02', 580);
+INSERT INTO public.chat_messages_contents VALUES (581, '{}', '2025-08-22 18:16:32.736407+02', '2025-08-22 18:16:32.736407+02', 581);
+INSERT INTO public.chat_messages_contents VALUES (582, '{}', '2025-08-22 18:16:46.652743+02', '2025-08-22 18:16:46.652743+02', 582);
+INSERT INTO public.chat_messages_contents VALUES (583, '{}', '2025-08-22 18:16:53.288179+02', '2025-08-22 18:16:53.288179+02', 583);
+INSERT INTO public.chat_messages_contents VALUES (584, '{"listingName":"Toddler Girl Dresses","offerPrice":7.61,"listingPhotoType":"storage","listingPhotoPath":"listings/ecd7297464328db5c2bc.jpeg","offerStartDate":"2025-08-27 00:00","offerFinishDate":"2025-08-30 00:00","description":"???"}', '2025-08-22 18:18:23.36816+02', '2025-08-22 18:18:23.36816+02', 584);
+INSERT INTO public.chat_messages_contents VALUES (585, '{}', '2025-08-22 18:18:28.632223+02', '2025-08-22 18:18:28.632223+02', 585);
+INSERT INTO public.chat_messages_contents VALUES (586, '{}', '2025-08-22 18:20:50.364219+02', '2025-08-22 18:20:50.364219+02', 586);
+INSERT INTO public.chat_messages_contents VALUES (587, '{}', '2025-08-22 18:21:06.381923+02', '2025-08-22 18:21:06.381923+02', 587);
+INSERT INTO public.chat_messages_contents VALUES (588, '{}', '2025-08-22 18:21:09.124471+02', '2025-08-22 18:21:09.124471+02', 588);
+INSERT INTO public.chat_messages_contents VALUES (589, '{"listingName":"Cap","offerPrice":8.95,"listingPhotoType":"storage","listingPhotoPath":"listings/3c363fc63514212542d2.jpeg","offerStartDate":"2025-09-02 00:00","offerFinishDate":"2025-09-04 00:00","description":",,,"}', '2025-08-22 18:21:30.046893+02', '2025-08-22 18:21:30.046893+02', 589);
+INSERT INTO public.chat_messages_contents VALUES (590, '{}', '2025-08-22 18:21:41.318301+02', '2025-08-22 18:21:41.318301+02', 590);
+INSERT INTO public.chat_messages_contents VALUES (591, '{}', '2025-08-22 18:21:49.288077+02', '2025-08-22 18:21:49.288077+02', 591);
+INSERT INTO public.chat_messages_contents VALUES (592, '{}', '2025-08-22 18:22:42.985977+02', '2025-08-22 18:22:42.985977+02', 592);
+INSERT INTO public.chat_messages_contents VALUES (593, '{}', '2025-08-22 18:22:47.931876+02', '2025-08-22 18:22:47.931876+02', 593);
+INSERT INTO public.chat_messages_contents VALUES (594, '{}', '2025-08-22 18:22:51.427561+02', '2025-08-22 18:22:51.427561+02', 594);
+INSERT INTO public.chat_messages_contents VALUES (595, '{"description":"???","type":"damage","senderName":"Theresa Baker MD","senderId":12}', '2025-08-22 18:23:17.585712+02', '2025-08-22 18:23:17.585712+02', 595);
+INSERT INTO public.chat_messages_contents VALUES (596, '{"description":"???","type":"damage","senderName":"Theresa Baker MD","senderId":12}', '2025-08-22 18:23:17.588534+02', '2025-08-22 18:23:17.588534+02', 596);
+INSERT INTO public.chat_messages_contents VALUES (597, '{"description":"???","type":"damage"}', '2025-08-22 18:23:17.591375+02', '2025-08-22 18:23:17.591375+02', 597);
+INSERT INTO public.chat_messages_contents VALUES (598, '{"listingName":"Sunglasses","offerPrice":7.2,"listingPhotoType":"storage","listingPhotoPath":"listings/d9c9758cb6b06f9b21b5.jpeg","offerStartDate":"2025-08-29 00:00","offerFinishDate":"2025-08-30 00:00","description":"???"}', '2025-08-22 18:24:14.573652+02', '2025-08-22 18:24:14.573652+02', 598);
+INSERT INTO public.chat_messages_contents VALUES (599, '{}', '2025-08-22 18:24:23.871849+02', '2025-08-22 18:24:23.871849+02', 599);
+INSERT INTO public.chat_messages_contents VALUES (600, '{}', '2025-08-22 18:24:38.016106+02', '2025-08-22 18:24:38.016106+02', 600);
+INSERT INTO public.chat_messages_contents VALUES (601, '{}', '2025-08-22 18:24:44.476103+02', '2025-08-22 18:24:44.476103+02', 601);
+INSERT INTO public.chat_messages_contents VALUES (602, '{}', '2025-08-22 18:24:48.829953+02', '2025-08-22 18:24:48.829953+02', 602);
+INSERT INTO public.chat_messages_contents VALUES (603, '{"itemDescriptionAccuracy":1,"photoAccuracy":5,"pickupCondition":4,"cleanliness":4,"responsiveness":5,"clarity":3,"schedulingFlexibility":3,"issueResolution":4,"leaveFeedback":"???","description":"???"}', '2025-08-22 18:25:02.58041+02', '2025-08-22 18:25:02.58041+02', 603);
+INSERT INTO public.chat_messages_contents VALUES (604, '{"listingName":"Kids jacket","offerPrice":5,"listingPhotoType":"storage","listingPhotoPath":"listings/3ca50959da5962305182.jpeg","offerStartDate":"2025-08-27 00:00","offerFinishDate":"2025-08-29 00:00","description":"???"}', '2025-08-22 18:25:59.334697+02', '2025-08-22 18:25:59.334697+02', 604);
+INSERT INTO public.chat_messages_contents VALUES (605, '{"requestId":44,"listingName":"Kids jacket","offerPrice":5,"listingPhotoPath":"listings/3ca50959da5962305182.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-08-27 00:00","offerStartDate":"2025-08-29 00:00"}', '2025-08-22 18:26:08.984092+02', '2025-08-22 18:26:08.984092+02', 605);
+INSERT INTO public.chat_messages_contents VALUES (606, '{"requestId":45,"listingName":"Kids jacket","offerPrice":5,"listingPhotoPath":"listings/3ca50959da5962305182.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-04 00:00","offerStartDate":"2025-09-06 00:00"}', '2025-08-22 18:26:15.85006+02', '2025-08-22 18:26:15.85006+02', 606);
+INSERT INTO public.chat_messages_contents VALUES (607, '{"requestId":46,"listingName":"Kids jacket","offerPrice":5,"listingPhotoPath":"listings/3ca50959da5962305182.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-18 00:00","offerStartDate":"2025-09-20 00:00"}', '2025-08-22 18:26:25.291312+02', '2025-08-22 18:26:25.291312+02', 607);
+INSERT INTO public.chat_messages_contents VALUES (608, '{}', '2025-08-22 18:26:30.22306+02', '2025-08-22 18:26:30.22306+02', 608);
+INSERT INTO public.chat_messages_contents VALUES (609, '{}', '2025-08-22 18:26:41.179217+02', '2025-08-22 18:26:41.179217+02', 609);
+INSERT INTO public.chat_messages_contents VALUES (610, '{}', '2025-08-22 18:26:46.923315+02', '2025-08-22 18:26:46.923315+02', 610);
+INSERT INTO public.chat_messages_contents VALUES (611, '{}', '2025-08-22 18:26:50.757646+02', '2025-08-22 18:26:50.757646+02', 611);
+INSERT INTO public.chat_messages_contents VALUES (612, '{}', '2025-08-22 18:26:54.636558+02', '2025-08-22 18:26:54.636558+02', 612);
+INSERT INTO public.chat_messages_contents VALUES (613, '{"listingName":"Cap","offerPrice":8.95,"listingPhotoType":"storage","listingPhotoPath":"listings/3c363fc63514212542d2.jpeg","offerStartDate":"2025-08-28 00:00","offerFinishDate":"2025-08-30 00:00","description":"???"}', '2025-08-22 18:27:16.148345+02', '2025-08-22 18:27:16.148345+02', 613);
+INSERT INTO public.chat_messages_contents VALUES (614, '{}', '2025-08-22 18:27:44.871048+02', '2025-08-22 18:27:44.871048+02', 614);
+INSERT INTO public.chat_messages_contents VALUES (615, '{}', '2025-08-22 18:28:30.533171+02', '2025-08-22 18:28:30.533171+02', 615);
+INSERT INTO public.chat_messages_contents VALUES (616, '{}', '2025-08-22 18:28:39.55448+02', '2025-08-22 18:28:39.55448+02', 616);
+INSERT INTO public.chat_messages_contents VALUES (617, '{}', '2025-08-22 18:28:43.257429+02', '2025-08-22 18:28:43.257429+02', 617);
+INSERT INTO public.chat_messages_contents VALUES (618, '{"care":5,"timeliness":5,"responsiveness":5,"clarity":5,"usageGuidelines":5,"termsOfService":5,"honesty":5,"reliability":5,"satisfaction":5,"leaveFeedback":"???","description":"???"}', '2025-08-22 18:29:02.717761+02', '2025-08-22 18:29:02.717761+02', 618);
+INSERT INTO public.chat_messages_contents VALUES (619, '{"listingName":"Kids jacket","offerPrice":5,"listingPhotoType":"storage","listingPhotoPath":"listings/3ca50959da5962305182.jpeg","offerStartDate":"2025-08-26 00:00","offerFinishDate":"2025-08-28 00:00","description":"???"}', '2025-08-22 18:29:32.714511+02', '2025-08-22 18:29:32.714511+02', 619);
+INSERT INTO public.chat_messages_contents VALUES (620, '{}', '2025-08-22 18:29:40.755936+02', '2025-08-22 18:29:40.755936+02', 620);
+INSERT INTO public.chat_messages_contents VALUES (623, '{}', '2025-08-22 18:30:03.855549+02', '2025-08-22 18:30:03.855549+02', 623);
+INSERT INTO public.chat_messages_contents VALUES (624, '{"care":5,"timeliness":5,"responsiveness":5,"clarity":5,"usageGuidelines":3,"termsOfService":4,"honesty":5,"reliability":5,"satisfaction":4,"leaveFeedback":"???","description":"???"}', '2025-08-22 18:30:20.402695+02', '2025-08-22 18:30:20.402695+02', 624);
+INSERT INTO public.chat_messages_contents VALUES (643, '{"description":"???","type":"damage","senderName":"Renee Branch","senderId":19}', '2025-08-22 18:34:23.879964+02', '2025-08-22 18:34:23.879964+02', 643);
+INSERT INTO public.chat_messages_contents VALUES (644, '{"description":"???","type":"damage","senderName":"Renee Branch","senderId":19}', '2025-08-22 18:34:23.882048+02', '2025-08-22 18:34:23.882048+02', 644);
+INSERT INTO public.chat_messages_contents VALUES (645, '{"description":"???","type":"damage"}', '2025-08-22 18:34:23.885512+02', '2025-08-22 18:34:23.885512+02', 645);
+INSERT INTO public.chat_messages_contents VALUES (646, '{"listingName":"Suit","offerPrice":4.7,"listingPhotoType":"storage","listingPhotoPath":"listings/d5cb82987dac45570e30.jpeg","offerStartDate":"2025-09-03 00:00","offerFinishDate":"2025-09-05 00:00","description":"???"}', '2025-08-22 18:34:43.406806+02', '2025-08-22 18:34:43.406806+02', 646);
+INSERT INTO public.chat_messages_contents VALUES (647, '{}', '2025-08-22 18:34:52.278431+02', '2025-08-22 18:34:52.278431+02', 647);
+INSERT INTO public.chat_messages_contents VALUES (648, '{}', '2025-08-22 18:35:00.785388+02', '2025-08-22 18:35:00.785388+02', 648);
+INSERT INTO public.chat_messages_contents VALUES (649, '{}', '2025-08-22 18:35:04.304703+02', '2025-08-22 18:35:04.304703+02', 649);
+INSERT INTO public.chat_messages_contents VALUES (650, '{}', '2025-08-22 18:35:10.952841+02', '2025-08-22 18:35:10.952841+02', 650);
+INSERT INTO public.chat_messages_contents VALUES (651, '{}', '2025-08-22 18:35:13.918301+02', '2025-08-22 18:35:13.918301+02', 651);
+INSERT INTO public.chat_messages_contents VALUES (652, '{"listingName":"Ring","offerPrice":5.1,"listingPhotoType":"storage","listingPhotoPath":"listings/6864688783b444c43060.jpeg","offerStartDate":"2025-08-26 00:00","offerFinishDate":"2025-08-28 00:00","description":"???"}', '2025-08-22 18:36:24.000272+02', '2025-08-22 18:36:24.000272+02', 652);
+INSERT INTO public.chat_messages_contents VALUES (653, '{}', '2025-08-22 18:36:30.173574+02', '2025-08-22 18:36:30.173574+02', 653);
+INSERT INTO public.chat_messages_contents VALUES (654, '{}', '2025-08-22 18:36:53.01173+02', '2025-08-22 18:36:53.01173+02', 654);
+INSERT INTO public.chat_messages_contents VALUES (655, '{}', '2025-08-22 18:37:00.551002+02', '2025-08-22 18:37:00.551002+02', 655);
+INSERT INTO public.chat_messages_contents VALUES (656, '{}', '2025-08-22 18:37:02.954519+02', '2025-08-22 18:37:02.954519+02', 656);
+INSERT INTO public.chat_messages_contents VALUES (657, '{"care":5,"timeliness":5,"responsiveness":5,"clarity":5,"usageGuidelines":5,"termsOfService":4,"honesty":5,"reliability":5,"satisfaction":5,"leaveFeedback":"???","description":"???"}', '2025-08-22 18:37:15.120434+02', '2025-08-22 18:37:15.120434+02', 657);
+INSERT INTO public.chat_messages_contents VALUES (658, '{"listingName":"Skirt","offerPrice":8.69,"listingPhotoType":"storage","listingPhotoPath":"listings/f59281df52dc83bc21c8.jpeg","offerStartDate":"2025-09-02 00:00","offerFinishDate":"2025-09-04 00:00","description":"???"}', '2025-08-22 18:37:34.522649+02', '2025-08-22 18:37:34.522649+02', 658);
+INSERT INTO public.chat_messages_contents VALUES (659, '{}', '2025-08-22 18:37:46.783725+02', '2025-08-22 18:37:46.783725+02', 659);
+INSERT INTO public.chat_messages_contents VALUES (660, '{}', '2025-08-22 18:37:56.389586+02', '2025-08-22 18:37:56.389586+02', 660);
+INSERT INTO public.chat_messages_contents VALUES (661, '{}', '2025-08-22 18:38:00.218913+02', '2025-08-22 18:38:00.218913+02', 661);
+INSERT INTO public.chat_messages_contents VALUES (662, '{}', '2025-08-22 18:38:03.941299+02', '2025-08-22 18:38:03.941299+02', 662);
+INSERT INTO public.chat_messages_contents VALUES (663, '{}', '2025-08-22 18:38:12.018112+02', '2025-08-22 18:38:12.018112+02', 663);
+INSERT INTO public.chat_messages_contents VALUES (664, '{"care":4,"timeliness":4,"responsiveness":5,"clarity":5,"usageGuidelines":5,"termsOfService":5,"honesty":5,"reliability":5,"satisfaction":5,"leaveFeedback":"???","description":"???"}', '2025-08-22 18:38:26.288373+02', '2025-08-22 18:38:26.288373+02', 664);
+INSERT INTO public.chat_messages_contents VALUES (665, '{"listingName":"Suit","offerPrice":4.7,"listingPhotoType":"storage","listingPhotoPath":"listings/d5cb82987dac45570e30.jpeg","offerStartDate":"2025-08-27 00:00","offerFinishDate":"2025-09-03 00:00","description":"???"}', '2025-08-22 18:39:29.601895+02', '2025-08-22 18:39:29.601895+02', 665);
+INSERT INTO public.chat_messages_contents VALUES (666, '{"requestId":50,"listingName":"Suit","offerPrice":4.7,"listingPhotoPath":"listings/d5cb82987dac45570e30.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-03 00:00","offerStartDate":"2025-09-06 00:00"}', '2025-08-22 18:39:41.347969+02', '2025-08-22 18:39:41.347969+02', 666);
+INSERT INTO public.chat_messages_contents VALUES (667, '{}', '2025-08-22 18:39:47.222411+02', '2025-08-22 18:39:47.222411+02', 667);
+INSERT INTO public.chat_messages_contents VALUES (668, '{}', '2025-08-22 18:40:05.995677+02', '2025-08-22 18:40:05.995677+02', 668);
+INSERT INTO public.chat_messages_contents VALUES (669, '{}', '2025-08-22 18:40:12.493448+02', '2025-08-22 18:40:12.493448+02', 669);
+INSERT INTO public.chat_messages_contents VALUES (670, '{}', '2025-08-22 18:40:15.58564+02', '2025-08-22 18:40:15.58564+02', 670);
+INSERT INTO public.chat_messages_contents VALUES (671, '{"care":4,"timeliness":4,"responsiveness":5,"clarity":5,"usageGuidelines":5,"termsOfService":2,"honesty":2,"reliability":4,"satisfaction":3,"leaveFeedback":"???","description":"???"}', '2025-08-22 18:40:27.024678+02', '2025-08-22 18:40:27.024678+02', 671);
+INSERT INTO public.chat_messages_contents VALUES (625, '{"listingName":"T-shirt","offerPrice":8.7,"listingPhotoType":"storage","listingPhotoPath":"listings/6f5d3a7e0e4870464cc6.jpeg","offerStartDate":"2025-09-04 00:00","offerFinishDate":"2025-09-06 00:00","description":"???"}', '2025-08-22 18:31:10.114814+02', '2025-08-22 18:31:10.114814+02', 625);
+INSERT INTO public.chat_messages_contents VALUES (626, '{"requestId":47,"listingName":"T-shirt","offerPrice":8.7,"listingPhotoPath":"listings/6f5d3a7e0e4870464cc6.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-03 00:00","offerStartDate":"2025-09-05 00:00"}', '2025-08-22 18:31:20.633894+02', '2025-08-22 18:31:20.633894+02', 626);
+INSERT INTO public.chat_messages_contents VALUES (627, '{"requestId":48,"listingName":"T-shirt","offerPrice":8.7,"listingPhotoPath":"listings/6f5d3a7e0e4870464cc6.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-02 00:00","offerStartDate":"2025-09-04 00:00"}', '2025-08-22 18:31:36.913704+02', '2025-08-22 18:31:36.913704+02', 627);
+INSERT INTO public.chat_messages_contents VALUES (628, '{"requestId":49,"listingName":"T-shirt","offerPrice":8.7,"listingPhotoPath":"listings/6f5d3a7e0e4870464cc6.jpeg","listingPhotoType":"storage","offerFinishDate":"2025-09-04 00:00","offerStartDate":"2025-09-06 00:00"}', '2025-08-22 18:31:44.874419+02', '2025-08-22 18:31:44.874419+02', 628);
+INSERT INTO public.chat_messages_contents VALUES (629, '{}', '2025-08-22 18:31:48.885783+02', '2025-08-22 18:31:48.885783+02', 629);
+INSERT INTO public.chat_messages_contents VALUES (630, '{}', '2025-08-22 18:32:00.788263+02', '2025-08-22 18:32:00.788263+02', 630);
+INSERT INTO public.chat_messages_contents VALUES (631, '{}', '2025-08-22 18:32:06.419925+02', '2025-08-22 18:32:06.419925+02', 631);
+INSERT INTO public.chat_messages_contents VALUES (632, '{}', '2025-08-22 18:32:12.104365+02', '2025-08-22 18:32:12.104365+02', 632);
+INSERT INTO public.chat_messages_contents VALUES (633, '{}', '2025-08-22 18:32:14.946437+02', '2025-08-22 18:32:14.946437+02', 633);
+INSERT INTO public.chat_messages_contents VALUES (634, '{"listingName":"Evening dress","offerPrice":5,"listingPhotoType":"storage","listingPhotoPath":"listings/64a693466ec9540984cc.jpeg","offerStartDate":"2025-09-04 00:00","offerFinishDate":"2025-09-06 00:00","description":"???"}', '2025-08-22 18:33:06.604206+02', '2025-08-22 18:33:06.604206+02', 634);
+INSERT INTO public.chat_messages_contents VALUES (635, '{}', '2025-08-22 18:33:12.762322+02', '2025-08-22 18:33:12.762322+02', 635);
+INSERT INTO public.chat_messages_contents VALUES (636, '{}', '2025-08-22 18:33:20.818218+02', '2025-08-22 18:33:20.818218+02', 636);
+INSERT INTO public.chat_messages_contents VALUES (637, '{}', '2025-08-22 18:33:25.636314+02', '2025-08-22 18:33:25.636314+02', 637);
+INSERT INTO public.chat_messages_contents VALUES (638, '{}', '2025-08-22 18:33:32.88127+02', '2025-08-22 18:33:32.88127+02', 638);
+INSERT INTO public.chat_messages_contents VALUES (639, '{}', '2025-08-22 18:33:36.814123+02', '2025-08-22 18:33:36.814123+02', 639);
+INSERT INTO public.chat_messages_contents VALUES (640, '{"listingName":"Sunglasses","offerPrice":9.65,"listingPhotoType":"storage","listingPhotoPath":"listings/8b8ea898c7617b91032d.jpeg","offerStartDate":"2025-09-01 00:00","offerFinishDate":"2025-09-03 00:00","description":"???"}', '2025-08-22 18:33:53.124374+02', '2025-08-22 18:33:53.124374+02', 640);
+INSERT INTO public.chat_messages_contents VALUES (641, '{}', '2025-08-22 18:34:00.589875+02', '2025-08-22 18:34:00.589875+02', 641);
+INSERT INTO public.chat_messages_contents VALUES (642, '{}', '2025-08-22 18:34:15.052089+02', '2025-08-22 18:34:15.052089+02', 642);
 
 
 --
@@ -3046,6 +3316,50 @@ INSERT INTO public.chat_relations VALUES (249, false, '2025-08-22 15:46:03.58597
 INSERT INTO public.chat_relations VALUES (250, false, '2025-08-22 15:46:03.591811+02', '2025-08-22 15:46:03.591811+02', 170, 20);
 INSERT INTO public.chat_relations VALUES (251, false, '2025-08-22 15:46:28.893208+02', '2025-08-22 15:46:28.893208+02', 171, 16);
 INSERT INTO public.chat_relations VALUES (252, false, '2025-08-22 15:46:28.894128+02', '2025-08-22 15:46:28.894128+02', 171, 24);
+INSERT INTO public.chat_relations VALUES (253, false, '2025-08-22 16:52:03.187486+02', '2025-08-22 16:52:03.187486+02', 172, 6);
+INSERT INTO public.chat_relations VALUES (254, false, '2025-08-22 16:52:03.191876+02', '2025-08-22 16:52:03.191876+02', 172, 3);
+INSERT INTO public.chat_relations VALUES (255, false, '2025-08-22 16:54:27.407531+02', '2025-08-22 16:54:27.407531+02', 173, 6);
+INSERT INTO public.chat_relations VALUES (256, false, '2025-08-22 16:54:27.409696+02', '2025-08-22 16:54:27.409696+02', 173, 3);
+INSERT INTO public.chat_relations VALUES (257, false, '2025-08-22 16:56:50.716564+02', '2025-08-22 16:56:50.716564+02', 174, 6);
+INSERT INTO public.chat_relations VALUES (258, false, '2025-08-22 16:56:50.719456+02', '2025-08-22 16:56:50.719456+02', 174, 7);
+INSERT INTO public.chat_relations VALUES (259, false, '2025-08-22 17:03:12.233561+02', '2025-08-22 17:03:12.233561+02', 175, 6);
+INSERT INTO public.chat_relations VALUES (260, false, '2025-08-22 17:03:12.235538+02', '2025-08-22 17:03:12.235538+02', 175, 7);
+INSERT INTO public.chat_relations VALUES (261, false, '2025-08-22 17:05:11.983085+02', '2025-08-22 17:05:11.983085+02', 176, 7);
+INSERT INTO public.chat_relations VALUES (262, false, '2025-08-22 17:05:11.986966+02', '2025-08-22 17:05:11.986966+02', 176, 6);
+INSERT INTO public.chat_relations VALUES (263, false, '2025-08-22 17:06:38.090694+02', '2025-08-22 17:06:38.090694+02', 177, 10);
+INSERT INTO public.chat_relations VALUES (264, false, '2025-08-22 17:06:38.091704+02', '2025-08-22 17:06:38.091704+02', 177, 6);
+INSERT INTO public.chat_relations VALUES (265, false, '2025-08-22 18:15:45.512772+02', '2025-08-22 18:15:45.512772+02', 178, 6);
+INSERT INTO public.chat_relations VALUES (266, false, '2025-08-22 18:15:45.514839+02', '2025-08-22 18:15:45.514839+02', 178, 10);
+INSERT INTO public.chat_relations VALUES (267, false, '2025-08-22 18:18:23.363696+02', '2025-08-22 18:18:23.363696+02', 179, 10);
+INSERT INTO public.chat_relations VALUES (268, false, '2025-08-22 18:18:23.364419+02', '2025-08-22 18:18:23.364419+02', 179, 12);
+INSERT INTO public.chat_relations VALUES (269, false, '2025-08-22 18:21:30.044317+02', '2025-08-22 18:21:30.044317+02', 180, 12);
+INSERT INTO public.chat_relations VALUES (270, false, '2025-08-22 18:21:30.045721+02', '2025-08-22 18:21:30.045721+02', 180, 10);
+INSERT INTO public.chat_relations VALUES (271, false, '2025-08-22 18:23:17.584619+02', '2025-08-22 18:23:17.584619+02', 181, 10);
+INSERT INTO public.chat_relations VALUES (272, false, '2025-08-22 18:23:17.587453+02', '2025-08-22 18:23:17.587453+02', 182, 12);
+INSERT INTO public.chat_relations VALUES (273, false, '2025-08-22 18:24:14.570058+02', '2025-08-22 18:24:14.570058+02', 183, 10);
+INSERT INTO public.chat_relations VALUES (274, false, '2025-08-22 18:24:14.570389+02', '2025-08-22 18:24:14.570389+02', 183, 12);
+INSERT INTO public.chat_relations VALUES (275, false, '2025-08-22 18:25:59.333395+02', '2025-08-22 18:25:59.333395+02', 184, 16);
+INSERT INTO public.chat_relations VALUES (276, false, '2025-08-22 18:25:59.333709+02', '2025-08-22 18:25:59.333709+02', 184, 12);
+INSERT INTO public.chat_relations VALUES (277, false, '2025-08-22 18:27:16.147222+02', '2025-08-22 18:27:16.147222+02', 185, 12);
+INSERT INTO public.chat_relations VALUES (278, false, '2025-08-22 18:27:16.147541+02', '2025-08-22 18:27:16.147541+02', 185, 16);
+INSERT INTO public.chat_relations VALUES (279, false, '2025-08-22 18:29:32.709606+02', '2025-08-22 18:29:32.709606+02', 186, 16);
+INSERT INTO public.chat_relations VALUES (280, false, '2025-08-22 18:29:32.711979+02', '2025-08-22 18:29:32.711979+02', 186, 18);
+INSERT INTO public.chat_relations VALUES (281, false, '2025-08-22 18:31:10.111939+02', '2025-08-22 18:31:10.111939+02', 187, 16);
+INSERT INTO public.chat_relations VALUES (282, false, '2025-08-22 18:31:10.112658+02', '2025-08-22 18:31:10.112658+02', 187, 18);
+INSERT INTO public.chat_relations VALUES (283, false, '2025-08-22 18:33:06.601709+02', '2025-08-22 18:33:06.601709+02', 188, 19);
+INSERT INTO public.chat_relations VALUES (284, false, '2025-08-22 18:33:06.602068+02', '2025-08-22 18:33:06.602068+02', 188, 18);
+INSERT INTO public.chat_relations VALUES (285, false, '2025-08-22 18:33:53.11823+02', '2025-08-22 18:33:53.11823+02', 189, 18);
+INSERT INTO public.chat_relations VALUES (286, false, '2025-08-22 18:33:53.119177+02', '2025-08-22 18:33:53.119177+02', 189, 19);
+INSERT INTO public.chat_relations VALUES (287, false, '2025-08-22 18:34:23.878666+02', '2025-08-22 18:34:23.878666+02', 190, 19);
+INSERT INTO public.chat_relations VALUES (288, false, '2025-08-22 18:34:23.881261+02', '2025-08-22 18:34:23.881261+02', 191, 18);
+INSERT INTO public.chat_relations VALUES (289, false, '2025-08-22 18:34:43.405762+02', '2025-08-22 18:34:43.405762+02', 192, 18);
+INSERT INTO public.chat_relations VALUES (290, false, '2025-08-22 18:34:43.406103+02', '2025-08-22 18:34:43.406103+02', 192, 19);
+INSERT INTO public.chat_relations VALUES (291, false, '2025-08-22 18:36:23.998614+02', '2025-08-22 18:36:23.998614+02', 193, 20);
+INSERT INTO public.chat_relations VALUES (292, false, '2025-08-22 18:36:23.998928+02', '2025-08-22 18:36:23.998928+02', 193, 18);
+INSERT INTO public.chat_relations VALUES (293, false, '2025-08-22 18:37:34.519771+02', '2025-08-22 18:37:34.519771+02', 194, 18);
+INSERT INTO public.chat_relations VALUES (294, false, '2025-08-22 18:37:34.521716+02', '2025-08-22 18:37:34.521716+02', 194, 20);
+INSERT INTO public.chat_relations VALUES (295, false, '2025-08-22 18:39:29.60078+02', '2025-08-22 18:39:29.60078+02', 195, 18);
+INSERT INTO public.chat_relations VALUES (296, false, '2025-08-22 18:39:29.601077+02', '2025-08-22 18:39:29.601077+02', 195, 20);
 
 
 --
@@ -3225,6 +3539,30 @@ INSERT INTO public.chats VALUES (168, 80, 'order', 'Rental Casual dress', '2025-
 INSERT INTO public.chats VALUES (169, 45, 'dispute', 'Dispute for order #80', '2025-08-22 15:46:03.584413+02', '2025-08-22 15:46:03.584413+02');
 INSERT INTO public.chats VALUES (170, 45, 'dispute', 'Dispute for order #80', '2025-08-22 15:46:03.590776+02', '2025-08-22 15:46:03.590776+02');
 INSERT INTO public.chats VALUES (171, 81, 'order', 'Rental Kids jacket', '2025-08-22 15:46:28.891735+02', '2025-08-22 15:46:28.891735+02');
+INSERT INTO public.chats VALUES (172, 82, 'order', 'Rental Pants', '2025-08-22 16:52:03.181552+02', '2025-08-22 16:52:03.181552+02');
+INSERT INTO public.chats VALUES (173, 83, 'order', 'Rental Ring', '2025-08-22 16:54:27.406356+02', '2025-08-22 16:54:27.406356+02');
+INSERT INTO public.chats VALUES (174, 84, 'order', 'Rental Sweater', '2025-08-22 16:56:50.714993+02', '2025-08-22 16:56:50.714993+02');
+INSERT INTO public.chats VALUES (175, 85, 'order', 'Rental Tracksuit', '2025-08-22 17:03:12.232076+02', '2025-08-22 17:03:12.232076+02');
+INSERT INTO public.chats VALUES (176, 86, 'order', 'Rental Sweatshirt', '2025-08-22 17:05:11.981223+02', '2025-08-22 17:05:11.981223+02');
+INSERT INTO public.chats VALUES (177, 87, 'order', 'Rental Sunglasses', '2025-08-22 17:06:38.089573+02', '2025-08-22 17:06:38.089573+02');
+INSERT INTO public.chats VALUES (178, 88, 'order', 'Rental Ring', '2025-08-22 18:15:45.51118+02', '2025-08-22 18:15:45.51118+02');
+INSERT INTO public.chats VALUES (179, 89, 'order', 'Rental Toddler Girl Dresses', '2025-08-22 18:18:23.362945+02', '2025-08-22 18:18:23.362945+02');
+INSERT INTO public.chats VALUES (180, 90, 'order', 'Rental Cap', '2025-08-22 18:21:30.043371+02', '2025-08-22 18:21:30.043371+02');
+INSERT INTO public.chats VALUES (181, 46, 'dispute', 'Dispute for order #90', '2025-08-22 18:23:17.584113+02', '2025-08-22 18:23:17.584113+02');
+INSERT INTO public.chats VALUES (182, 46, 'dispute', 'Dispute for order #90', '2025-08-22 18:23:17.5871+02', '2025-08-22 18:23:17.5871+02');
+INSERT INTO public.chats VALUES (183, 91, 'order', 'Rental Sunglasses', '2025-08-22 18:24:14.569349+02', '2025-08-22 18:24:14.569349+02');
+INSERT INTO public.chats VALUES (184, 92, 'order', 'Rental Kids jacket', '2025-08-22 18:25:59.332902+02', '2025-08-22 18:25:59.332902+02');
+INSERT INTO public.chats VALUES (185, 93, 'order', 'Rental Cap', '2025-08-22 18:27:16.1469+02', '2025-08-22 18:27:16.1469+02');
+INSERT INTO public.chats VALUES (186, 94, 'order', 'Rental Kids jacket', '2025-08-22 18:29:32.708636+02', '2025-08-22 18:29:32.708636+02');
+INSERT INTO public.chats VALUES (187, 95, 'order', 'Rental T-shirt', '2025-08-22 18:31:10.111473+02', '2025-08-22 18:31:10.111473+02');
+INSERT INTO public.chats VALUES (188, 96, 'order', 'Rental Evening dress', '2025-08-22 18:33:06.601384+02', '2025-08-22 18:33:06.601384+02');
+INSERT INTO public.chats VALUES (189, 97, 'order', 'Rental Sunglasses', '2025-08-22 18:33:53.117291+02', '2025-08-22 18:33:53.117291+02');
+INSERT INTO public.chats VALUES (190, 47, 'dispute', 'Dispute for order #97', '2025-08-22 18:34:23.878224+02', '2025-08-22 18:34:23.878224+02');
+INSERT INTO public.chats VALUES (191, 47, 'dispute', 'Dispute for order #97', '2025-08-22 18:34:23.881003+02', '2025-08-22 18:34:23.881003+02');
+INSERT INTO public.chats VALUES (192, 98, 'order', 'Rental Suit', '2025-08-22 18:34:43.405466+02', '2025-08-22 18:34:43.405466+02');
+INSERT INTO public.chats VALUES (193, 99, 'order', 'Rental Ring', '2025-08-22 18:36:23.998227+02', '2025-08-22 18:36:23.998227+02');
+INSERT INTO public.chats VALUES (194, 100, 'order', 'Rental Skirt', '2025-08-22 18:37:34.51893+02', '2025-08-22 18:37:34.51893+02');
+INSERT INTO public.chats VALUES (195, 101, 'order', 'Rental Suit', '2025-08-22 18:39:29.60046+02', '2025-08-22 18:39:29.60046+02');
 
 
 --
@@ -3293,6 +3631,8 @@ INSERT INTO public.disputes VALUES (42, '', '???', 'damage', 'open', NULL, '2025
 INSERT INTO public.disputes VALUES (43, '', '???', 'damage', 'open', NULL, '2025-08-22 15:34:23.647209+02', '2025-08-22 15:34:23.647209+02', 78, 20);
 INSERT INTO public.disputes VALUES (44, '', '???', 'damage', 'open', NULL, '2025-08-22 15:45:07.41648+02', '2025-08-22 15:45:07.41648+02', 79, 20);
 INSERT INTO public.disputes VALUES (45, '', '???', 'damage', 'open', NULL, '2025-08-22 15:46:03.57919+02', '2025-08-22 15:46:03.57919+02', 80, 20);
+INSERT INTO public.disputes VALUES (46, '', '???', 'damage', 'open', NULL, '2025-08-22 18:23:17.582605+02', '2025-08-22 18:23:17.582605+02', 90, 12);
+INSERT INTO public.disputes VALUES (47, '', '???', 'damage', 'open', NULL, '2025-08-22 18:34:23.876264+02', '2025-08-22 18:34:23.876264+02', 97, 19);
 
 
 --
@@ -4385,6 +4725,15 @@ INSERT INTO public.order_update_requests VALUES (38, false, 9.65, '2025-09-12 23
 INSERT INTO public.order_update_requests VALUES (39, false, 9.65, '2025-08-26 23:00:00+02', '2025-08-24 23:00:00+02', '2025-08-22 15:05:24.395147+02', '2025-08-22 15:05:24.395147+02', 18, 68);
 INSERT INTO public.order_update_requests VALUES (40, false, 5.45, '2025-08-29 23:00:00+02', '2025-08-26 23:00:00+02', '2025-08-22 15:14:11.677027+02', '2025-08-22 15:14:11.677027+02', 19, 72);
 INSERT INTO public.order_update_requests VALUES (41, false, 5.45, '2025-09-26 23:00:00+02', '2025-09-23 23:00:00+02', '2025-08-22 15:14:25.702527+02', '2025-08-22 15:14:25.702527+02', 24, 72);
+INSERT INTO public.order_update_requests VALUES (42, false, 6.06, '2025-09-17 23:00:00+02', '2025-09-16 23:00:00+02', '2025-08-22 16:54:39.760146+02', '2025-08-22 16:54:39.760146+02', 6, 83);
+INSERT INTO public.order_update_requests VALUES (43, false, 7.2, '2025-09-03 23:00:00+02', '2025-09-01 23:00:00+02', '2025-08-22 17:06:53.96222+02', '2025-08-22 17:06:53.96222+02', 10, 87);
+INSERT INTO public.order_update_requests VALUES (44, false, 5, '2025-08-28 23:00:00+02', '2025-08-26 23:00:00+02', '2025-08-22 18:26:08.982295+02', '2025-08-22 18:26:08.982295+02', 16, 92);
+INSERT INTO public.order_update_requests VALUES (45, false, 5, '2025-09-05 23:00:00+02', '2025-09-03 23:00:00+02', '2025-08-22 18:26:15.84877+02', '2025-08-22 18:26:15.84877+02', 12, 92);
+INSERT INTO public.order_update_requests VALUES (46, false, 5, '2025-09-19 23:00:00+02', '2025-09-17 23:00:00+02', '2025-08-22 18:26:25.28927+02', '2025-08-22 18:26:25.28927+02', 16, 92);
+INSERT INTO public.order_update_requests VALUES (47, false, 8.7, '2025-09-04 23:00:00+02', '2025-09-02 23:00:00+02', '2025-08-22 18:31:20.632449+02', '2025-08-22 18:31:20.632449+02', 16, 95);
+INSERT INTO public.order_update_requests VALUES (48, false, 8.7, '2025-09-03 23:00:00+02', '2025-09-01 23:00:00+02', '2025-08-22 18:31:36.911159+02', '2025-08-22 18:31:36.911159+02', 18, 95);
+INSERT INTO public.order_update_requests VALUES (49, false, 8.7, '2025-09-05 23:00:00+02', '2025-09-03 23:00:00+02', '2025-08-22 18:31:44.871734+02', '2025-08-22 18:31:44.871734+02', 16, 95);
+INSERT INTO public.order_update_requests VALUES (50, false, 4.7, '2025-09-05 23:00:00+02', '2025-09-02 23:00:00+02', '2025-08-22 18:39:41.345523+02', '2025-08-22 18:39:41.345523+02', 18, 101);
 
 
 --
@@ -4454,26 +4803,46 @@ INSERT INTO public.orders VALUES (58, 'finished', NULL, 8.7, '2025-09-04 23:00:0
 INSERT INTO public.orders VALUES (59, 'pending_owner_finished', NULL, 7.8, '2025-09-01 23:00:00+02', '2025-09-02 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 10:06:44.27434+02', '2025-08-22 10:06:44.27434+02', 21, 11, 0);
 INSERT INTO public.orders VALUES (60, 'finished', NULL, 8.8, '2025-09-04 23:00:00+02', '2025-09-04 23:00:00+02', 8.8, '2025-08-27 23:00:00+02', '2025-08-27 23:00:00+02', 15, 15, NULL, '2025-08-22 10:08:05.47088+02', '2025-08-22 10:08:05.47088+02', 21, 5, 0);
 INSERT INTO public.orders VALUES (61, 'finished', NULL, 7.8, '2025-08-22 10:09:00+02', '2025-08-22 10:09:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 10:09:11.960274+02', '2025-08-22 10:09:11.960274+02', 21, 11, 0);
+INSERT INTO public.orders VALUES (85, 'finished', NULL, 6.12, '2025-09-01 23:00:00+02', '2025-09-04 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:03:12.207436+02', '2025-08-22 17:03:12.207436+02', 7, 25, 0);
 INSERT INTO public.orders VALUES (75, 'finished', NULL, 8.04, '2025-09-02 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:20:02.94645+02', '2025-08-22 15:20:02.94645+02', 24, 44, 0);
 INSERT INTO public.orders VALUES (62, 'finished', NULL, 9.65, '2025-09-12 23:00:00+02', '2025-09-04 23:00:00+02', 9.65, '2025-08-21 23:00:00+02', '2025-08-29 23:00:00+02', 15, 15, NULL, '2025-08-22 14:53:35.287455+02', '2025-08-22 14:53:35.287455+02', 1, 41, 0);
 INSERT INTO public.orders VALUES (63, 'in_process', NULL, 4.7, '2025-08-22 14:55:00+02', '2025-08-22 14:55:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 14:55:54.996004+02', '2025-08-22 14:55:54.996004+02', 1, 10, 0);
 INSERT INTO public.orders VALUES (76, 'pending_owner_finished', NULL, 7.99, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:29:43.831602+02', '2025-08-22 15:29:43.831602+02', 24, 30, 0);
 INSERT INTO public.orders VALUES (64, 'finished', NULL, 9.65, '2025-09-12 23:00:00+02', '2025-09-04 23:00:00+02', 9.65, '2025-08-21 23:00:00+02', '2025-08-29 23:00:00+02', 15, 15, NULL, '2025-08-22 14:57:51.484831+02', '2025-08-22 14:57:51.484831+02', 22, 41, 0);
 INSERT INTO public.orders VALUES (77, 'in_process', NULL, 5.1, '2025-09-04 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:31:44.909572+02', '2025-08-22 15:31:44.909572+02', 24, 13, 0);
+INSERT INTO public.orders VALUES (97, 'in_process', NULL, 9.65, '2025-08-31 23:00:00+02', '2025-09-02 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:33:53.114282+02', '2025-08-22 18:33:53.114282+02', 19, 41, 0);
 INSERT INTO public.orders VALUES (65, 'finished', NULL, 8.69, '2025-08-21 23:00:00+02', '2025-08-21 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 14:58:48.753641+02', '2025-08-22 14:58:48.753641+02', 22, 42, 0);
+INSERT INTO public.orders VALUES (86, 'finished', NULL, 5, '2025-08-25 23:00:00+02', '2025-08-26 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:05:11.940665+02', '2025-08-22 17:05:11.940665+02', 6, 7, 0);
 INSERT INTO public.orders VALUES (66, 'in_process', NULL, 9.65, '2025-08-21 23:00:00+02', '2025-08-29 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:02:04.16702+02', '2025-08-22 15:02:04.16702+02', 22, 41, 0);
 INSERT INTO public.orders VALUES (67, 'in_process', NULL, 9.65, '2025-09-12 23:00:00+02', '2025-09-10 23:00:00+02', 9.65, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', 15, 15, NULL, '2025-08-22 15:02:47.152301+02', '2025-08-22 15:02:47.152301+02', 22, 41, 0);
 INSERT INTO public.orders VALUES (78, 'in_process', NULL, 5.1, '2025-09-01 23:00:00+02', '2025-09-03 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:32:37.46264+02', '2025-08-22 15:32:37.46264+02', 24, 13, 0);
 INSERT INTO public.orders VALUES (68, 'in_process', NULL, 9.65, '2025-08-26 23:00:00+02', '2025-08-24 23:00:00+02', 9.65, '2025-08-31 23:00:00+02', '2025-09-02 23:00:00+02', 15, 15, NULL, '2025-08-22 15:05:15.253153+02', '2025-08-22 15:05:15.253153+02', 23, 41, 0);
+INSERT INTO public.orders VALUES (92, 'finished', NULL, 5, '2025-09-19 23:00:00+02', '2025-09-17 23:00:00+02', 5, '2025-08-26 23:00:00+02', '2025-08-28 23:00:00+02', 15, 15, NULL, '2025-08-22 18:25:59.329082+02', '2025-08-22 18:25:59.329082+02', 12, 4, 0);
 INSERT INTO public.orders VALUES (69, 'in_process', NULL, 9.65, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:06:34.89643+02', '2025-08-22 15:06:34.89643+02', 23, 41, 0);
 INSERT INTO public.orders VALUES (79, 'in_process', NULL, 5.3, '2025-08-26 23:00:00+02', '2025-08-28 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:44:20.128396+02', '2025-08-22 15:44:20.128396+02', 24, 12, 0);
 INSERT INTO public.orders VALUES (70, 'in_process', NULL, 5, '2025-08-21 23:00:00+02', '2025-08-28 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:12:01.567895+02', '2025-08-22 15:12:01.567895+02', 23, 15, 0);
 INSERT INTO public.orders VALUES (71, 'in_process', NULL, 5.45, '2025-08-21 23:00:00+02', '2025-08-28 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:12:56.419401+02', '2025-08-22 15:12:56.419401+02', 23, 2, 0);
 INSERT INTO public.orders VALUES (80, 'in_process', NULL, 7.71, '2025-09-02 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:45:34.209084+02', '2025-08-22 15:45:34.209084+02', 24, 22, 0);
+INSERT INTO public.orders VALUES (87, 'finished', NULL, 7.2, '2025-09-03 23:00:00+02', '2025-09-01 23:00:00+02', 7.2, '2025-08-28 23:00:00+02', '2025-08-30 23:00:00+02', 15, 15, NULL, '2025-08-22 17:06:38.082108+02', '2025-08-22 17:06:38.082108+02', 6, 31, 0);
 INSERT INTO public.orders VALUES (72, 'finished', NULL, 5.45, '2025-09-26 23:00:00+02', '2025-09-23 23:00:00+02', 5.45, '2025-09-02 23:00:00+02', '2025-09-05 23:00:00+02', 15, 15, NULL, '2025-08-22 15:13:59.63969+02', '2025-08-22 15:13:59.63969+02', 24, 2, 0);
 INSERT INTO public.orders VALUES (81, 'finished', NULL, 5, '2025-09-04 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:46:28.884845+02', '2025-08-22 15:46:28.884845+02', 24, 4, 0);
 INSERT INTO public.orders VALUES (73, 'finished', NULL, 5, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:16:47.066728+02', '2025-08-22 15:16:47.066728+02', 24, 15, 0);
+INSERT INTO public.orders VALUES (93, 'finished', NULL, 8.95, '2025-08-27 23:00:00+02', '2025-08-29 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:27:16.137937+02', '2025-08-22 18:27:16.137937+02', 16, 18, 0);
 INSERT INTO public.orders VALUES (74, 'finished', NULL, 5, '2025-10-15 23:00:00+02', '2025-10-17 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:18:18.708348+02', '2025-08-22 15:18:18.708348+02', 24, 15, 0);
+INSERT INTO public.orders VALUES (82, 'finished', NULL, 5, '2025-08-22 16:51:00+02', '2025-08-22 16:51:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:52:03.128126+02', '2025-08-22 16:52:03.128126+02', 3, 40, 0);
+INSERT INTO public.orders VALUES (88, 'finished', NULL, 6.06, '2025-08-26 23:00:00+02', '2025-08-28 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:15:45.501951+02', '2025-08-22 18:15:45.501951+02', 10, 26, 0);
+INSERT INTO public.orders VALUES (98, 'finished', NULL, 4.7, '2025-09-02 23:00:00+02', '2025-09-04 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:34:43.399237+02', '2025-08-22 18:34:43.399237+02', 19, 10, 0);
+INSERT INTO public.orders VALUES (83, 'finished', NULL, 6.06, '2025-09-17 23:00:00+02', '2025-09-16 23:00:00+02', 6.06, '2025-09-02 23:00:00+02', '2025-09-04 23:00:00+02', 15, 15, NULL, '2025-08-22 16:54:27.396089+02', '2025-08-22 16:54:27.396089+02', 3, 26, 0);
+INSERT INTO public.orders VALUES (89, 'finished', NULL, 7.61, '2025-08-26 23:00:00+02', '2025-08-29 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:18:23.358936+02', '2025-08-22 18:18:23.358936+02', 12, 16, 0);
+INSERT INTO public.orders VALUES (84, 'finished', NULL, 5, '2025-08-25 23:00:00+02', '2025-08-27 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:56:50.679177+02', '2025-08-22 16:56:50.679177+02', 7, 6, 0);
+INSERT INTO public.orders VALUES (94, 'finished', NULL, 5, '2025-08-25 23:00:00+02', '2025-08-27 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:29:32.704612+02', '2025-08-22 18:29:32.704612+02', 18, 4, 0);
+INSERT INTO public.orders VALUES (90, 'in_process', NULL, 8.95, '2025-09-01 23:00:00+02', '2025-09-03 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:21:30.038409+02', '2025-08-22 18:21:30.038409+02', 10, 18, 0);
+INSERT INTO public.orders VALUES (99, 'finished', NULL, 5.1, '2025-08-25 23:00:00+02', '2025-08-27 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:36:23.989993+02', '2025-08-22 18:36:23.989993+02', 18, 13, 0);
+INSERT INTO public.orders VALUES (91, 'finished', NULL, 7.2, '2025-08-28 23:00:00+02', '2025-08-29 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:24:14.561347+02', '2025-08-22 18:24:14.561347+02', 12, 31, 0);
+INSERT INTO public.orders VALUES (95, 'finished', NULL, 8.7, '2025-09-05 23:00:00+02', '2025-09-03 23:00:00+02', 8.7, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', 15, 15, NULL, '2025-08-22 18:31:10.106397+02', '2025-08-22 18:31:10.106397+02', 18, 3, 0);
+INSERT INTO public.orders VALUES (100, 'finished', NULL, 8.69, '2025-09-01 23:00:00+02', '2025-09-03 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:37:34.514283+02', '2025-08-22 18:37:34.514283+02', 20, 42, 0);
+INSERT INTO public.orders VALUES (96, 'finished', NULL, 5, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:33:06.598647+02', '2025-08-22 18:33:06.598647+02', 18, 15, 0);
+INSERT INTO public.orders VALUES (101, 'finished', NULL, 4.7, '2025-09-05 23:00:00+02', '2025-09-02 23:00:00+02', 4.7, '2025-08-26 23:00:00+02', '2025-09-02 23:00:00+02', 15, 15, NULL, '2025-08-22 18:39:29.592024+02', '2025-08-22 18:39:29.592024+02', 20, 10, 0);
 
 
 --
@@ -4484,6 +4853,10 @@ INSERT INTO public.orders VALUES (74, 'finished', NULL, 5, '2025-10-15 23:00:00+
 
 INSERT INTO public.owner_comments VALUES (1, 'cool', 'cool', 2, 5, 1, 2, 3, 4, 2, 3, false, true, '', '2025-08-18 18:32:13.593842+02', '2025-08-18 18:32:13.593842+02', 3);
 INSERT INTO public.owner_comments VALUES (2, '???', '???', 3, 2, 5, 3, 4, 2, 2, 3, false, true, '', '2025-08-22 15:17:43.330505+02', '2025-08-22 15:17:43.330505+02', 73);
+INSERT INTO public.owner_comments VALUES (3, '???', '???', 5, 5, 5, 5, 3, 4, 5, 5, false, true, '', '2025-08-22 16:53:55.720876+02', '2025-08-22 16:53:55.720876+02', 82);
+INSERT INTO public.owner_comments VALUES (4, '???', '???', 3, 5, 1, 5, 3, 4, 1, 4, false, true, '', '2025-08-22 17:04:46.292151+02', '2025-08-22 17:04:46.292151+02', 85);
+INSERT INTO public.owner_comments VALUES (5, '???', '???', 1, 2, 4, 1, 1, 1, 2, 1, false, true, '', '2025-08-22 17:08:19.319901+02', '2025-08-22 17:08:19.319901+02', 87);
+INSERT INTO public.owner_comments VALUES (6, '???', '???', 1, 5, 4, 4, 5, 3, 3, 4, false, true, '', '2025-08-22 18:25:02.579234+02', '2025-08-22 18:25:02.579234+02', 91);
 
 
 --
@@ -4511,6 +4884,14 @@ INSERT INTO public.owner_comments VALUES (2, '???', '???', 3, 2, 5, 3, 4, 2, 2, 
 INSERT INTO public.renter_comments VALUES (1, 'cool', 'cool', 2, 5, 5, 5, 5, 3, 3, 5, 5, false, true, '', '2025-08-18 18:33:15.316524+02', '2025-08-18 18:33:15.316524+02', 3);
 INSERT INTO public.renter_comments VALUES (2, 'amazing!', 'amazing!', 2, 4, 2, 1, 4, 5, 1, 2, 4, false, true, '', '2025-08-18 18:53:23.553244+02', '2025-08-18 18:53:23.553244+02', 6);
 INSERT INTO public.renter_comments VALUES (3, '???', '???', 4, 4, 2, 3, 5, 3, 5, 3, 4, false, true, '', '2025-08-22 15:17:30.454191+02', '2025-08-22 15:17:30.454191+02', 73);
+INSERT INTO public.renter_comments VALUES (4, '???', '???', 4, 2, 3, 1, 2, 3, 3, 5, 5, false, true, '', '2025-08-22 16:53:40.960775+02', '2025-08-22 16:53:40.960775+02', 82);
+INSERT INTO public.renter_comments VALUES (5, '???', '???', 5, 5, 4, 4, 5, 5, 4, 5, 5, false, true, '', '2025-08-22 17:00:05.06133+02', '2025-08-22 17:00:05.06133+02', 84);
+INSERT INTO public.renter_comments VALUES (6, '???', '???', 3, 5, 4, 4, 5, 5, 5, 5, 5, false, true, '', '2025-08-22 17:05:56.524017+02', '2025-08-22 17:05:56.524017+02', 86);
+INSERT INTO public.renter_comments VALUES (7, '???', '???', 5, 5, 5, 5, 5, 5, 5, 5, 5, false, true, '', '2025-08-22 18:29:02.712958+02', '2025-08-22 18:29:02.712958+02', 93);
+INSERT INTO public.renter_comments VALUES (8, '???', '???', 5, 5, 5, 5, 3, 4, 5, 5, 4, false, true, '', '2025-08-22 18:30:20.399498+02', '2025-08-22 18:30:20.399498+02', 94);
+INSERT INTO public.renter_comments VALUES (9, '???', '???', 5, 5, 5, 5, 5, 4, 5, 5, 5, false, true, '', '2025-08-22 18:37:15.119168+02', '2025-08-22 18:37:15.119168+02', 99);
+INSERT INTO public.renter_comments VALUES (10, '???', '???', 4, 4, 5, 5, 5, 5, 5, 5, 5, false, true, '', '2025-08-22 18:38:26.283459+02', '2025-08-22 18:38:26.283459+02', 100);
+INSERT INTO public.renter_comments VALUES (11, '???', '???', 4, 4, 5, 5, 5, 2, 2, 4, 3, false, true, '', '2025-08-22 18:40:27.023382+02', '2025-08-22 18:40:27.023382+02', 101);
 
 
 --
@@ -4619,6 +5000,26 @@ INSERT INTO public.sender_payments VALUES (83, 20.3, '', 'paypal', '{"paypalSend
 INSERT INTO public.sender_payments VALUES (84, 20.9, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"04G50751RE217672N","paypalOrderId":"3N16695182479681C"}', true, false, NULL, '2025-08-22 15:44:34.80407+02', false, '2025-08-22 15:44:34.80407+02', '2025-08-22 15:44:34.80407+02', 24, 79);
 INSERT INTO public.sender_payments VALUES (85, 35.84, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"2LR016186A3200306","paypalOrderId":"9BA02307K9125861J"}', true, false, NULL, '2025-08-22 15:45:47.61128+02', false, '2025-08-22 15:45:47.61128+02', '2025-08-22 15:45:47.61128+02', 24, 80);
 INSERT INTO public.sender_payments VALUES (86, 15, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"0SA22679C2847983C","paypalOrderId":"90G72279B36699521"}', true, false, NULL, '2025-08-22 15:47:04.784713+02', false, '2025-08-22 15:47:04.784713+02', '2025-08-22 15:47:04.784713+02', 24, 81);
+INSERT INTO public.sender_payments VALUES (87, 10, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"2GN166495R430842S","paypalOrderId":"08E02965ER3647218"}', true, false, NULL, '2025-08-22 16:52:20.527916+02', false, '2025-08-22 16:52:20.527916+02', '2025-08-22 16:52:20.527916+02', 3, 82);
+INSERT INTO public.sender_payments VALUES (88, 17.12, 'paymentProofs/1b41b6446390283b1e75.png', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 16:55:12.758259+02', false, '2025-08-22 16:54:54.191032+02', '2025-08-22 16:54:54.191032+02', 3, 83);
+INSERT INTO public.sender_payments VALUES (89, 20, 'paymentProofs/16715ec10927d7df2bdd.png', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 16:57:34.145532+02', false, '2025-08-22 16:57:29.497118+02', '2025-08-22 16:57:15.090594+02', 7, 84);
+INSERT INTO public.sender_payments VALUES (90, 29.48, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"3TJ408066X2367543","paypalOrderId":"8MM91319XF681593P"}', true, false, NULL, '2025-08-22 17:04:09.455388+02', false, '2025-08-22 17:04:09.455388+02', '2025-08-22 17:04:09.455388+02', 7, 85);
+INSERT INTO public.sender_payments VALUES (91, 15, 'paymentProofs/4667b8c14c994368586d.png', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 17:05:36.615038+02', false, '2025-08-22 17:05:31.95322+02', '2025-08-22 17:05:31.95322+02', 6, 86);
+INSERT INTO public.sender_payments VALUES (92, 26.6, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"2FM53911YP1413534","paypalOrderId":"7FM740719P7814814"}', true, false, NULL, '2025-08-22 17:07:03.539234+02', false, '2025-08-22 17:07:03.539234+02', '2025-08-22 17:07:03.539234+02', 6, 87);
+INSERT INTO public.sender_payments VALUES (93, 23.18, 'paymentProofs/bde08241a0f3342feb7e.jpeg', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 18:16:32.731822+02', false, '2025-08-22 18:16:22.392204+02', '2025-08-22 18:16:22.392204+02', 10, 88);
+INSERT INTO public.sender_payments VALUES (94, 35.44, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"2PJ03632FV472773W","paypalOrderId":"5LU824162P1395430"}', true, false, NULL, '2025-08-22 18:18:35.67807+02', false, '2025-08-22 18:18:35.67807+02', '2025-08-22 18:18:35.67807+02', 12, 89);
+INSERT INTO public.sender_payments VALUES (95, 31.85, 'paymentProofs/5ef40796f3bfc107f976.jpeg', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 18:22:42.982985+02', false, '2025-08-22 18:22:39.091092+02', '2025-08-22 18:21:49.285416+02', 10, 90);
+INSERT INTO public.sender_payments VALUES (96, 19.4, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"56J31729W2350031E","paypalOrderId":"1NF75601A2358405G"}', true, false, NULL, '2025-08-22 18:24:30.093378+02', false, '2025-08-22 18:24:30.093378+02', '2025-08-22 18:24:30.093378+02', 12, 91);
+INSERT INTO public.sender_payments VALUES (97, 20, 'paymentProofs/419f2c3f976109fdf08f.png', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 18:26:46.918765+02', false, '2025-08-22 18:26:41.174719+02', '2025-08-22 18:26:41.174719+02', 12, 92);
+INSERT INTO public.sender_payments VALUES (99, 31.85, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"0KX607697C996505X","paypalOrderId":"6641698742185593H"}', true, false, NULL, '2025-08-22 18:28:11.518612+02', false, '2025-08-22 18:28:11.518612+02', '2025-08-22 18:28:11.518612+02', 16, 93);
+INSERT INTO public.sender_payments VALUES (100, 20, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"79L50470E8895621B","paypalOrderId":"6YT39820VA671041H"}', true, false, NULL, '2025-08-22 18:29:46.659381+02', false, '2025-08-22 18:29:46.659381+02', '2025-08-22 18:29:46.659381+02', 18, 94);
+INSERT INTO public.sender_payments VALUES (101, 31.1, 'paymentProofs/6284b21c91e8af9918a5.jpeg', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 18:32:06.413342+02', false, '2025-08-22 18:32:00.783432+02', '2025-08-22 18:32:00.783432+02', 18, 95);
+INSERT INTO public.sender_payments VALUES (102, 20, 'paymentProofs/d1ec679ad9954e3314a3.png', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 18:33:25.631553+02', false, '2025-08-22 18:33:20.815395+02', '2025-08-22 18:33:20.815395+02', 18, 96);
+INSERT INTO public.sender_payments VALUES (103, 33.95, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"2GU0388635212615Y","paypalOrderId":"5P284012KP7939834"}', true, false, NULL, '2025-08-22 18:34:06.399169+02', false, '2025-08-22 18:34:06.399169+02', '2025-08-22 18:34:06.399169+02', 19, 97);
+INSERT INTO public.sender_payments VALUES (104, 19.1, 'paymentProofs/d86fc9cccc1802251511.png', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 18:35:04.30309+02', false, '2025-08-22 18:35:00.780323+02', '2025-08-22 18:35:00.780323+02', 19, 98);
+INSERT INTO public.sender_payments VALUES (105, 20.3, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"2WP61742G35714322","paypalOrderId":"4SL17144MT485045U"}', true, false, NULL, '2025-08-22 18:36:43.97163+02', false, '2025-08-22 18:36:43.97163+02', '2025-08-22 18:36:43.97163+02', 18, 99);
+INSERT INTO public.sender_payments VALUES (106, 31.07, 'paymentProofs/9d42e27d871d364b1348.png', 'bank-transfer', '{}', true, false, NULL, '2025-08-22 18:38:00.217386+02', false, '2025-08-22 18:37:56.384253+02', '2025-08-22 18:37:56.384253+02', 20, 100);
+INSERT INTO public.sender_payments VALUES (107, 23.8, '', 'paypal', '{"paypalSenderId":"6WQ68DM2A9FGS","paypalCaptureId":"2MB14409JU165813A","paypalOrderId":"3CS44569KG5860807"}', true, false, NULL, '2025-08-22 18:39:56.056635+02', false, '2025-08-22 18:39:56.056635+02', '2025-08-22 18:39:56.056635+02', 20, 101);
 
 
 --
@@ -5188,6 +5589,7 @@ INSERT INTO public.sockets VALUES (1340, 'De0oYIIJHasLfwuFAAAP', '2025-08-18 19:
 INSERT INTO public.sockets VALUES (1341, 'jsqflcrGc5iP3uPkAAAQ', '2025-08-18 19:00:52.590547+02', '2025-08-18 19:00:52.590547+02', 6);
 INSERT INTO public.sockets VALUES (1342, 'z18I6myQ4VnF4P26AAAR', '2025-08-18 19:00:52.594019+02', '2025-08-18 19:00:52.594019+02', 1);
 INSERT INTO public.sockets VALUES (1343, 'qVbXLC63fQc-OU5sAAAS', '2025-08-18 19:00:52.594411+02', '2025-08-18 19:00:52.594411+02', 6);
+INSERT INTO public.sockets VALUES (2206, 'OPmlH4DFR_mhhLEnAAFR', '2025-08-22 18:37:58.334358+02', '2025-08-22 18:37:58.334358+02', 1);
 INSERT INTO public.sockets VALUES (1344, 'jxazvIlPyq0NzoqGAAAT', '2025-08-18 19:00:52.597294+02', '2025-08-18 19:00:52.597294+02', 4);
 INSERT INTO public.sockets VALUES (1345, 'IsxxGRouzzmgh2yZAAAH', '2025-08-18 19:01:27.654878+02', '2025-08-18 19:01:27.654878+02', 6);
 INSERT INTO public.sockets VALUES (1346, 'H8j2NhtZaf_0uOiwAAAJ', '2025-08-18 19:01:27.655694+02', '2025-08-18 19:01:27.655694+02', 6);
@@ -5582,6 +5984,47 @@ INSERT INTO public.temp_orders VALUES (208, 'pending_owner', NULL, NULL, NULL, N
 INSERT INTO public.temp_orders VALUES (209, 'pending_owner', NULL, 7.71, '2025-09-02 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:45:31.89479+02', '2025-08-22 15:45:31.89479+02', 24, 22, NULL);
 INSERT INTO public.temp_orders VALUES (210, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:46:23.263937+02', '2025-08-22 15:46:23.263937+02', 24, 4, NULL);
 INSERT INTO public.temp_orders VALUES (211, 'pending_owner', NULL, 5, '2025-09-04 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 15:46:26.852503+02', '2025-08-22 15:46:26.852503+02', 24, 4, NULL);
+INSERT INTO public.temp_orders VALUES (212, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:51:54.010437+02', '2025-08-22 16:51:54.010437+02', 3, 40, NULL);
+INSERT INTO public.temp_orders VALUES (213, 'pending_owner', NULL, 5, '2025-08-22 16:51:00+02', '2025-08-22 16:51:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:51:56.490931+02', '2025-08-22 16:51:56.490931+02', 3, 40, NULL);
+INSERT INTO public.temp_orders VALUES (214, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:54:23.038496+02', '2025-08-22 16:54:23.038496+02', 3, 26, NULL);
+INSERT INTO public.temp_orders VALUES (215, 'pending_owner', NULL, 6.06, '2025-09-02 23:00:00+02', '2025-09-04 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:54:25.506256+02', '2025-08-22 16:54:25.506256+02', 3, 26, NULL);
+INSERT INTO public.temp_orders VALUES (216, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:56:44.378709+02', '2025-08-22 16:56:44.378709+02', 7, 6, NULL);
+INSERT INTO public.temp_orders VALUES (217, 'pending_owner', NULL, 5, '2025-08-25 23:00:00+02', '2025-08-27 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 16:56:48.170177+02', '2025-08-22 16:56:48.170177+02', 7, 6, NULL);
+INSERT INTO public.temp_orders VALUES (218, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:03:07.507987+02', '2025-08-22 17:03:07.507987+02', 7, 25, NULL);
+INSERT INTO public.temp_orders VALUES (219, 'pending_owner', NULL, 6.12, '2025-09-01 23:00:00+02', '2025-09-04 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:03:10.210457+02', '2025-08-22 17:03:10.210457+02', 7, 25, NULL);
+INSERT INTO public.temp_orders VALUES (220, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:05:07.33693+02', '2025-08-22 17:05:07.33693+02', 6, 7, NULL);
+INSERT INTO public.temp_orders VALUES (221, 'pending_owner', NULL, 5, '2025-08-25 23:00:00+02', '2025-08-26 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:05:10.116622+02', '2025-08-22 17:05:10.116622+02', 6, 7, NULL);
+INSERT INTO public.temp_orders VALUES (222, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:06:31.972247+02', '2025-08-22 17:06:31.972247+02', 6, 31, NULL);
+INSERT INTO public.temp_orders VALUES (223, 'pending_owner', NULL, 7.2, '2025-08-28 23:00:00+02', '2025-08-30 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 17:06:36.078624+02', '2025-08-22 17:06:36.078624+02', 6, 31, NULL);
+INSERT INTO public.temp_orders VALUES (224, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:15:39.788059+02', '2025-08-22 18:15:39.788059+02', 10, 26, NULL);
+INSERT INTO public.temp_orders VALUES (225, 'pending_owner', NULL, 6.06, '2025-08-26 23:00:00+02', '2025-08-28 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:15:42.984185+02', '2025-08-22 18:15:42.984185+02', 10, 26, NULL);
+INSERT INTO public.temp_orders VALUES (226, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:18:05.441276+02', '2025-08-22 18:18:05.441276+02', 10, 26, NULL);
+INSERT INTO public.temp_orders VALUES (227, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:18:15.027028+02', '2025-08-22 18:18:15.027028+02', 12, 16, NULL);
+INSERT INTO public.temp_orders VALUES (228, 'pending_owner', NULL, 7.61, '2025-08-26 23:00:00+02', '2025-08-29 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:18:20.628293+02', '2025-08-22 18:18:20.628293+02', 12, 16, NULL);
+INSERT INTO public.temp_orders VALUES (229, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:21:23.808658+02', '2025-08-22 18:21:23.808658+02', 10, 18, NULL);
+INSERT INTO public.temp_orders VALUES (230, 'pending_owner', NULL, 8.95, '2025-09-01 23:00:00+02', '2025-09-03 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:21:27.072837+02', '2025-08-22 18:21:27.072837+02', 10, 18, NULL);
+INSERT INTO public.temp_orders VALUES (231, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:24:07.866145+02', '2025-08-22 18:24:07.866145+02', 12, 31, NULL);
+INSERT INTO public.temp_orders VALUES (232, 'pending_owner', NULL, 7.2, '2025-08-28 23:00:00+02', '2025-08-29 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:24:11.42102+02', '2025-08-22 18:24:11.42102+02', 12, 31, NULL);
+INSERT INTO public.temp_orders VALUES (233, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:25:52.28778+02', '2025-08-22 18:25:52.28778+02', 12, 4, NULL);
+INSERT INTO public.temp_orders VALUES (234, 'pending_owner', NULL, 5, '2025-08-26 23:00:00+02', '2025-08-28 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:25:56.051116+02', '2025-08-22 18:25:56.051116+02', 12, 4, NULL);
+INSERT INTO public.temp_orders VALUES (235, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:27:09.696276+02', '2025-08-22 18:27:09.696276+02', 16, 18, NULL);
+INSERT INTO public.temp_orders VALUES (236, 'pending_owner', NULL, 8.95, '2025-08-27 23:00:00+02', '2025-08-29 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:27:13.521692+02', '2025-08-22 18:27:13.521692+02', 16, 18, NULL);
+INSERT INTO public.temp_orders VALUES (237, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:29:27.643799+02', '2025-08-22 18:29:27.643799+02', 18, 4, NULL);
+INSERT INTO public.temp_orders VALUES (238, 'pending_owner', NULL, 5, '2025-08-25 23:00:00+02', '2025-08-27 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:29:30.649664+02', '2025-08-22 18:29:30.649664+02', 18, 4, NULL);
+INSERT INTO public.temp_orders VALUES (239, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:31:01.353824+02', '2025-08-22 18:31:01.353824+02', 18, 3, NULL);
+INSERT INTO public.temp_orders VALUES (240, 'pending_owner', NULL, 8.7, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:31:05.310353+02', '2025-08-22 18:31:05.310353+02', 18, 3, NULL);
+INSERT INTO public.temp_orders VALUES (241, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:33:00.919204+02', '2025-08-22 18:33:00.919204+02', 18, 15, NULL);
+INSERT INTO public.temp_orders VALUES (242, 'pending_owner', NULL, 5, '2025-09-03 23:00:00+02', '2025-09-05 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:33:03.815974+02', '2025-08-22 18:33:03.815974+02', 18, 15, NULL);
+INSERT INTO public.temp_orders VALUES (243, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:33:46.428218+02', '2025-08-22 18:33:46.428218+02', 19, 41, NULL);
+INSERT INTO public.temp_orders VALUES (244, 'pending_owner', NULL, 9.65, '2025-08-31 23:00:00+02', '2025-09-02 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:33:50.52586+02', '2025-08-22 18:33:50.52586+02', 19, 41, NULL);
+INSERT INTO public.temp_orders VALUES (245, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:34:37.582247+02', '2025-08-22 18:34:37.582247+02', 19, 10, NULL);
+INSERT INTO public.temp_orders VALUES (246, 'pending_owner', NULL, 4.7, '2025-09-02 23:00:00+02', '2025-09-04 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:34:41.057297+02', '2025-08-22 18:34:41.057297+02', 19, 10, NULL);
+INSERT INTO public.temp_orders VALUES (247, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:36:18.20741+02', '2025-08-22 18:36:18.20741+02', 18, 13, NULL);
+INSERT INTO public.temp_orders VALUES (248, 'pending_owner', NULL, 5.1, '2025-08-25 23:00:00+02', '2025-08-27 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:36:21.249819+02', '2025-08-22 18:36:21.249819+02', 18, 13, NULL);
+INSERT INTO public.temp_orders VALUES (249, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:37:29.034092+02', '2025-08-22 18:37:29.034092+02', 20, 42, NULL);
+INSERT INTO public.temp_orders VALUES (250, 'pending_owner', NULL, 8.69, '2025-09-01 23:00:00+02', '2025-09-03 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:37:32.315009+02', '2025-08-22 18:37:32.315009+02', 20, 42, NULL);
+INSERT INTO public.temp_orders VALUES (251, 'pending_owner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:39:24.782428+02', '2025-08-22 18:39:24.782428+02', 20, 10, NULL);
+INSERT INTO public.temp_orders VALUES (252, 'pending_owner', NULL, 4.7, '2025-08-26 23:00:00+02', '2025-09-02 23:00:00+02', NULL, NULL, NULL, 15, 15, NULL, '2025-08-22 18:39:27.770863+02', '2025-08-22 18:39:27.770863+02', 20, 10, NULL);
 
 
 --
@@ -5718,26 +6161,25 @@ INSERT INTO public.user_event_logs VALUES (86, 'admin@gmail.com', 'admin', 'Admi
 
 INSERT INTO public.users VALUES (14, 'Joseph Mccall', 'tinastephens@bates.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', NULL, 'users/dd15d7874803bae41171.jpeg', NULL, false, true, true, false, false, true, false, false, NULL, NULL, 'https://instagram.com/brenda56', '7c133bc0', true, false, '2025-08-17 12:58:46.68604+02', '2025-08-17 12:58:46.68604+02');
 INSERT INTO public.users VALUES (13, 'Cheryl Keith', 'thomasanderson@aguilar.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Property everybody suffer process news best Democrat event how price site.', 'users/5b4707cbc062d1281eaa.jpeg', NULL, false, true, true, false, false, true, false, false, NULL, 'https://linkedin.com/in/nryan', NULL, 'kGVSRLhnA7to', true, false, '2025-08-17 12:57:30.810516+02', '2025-08-17 12:57:30.810516+02');
-INSERT INTO public.users VALUES (12, 'Theresa Baker MD', 'emilyparsons@gmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Sound rock growth compare too general make which where.', 'users/e57042a3d89e54732137.jpeg', '380663253489', true, true, true, false, false, true, false, false, 'https://facebook.com/david28', NULL, NULL, 'a722e661', true, false, '2025-08-17 12:55:54.643181+02', '2025-08-17 12:55:54.643181+02');
 INSERT INTO public.users VALUES (5, 'Erica Kim', 'emily50@delacruz.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'International door direction number every amount.', 'users/ba90478ddf8b7e720000.jpeg', '380662524418', true, true, true, false, true, true, false, false, NULL, NULL, NULL, 'd496f4bf', true, false, '2025-08-17 12:39:27.835984+02', '2025-08-17 12:39:27.835984+02');
 INSERT INTO public.users VALUES (2, 'tester', 'test@gmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', '', '', NULL, false, true, false, false, true, true, false, false, NULL, NULL, NULL, NULL, true, false, '2025-08-10 12:05:02.914295+02', '2025-08-10 12:05:02.914295+02');
-INSERT INTO public.users VALUES (6, 'Carrie Thomas', 'theodorehenry@yahoo.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Author Republican why beautiful teacher which public enough maintain couple idea.', 'users/1de34bf9a9e7f5cce371.jpeg', '380674236558', true, true, true, false, true, true, false, false, 'https://facebook.com/taylorshawn', 'https://linkedin.com/in/ecollins', 'https://instagram.com/brett85', 'de1ac9a4', true, false, '2025-08-17 12:41:50.000354+02', '2025-08-17 12:41:50.000354+02');
+INSERT INTO public.users VALUES (7, 'Juan Wilson', 'mackpaul@hotmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Report tend thank deal major agent through.', 'users/3a4c96ef8066a42832ec.jpeg', '380964236558', true, true, true, false, true, true, false, false, 'https://facebook.com/mgardner', NULL, NULL, '93d3f49c', true, false, '2025-08-17 12:44:04.176978+02', '2025-08-17 12:44:04.176978+02');
 INSERT INTO public.users VALUES (26, 'Taylor Decker', 'sarahgomez@schultz-lin.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Adult board experience decision technology message.', 'users/e719f33aacad8812de18.jpeg', NULL, false, true, true, false, false, true, false, false, 'https://facebook.com/logancurtis', NULL, NULL, 'eaee4327', true, false, '2025-08-17 13:35:39.829949+02', '2025-08-17 13:35:39.829949+02');
-INSERT INTO public.users VALUES (10, 'Sara Mueller', 'uglover@erickson-byrd.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Make character sport open sing take television specific management miss.', 'users/30bf463f04e10a72148f.jpeg', '380669271708', true, true, true, false, false, true, false, false, 'https://facebook.com/michaeljohnson', 'https://linkedin.com/in/perrysean', NULL, 'e9dc3319', true, false, '2025-08-17 12:51:32.43273+02', '2025-08-17 12:51:32.43273+02');
+INSERT INTO public.users VALUES (19, 'Renee Branch', 'nicholas86@nixon.org', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Hundred affect her east single bed herself full mind true order.', 'users/cd303cc1ff9347e41682.jpeg', '380964222541', true, true, true, false, false, true, false, false, 'https://facebook.com/cooperrebecca', NULL, NULL, '6aa8aa6b', true, false, '2025-08-17 13:08:24.122889+02', '2025-08-17 13:08:24.122889+02');
 INSERT INTO public.users VALUES (8, 'Sandra Osborn', 'iharris@hotmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Product newspaper price nearly point Congress war different.', 'users/e91559bd3c0330fe5e9d.jpeg', '380666440342', true, true, true, false, false, true, false, false, NULL, 'https://linkedin.com/in/zfowler', 'https://instagram.com/nancy53', '5889b946', true, false, '2025-08-17 12:47:19.284473+02', '2025-08-17 12:47:19.284473+02');
 INSERT INTO public.users VALUES (25, 'Tiffany Gray', 'taylorwebb@hodges.org', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Stock both decision set simply level nation available.', 'users/4b3ec2cc7eaf2a8baaf6.jpeg', '380661236842', true, true, true, false, false, true, false, false, 'https://facebook.com/gsanders', 'https://linkedin.com/in/epeterson', 'https://instagram.com/lynn99', 'c19e80b7', true, false, '2025-08-17 13:34:29.351501+02', '2025-08-17 13:34:29.351501+02');
 INSERT INTO public.users VALUES (24, 'Jose Hobbs', 'riverabriana@yahoo.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Health hit form finally billion sound again better describe travel.', 'users/a6a22ffaee5b07d4954b.jpeg', '380667765081', true, true, true, false, false, true, false, false, 'https://facebook.com/scottgolden', 'https://linkedin.com/in/iromero', 'https://instagram.com/proctorrobert', 'fb7f6628', true, false, '2025-08-17 13:32:46.35461+02', '2025-08-17 13:32:46.35461+02');
-INSERT INTO public.users VALUES (19, 'Renee Branch', 'nicholas86@nixon.org', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Hundred affect her east single bed herself full mind true order.', 'users/cd303cc1ff9347e41682.jpeg', '380964222541', true, true, true, false, false, true, false, false, 'https://facebook.com/cooperrebecca', NULL, NULL, '6aa8aa6b', true, false, '2025-08-17 13:08:24.122889+02', '2025-08-17 13:08:24.122889+02');
-INSERT INTO public.users VALUES (23, 'Dawn Wolfe', 'xbell@hotmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Forward and whether argue seem garden tough plan yeah bring.', 'users/ad10f2d6569054c335c6.jpeg', '380665434478', true, true, true, false, false, true, false, false, 'https://facebook.com/chapmanbeverly', 'https://linkedin.com/in/vbrown', NULL, '1b425272', true, false, '2025-08-17 13:31:19.347167+02', '2025-08-17 13:31:19.347167+02');
+INSERT INTO public.users VALUES (6, 'Carrie Thomas', 'theodorehenry@yahoo.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Author Republican why beautiful teacher which public enough maintain couple idea.', 'users/1de34bf9a9e7f5cce371.jpeg', '380674236558', true, true, true, false, true, true, false, false, 'https://facebook.com/taylorshawn', 'https://linkedin.com/in/ecollins', 'https://instagram.com/brett85', 'de1ac9a4', true, false, '2025-08-17 12:41:50.000354+02', '2025-08-17 12:41:50.000354+02');
 INSERT INTO public.users VALUES (18, 'Crystal Morrow', 'jturner@thompson.biz', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Room mission business center ten letter goal begin year.', 'users/6ddc3f61ff9a233974f6.jpeg', '380676678246', true, true, true, false, false, true, false, false, 'https://facebook.com/handerson', 'https://linkedin.com/in/andrew32', 'https://instagram.com/knapprobert', '9973ecc1', true, false, '2025-08-17 13:06:46.641678+02', '2025-08-17 13:06:46.641678+02');
+INSERT INTO public.users VALUES (12, 'Theresa Baker MD', 'emilyparsons@gmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Sound rock growth compare too general make which where.', 'users/e57042a3d89e54732137.jpeg', '380663253489', true, true, true, false, false, true, false, false, 'https://facebook.com/david28', NULL, NULL, 'a722e661', true, false, '2025-08-17 12:55:54.643181+02', '2025-08-17 12:55:54.643181+02');
+INSERT INTO public.users VALUES (23, 'Dawn Wolfe', 'xbell@hotmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Forward and whether argue seem garden tough plan yeah bring.', 'users/ad10f2d6569054c335c6.jpeg', '380665434478', true, true, true, false, false, true, false, false, 'https://facebook.com/chapmanbeverly', 'https://linkedin.com/in/vbrown', NULL, '1b425272', true, false, '2025-08-17 13:31:19.347167+02', '2025-08-17 13:31:19.347167+02');
 INSERT INTO public.users VALUES (20, 'Kelsey Rojas', 'baileyjoshua@pittman.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'More subject join reality issue lay type her ago.', 'users/ce6a6666a593cdf016a7.jpeg', NULL, false, true, true, false, false, true, false, false, 'https://facebook.com/tracythompson', 'https://linkedin.com/in/laura90', NULL, '108d38ad', true, false, '2025-08-17 13:09:40.968724+02', '2025-08-17 13:09:40.968724+02');
+INSERT INTO public.users VALUES (10, 'Sara Mueller', 'uglover@erickson-byrd.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Make character sport open sing take television specific management miss.', 'users/30bf463f04e10a72148f.jpeg', '380669271708', true, true, true, false, false, true, false, false, 'https://facebook.com/michaeljohnson', 'https://linkedin.com/in/perrysean', NULL, 'e9dc3319', true, false, '2025-08-17 12:51:32.43273+02', '2025-08-17 12:51:32.43273+02');
 INSERT INTO public.users VALUES (15, 'Craig Dennis', 'brittanycook@gmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Call according responsibility huge contain successful million can important score.', 'users/35aa5950f8ca5025c285.jpeg', '380666584442', true, true, true, false, false, true, false, false, 'https://facebook.com/colerandall', NULL, 'https://instagram.com/qsanders', 'ae3e8107', true, false, '2025-08-17 13:01:47.474004+02', '2025-08-17 13:01:47.474004+02');
 INSERT INTO public.users VALUES (17, 'Jodi Zimmerman', 'khartman@yahoo.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Structure model job fund Republican one determine.', 'users/037540811f9e699f4421.jpeg', '380662259015', true, true, true, false, false, true, false, false, NULL, NULL, NULL, 'f19ec452', true, false, '2025-08-17 13:04:08.698832+02', '2025-08-17 13:04:08.698832+02');
-INSERT INTO public.users VALUES (7, 'Juan Wilson', 'mackpaul@hotmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Report tend thank deal major agent through.', 'users/3a4c96ef8066a42832ec.jpeg', '380964236558', true, true, true, false, true, true, false, false, 'https://facebook.com/mgardner', NULL, NULL, '93d3f49c', true, false, '2025-08-17 12:44:04.176978+02', '2025-08-17 12:44:04.176978+02');
 INSERT INTO public.users VALUES (9, 'Matthew Moss', 'lindaward@gibbs.net', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Everything best free piece fact future.', 'users/aa7eceb3a969aea6d367.jpeg', '380661256349', true, true, true, false, false, true, false, false, NULL, 'https://linkedin.com/in/lisaharrington', NULL, 'ad665ea9', true, false, '2025-08-17 12:48:50.219283+02', '2025-08-17 12:48:50.219283+02');
 INSERT INTO public.users VALUES (21, 'Russell Humphrey', 'mlewis@cook.org', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Break difference card travel deal interview clearly girl who.', 'users/e392d8a41962b73a901d.jpeg', '380661239821', true, true, true, false, false, true, false, false, 'https://facebook.com/russellsmith', 'https://linkedin.com/in/brettkidd', NULL, '3759fdfb', true, false, '2025-08-17 13:11:27.091942+02', '2025-08-17 13:11:27.091942+02');
 INSERT INTO public.users VALUES (27, 'Monica Freeman', 'rcarter@yahoo.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Card course increase prove agency above become get social.', 'users/73be5ae8e2b0102bf351.jpeg', '380966223389', true, true, true, false, false, true, false, false, 'https://facebook.com/stephaniemedina', 'https://linkedin.com/in/patrick29', NULL, '4a1f5748', true, false, '2025-08-17 13:36:58.149503+02', '2025-08-17 13:36:58.149503+02');
-INSERT INTO public.users VALUES (1, 'admin', 'admin@gmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'admin', NULL, 'users/239a8c8eead7508bcbfb.png', '380678811196', false, false, true, false, true, true, false, false, NULL, NULL, NULL, '08cddc3c', true, false, '2025-07-13 13:52:02.659479+02', '2025-07-13 13:52:02.659479+02');
 INSERT INTO public.users VALUES (22, 'Rebecca Hurley', 'qramirez@andrews-jackson.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Whom tell note see significant political people situation Mr road.', 'users/0acd5224ec51ae1097b9.jpeg', '380664559269', true, true, true, false, false, true, false, false, NULL, 'https://linkedin.com/in/logangarrett', 'https://instagram.com/juliaparks', '1442241f', true, false, '2025-08-17 13:13:40.027491+02', '2025-08-17 13:13:40.027491+02');
 INSERT INTO public.users VALUES (4, 'Hannah Ibarra', 'scott54@yahoo.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Blood management read likely together speech impact teacher body result prove purpose.', 'users/68816c15fb574b0df067.jpeg', '380961234326', true, true, true, false, true, true, false, false, 'https://facebook.com/deborahcampos', 'https://linkedin.com/in/john32', 'https://instagram.com/zbailey', '6b5ea5c5', true, false, '2025-08-17 12:38:05.882227+02', '2025-08-17 12:38:05.882227+02');
 INSERT INTO public.users VALUES (32, 'Deborah Davis', 'hancocktony@gmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Night both meeting skin business after here sure.', 'users/f28d67a01fc09ecb36e6.jpeg', '380666224658', true, true, true, false, false, true, false, false, 'https://facebook.com/kathyfernandez', 'https://linkedin.com/in/cassandra73', 'https://instagram.com/david07', 'b971c8be', true, false, '2025-08-17 13:45:50.074723+02', '2025-08-17 13:45:50.074723+02');
@@ -5745,8 +6187,9 @@ INSERT INTO public.users VALUES (31, 'Jennifer Smith', 'zimmermankevin@garcia.in
 INSERT INTO public.users VALUES (30, 'Michael Mckinney', 'fberry@stout.net', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Particularly policy model hope section power modern training new station claim have.', 'users/c6ff1fd27f4bf6c137d8.jpeg', '380675611157', true, true, true, false, false, true, false, false, 'https://facebook.com/kandersen', 'https://linkedin.com/in/rebeccamcintosh', 'https://instagram.com/alexandercastillo', 'd4593834', true, false, '2025-08-17 13:42:16.512941+02', '2025-08-17 13:42:16.512941+02');
 INSERT INTO public.users VALUES (29, 'David Harrell', 'gregorycox@hotmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Page man us political surface meeting break hotel enough game up authority.', 'users/2c682d81c6be661adcff.jpeg', NULL, false, true, true, false, false, true, false, false, 'https://facebook.com/markbrown', 'https://linkedin.com/in/robertgonzales', 'https://instagram.com/emoore', '763b83f4', true, false, '2025-08-17 13:40:03.754292+02', '2025-08-17 13:40:03.754292+02');
 INSERT INTO public.users VALUES (28, 'Tommy Kim', 'allenbeard@morris.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Top series wind plant by become prevent check until peace risk item.', 'users/0d10f8a2e862bc90296e.jpeg', '380664408548', true, true, true, false, false, true, false, false, 'https://facebook.com/andreafisher', 'https://linkedin.com/in/scott46', 'https://instagram.com/vholt', 'de8fdb4d', true, false, '2025-08-17 13:39:01.892744+02', '2025-08-17 13:39:01.892744+02');
-INSERT INTO public.users VALUES (16, 'Cynthia Clark', 'moralescynthia@palmer-hughes.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Short yet that indeed alone catch wrong name real right vote exist seven.', 'users/ffece25a7e4698f2948a.jpeg', NULL, false, true, true, false, false, true, false, false, 'https://facebook.com/dcollins', 'https://linkedin.com/in/austinhensley', 'https://instagram.com/jonesdonald', '24453c49', true, false, '2025-08-17 13:03:01.2497+02', '2025-08-17 13:03:01.2497+02');
 INSERT INTO public.users VALUES (3, 'Holly Burgess', 'catherine30@wright.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Thank return nothing officer adult car air wide hot.', 'users/e444d22dc4b670687ffb.jpeg', '380676186186', false, false, true, false, true, true, false, false, 'https://facebook.com/samuelbarron', 'https://linkedin.com/in/lopezharold', 'https://instagram.com/lucassusan', '08cddc3c', true, false, '2025-08-17 12:22:19.271814+02', '2025-08-17 12:22:19.271814+02');
+INSERT INTO public.users VALUES (1, 'admin', 'admin@gmail.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'admin', NULL, 'users/239a8c8eead7508bcbfb.png', '380678811196', false, false, true, false, true, true, false, true, NULL, NULL, NULL, '08cddc3c', true, false, '2025-07-13 13:52:02.659479+02', '2025-07-13 13:52:02.659479+02');
+INSERT INTO public.users VALUES (16, 'Cynthia Clark', 'moralescynthia@palmer-hughes.com', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Short yet that indeed alone catch wrong name real right vote exist seven.', 'users/ffece25a7e4698f2948a.jpeg', NULL, false, true, true, false, false, true, false, false, 'https://facebook.com/dcollins', 'https://linkedin.com/in/austinhensley', 'https://instagram.com/jonesdonald', '24453c49', true, false, '2025-08-17 13:03:01.2497+02', '2025-08-17 13:03:01.2497+02');
 INSERT INTO public.users VALUES (11, 'Tanya Clayton', 'monteslindsay@wyatt.biz', true, '$2b$10$fTk379Jv2HQvFXKzMZyE5.7RfFTjiVVrMmu32Vz6r4aO9pCCsBosi', 'user', 'Difficult four ok guy material of try.', 'users/b5f330a2f094974c46a4.jpeg', '380676436013', true, true, true, false, false, true, false, false, 'https://facebook.com/ahardy', 'https://linkedin.com/in/qdaniels', 'https://instagram.com/howardchris', 'd505e1a4', true, false, '2025-08-17 12:54:13.376729+02', '2025-08-17 12:54:13.376729+02');
 
 
@@ -5765,7 +6208,7 @@ SELECT pg_catalog.setval('public.active_actions_id_seq', 1, false);
 -- Name: chat_messages_contents_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.chat_messages_contents_id_seq', 536, true);
+SELECT pg_catalog.setval('public.chat_messages_contents_id_seq', 671, true);
 
 
 --
@@ -5774,7 +6217,7 @@ SELECT pg_catalog.setval('public.chat_messages_contents_id_seq', 536, true);
 -- Name: chat_messages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.chat_messages_id_seq', 536, true);
+SELECT pg_catalog.setval('public.chat_messages_id_seq', 671, true);
 
 
 --
@@ -5783,7 +6226,7 @@ SELECT pg_catalog.setval('public.chat_messages_id_seq', 536, true);
 -- Name: chat_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.chat_relations_id_seq', 252, true);
+SELECT pg_catalog.setval('public.chat_relations_id_seq', 296, true);
 
 
 --
@@ -5792,7 +6235,7 @@ SELECT pg_catalog.setval('public.chat_relations_id_seq', 252, true);
 -- Name: chats_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.chats_id_seq', 171, true);
+SELECT pg_catalog.setval('public.chats_id_seq', 195, true);
 
 
 --
@@ -5810,7 +6253,7 @@ SELECT pg_catalog.setval('public.dispute_prediction_models_id_seq', 7, true);
 -- Name: disputes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.disputes_id_seq', 45, true);
+SELECT pg_catalog.setval('public.disputes_id_seq', 47, true);
 
 
 --
@@ -5900,7 +6343,7 @@ SELECT pg_catalog.setval('public.logs_id_seq', 42, true);
 -- Name: order_update_requests_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.order_update_requests_id_seq', 41, true);
+SELECT pg_catalog.setval('public.order_update_requests_id_seq', 50, true);
 
 
 --
@@ -5909,7 +6352,7 @@ SELECT pg_catalog.setval('public.order_update_requests_id_seq', 41, true);
 -- Name: orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.orders_id_seq', 81, true);
+SELECT pg_catalog.setval('public.orders_id_seq', 101, true);
 
 
 --
@@ -5918,7 +6361,7 @@ SELECT pg_catalog.setval('public.orders_id_seq', 81, true);
 -- Name: owner_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.owner_comments_id_seq', 2, true);
+SELECT pg_catalog.setval('public.owner_comments_id_seq', 6, true);
 
 
 --
@@ -5945,7 +6388,7 @@ SELECT pg_catalog.setval('public.recipient_payments_id_seq', 1, false);
 -- Name: renter_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.renter_comments_id_seq', 3, true);
+SELECT pg_catalog.setval('public.renter_comments_id_seq', 11, true);
 
 
 --
@@ -5972,7 +6415,7 @@ SELECT pg_catalog.setval('public.seeds_status_id_seq', 4, true);
 -- Name: sender_payments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.sender_payments_id_seq', 86, true);
+SELECT pg_catalog.setval('public.sender_payments_id_seq', 107, true);
 
 
 --
@@ -5981,7 +6424,7 @@ SELECT pg_catalog.setval('public.sender_payments_id_seq', 86, true);
 -- Name: sockets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.sockets_id_seq', 2037, true);
+SELECT pg_catalog.setval('public.sockets_id_seq', 2216, true);
 
 
 --
@@ -5999,7 +6442,7 @@ SELECT pg_catalog.setval('public.system_id_seq', 10, true);
 -- Name: temp_orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.temp_orders_id_seq', 211, true);
+SELECT pg_catalog.setval('public.temp_orders_id_seq', 252, true);
 
 
 --
@@ -6695,7 +7138,7 @@ ALTER TABLE ONLY public.user_verify_requests
     ADD CONSTRAINT user_verify_requests_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
--- Completed on 2025-08-22 16:48:14
+-- Completed on 2025-08-22 19:40:45
 
 --
 -- PostgreSQL database dump complete
