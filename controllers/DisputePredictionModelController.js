@@ -118,14 +118,6 @@ class DisputePredictionModelController extends Controller {
         console.log("forest server error: ", e.message);
       }
 
-      if (errorMessage) {
-        return this.sendErrorResponse(
-          res,
-          STATIC.ERRORS.BAD_REQUEST,
-          errorMessage
-        );
-      }
-
       await this.disputePredictionModel.update(id, {
         body,
         afterFinishActive,
