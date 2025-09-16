@@ -1,0 +1,1141 @@
+[
+    {
+        "pseudonym": "renter_average_rating",
+        "type": "template",
+        "content": [
+            {
+                "key": "avg",
+                "body": "Avg",
+                "subItems": [
+                    {
+                        "key": "brackets",
+                        "body": "Brackets",
+                        "subItems": [
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "care",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_care"
+                                },
+                                "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-1"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "timeliness",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_timeliness"
+                                },
+                                "id": "276f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-2"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "responsiveness",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_responsiveness"
+                                },
+                                "id": "376f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-3"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "clarity",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_clarity"
+                                },
+                                "id": "476f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-4"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "usage_guidelines",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_usage_guidelines"
+                                },
+                                "id": "576f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-5"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "terms_of_service",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_terms_of_service"
+                                },
+                                "id": "676f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-6"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "honesty",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_honesty"
+                                },
+                                "id": "776f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-7"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "reliability",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_reliability"
+                                },
+                                "id": "876f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-8"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_comments",
+                                    "fieldName": "satisfaction",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "renter_rented_orders"
+                                        },
+                                        {
+                                            "baseTable": "renter_rented_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "renter_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "renter_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "rc_satisfaction"
+                                },
+                                "id": "976f59c3fbea02075efc574e120a696d018166e6"
+                            }
+                        ],
+                        "id": "7ccd8a851a202d3f76530cf4d6da1dc54d0dc467"
+                    },
+                    {
+                        "key": "/",
+                        "body": "/",
+                        "id": "operation-division-1"
+                    },
+                    {
+                        "key": "custom_value",
+                        "body": "Custom Value",
+                        "content": {
+                            "value": "9"
+                        },
+                        "id": "custom-value-1"
+                    }
+                ],
+                "id": "1ab907ba98848fceee44111cb4b4a6a3e767c09f"
+            }
+        ],
+        "conditions": [
+            {
+                "baseTable": "renter_comments",
+                "baseField": "created_at",
+                "joinCondition": "<",
+                "joinedTable": "suborder",
+                "joinedField": "created_at"
+            }
+        ],
+        "orders": [],
+        "groups": [],
+        "comparisonType": "numerical",
+        "defaultValue": "5"
+    },
+    {
+        "pseudonym": "owner_average_rating",
+        "type": "template",
+        "content": [
+            {
+                "key": "avg",
+                "body": "Avg",
+                "subItems": [
+                    {
+                        "key": "brackets",
+                        "body": "Brackets",
+                        "subItems": [
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "item_description_accuracy",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_item_description_accuracy"
+                                },
+                                "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-1"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "photo_accuracy",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_photo_accuracy"
+                                },
+                                "id": "276f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-2"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "pickup_condition",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_pickup_condition"
+                                },
+                                "id": "376f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-3"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "cleanliness",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_cleanliness"
+                                },
+                                "id": "476f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-4"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "responsiveness",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_responsiveness"
+                                },
+                                "id": "576f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-5"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "clarity",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_clarity"
+                                },
+                                "id": "676f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-6"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "scheduling_flexibility",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_scheduling_flexibility"
+                                },
+                                "id": "776f59c3fbea02075efc574e120a696d018166e6"
+                            },
+                            {
+                                "key": "+",
+                                "body": "+",
+                                "id": "operation-plus-7"
+                            },
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_comments",
+                                    "fieldName": "issue_resolution",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "owner_completed_order_listings"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_order_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "owner_completed_orders"
+                                        },
+                                        {
+                                            "baseTable": "owner_completed_orders",
+                                            "baseField": "id",
+                                            "joinedTable": "owner_comments",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "owner_comments"
+                                        }
+                                    ],
+                                    "pseudonym": "oc_issue_resolution"
+                                },
+                                "id": "876f59c3fbea02075efc574e120a696d018166e6"
+                            }
+                        ],
+                        "id": "7ccd8a851a202d3f76530cf4d6da1dc54d0dc467"
+                    },
+                    {
+                        "key": "/",
+                        "body": "/",
+                        "id": "operation-division-1"
+                    },
+                    {
+                        "key": "custom_value",
+                        "body": "Custom Value",
+                        "content": {
+                            "value": "8"
+                        },
+                        "id": "custom-value-1"
+                    }
+                ],
+                "id": "2ab907ba98848fceee44111cb4b4a6a3e767c09f"
+            }
+        ]
+    },
+    {
+        "pseudonym": "price_per_day",
+        "type": "field",
+        "content": {
+            "tableName": "orders",
+            "fieldName": "price",
+            "joins": []
+        }
+    },
+    {
+        "pseudonym": "duration_days",
+        "type": "template",
+        "content": [
+            {
+                "key": "day_date_part",
+                "body": "Day",
+                "subItems": [
+                    {
+                        "key": "table_selects",
+                        "body": "Table Selects",
+                        "content": {
+                            "tableName": "suborder",
+                            "fieldName": "finish_time",
+                            "pseudonym": "orders_finish_time",
+                            "joins": []
+                        },
+                        "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                    },
+                    {
+                        "key": "-",
+                        "body": "-",
+                        "id": "operation-diff-1"
+                    },
+                    {
+                        "key": "table_selects",
+                        "body": "Table Selects",
+                        "content": {
+                            "tableName": "suborder",
+                            "fieldName": "start_time",
+                            "pseudonym": "orders_start_time",
+                            "joins": []
+                        },
+                        "id": "276f59c3fbea02075efc574e120a696d018166e6"
+                    }
+                ],
+                "id": "3ab907ba98848fceee44111cb4b4a6a3e767c09f"
+            }
+        ]
+    },
+    {
+        "pseudonym": "listing_category_id",
+        "type": "field",
+        "content": {
+            "tableName": "order_listings",
+            "fieldName": "category_id",
+            "joins": [
+                {
+                    "baseTable": "orders",
+                    "baseField": "listing_id",
+                    "joinedTable": "listings",
+                    "joinedField": "id",
+                    "pseudonym": "order_listings"
+                }
+            ]
+        },
+        "comparisonType": "categorical"
+    },
+    {
+        "pseudonym": "count_owner_completed_orders",
+        "type": "template",
+        "content": [
+            {
+                "key": "count",
+                "body": "Count",
+                "subItems": [
+                    {
+                        "key": "table_selects",
+                        "body": "Table Selects",
+                        "content": {
+                            "tableName": "suborder",
+                            "fieldName": "id",
+                            "pseudonym": "owner_completed_order_id",
+                            "joins": [
+                                {
+                                    "baseTable": "suborder",
+                                    "baseField": "listing_id",
+                                    "joinedTable": "listings",
+                                    "joinedField": "id",
+                                    "pseudonym": "order_listings"
+                                },
+                                {
+                                    "baseTable": "order_listings",
+                                    "baseField": "owner_id",
+                                    "joinedTable": "listings",
+                                    "joinedField": "owner_id",
+                                    "pseudonym": "owner_completed_order_listings"
+                                },
+                                {
+                                    "baseTable": "order_listings",
+                                    "baseField": "id",
+                                    "joinedTable": "orders",
+                                    "joinedField": "listing_id",
+                                    "pseudonym": "owner_completed_orders"
+                                },
+                                {
+                                    "baseTable": "owner_completed_orders",
+                                    "baseField": "id",
+                                    "joinedTable": "disputes",
+                                    "joinedField": "order_id",
+                                    "pseudonym": "owner_completed_order_disputes"
+                                }
+                            ]
+                        },
+                        "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                    }
+                ],
+                "id": "4ab907ba98848fceee44111cb4b4a6a3e767c09f"
+            }
+        ],
+        "conditions": [
+            {
+                "baseTable": "owner_completed_orders",
+                "baseField": "created_at",
+                "joinCondition": "<",
+                "joinedTable": "suborder",
+                "joinedField": "created_at"
+            },
+            {
+                "baseTable": "owner_completed_order_disputes",
+                "baseField": "id",
+                "joinCondition": "IS NOT DISTINCT FROM",
+                "joinedTable": "order_listings",
+                "joinedField": "other_category_parent_id"
+            }
+        ],
+        "orders": [],
+        "groups": [],
+        "comparisonType": "numerical"
+    },
+    {
+        "pseudonym": "count_renter_finished_orders",
+        "type": "template",
+        "content": [
+            {
+                "key": "count",
+                "body": "Count",
+                "subItems": [
+                    {
+                        "key": "table_selects",
+                        "body": "Table Selects",
+                        "content": {
+                            "tableName": "renter_finished_orders",
+                            "fieldName": "id",
+                            "pseudonym": "renter_finished_order_id",
+                            "joins": [
+                                {
+                                    "baseTable": "suborder",
+                                    "baseField": "renter_id",
+                                    "joinedTable": "orders",
+                                    "joinedField": "renter_id",
+                                    "pseudonym": "renter_finished_orders"
+                                },
+                                {
+                                    "baseTable": "suborder",
+                                    "baseField": "listing_id",
+                                    "joinedTable": "listings",
+                                    "joinedField": "id",
+                                    "pseudonym": "order_listings"
+                                },
+                                {
+                                    "baseTable": "renter_finished_orders",
+                                    "baseField": "id",
+                                    "joinedTable": "disputes",
+                                    "joinedField": "order_id",
+                                    "pseudonym": "renter_finished_order_disputes"
+                                }
+                            ]
+                        },
+                        "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                    }
+                ],
+                "id": "5ab907ba98848fceee44111cb4b4a6a3e767c09f"
+            }
+        ],
+        "conditions": [
+            {
+                "baseTable": "renter_finished_orders",
+                "baseField": "created_at",
+                "joinCondition": "<",
+                "joinedTable": "suborder",
+                "joinedField": "created_at"
+            },
+            {
+                "baseTable": "renter_finished_order_disputes",
+                "baseField": "id",
+                "joinCondition": "IS NOT DISTINCT FROM",
+                "joinedTable": "order_listings",
+                "joinedField": "other_category_parent_id"
+            }
+        ],
+        "orders": [],
+        "groups": [],
+        "comparisonType": "numerical"
+    },
+    {
+        "pseudonym": "count_order_update_requests",
+        "type": "template",
+        "content": [
+            {
+                "key": "count",
+                "body": "Count",
+                "subItems": [
+                    {
+                        "key": "table_selects",
+                        "body": "Table Selects",
+                        "content": {
+                            "tableName": "order_update_requests",
+                            "fieldName": "id",
+                            "pseudonym": "order_update_request_id",
+                            "joins": [
+                                {
+                                    "baseTable": "suborder",
+                                    "baseField": "id",
+                                    "joinedTable": "order_update_requests",
+                                    "joinedField": "order_id",
+                                    "pseudonym": "order_update_requests"
+                                }
+                            ]
+                        },
+                        "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                    }
+                ],
+                "id": "6ab907ba98848fceee44111cb4b4a6a3e767c09f"
+            }
+        ]
+    },
+    {
+        "pseudonym": "owner_is_renter",
+        "type": "template",
+        "content": [
+            {
+                "key": "brackets",
+                "body": "Brackets",
+                "subItems": [
+                    {
+                        "key": "count",
+                        "body": "Count",
+                        "subItems": [
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "owner_orders_as_renter",
+                                    "fieldName": "id",
+                                    "pseudonym": "owner_orders_as_renter_id",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "listing_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "id",
+                                            "pseudonym": "order_listings"
+                                        },
+                                        {
+                                            "baseTable": "order_listings",
+                                            "baseField": "owner_id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "renter_id",
+                                            "pseudonym": "owner_orders_as_renter"
+                                        }
+                                    ]
+                                },
+                                "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                            }
+                        ],
+                        "id": "5ab907ba98848fceee44111cb4b4a6a3e767c09f"
+                    },
+                    {
+                        "key": ">",
+                        "body": ">",
+                        "id": "operation-more-1"
+                    },
+                    {
+                        "key": "custom_value",
+                        "body": "Custom Value",
+                        "content": {
+                            "value": "0"
+                        },
+                        "id": "custom-value-1"
+                    }
+                ]
+            }
+        ],
+        "conditions": [
+            {
+                "baseTable": "owner_orders_as_renter",
+                "baseField": "created_at",
+                "joinCondition": "<",
+                "joinedTable": "suborder",
+                "joinedField": "created_at"
+            }
+        ],
+        "orders": [],
+        "groups": [],
+        "comparisonType": "categorical"
+    },
+    {
+        "pseudonym": "renter_is_owner",
+        "type": "template",
+        "content": [
+            {
+                "key": "brackets",
+                "body": "Brackets",
+                "subItems": [
+                    {
+                        "key": "count",
+                        "body": "Count",
+                        "subItems": [
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "renter_orders_as_owner",
+                                    "fieldName": "id",
+                                    "pseudonym": "renter_orders_as_owner_id",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "renter_id",
+                                            "joinedTable": "listings",
+                                            "joinedField": "owner_id",
+                                            "pseudonym": "renter_listings"
+                                        },
+                                        {
+                                            "baseTable": "renter_listings",
+                                            "baseField": "id",
+                                            "joinedTable": "orders",
+                                            "joinedField": "listing_id",
+                                            "pseudonym": "renter_orders_as_owner"
+                                        }
+                                    ]
+                                },
+                                "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                            }
+                        ],
+                        "id": "5ab907ba98848fceee44111cb4b4a6a3e767c09f"
+                    },
+                    {
+                        "key": ">",
+                        "body": ">",
+                        "id": "operation-more-1"
+                    },
+                    {
+                        "key": "custom_value",
+                        "body": "Custom Value",
+                        "content": {
+                            "value": "0"
+                        },
+                        "id": "custom-value-1"
+                    }
+                ]
+            }
+        ],
+        "conditions": [
+            {
+                "baseTable": "renter_orders_as_owner",
+                "baseField": "created_at",
+                "joinCondition": "<",
+                "joinedTable": "suborder",
+                "joinedField": "created_at"
+            }
+        ],
+        "orders": [],
+        "groups": [],
+        "comparisonType": "categorical"
+    },
+    {
+        "pseudonym": "has_dispute",
+        "type": "template",
+        "content": [
+            {
+                "key": "brackets",
+                "body": "Brackets",
+                "subItems": [
+                    {
+                        "key": "count",
+                        "body": "Count",
+                        "subItems": [
+                            {
+                                "key": "table_selects",
+                                "body": "Table Selects",
+                                "content": {
+                                    "tableName": "order_disputes",
+                                    "fieldName": "id",
+                                    "pseudonym": "order_dispute_id",
+                                    "joins": [
+                                        {
+                                            "baseTable": "suborder",
+                                            "baseField": "id",
+                                            "joinedTable": "disputes",
+                                            "joinedField": "order_id",
+                                            "pseudonym": "order_disputes"
+                                        }
+                                    ]
+                                },
+                                "id": "176f59c3fbea02075efc574e120a696d018166e6"
+                            }
+                        ],
+                        "id": "7ab907ba98848fceee44111cb4b4a6a3e767c09f"
+                    },
+                    {
+                        "key": ">",
+                        "body": ">",
+                        "id": "operation-more-1"
+                    },
+                    {
+                        "key": "custom_value",
+                        "body": "Custom Value",
+                        "content": {
+                            "value": "0"
+                        },
+                        "id": "custom-value-1"
+                    }
+                ]
+            }
+        ],
+        "conditions": [],
+        "orders": [],
+        "groups": [],
+        "comparisonType": "categorical"
+    }
+]
