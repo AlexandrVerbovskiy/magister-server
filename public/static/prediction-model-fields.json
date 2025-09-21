@@ -19,7 +19,7 @@
                                     "fieldName": "care",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -50,7 +50,7 @@
                                     "fieldName": "timeliness",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -81,7 +81,7 @@
                                     "fieldName": "responsiveness",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -112,7 +112,7 @@
                                     "fieldName": "clarity",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -143,7 +143,7 @@
                                     "fieldName": "usage_guidelines",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -174,7 +174,7 @@
                                     "fieldName": "terms_of_service",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -205,7 +205,7 @@
                                     "fieldName": "honesty",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -236,7 +236,7 @@
                                     "fieldName": "reliability",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -267,7 +267,7 @@
                                     "fieldName": "satisfaction",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "orders",
                                             "joinedField": "renter_id",
@@ -310,7 +310,7 @@
                 "baseTable": "renter_comments",
                 "baseField": "created_at",
                 "joinCondition": "<",
-                "joinedTable": "suborder",
+                "joinedTable": "orders",
                 "joinedField": "created_at"
             }
         ],
@@ -339,7 +339,7 @@
                                     "fieldName": "item_description_accuracy",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -384,7 +384,7 @@
                                     "fieldName": "photo_accuracy",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -429,7 +429,7 @@
                                     "fieldName": "pickup_condition",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -474,7 +474,7 @@
                                     "fieldName": "cleanliness",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -519,7 +519,7 @@
                                     "fieldName": "responsiveness",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -564,7 +564,7 @@
                                     "fieldName": "clarity",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -609,7 +609,7 @@
                                     "fieldName": "scheduling_flexibility",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -654,7 +654,7 @@
                                     "fieldName": "issue_resolution",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -705,7 +705,10 @@
                 ],
                 "id": "2ab907ba98848fceee44111cb4b4a6a3e767c09f"
             }
-        ]
+        ],
+        "orders": [],
+        "groups": [],
+        "comparisonType": "numerical"
     },
     {
         "pseudonym": "price_per_day",
@@ -714,7 +717,8 @@
             "tableName": "orders",
             "fieldName": "price",
             "joins": []
-        }
+        },
+        "comparisonType": "numerical"
     },
     {
         "pseudonym": "duration_days",
@@ -728,7 +732,7 @@
                         "key": "table_selects",
                         "body": "Table Selects",
                         "content": {
-                            "tableName": "suborder",
+                            "tableName": "orders",
                             "fieldName": "finish_time",
                             "pseudonym": "orders_finish_time",
                             "joins": []
@@ -744,7 +748,7 @@
                         "key": "table_selects",
                         "body": "Table Selects",
                         "content": {
-                            "tableName": "suborder",
+                            "tableName": "orders",
                             "fieldName": "start_time",
                             "pseudonym": "orders_start_time",
                             "joins": []
@@ -754,7 +758,8 @@
                 ],
                 "id": "3ab907ba98848fceee44111cb4b4a6a3e767c09f"
             }
-        ]
+        ],
+        "comparisonType": "numerical"
     },
     {
         "pseudonym": "listing_category_id",
@@ -786,12 +791,12 @@
                         "key": "table_selects",
                         "body": "Table Selects",
                         "content": {
-                            "tableName": "suborder",
+                            "tableName": "orders",
                             "fieldName": "id",
                             "pseudonym": "owner_completed_order_id",
                             "joins": [
                                 {
-                                    "baseTable": "suborder",
+                                    "baseTable": "orders",
                                     "baseField": "listing_id",
                                     "joinedTable": "listings",
                                     "joinedField": "id",
@@ -831,7 +836,7 @@
                 "baseTable": "owner_completed_orders",
                 "baseField": "created_at",
                 "joinCondition": "<",
-                "joinedTable": "suborder",
+                "joinedTable": "orders",
                 "joinedField": "created_at"
             },
             {
@@ -863,14 +868,14 @@
                             "pseudonym": "renter_finished_order_id",
                             "joins": [
                                 {
-                                    "baseTable": "suborder",
+                                    "baseTable": "orders",
                                     "baseField": "renter_id",
                                     "joinedTable": "orders",
                                     "joinedField": "renter_id",
                                     "pseudonym": "renter_finished_orders"
                                 },
                                 {
-                                    "baseTable": "suborder",
+                                    "baseTable": "orders",
                                     "baseField": "listing_id",
                                     "joinedTable": "listings",
                                     "joinedField": "id",
@@ -896,7 +901,7 @@
                 "baseTable": "renter_finished_orders",
                 "baseField": "created_at",
                 "joinCondition": "<",
-                "joinedTable": "suborder",
+                "joinedTable": "orders",
                 "joinedField": "created_at"
             },
             {
@@ -928,7 +933,7 @@
                             "pseudonym": "order_update_request_id",
                             "joins": [
                                 {
-                                    "baseTable": "suborder",
+                                    "baseTable": "orders",
                                     "baseField": "id",
                                     "joinedTable": "order_update_requests",
                                     "joinedField": "order_id",
@@ -941,7 +946,8 @@
                 ],
                 "id": "6ab907ba98848fceee44111cb4b4a6a3e767c09f"
             }
-        ]
+        ],
+        "comparisonType": "numerical"
     },
     {
         "pseudonym": "owner_is_renter",
@@ -964,7 +970,7 @@
                                     "pseudonym": "owner_orders_as_renter_id",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "listing_id",
                                             "joinedTable": "listings",
                                             "joinedField": "id",
@@ -1005,7 +1011,7 @@
                 "baseTable": "owner_orders_as_renter",
                 "baseField": "created_at",
                 "joinCondition": "<",
-                "joinedTable": "suborder",
+                "joinedTable": "orders",
                 "joinedField": "created_at"
             }
         ],
@@ -1034,7 +1040,7 @@
                                     "pseudonym": "renter_orders_as_owner_id",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "renter_id",
                                             "joinedTable": "listings",
                                             "joinedField": "owner_id",
@@ -1075,7 +1081,7 @@
                 "baseTable": "renter_orders_as_owner",
                 "baseField": "created_at",
                 "joinCondition": "<",
-                "joinedTable": "suborder",
+                "joinedTable": "orders",
                 "joinedField": "created_at"
             }
         ],
@@ -1104,7 +1110,7 @@
                                     "pseudonym": "order_dispute_id",
                                     "joins": [
                                         {
-                                            "baseTable": "suborder",
+                                            "baseTable": "orders",
                                             "baseField": "id",
                                             "joinedTable": "disputes",
                                             "joinedField": "order_id",

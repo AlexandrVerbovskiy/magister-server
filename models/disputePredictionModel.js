@@ -19,7 +19,7 @@ class DisputePrediction extends Model {
     "body",
     "check_field as checkField",
     "created_at as createdAt",
-    "training_percent as progressPercent",
+    "progress_percent as progressPercent",
     "prediction_details as predictionDetails",
     "selected_fields as selectedFields",
   ];
@@ -49,18 +49,24 @@ class DisputePrediction extends Model {
   setActive = async (id, afterFinishRebuild) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where("active", true)
-      .where({ id })
       .update({ active: false });
 
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
       .where({ id })
-      .update({ active: true, after_finish_rebuild: afterFinishRebuild });
+      .update({
+        active: true,
+        after_finish_active: true,
+        after_finish_rebuild: afterFinishRebuild,
+      });
   };
 
   setStartTrainingStatus = async (id, selectedFields) => {
     await db(DISPUTE_PREDICTION_MODEL_TABLE)
-      .where({ id, selected_fields: selectedFields })
-      .update({ started: true });
+      .where({ id })
+      .update({
+        started: true,
+        selected_fields: JSON.stringify(selectedFields),
+      });
   };
 
   stop = async (id) => {
