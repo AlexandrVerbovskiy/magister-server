@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+  backend:
+    build: .
+    env_file:
+      - ./.env.docker
+    ports:
+      - "5000:5000"
+    depends_on:
+      - forest
+    networks:
+      - mynet
+
+  client:
+    build: ../client
+    env_file:
+      - ../client/.env.docker
+    ports:
+      - "3000:3000"
+    depends_on:
+      - forest
+      - backend
+    networks:
+      - mynet
+
+  forest:
+    build: ../forest-server
+    command: python app.py
+    env_file:
+      - ../forest-server/.env.docker
+    ports:
+      - "5001:5001"
+    networks:
+      - mynet
+
+networks:
+  mynet:
+    driver: bridge
