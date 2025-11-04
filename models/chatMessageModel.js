@@ -18,6 +18,7 @@ class ChatMessageModel extends Model {
     `${CHAT_MESSAGE_TABLE}.chat_id as chatId`,
     `${CHAT_MESSAGE_TABLE}.sender_id as senderId`,
     `${CHAT_MESSAGE_TABLE}.created_at as createdAt`,
+    `${CHAT_MESSAGE_TABLE}.admin_send as adminSend`
   ];
 
   fullVisibleFields = [
